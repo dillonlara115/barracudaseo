@@ -13,16 +13,16 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "baracuda",
+	Use:   "barracuda",
 	Short: "A fast, lightweight SEO website crawler",
-	Long: `baracuda is a CLI tool for crawling websites and extracting SEO data.
+	Long: `barracuda is a CLI tool for crawling websites and extracting SEO data.
 It recursively crawls websites, extracts key SEO elements like titles, meta descriptions,
 headings, and links, and exports the data to CSV or JSON format.
 
-When run without arguments, baracuda starts in interactive mode.`,
+When run without arguments, barracuda starts in interactive mode.`,
 	Version: "1.0.0",
 	Run: func(cmd *cobra.Command, args []string) {
-		// When baracuda is run without subcommands, start interactive crawl
+		// When barracuda is run without subcommands, start interactive crawl
 		displayBanner()
 		fmt.Println()
 		// Force interactive mode when called from root

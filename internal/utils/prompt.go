@@ -176,8 +176,10 @@ func PromptChoice(prompt string, choices []string, defaultValue string) (string,
 
 // PromptInteractive prompts the user for all crawl configuration interactively
 func PromptInteractive() (*Config, string, string, bool, error) {
-	fmt.Println("\n🐊 Baracuda - Interactive Crawl Setup")
-	fmt.Println("═══════════════════════════════════════\n")
+	fmt.Println()
+	fmt.Println("🐊 Barracuda - Interactive Crawl Setup")
+	fmt.Println("═══════════════════════════════════════")
+	fmt.Println()
 	
 	// Get URL
 	urlInput, err := PromptString("What is the URL you want to scan?", "", true)
@@ -277,7 +279,7 @@ func PromptInteractive() (*Config, string, string, bool, error) {
 		Workers:       workers,
 		Delay:         0,
 		Timeout:       30 * time.Second,
-		UserAgent:     "baracuda/1.0.0",
+		UserAgent:     "barracuda/1.0.0",
 		RespectRobots: respectRobots,
 		ParseSitemap:  parseSitemap,
 		ExportFormat:  format,
@@ -287,4 +289,3 @@ func PromptInteractive() (*Config, string, string, bool, error) {
 	
 	return config, graphExport, crawlDir, openBrowser, nil
 }
-

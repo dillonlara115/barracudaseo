@@ -1,4 +1,4 @@
-module github.com/dillonlara115/baracuda
+module github.com/dillonlara115/barracuda
 
 go 1.21
 

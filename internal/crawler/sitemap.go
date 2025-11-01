@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/dillonlara115/baracuda/internal/utils"
+	"github.com/dillonlara115/barracuda/internal/utils"
 )
 
 // SitemapIndex represents a sitemap index file

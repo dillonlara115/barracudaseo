@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/dillonlara115/baracuda/pkg/models"
+	"github.com/dillonlara115/barracuda/pkg/models"
 )
 
 // ExportJSON exports page results to a JSON file

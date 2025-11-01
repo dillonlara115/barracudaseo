@@ -39,7 +39,7 @@ func startServerAndOpenBrowser(resultsPath, graphPath string) error {
 	if _, err := os.Stat("web/dist"); os.IsNotExist(err) {
 		fmt.Fprintf(os.Stderr, "\n⚠️  Frontend not built. Skipping browser open.\n")
 		fmt.Fprintf(os.Stderr, "   Run 'make frontend-build' to build the frontend, then run:\n")
-		fmt.Fprintf(os.Stderr, "   baracuda serve --results %s --graph %s\n", resultsPath, graphPath)
+		fmt.Fprintf(os.Stderr, "   barracuda serve --results %s --graph %s\n", resultsPath, graphPath)
 		return nil
 	}
 

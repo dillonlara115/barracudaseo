@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/dillonlara115/baracuda/internal/utils"
+	"github.com/dillonlara115/barracuda/internal/utils"
 	"github.com/temoto/robotstxt"
 )
 

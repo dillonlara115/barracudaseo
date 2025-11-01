@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/dillonlara115/baracuda/internal/analyzer"
-	"github.com/dillonlara115/baracuda/internal/exporter"
-	"github.com/dillonlara115/baracuda/pkg/models"
+	"github.com/dillonlara115/barracuda/internal/analyzer"
+	"github.com/dillonlara115/barracuda/internal/exporter"
+	"github.com/dillonlara115/barracuda/pkg/models"
 	"github.com/spf13/cobra"
 )
 
@@ -146,7 +146,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 		})
 	}
 
-	fmt.Fprintf(os.Stdout, "🚀 Starting Baracuda web server on http://localhost:%d\n", servePort)
+	fmt.Fprintf(os.Stdout, "🚀 Starting Barracuda web server on http://localhost:%d\n", servePort)
 	fmt.Fprintf(os.Stdout, "📊 Serving %d pages from %s\n", len(results), serveResults)
 	fmt.Fprintf(os.Stdout, "🌐 Open http://localhost:%d in your browser\n", servePort)
 

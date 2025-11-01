@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dillonlara115/baracuda/internal/utils"
-	"github.com/dillonlara115/baracuda/pkg/models"
+	"github.com/dillonlara115/barracuda/internal/utils"
+	"github.com/dillonlara115/barracuda/pkg/models"
 )
 
 // Fetcher handles HTTP requests and response processing

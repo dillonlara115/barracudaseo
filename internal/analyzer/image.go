@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dillonlara115/baracuda/pkg/models"
+	"github.com/dillonlara115/barracuda/pkg/models"
 )
 
 const (

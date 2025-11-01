@@ -1,6 +1,6 @@
 # Dashboard Improvements Roadmap
 
-This document tracks planned improvements for the Baracuda web dashboard to better serve SEO strategists in identifying, organizing, and solving technical SEO issues.
+This document tracks planned improvements for the Barracuda web dashboard to better serve SEO strategists in identifying, organizing, and solving technical SEO issues.
 
 ## Status Legend
 - [ ] Not Started

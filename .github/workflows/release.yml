@@ -18,38 +18,38 @@ jobs:
       
       - name: Build Linux AMD64
         run: |
-          GOOS=linux GOARCH=amd64 go build -o baracuda-linux-amd64 .
-          tar czf baracuda-linux-amd64.tar.gz baracuda-linux-amd64
+          GOOS=linux GOARCH=amd64 go build -o barracuda-linux-amd64 .
+          tar czf barracuda-linux-amd64.tar.gz barracuda-linux-amd64
       
       - name: Build Linux ARM64
         run: |
-          GOOS=linux GOARCH=arm64 go build -o baracuda-linux-arm64 .
-          tar czf baracuda-linux-arm64.tar.gz baracuda-linux-arm64
+          GOOS=linux GOARCH=arm64 go build -o barracuda-linux-arm64 .
+          tar czf barracuda-linux-arm64.tar.gz barracuda-linux-arm64
       
       - name: Build macOS AMD64
         run: |
-          GOOS=darwin GOARCH=amd64 go build -o baracuda-darwin-amd64 .
-          tar czf baracuda-darwin-amd64.tar.gz baracuda-darwin-amd64
+          GOOS=darwin GOARCH=amd64 go build -o barracuda-darwin-amd64 .
+          tar czf barracuda-darwin-amd64.tar.gz barracuda-darwin-amd64
       
       - name: Build macOS ARM64
         run: |
-          GOOS=darwin GOARCH=arm64 go build -o baracuda-darwin-arm64 .
-          tar czf baracuda-darwin-arm64.tar.gz baracuda-darwin-arm64
+          GOOS=darwin GOARCH=arm64 go build -o barracuda-darwin-arm64 .
+          tar czf barracuda-darwin-arm64.tar.gz barracuda-darwin-arm64
       
       - name: Build Windows AMD64
         run: |
-          GOOS=windows GOARCH=amd64 go build -o baracuda-windows-amd64.exe .
-          zip baracuda-windows-amd64.zip baracuda-windows-amd64.exe
+          GOOS=windows GOARCH=amd64 go build -o barracuda-windows-amd64.exe .
+          zip barracuda-windows-amd64.zip barracuda-windows-amd64.exe
       
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            baracuda-linux-amd64.tar.gz
-            baracuda-linux-arm64.tar.gz
-            baracuda-darwin-amd64.tar.gz
-            baracuda-darwin-arm64.tar.gz
-            baracuda-windows-amd64.zip
+            barracuda-linux-amd64.tar.gz
+            barracuda-linux-arm64.tar.gz
+            barracuda-darwin-amd64.tar.gz
+            barracuda-darwin-arm64.tar.gz
+            barracuda-windows-amd64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

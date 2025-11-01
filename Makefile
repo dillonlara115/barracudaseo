@@ -2,7 +2,7 @@
 
 # Build the binary
 build:
-	go build -o bin/baracuda .
+	go build -o bin/barracuda .
 
 # Run tests
 test:
@@ -20,8 +20,8 @@ install:
 # Install alias to ~/.zshrc
 install-alias:
 	@echo "Adding alias to ~/.zshrc..."
-	@if ! grep -q "alias baracuda=" ~/.zshrc 2>/dev/null; then \
-		echo "alias baracuda=\"$(shell pwd)/bin/baracuda\"" >> ~/.zshrc; \
+	@if ! grep -q "alias barracuda=" ~/.zshrc 2>/dev/null; then \
+		echo "alias barracuda=\"$(shell pwd)/bin/barracuda\"" >> ~/.zshrc; \
 		echo "✓ Alias added to ~/.zshrc"; \
 		echo "Run 'source ~/.zshrc' or restart your terminal to use it"; \
 	else \
@@ -46,11 +46,11 @@ clean:
 
 # Build for multiple platforms
 release:
-	GOOS=linux GOARCH=amd64 go build -o bin/baracuda-linux-amd64 .
-	GOOS=linux GOARCH=arm64 go build -o bin/baracuda-linux-arm64 .
-	GOOS=darwin GOARCH=amd64 go build -o bin/baracuda-darwin-amd64 .
-	GOOS=darwin GOARCH=arm64 go build -o bin/baracuda-darwin-arm64 .
-	GOOS=windows GOARCH=amd64 go build -o bin/baracuda-windows-amd64.exe .
+	GOOS=linux GOARCH=amd64 go build -o bin/barracuda-linux-amd64 .
+	GOOS=linux GOARCH=arm64 go build -o bin/barracuda-linux-arm64 .
+	GOOS=darwin GOARCH=amd64 go build -o bin/barracuda-darwin-amd64 .
+	GOOS=darwin GOARCH=arm64 go build -o bin/barracuda-darwin-arm64 .
+	GOOS=windows GOARCH=amd64 go build -o bin/barracuda-windows-amd64.exe .
 
 # Format code
 fmt:

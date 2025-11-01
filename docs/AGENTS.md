@@ -1,12 +1,12 @@
 # AGENTS.md - AI Agent Context Guide
 
-This document provides essential context for AI agents working on the Baracuda project. It outlines the architecture, patterns, conventions, and workflows to help agents understand and modify the codebase effectively.
+This document provides essential context for AI agents working on the Barracuda project. It outlines the architecture, patterns, conventions, and workflows to help agents understand and modify the codebase effectively.
 
 ---
 
 ## Project Overview
 
-**Baracuda** is a fast, lightweight SEO website crawler CLI tool inspired by Screaming Frog. It crawls websites recursively, extracts SEO data, detects issues, and provides a web dashboard for visualization.
+**Barracuda** is a fast, lightweight SEO website crawler CLI tool inspired by Screaming Frog. It crawls websites recursively, extracts SEO data, detects issues, and provides a web dashboard for visualization.
 
 **Key Features:**
 - Recursive website crawling with configurable depth/limits
@@ -40,7 +40,7 @@ This document provides essential context for AI agents working on the Baracuda p
 ## Project Structure
 
 ```
-baracuda/
+barracuda/
 ├── cmd/                    # CLI commands
 │   ├── root.go            # Root command, banner display
 │   ├── crawl.go           # Crawl command (main functionality)
@@ -96,7 +96,7 @@ baracuda/
 ## Architecture Patterns
 
 ### CLI Structure (Cobra)
-- **Root command:** `baracuda` - Shows banner, defaults to interactive crawl
+- **Root command:** `barracuda` - Shows banner, defaults to interactive crawl
 - **Subcommands:** 
   - `crawl [URL]` - Main crawling functionality
   - `serve` - Web dashboard server
@@ -119,7 +119,7 @@ func init() {
 ### Crawling Architecture
 
 **Flow:**
-1. User runs `baracuda crawl <URL>` or `baracuda` (interactive)
+1. User runs `barracuda crawl <URL>` or `barracuda` (interactive)
 2. `cmd/crawl.go` → `runCrawl()` validates config
 3. Creates `crawler.Manager` with config
 4. Manager spawns worker pool (goroutines)
@@ -176,7 +176,7 @@ type PageResult struct {
 
 ### Web Dashboard Flow
 
-1. `baracuda serve --results results.json --graph graph.json`
+1. `barracuda serve --results results.json --graph graph.json`
 2. `cmd/serve.go` loads JSON/CSV files
 3. Generates summary via `analyzer.AnalyzeWithImages()`
 4. Serves static files from `web/dist/`
@@ -205,8 +205,8 @@ import (
     "github.com/spf13/cobra"
     
     // Internal
-    "github.com/dillonlara115/baracuda/internal/utils"
-    "github.com/dillonlara115/baracuda/pkg/models"
+    "github.com/dillonlara115/barracuda/internal/utils"
+    "github.com/dillonlara115/barracuda/pkg/models"
 )
 ```
 
@@ -561,7 +561,7 @@ make release          # Cross-platform builds
 
 ## Contact & Resources
 
-- **Project:** github.com/dillonlara115/baracuda
+- **Project:** github.com/dillonlara115/barracuda
 - **Documentation:** See `README.md` and `docs/` directory
 - **Issues:** Check GitHub issues
 

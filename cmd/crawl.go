@@ -6,12 +6,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/dillonlara115/baracuda/internal/analyzer"
-	"github.com/dillonlara115/baracuda/internal/crawler"
-	"github.com/dillonlara115/baracuda/internal/exporter"
-	"github.com/dillonlara115/baracuda/internal/graph"
-	"github.com/dillonlara115/baracuda/internal/utils"
-	"github.com/dillonlara115/baracuda/pkg/models"
+	"github.com/dillonlara115/barracuda/internal/analyzer"
+	"github.com/dillonlara115/barracuda/internal/crawler"
+	"github.com/dillonlara115/barracuda/internal/exporter"
+	"github.com/dillonlara115/barracuda/internal/graph"
+	"github.com/dillonlara115/barracuda/internal/utils"
+	"github.com/dillonlara115/barracuda/pkg/models"
 	"github.com/spf13/cobra"
 )
 
@@ -55,7 +55,7 @@ func init() {
 	crawlCmd.Flags().IntVarP(&workers, "workers", "w", 10, "Number of concurrent workers")
 	crawlCmd.Flags().DurationVar(&delay, "delay", 0, "Delay between requests (e.g., 100ms)")
 	crawlCmd.Flags().DurationVar(&timeout, "timeout", 30*time.Second, "HTTP request timeout")
-	crawlCmd.Flags().StringVar(&userAgent, "user-agent", "baracuda/1.0.0", "User agent string")
+	crawlCmd.Flags().StringVar(&userAgent, "user-agent", "barracuda/1.0.0", "User agent string")
 	crawlCmd.Flags().BoolVar(&respectRobots, "respect-robots", true, "Respect robots.txt")
 	crawlCmd.Flags().BoolVar(&parseSitemap, "parse-sitemap", false, "Parse sitemap.xml for seed URLs")
 	crawlCmd.Flags().StringVar(&domainFilter, "domain-filter", "same", "Domain filter: 'same' or 'all'")
@@ -196,7 +196,7 @@ func runCrawl(cmd *cobra.Command, args []string) error {
 		fmt.Fprintf(os.Stdout, "\n")
 		if err := startServerAndOpenBrowser(config.ExportPath, graphExport); err != nil {
 			fmt.Fprintf(os.Stderr, "⚠️  Failed to start server: %v\n", err)
-			fmt.Fprintf(os.Stderr, "   You can manually run: baracuda serve --results %s", config.ExportPath)
+			fmt.Fprintf(os.Stderr, "   You can manually run: barracuda serve --results %s", config.ExportPath)
 			if graphExport != "" {
 				fmt.Fprintf(os.Stderr, " --graph %s", graphExport)
 			}

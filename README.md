@@ -1,4 +1,4 @@
-# baracuda
+# barracuda
 
 A fast, lightweight SEO website crawler CLI tool inspired by Screaming Frog.
 
@@ -20,16 +20,16 @@ A fast, lightweight SEO website crawler CLI tool inspired by Screaming Frog.
 ### From Source
 
 ```bash
-git clone https://github.com/dillonlara115/baracuda.git
-cd baracuda
-go build -o baracuda .
-sudo mv baracuda /usr/local/bin/
+git clone https://github.com/dillonlara115/barracuda.git
+cd barracuda
+go build -o barracuda .
+sudo mv barracuda /usr/local/bin/
 ```
 
 ### Using Go Install
 
 ```bash
-go install github.com/dillonlara115/baracuda@latest
+go install github.com/dillonlara115/barracuda@latest
 ```
 
 ### Frontend Setup (Optional)
@@ -54,20 +54,20 @@ make frontend-build
 
 ```bash
 # Crawl a website
-baracuda crawl https://example.com
+barracuda crawl https://example.com
 
 # Crawl with custom depth and export format
-baracuda crawl https://example.com --max-depth 2 --format json
+barracuda crawl https://example.com --max-depth 2 --format json
 
 # Export to specific file
-baracuda crawl https://example.com --export results.csv
+barracuda crawl https://example.com --export results.csv
 ```
 
 ### Advanced Options
 
 ```bash
 # Full example with all options
-baracuda crawl https://example.com \
+barracuda crawl https://example.com \
   --max-depth 3 \
   --max-pages 500 \
   --workers 20 \
@@ -86,10 +86,10 @@ After crawling, view your results in a beautiful web interface:
 
 ```bash
 # First, crawl with JSON export
-baracuda crawl https://example.com --format json --export results.json --graph-export graph.json
+barracuda crawl https://example.com --format json --export results.json --graph-export graph.json
 
 # Then serve the results
-baracuda serve --results results.json --graph graph.json
+barracuda serve --results results.json --graph graph.json
 ```
 
 Or use the Makefile shortcut:
@@ -119,7 +119,7 @@ Access the dashboard at `http://localhost:8080` (default port).
 - `--workers, -w`: Number of concurrent workers (default: 10)
 - `--delay`: Delay between requests (e.g., 100ms) (default: 0ms)
 - `--timeout`: HTTP request timeout (default: 30s)
-- `--user-agent`: User agent string (default: baracuda/1.0.0)
+- `--user-agent`: User agent string (default: barracuda/1.0.0)
 - `--respect-robots`: Respect robots.txt rules (default: true)
 - `--parse-sitemap`: Parse sitemap.xml for seed URLs (default: false)
 - `--domain-filter`: Domain filter: 'same' or 'all' (default: same)
@@ -148,7 +148,7 @@ Access the dashboard at `http://localhost:8080` (default port).
 ### Example 1: Basic Crawl
 
 ```bash
-baracuda crawl https://example.com
+barracuda crawl https://example.com
 ```
 
 This will:
@@ -159,7 +159,7 @@ This will:
 ### Example 2: JSON Export with Link Graph
 
 ```bash
-baracuda crawl https://example.com \
+barracuda crawl https://example.com \
   --format json \
   --export results.json \
   --graph-export graph.json
@@ -168,7 +168,7 @@ baracuda crawl https://example.com \
 ### Example 3: Fast Crawl (No Robots, Higher Concurrency)
 
 ```bash
-baracuda crawl https://example.com \
+barracuda crawl https://example.com \
   --workers 50 \
   --max-pages 5000 \
   --respect-robots=false
@@ -177,7 +177,7 @@ baracuda crawl https://example.com \
 ### Example 4: Sitemap-Based Crawl
 
 ```bash
-baracuda crawl https://example.com \
+barracuda crawl https://example.com \
   --parse-sitemap \
   --max-depth 1
 ```
@@ -186,7 +186,7 @@ baracuda crawl https://example.com \
 
 ```bash
 # Step 1: Crawl and export to JSON
-baracuda crawl https://example.com \
+barracuda crawl https://example.com \
   --format json \
   --export results.json \
   --graph-export graph.json
@@ -195,7 +195,7 @@ baracuda crawl https://example.com \
 cd web && npm install && npm run build
 
 # Step 3: Serve results
-baracuda serve --results results.json --graph graph.json
+barracuda serve --results results.json --graph graph.json
 
 # Open http://localhost:8080 in your browser
 ```
@@ -292,7 +292,7 @@ make serve
 ### Project Structure
 
 ```
-baracuda/
+barracuda/
 ├── cmd/              # CLI commands
 │   ├── crawl.go     # Crawl command
 │   └── serve.go     # Serve command (web dashboard)

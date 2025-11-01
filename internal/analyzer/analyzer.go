@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dillonlara115/baracuda/pkg/models"
+	"github.com/dillonlara115/barracuda/pkg/models"
 )
 
 // IssueType represents the type of SEO issue detected

@@ -1,4 +1,4 @@
-# Baracuda Web Frontend
+# Barracuda Web Frontend
 
 This is the Svelte frontend for viewing crawl results.
 
@@ -29,7 +29,7 @@ This creates a `dist/` folder with optimized static files that can be served by 
 
 1. Run a crawl with JSON export:
    ```bash
-   baracuda crawl https://example.com --format json --export results.json --graph-export graph.json
+   barracuda crawl https://example.com --format json --export results.json --graph-export graph.json
    ```
 
 2. Build the frontend:
@@ -39,7 +39,7 @@ This creates a `dist/` folder with optimized static files that can be served by 
 
 3. Serve the results:
    ```bash
-   baracuda serve --results results.json --graph graph.json
+   barracuda serve --results results.json --graph graph.json
    ```
 
 Or use the Makefile shortcut:

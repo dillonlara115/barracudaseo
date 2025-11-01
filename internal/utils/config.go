@@ -29,7 +29,7 @@ func DefaultConfig() *Config {
 		Workers:       10,
 		Delay:         0,
 		Timeout:       30 * time.Second,
-		UserAgent:     "baracuda/1.0.0",
+		UserAgent:     "barracuda/1.0.0",
 		RespectRobots: true,
 		ParseSitemap:  false,
 		ExportFormat:  "csv",

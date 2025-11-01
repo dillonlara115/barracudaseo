@@ -29,25 +29,111 @@
       default: return 'badge-ghost';
     }
   };
+
+  const timestamp = () => {
+    const now = new Date();
+    const pad = (value) => value.toString().padStart(2, '0');
+    return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  };
+
+  const downloadFile = (content, fileName, mimeType) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportAsJson = () => {
+    const fileName = `issues-${timestamp()}.json`;
+    const content = JSON.stringify(filteredIssues, null, 2);
+    downloadFile(content, fileName, 'application/json');
+  };
+
+  const toCsv = (rows) => {
+    const escapeValue = (value) => {
+      if (value === null || value === undefined) return '';
+      const stringValue = String(value);
+      return /[",\n]/.test(stringValue) ? `"${stringValue.replace(/"/g, '""')}"` : stringValue;
+    };
+
+    const headers = ['url', 'type', 'severity', 'message', 'recommendation', 'value'];
+    const dataRows = rows.map(issue => [
+      issue.url || '',
+      issue.type || '',
+      issue.severity || '',
+      issue.message || '',
+      issue.recommendation || '',
+      issue.value || ''
+    ]);
+
+    return [headers, ...dataRows]
+      .map(row => row.map(escapeValue).join(','))
+      .join('\n');
+  };
+
+  const exportAsCsv = () => {
+    const fileName = `issues-${timestamp()}.csv`;
+    const content = toCsv(filteredIssues);
+    downloadFile(content, fileName, 'text/csv');
+  };
+
+  const closeDropdown = (event) => {
+    const details = event?.currentTarget?.closest('details');
+    if (details) {
+      details.removeAttribute('open');
+    }
+  };
+
+  const handleExportCsv = (event) => {
+    exportAsCsv();
+    closeDropdown(event);
+  };
+
+  const handleExportJson = (event) => {
+    exportAsJson();
+    closeDropdown(event);
+  };
 </script>
 
 <div class="card bg-base-100 shadow">
   <div class="card-body">
     <h2 class="card-title mb-4">SEO Issues</h2>
 
-    <div class="flex flex-col md:flex-row gap-4 mb-4">
-      <select class="select select-bordered" bind:value={severityFilter}>
-        <option value="all">All Severities</option>
-        <option value="error">Errors</option>
-        <option value="warning">Warnings</option>
-        <option value="info">Info</option>
-      </select>
-      <select class="select select-bordered" bind:value={typeFilter}>
-        <option value="all">All Types</option>
-        {#each uniqueTypes as type}
-          <option value={type}>{type.replace(/_/g, ' ')}</option>
-        {/each}
-      </select>
+    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
+      <div class="flex flex-col md:flex-row gap-4">
+        <select class="select select-bordered" bind:value={severityFilter}>
+          <option value="all">All Severities</option>
+          <option value="error">Errors</option>
+          <option value="warning">Warnings</option>
+          <option value="info">Info</option>
+        </select>
+        <select class="select select-bordered" bind:value={typeFilter}>
+          <option value="all">All Types</option>
+          {#each uniqueTypes as type}
+            <option value={type}>{type.replace(/_/g, ' ')}</option>
+          {/each}
+        </select>
+      </div>
+      <details class="dropdown dropdown-end">
+        <summary class="btn btn-primary select-none">Export Issues</summary>
+        <ul class="dropdown-content menu bg-base-200 rounded-box w-52 shadow mt-2">
+          <li>
+            <button type="button" on:click={handleExportCsv}>
+              Export as CSV
+            </button>
+          </li>
+          <li>
+            <button type="button" on:click={handleExportJson}>
+              Export as JSON
+            </button>
+          </li>
+        </ul>
+      </details>
     </div>
 
     <div class="text-sm text-base-content/70 mb-4">
@@ -97,4 +183,3 @@
     {/if}
   </div>
 </div>
-

@@ -12,7 +12,7 @@
 
 <div class="navbar bg-base-300 shadow-lg">
   <div class="flex-1">
-    <a href="/" class="btn btn-ghost text-xl">🐊 Baracuda</a>
+    <a href="/" class="btn btn-ghost text-xl">🐊 Barracuda</a>
   </div>
   <div class="flex-none">
     <ul class="menu menu-horizontal px-1">
