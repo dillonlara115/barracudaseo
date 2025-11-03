@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"time"
 )
@@ -33,19 +35,49 @@ func openBrowserURL(url string) error {
 	return cmd.Start() // Don't wait for browser to close
 }
 
+func hasFrontendAssets() bool {
+	if frontendFiles != nil {
+		if entries, err := fs.ReadDir(frontendFiles, "web/dist"); err == nil && len(entries) > 0 {
+			return true
+		}
+	}
+
+	if _, err := os.Stat(filepath.Join("web", "dist", "index.html")); err == nil {
+		return true
+	}
+
+	return false
+}
+
 // startServerAndOpenBrowser starts the serve command and opens the browser
 func startServerAndOpenBrowser(resultsPath, graphPath string) error {
+	if !hasFrontendAssets() {
+		fmt.Fprintf(os.Stderr, "⚠️  Frontend not built. Skipping browser open.\n")
+		fmt.Fprintf(os.Stderr, "   Run 'make frontend-build' to build the frontend, then run:\n")
+		fmt.Fprintf(os.Stderr, "   barracuda serve --results %s", resultsPath)
+		if graphPath != "" {
+			fmt.Fprintf(os.Stderr, " --graph %s", graphPath)
+		}
+		fmt.Fprint(os.Stderr, "\n")
+		return nil
+	}
+
 	// Start server in background
 	fmt.Fprintf(os.Stdout, "\n🚀 Starting web server...\n")
 	fmt.Fprintf(os.Stdout, "📊 Opening dashboard in browser...\n")
 
+	executable, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("failed to determine executable path: %w", err)
+	}
+
 	// Build serve command
-	serveArgs := []string{"run", ".", "serve", "--results", resultsPath, "--port", "8080"}
+	serveArgs := []string{"serve", "--results", resultsPath, "--port", "8080"}
 	if graphPath != "" {
 		serveArgs = append(serveArgs, "--graph", graphPath)
 	}
 
-	cmd := exec.Command("go", serveArgs...)
+	cmd := exec.Command(executable, serveArgs...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -70,4 +102,3 @@ func startServerAndOpenBrowser(resultsPath, graphPath string) error {
 	// Wait for server process
 	return cmd.Wait()
 }
-
