@@ -1,0 +1,54 @@
+# Git
+.git
+.gitignore
+.github
+
+# Build artifacts
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+*_test.go
+*.test
+coverage.out
+
+# Documentation
+docs/
+*.md
+README.md
+
+# Development files
+.env
+.env.local
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Crawl data (don't need in container)
+crawls/
+results.json
+graph.json
+test-results.json
+
+# Supabase local (not needed in container)
+supabase/.branches
+supabase/.temp
+
+# Node modules (will be built in container)
+web/node_modules/
+
+# Frontend dist (will be built in container)
+web/dist/
+
