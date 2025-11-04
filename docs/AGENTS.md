@@ -35,6 +35,12 @@ This document provides essential context for AI agents working on the Barracuda 
 - **Build Tool:** Vite
 - **Package Manager:** npm
 
+### Hosted Deployment Strategy
+- **Backend:** Google Cloud Run hosts the containerized Go API and ingestion endpoints.
+- **Database & Auth:** Supabase provides Postgres, row-level security, and user authentication.
+- **Frontend Hosting:** Vercel deploys the Svelte dashboard and surfaces edge/serverless helpers.
+- **Reference:** See `docs/CLOUD_RUN_SUPABASE.md` for the detailed blueprint, data flow, and deployment workflow.
+
 ---
 
 ## Project Structure
@@ -574,4 +580,3 @@ make release          # Cross-platform builds
 
 **Last Updated:** 2025-01-01  
 **Maintainer:** Maintain this file as the codebase evolves
-
