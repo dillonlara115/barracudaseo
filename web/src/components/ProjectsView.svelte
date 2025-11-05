@@ -1,7 +1,9 @@
 <script>
   import { createEventDispatcher } from 'svelte';
+  import { link } from 'svelte-spa-router';
   import { createProject } from '../lib/data.js';
   import Auth from './Auth.svelte';
+  import Logo from './Logo.svelte';
   
   const dispatch = createEventDispatcher();
 
@@ -52,9 +54,11 @@
   }
 </script>
 
-<div class="navbar bg-base-300 shadow-lg">
+<div class="navbar bg-base-100 shadow-lg border-b border-base-300">
   <div class="flex-1">
-    <a class="btn btn-ghost text-xl">Barracuda</a>
+    <a href="/" use:link class="btn btn-ghost">
+      <Logo size="md" />
+    </a>
   </div>
   <div class="flex-none gap-2">
     <Auth />

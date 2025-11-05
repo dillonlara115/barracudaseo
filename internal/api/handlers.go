@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/dillonlara115/barracuda/internal/analyzer"
+	"github.com/dillonlara115/barracuda/internal/crawler"
+	"github.com/dillonlara115/barracuda/internal/utils"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -364,13 +366,20 @@ func (s *Server) handleProjectByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Handle sub-resources like /projects/:id/crawls
+	// Handle sub-resources like /projects/:id/crawls or /projects/:id/crawl
 	if len(parts) > 1 {
 		resource := parts[1]
 		switch resource {
 		case "crawls":
 			if r.Method == http.MethodGet {
 				s.handleListProjectCrawls(w, r, projectID, userID)
+			} else {
+				s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			}
+			return
+		case "crawl":
+			if r.Method == http.MethodPost {
+				s.handleTriggerCrawl(w, r, projectID, userID)
 			} else {
 				s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			}
@@ -471,6 +480,244 @@ func (s *Server) handleExports(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: Implement export generation
 	s.respondError(w, http.StatusNotImplemented, "Export functionality not yet implemented")
+}
+
+// handleTriggerCrawl handles POST /api/v1/projects/:id/crawl - trigger a new crawl
+func (s *Server) handleTriggerCrawl(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	// Verify access
+	hasAccess, err := s.verifyProjectAccess(userID, projectID)
+	if err != nil {
+		s.logger.Error("Failed to verify project access", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify project access")
+		return
+	}
+	if !hasAccess {
+		s.respondError(w, http.StatusForbidden, "You don't have access to this project")
+		return
+	}
+
+	var req TriggerCrawlRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request body: %v", err))
+		return
+	}
+
+	// Validate and set defaults
+	if req.URL == "" {
+		s.respondError(w, http.StatusBadRequest, "url is required")
+		return
+	}
+	if req.MaxDepth == 0 {
+		req.MaxDepth = 3
+	}
+	if req.MaxPages == 0 {
+		req.MaxPages = 1000
+	}
+	if req.Workers == 0 {
+		req.Workers = 10
+	}
+
+	// Create crawl record with status "running"
+	crawlID := uuid.New().String()
+	crawl := map[string]interface{}{
+		"id":            crawlID,
+		"project_id":    projectID,
+		"initiated_by":  userID,
+		"source":        "web",
+		"status":        "running",
+		"started_at":    time.Now().UTC().Format(time.RFC3339),
+		"total_pages":   0,
+		"total_issues":  0,
+		"meta": map[string]interface{}{
+			"url":            req.URL,
+			"max_depth":      req.MaxDepth,
+			"max_pages":      req.MaxPages,
+			"workers":        req.Workers,
+			"respect_robots": req.RespectRobots,
+			"parse_sitemap":  req.ParseSitemap,
+		},
+	}
+
+	// Insert crawl using service role (bypasses RLS)
+	_, _, err = s.serviceRole.From("crawls").Insert(crawl, false, "", "", "").Execute()
+	if err != nil {
+		s.logger.Error("Failed to insert crawl", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to create crawl")
+		return
+	}
+
+	// Start crawl asynchronously
+	go s.runCrawlAsync(crawlID, projectID, req)
+
+	// Return immediately with crawl ID
+	s.respondJSON(w, http.StatusAccepted, map[string]interface{}{
+		"crawl_id": crawlID,
+		"status":   "running",
+		"message":  "Crawl started",
+	})
+}
+
+// runCrawlAsync runs the crawler and stores results
+func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlRequest) {
+	// Initialize logger for crawler
+	if err := utils.InitLogger(false); err != nil {
+		s.logger.Error("Failed to initialize logger", zap.Error(err))
+		s.updateCrawlStatus(crawlID, "failed", fmt.Sprintf("Failed to initialize logger: %v", err))
+		return
+	}
+	defer utils.Sync()
+
+	// Create crawler config
+	config := &utils.Config{
+		StartURL:      req.URL,
+		MaxDepth:      req.MaxDepth,
+		MaxPages:      req.MaxPages,
+		Workers:       req.Workers,
+		Delay:         0,
+		Timeout:       30 * time.Second,
+		UserAgent:     "barracuda/1.0.0",
+		RespectRobots: req.RespectRobots,
+		ParseSitemap:  req.ParseSitemap,
+		DomainFilter:  "same",
+	}
+
+	// Validate config
+	if err := config.Validate(); err != nil {
+		s.logger.Error("Invalid crawl config", zap.Error(err))
+		s.updateCrawlStatus(crawlID, "failed", err.Error())
+		return
+	}
+
+	// Create crawler manager
+	manager := crawler.NewManager(config)
+
+	// Run crawl
+	results, err := manager.Crawl()
+	if err != nil {
+		s.logger.Error("Crawl failed", zap.Error(err))
+		s.updateCrawlStatus(crawlID, "failed", err.Error())
+		return
+	}
+
+	// Analyze results
+	summary := analyzer.AnalyzeWithImages(results, config.Timeout)
+
+	// Store pages in batches
+	batchSize := 1000
+	pages := make([]map[string]interface{}, 0, len(results))
+	pageURLToID := make(map[string]int64) // Track page IDs for issues
+
+	for i, page := range results {
+		pageData := map[string]interface{}{
+			"crawl_id":         crawlID,
+			"url":              page.URL,
+			"status_code":      page.StatusCode,
+			"response_time_ms": page.ResponseTime,
+			"title":            page.Title,
+			"meta_description": page.MetaDesc,
+			"canonical_url":    page.Canonical,
+			"h1":               strings.Join(page.H1, ", "),
+			"word_count":       0, // TODO: calculate from content
+			"data": map[string]interface{}{
+				"h2":            page.H2,
+				"h3":            page.H3,
+				"h4":            page.H4,
+				"h5":            page.H5,
+				"h6":            page.H6,
+				"internal_links": page.InternalLinks,
+				"external_links": page.ExternalLinks,
+				"images":         page.Images,
+			},
+		}
+		pages = append(pages, pageData)
+
+		// Insert in batches and track IDs
+		if len(pages) >= batchSize || i == len(results)-1 {
+			var pageResults []map[string]interface{}
+			data, _, err := s.serviceRole.From("pages").Insert(pages, false, "", "", "").Execute()
+			if err != nil {
+				s.logger.Error("Failed to insert pages batch", zap.Error(err))
+			} else {
+				// Parse inserted pages to get IDs
+				if err := json.Unmarshal(data, &pageResults); err == nil {
+					for j, pageResult := range pageResults {
+						if pageID, ok := pageResult["id"].(float64); ok {
+							pageURLToID[pages[j]["url"].(string)] = int64(pageID)
+						}
+					}
+				}
+			}
+			pages = make([]map[string]interface{}, 0, batchSize)
+		}
+	}
+
+	// Store issues
+	issues := make([]map[string]interface{}, 0, len(summary.Issues))
+	for _, issue := range summary.Issues {
+		issueData := map[string]interface{}{
+			"crawl_id":      crawlID,
+			"project_id":    projectID,
+			"type":          string(issue.Type),
+			"severity":      issue.Severity,
+			"message":       issue.Message,
+			"recommendation": issue.Recommendation,
+			"value":         issue.Value,
+			"status":        "new",
+		}
+		// Try to find page ID
+		if pageID, ok := pageURLToID[issue.URL]; ok {
+			issueData["page_id"] = pageID
+		}
+		issues = append(issues, issueData)
+	}
+
+	if len(issues) > 0 {
+		// Batch insert issues
+		for i := 0; i < len(issues); i += batchSize {
+			end := i + batchSize
+			if end > len(issues) {
+				end = len(issues)
+			}
+			batch := issues[i:end]
+
+			_, _, err = s.serviceRole.From("issues").Insert(batch, false, "", "", "").Execute()
+			if err != nil {
+				s.logger.Error("Failed to insert issues batch", zap.Int("batch_start", i), zap.Error(err))
+			}
+		}
+	}
+
+	// Update crawl status to succeeded
+	s.updateCrawlStatus(crawlID, "succeeded", "")
+	update := map[string]interface{}{
+		"total_pages":  len(results),
+		"total_issues": len(summary.Issues),
+		"completed_at": time.Now().UTC().Format(time.RFC3339),
+	}
+	_, _, err = s.serviceRole.From("crawls").Update(update, "", "").Eq("id", crawlID).Execute()
+	if err != nil {
+		s.logger.Error("Failed to update crawl stats", zap.Error(err))
+	}
+}
+
+// updateCrawlStatus updates the status of a crawl
+func (s *Server) updateCrawlStatus(crawlID, status, errorMsg string) {
+	update := map[string]interface{}{
+		"status": status,
+	}
+	if status == "failed" && errorMsg != "" {
+		update["meta"] = map[string]interface{}{
+			"error": errorMsg,
+		}
+	}
+	if status == "succeeded" || status == "failed" {
+		update["completed_at"] = time.Now().UTC().Format(time.RFC3339)
+	}
+
+	_, _, err := s.serviceRole.From("crawls").Update(update, "", "").Eq("id", crawlID).Execute()
+	if err != nil {
+		s.logger.Error("Failed to update crawl status", zap.String("crawl_id", crawlID), zap.Error(err))
+	}
 }
 
 // verifyProjectAccess checks if user has access to a project

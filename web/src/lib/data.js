@@ -114,6 +114,37 @@ export async function createProject(name, domain, settings = {}) {
   }
 }
 
+// Trigger a new crawl for a project
+export async function triggerCrawl(projectId, crawlConfig) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('Not authenticated');
+
+    // Use local API server (http://localhost:8080) or Cloud Run URL if set
+    const apiUrl = import.meta.env.VITE_CLOUD_RUN_API_URL || 'http://localhost:8080';
+    
+    const response = await fetch(`${apiUrl}/api/v1/projects/${projectId}/crawl`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify(crawlConfig)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to trigger crawl');
+    }
+
+    const data = await response.json();
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error triggering crawl:', error);
+    return { data: null, error };
+  }
+}
+
 // Update issue status
 export async function updateIssueStatus(issueId, status, notes = null) {
   try {

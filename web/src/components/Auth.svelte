@@ -1,6 +1,7 @@
 <script>
   import { signIn, signUp, signOut } from '../lib/auth.js';
   import { user } from '../lib/auth.js';
+  import Logo from './Logo.svelte';
 
   let isSignUp = false;
   let email = '';
@@ -75,13 +76,7 @@
     <div class="flex-1 flex flex-col justify-center px-8 lg:px-16 xl:px-24">
       <!-- Logo -->
       <div class="absolute top-6 left-6 lg:left-8">
-        <div class="flex items-center gap-2">
-          <!-- Simple logo icon - can be replaced with actual logo -->
-          <div class="w-8 h-8 bg-gradient-to-br from-blue-500 via-orange-500 to-pink-500 rounded-sm flex items-center justify-center">
-            <span class="text-white font-bold text-xs">B</span>
-          </div>
-          <span class="text-white text-xl font-semibold">barracuda</span>
-        </div>
+        <Logo size="md" />
       </div>
 
       <!-- Form Container -->
