@@ -172,9 +172,7 @@
     </div>
   {:else if !$user}
     <!-- Show auth UI when not logged in -->
-    <div class="flex items-center justify-center min-h-screen p-4">
-      <Auth />
-    </div>
+    <Auth />
   {:else if loading}
     <!-- Loading state -->
     <div class="flex items-center justify-center min-h-screen">

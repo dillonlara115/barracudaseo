@@ -42,9 +42,11 @@ func init() {
 }
 
 func runAPI(cmd *cobra.Command, args []string) error {
-	// Load .env file if it exists (for local development)
-	// Ignore errors - .env file is optional
-	_ = godotenv.Load()
+	// Load .env file if it exists (for production/shared defaults)
+	// Then load .env.local to override with local development values
+	// Ignore errors - these files are optional
+	_ = godotenv.Load()        // Load .env first
+	_ = godotenv.Overload(".env.local") // Override with .env.local if it exists
 
 	// Initialize logger
 	logger, err := zap.NewProduction()
