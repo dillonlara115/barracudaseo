@@ -20,25 +20,38 @@
 
   async function checkConnection() {
     try {
+      // Skip GSC API calls in production (Vercel) - these endpoints don't exist there
+      // GSC integration requires the local API server
+      if (import.meta.env.PROD || window.location.hostname !== 'localhost') {
+        isConnected = false;
+        return;
+      }
+
       // Try to get user ID from session storage
       const userID = sessionStorage.getItem('gsc_user_id');
       const url = userID ? `/api/gsc/properties?user_id=${encodeURIComponent(userID)}` : '/api/gsc/properties';
       
       const response = await fetch(url);
       if (response.ok) {
-        const props = await response.json();
-        if (props && props.length > 0) {
-          isConnected = true;
-          properties = props;
-          if (!selectedProperty && props.length > 0) {
-            selectedProperty = props[0].url;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const props = await response.json();
+          if (props && props.length > 0) {
+            isConnected = true;
+            properties = props;
+            if (!selectedProperty && props.length > 0) {
+              selectedProperty = props[0].url;
+            }
           }
         }
       } else {
         // Handle error response
         try {
-          const errorData = await response.json();
-          console.error('GSC connection check failed:', errorData.error);
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            console.error('GSC connection check failed:', errorData.error);
+          }
         } catch (err) {
           // Not JSON, ignore
         }
@@ -127,6 +140,12 @@
     error = null;
     
     try {
+      // Skip GSC API calls in production (Vercel)
+      if (import.meta.env.PROD || window.location.hostname !== 'localhost') {
+        error = 'GSC integration is only available when running the local API server';
+        return;
+      }
+
       const userID = sessionStorage.getItem('gsc_user_id');
       const url = userID ? `/api/gsc/properties?user_id=${encodeURIComponent(userID)}` : '/api/gsc/properties';
       
@@ -135,22 +154,28 @@
         // Handle error response
         let errorMessage = `Failed to load properties (HTTP ${response.status})`;
         try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          }
         } catch (parseErr) {
           // Not JSON, use default message
         }
         throw new Error(errorMessage);
       }
       
-      const props = await response.json();
-      properties = props;
-      if (props.length > 0 && !selectedProperty) {
-        selectedProperty = props[0].url;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const props = await response.json();
+        properties = props;
+        if (props.length > 0 && !selectedProperty) {
+          selectedProperty = props[0].url;
+        }
       }
     } catch (err) {
       error = err.message;
-    } finally {
+} finally {
       isLoadingProperties = false;
     }
   }
