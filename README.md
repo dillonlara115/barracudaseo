@@ -4,18 +4,30 @@ A fast, lightweight SEO website crawler CLI tool inspired by Screaming Frog.
 
 ## Features
 
-- **Recursive Crawling**: Crawl websites with configurable depth and page limits
-- **SEO Data Extraction**: Extracts titles, meta descriptions, H1-H6 headings, canonical tags, and links
-- **HTTP Status Tracking**: Tracks status codes, redirects, and response times
-- **Concurrent Processing**: Async crawling with configurable worker pool
-- **Robots.txt Support**: Respects robots.txt rules (optional)
-- **Sitemap Parsing**: Optionally seed crawl queue from sitemap.xml
-- **Export Formats**: CSV and JSON export options
-- **Link Graph**: Build and export link graphs for visualization
-- **Web Dashboard**: Beautiful Svelte-based web interface for viewing results
-- **SEO Analysis**: Automatic issue detection with recommendations
+- **Recursive Crawling**: Crawl websites with configurable depth, page limits, and sitemap seeding
+- **SEO Intelligence**: Capture titles, meta data, headings, links, images, response metrics, and automatic issue detection
+- **Cloud-Ready Workflow**: Push crawl results to the hosted API (Supabase + Cloud Run) for multi-user projects
+- **Projects Workspace**: Authenticate with Supabase, manage projects, and view historical crawls inside the dashboard
+- **Insightful Dashboard**: Priority scoring, page-level modals, recommendations, and quick filters surface the most critical fixes
+- **Flexible Exports**: One-click CSV/JSON exports for filtered issues, link graphs, and crawl data
+- **Fast & Concurrent**: Worker pool, robots.txt controls, and domain filtering keep crawls respectful and performant
+
+## Components at a Glance
+
+- **CLI (`barracuda crawl`)**: Run local crawls, export results, and optionally upload to the cloud workspace.
+- **Embedded Dashboard (`barracuda serve`)**: Bundle crawl results into a Svelte UI with advanced filtering, grouping, and recommendations.
+- **Managed API (`barracuda api`)**: Supabase-backed REST service designed for Cloud Run that stores projects, crawls, pages, and issues for teams.
+- **Hosted Frontend (Vercel)**: Production dashboard at https://app.barracudaseo.com connected to Supabase auth and the Cloud Run API.
 
 ## Installation
+
+### Prerequisites
+
+- Go 1.21 or newer
+- Node 18+ (for building the Svelte frontend)
+- Supabase project (URL, anon key, and optionally service role key) if you plan to use the hosted workspace or API
+
+> `.env` files: the CLI loads `.env` first and then `.env.local` (if present) so you can keep shared defaults in `.env` and developer overrides in `.env.local`.
 
 ### From Source
 
@@ -62,6 +74,37 @@ make frontend-build
 ```
 
 **Note:** When installed via `go install` or built from source, the frontend is automatically included in the binary and works from any directory.
+
+### Environment Variables
+
+Create a `.env.local` at the repo root (and `web/.env.local` for the frontend) with the Supabase and Cloud Run configuration you need:
+
+```bash
+PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+PUBLIC_SUPABASE_ANON_KEY=public-anon-key
+SUPABASE_SERVICE_ROLE_KEY=service-role-key # only required when running the API server
+VITE_CLOUD_RUN_API_URL=https://barracuda-api-your-env.a.run.app
+```
+
+See `docs/SUPABASE_SCHEMA.md`, `docs/API_SERVER.md`, and `docs/CLOUD_RUN_SUPABASE.md` for the complete data model and deployment flow.
+
+### Run the API Server Locally
+
+The `api` command starts the Supabase-backed REST service used in Cloud Run.
+
+```bash
+# With env vars already exported or present in .env/.env.local
+go run . api --port 8080
+
+# Or pass flags explicitly
+go run . api \
+  --supabase-url https://your-project.supabase.co \
+  --supabase-anon-key public-anon-key \
+  --supabase-service-key service-role-key \
+  --port 8080
+```
+
+Docker helpers (`make docker-build`, `make deploy-backend`) are available for packaging and deploying to Cloud Run.
 
 ## Usage
 
@@ -114,12 +157,16 @@ make serve
 ```
 
 The web dashboard includes:
-- **Dashboard**: Overview statistics and metrics
-- **Results Table**: Filterable, sortable table of all crawled pages
-- **Issues Panel**: Detailed SEO issues with recommendations
-- **Link Graph**: Visualization of internal/external link structure
+- **Dashboard Overview**: KPI cards with deep links into issues, slow pages, and critical errors
+- **Issues Panel**: Search, severity filters, grouping toggles, priority scoring, and one-click CSV/JSON exports
+- **Results Table**: Page-level issue counts, detail modal with metadata, and quick navigation to filtered issues
+- **Recommendations Tab**: Curated fixes with copyable snippets, impact indicators, and links to best practices
+- **Projects Workspace**: Authenticated Supabase session picker that lets you switch projects or create new ones
+- **Link Graph**: Visualization of internal and external link structures with export support
 
 Access the dashboard at `http://localhost:8080` (default port).
+
+For the hosted dashboard (https://app.barracudaseo.com) configure Supabase auth + API URLs as described in `docs/VERCEL_DEPLOYMENT.md` and `docs/VERCEL_URL.md`.
 
 ## Command-Line Flags
 
@@ -152,6 +199,14 @@ Access the dashboard at `http://localhost:8080` (default port).
   - `--results`: Path to JSON results file (default: results.json)
   - `--graph`: Path to link graph JSON file (optional)
   - `--summary`: Path to summary JSON file (optional, auto-generated if not provided)
+
+### API Command (Cloud Workspace)
+
+- `api`: Start the Supabase-backed REST server
+  - `--port`: Port to run the API server on (default/Cloud Run: 8080 or pulled from `PORT`)
+  - `--supabase-url`: Supabase project URL (`PUBLIC_SUPABASE_URL`)
+  - `--supabase-service-key`: Supabase service role key (`SUPABASE_SERVICE_ROLE_KEY`)
+  - `--supabase-anon-key`: Supabase anon key (`PUBLIC_SUPABASE_ANON_KEY`)
 
 ### Global Flags
 
@@ -214,6 +269,18 @@ barracuda serve --results results.json --graph graph.json
 
 # Open http://localhost:8080 in your browser
 ```
+
+### Example 6: Run the Cloud API Locally
+
+```bash
+export PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+export PUBLIC_SUPABASE_ANON_KEY=public-anon-key
+export SUPABASE_SERVICE_ROLE_KEY=service-role-key
+
+barracuda api --port 8080
+```
+
+The API now serves authenticated REST endpoints for projects, crawls, pages, and issues at `http://localhost:8080/api/v1/...`. Review `docs/API_SERVER.md` for a complete endpoint list.
 
 ## Output Format
 
@@ -280,6 +347,14 @@ Issues are displayed in the terminal summary and can be viewed in detail in the 
 - No JavaScript rendering (static HTML only)
 - Binary size: ~15-20 MB (includes embedded frontend)
 
+## Cloud Deployment & Integrations
+
+- **Cloud Run + Supabase + Vercel**: Follow `docs/CLOUD_RUN_SUPABASE.md` for the end-to-end architecture and `docs/CLOUD_RUN_DEPLOYMENT.md` / `docs/DEPLOYMENT_CHECKLIST.md` for deployment automation.
+- **Supabase Schema & RLS**: Detailed tables, policies, and workflows live in `docs/SUPABASE_SCHEMA.md` with redirect configuration in `docs/SUPABASE_REDIRECT_SETUP.md`.
+- **Frontend Hosting**: `docs/VERCEL_DEPLOYMENT.md` and `docs/VERCEL_URL.md` cover production hosting, environment variables, and Supabase auth settings.
+- **Search Console & Integrations**: See `docs/GSC_SETUP_CHECKLIST.md`, `docs/GSC_CREDENTIALS.md`, and `docs/GSC_INTEGRATION.md` for enabling Google Search Console data pulls.
+- **Agents & API**: `docs/AGENTS.md` provides context for contributors/AI agents, while `docs/API_SERVER.md` documents the REST endpoints exposed by `barracuda api`.
+
 ## Development
 
 ### Building from Source
@@ -296,6 +371,12 @@ go build -o bin/barracuda .
 
 # Run tests
 make test
+
+# Start the Supabase-backed API server
+go run . api --port 8080
+
+# Build and deploy the Cloud Run image (requires GCP + Supabase env vars)
+make deploy-backend
 
 # Install locally (builds frontend automatically)
 make install
@@ -314,23 +395,31 @@ make serve
 
 ```
 barracuda/
-├── cmd/              # CLI commands
-│   ├── crawl.go     # Crawl command
-│   └── serve.go     # Serve command (web dashboard)
+├── cmd/                     # CLI entrypoints
+│   ├── api.go              # Cloud Run / Supabase API command
+│   ├── crawl.go            # Crawl command
+│   ├── serve.go            # Serve command (embedded dashboard)
+│   └── browser.go          # Browser helpers
 ├── internal/
-│   ├── analyzer/    # SEO analysis and issue detection
-│   ├── crawler/     # Crawling logic
-│   ├── exporter/    # Export formats
-│   ├── graph/       # Link graph
-│   └── utils/       # Utilities
+│   ├── api/                # REST server (handlers, router, types)
+│   ├── analyzer/           # SEO analysis and issue detection
+│   ├── crawler/            # Crawl engine
+│   ├── exporter/           # CSV/JSON export logic
+│   ├── graph/              # Link graph utilities
+│   └── utils/              # Shared helpers (config, logging, prompts)
 ├── pkg/
-│   └── models/      # Data models
-├── web/             # Svelte frontend
+│   └── models/             # Shared data models
+├── web/                    # Svelte dashboard
 │   ├── src/
-│   │   ├── components/  # Svelte components
-│   │   └── App.svelte   # Main app component
+│   │   ├── components/     # Dashboard, IssuesPanel, ProjectsView, etc.
+│   │   └── App.svelte
 │   └── package.json
-└── main.go          # Entry point
+├── docs/                   # Deployment, Supabase, and roadmap docs
+│   ├── API_SERVER.md
+│   ├── CLOUD_RUN_SUPABASE.md
+│   ├── DASHBOARD_IMPROVEMENTS.md
+│   └── SUPABASE_SCHEMA.md
+└── main.go                 # Entry point
 ```
 
 ## License
@@ -344,4 +433,3 @@ Contributions are welcome! Please open an issue or submit a pull request.
 ## Acknowledgments
 
 Inspired by Screaming Frog SEO Spider.
-
