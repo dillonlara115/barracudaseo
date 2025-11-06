@@ -9,16 +9,16 @@ module.exports = {
 			},
 			colors: {
 				primary: {
-					DEFAULT: '#FF6B6B',
-					focus: '#FF5252'
+					DEFAULT: '#8ec07c',
+					focus: '#a0d28c'
 				},
-				neutral: '#282828',
-				'base-100': '#282828',
+				neutral: '#3c3836',
+				'base-100': '#3c3836',
 				'base-content': '#FFFFFF',
-				info: '#3B82F6',
-				success: '#15803D',
-				warning: '#F59E0B',
-				error: '#B91C1C'
+				info: '#458588',
+				success: '#8ec07c',
+				warning: '#d79921',
+				error: '#cc241d'
 			}
 		}
 	}

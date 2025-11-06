@@ -9,21 +9,21 @@
 @import '@fontsource/jetbrains-mono/400.css';
 @import '@fontsource/jetbrains-mono/500.css';
 
-/* Tailwind v4 Theme Configuration */
+/* Tailwind v4 Theme Configuration - Gruvbox Color Scheme */
 @theme {
 	--font-heading: 'Sora', sans-serif;
 	--font-body: 'DM Sans', sans-serif;
 	--font-mono: 'JetBrains Mono', monospace;
 
-	--color-primary: #FF6B6B;
-	--color-primary-focus: #FF5252;
-	--color-neutral: #282828;
-	--color-base-100: #282828;
+	--color-primary: #8ec07c;
+	--color-primary-focus: #a0d28c;
+	--color-neutral: #3c3836;
+	--color-base-100: #3c3836;
 	--color-base-content: #FFFFFF;
-	--color-info: #3B82F6;
-	--color-success: #15803D;
-	--color-warning: #F59E0B;
-	--color-error: #B91C1C;
+	--color-info: #458588;
+	--color-success: #8ec07c;
+	--color-warning: #d79921;
+	--color-error: #cc241d;
 }
 
 /* Base styles */

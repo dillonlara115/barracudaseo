@@ -97,7 +97,7 @@
           <p class="text-gray-400 mb-8">
             Don't have an account yet? 
             <button 
-              class="text-[#FF6B6B] hover:text-[#FF5252] font-medium"
+              class="text-[#8ec07c] hover:text-[#a0d28c] font-medium"
               on:click={() => isSignUp = true}
             >
               Sign up for free
@@ -107,7 +107,7 @@
           <p class="text-gray-400 mb-8">
             Already have an account? 
             <button 
-              class="text-[#FF6B6B] hover:text-[#FF5252] font-medium"
+              class="text-[#8ec07c] hover:text-[#a0d28c] font-medium"
               on:click={() => isSignUp = false}
             >
               Log in
@@ -135,7 +135,7 @@
                 <input
                   type="text"
                   placeholder="First name"
-                  class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#FF6B6B] transition-colors"
+                  class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
                   bind:value={firstName}
                   required
                 />
@@ -144,7 +144,7 @@
                 <input
                   type="text"
                   placeholder="Last name"
-                  class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#FF6B6B] transition-colors"
+                  class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
                   bind:value={lastName}
                   required
                 />
@@ -157,7 +157,7 @@
             <input
               type="email"
               placeholder={isSignUp ? "Email address" : "name@work-email.com"}
-              class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#FF6B6B] transition-colors"
+              class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
               bind:value={email}
               required
             />
@@ -169,7 +169,7 @@
               <input
                 type="text"
                 placeholder="Password"
-                class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:border-[#FF6B6B] transition-colors"
+                class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
                 bind:value={password}
                 required
                 minlength="6"
@@ -178,7 +178,7 @@
               <input
                 type="password"
                 placeholder="Password"
-                class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:border-[#FF6B6B] transition-colors"
+                class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
                 bind:value={password}
                 required
                 minlength="6"
@@ -202,7 +202,7 @@
 
           {#if !isSignUp}
             <div class="flex items-center justify-between text-sm">
-              <button type="button" class="text-[#FF6B6B] hover:text-[#FF5252]">
+              <button type="button" class="text-[#8ec07c] hover:text-[#a0d28c]">
                 Forgot password?
               </button>
             </div>
@@ -211,7 +211,7 @@
           <!-- Submit Button -->
           <button
             type="submit"
-            class="w-full bg-[#FF6B6B] hover:bg-[#FF5252] text-white font-medium py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full bg-[#8ec07c] hover:bg-[#a0d28c] text-white font-medium py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loading}
           >
             {#if loading}
@@ -225,9 +225,9 @@
         {#if isSignUp}
           <p class="text-sm text-gray-500 mt-6 text-center">
             By creating an account, I agree with Barracuda's 
-            <button type="button" class="text-[#FF6B6B] hover:underline bg-transparent border-none p-0 cursor-pointer">Privacy Policy</button> 
+            <button type="button" class="text-[#8ec07c] hover:underline bg-transparent border-none p-0 cursor-pointer">Privacy Policy</button> 
             and 
-            <button type="button" class="text-[#FF6B6B] hover:underline bg-transparent border-none p-0 cursor-pointer">Terms of Service</button>.
+            <button type="button" class="text-[#8ec07c] hover:underline bg-transparent border-none p-0 cursor-pointer">Terms of Service</button>.
           </p>
         {/if}
       </div>
@@ -255,7 +255,7 @@
               <tspan x="220" dy="15">const crawl = () =></tspan>
               <tspan x="220" dy="15">  return pages;</tspan>
             </text>
-            <text x="220" y="240" font-family="monospace" font-size="12" fill="#FF0000">
+            <text x="220" y="240" font-family="monospace" font-size="12" fill="#cc241d">
               <tspan x="220" dy="15">// SEO Analysis</tspan>
             </text>
             <!-- Monitor Stand -->
@@ -275,37 +275,37 @@
               fill="none"
             />
             <!-- Paint Blobs -->
-            <circle cx="240" cy="410" r="12" fill="#FFB6C1"/>
-            <circle cx="280" cy="405" r="12" fill="#FFD700"/>
-            <circle cx="320" cy="410" r="12" fill="#87CEEB"/>
-            <circle cx="260" cy="425" r="12" fill="#FF69B4"/>
-            <circle cx="300" cy="430" r="12" fill="#FFA500"/>
+            <circle cx="240" cy="410" r="12" fill="#8ec07c"/>
+            <circle cx="280" cy="405" r="12" fill="#d79921"/>
+            <circle cx="320" cy="410" r="12" fill="#8ec07c"/>
+            <circle cx="260" cy="425" r="12" fill="#d79921"/>
+            <circle cx="300" cy="430" r="12" fill="#8ec07c"/>
           </g>
 
           <!-- Flying Birdhouses -->
           <g opacity="0.8">
             <!-- Birdhouse 1 -->
             <g transform="translate(120, 100)">
-              <rect x="0" y="0" width="40" height="50" rx="2" stroke="#FF6B6B" stroke-width="2" fill="none"/>
+              <rect x="0" y="0" width="40" height="50" rx="2" stroke="#8ec07c" stroke-width="2" fill="none"/>
               <circle cx="20" cy="15" r="8" stroke="white" stroke-width="2" fill="none"/>
               <rect x="18" y="20" width="4" height="8" fill="white"/>
               <!-- Wings -->
               <path d="M -10 25 Q -5 20 0 25" stroke="white" stroke-width="2" fill="none"/>
               <path d="M 50 25 Q 45 20 40 25" stroke="white" stroke-width="2" fill="none"/>
               <!-- Glow -->
-              <circle cx="20" cy="60" r="8" fill="#FFD700" opacity="0.6"/>
+              <circle cx="20" cy="60" r="8" fill="#d79921" opacity="0.6"/>
             </g>
             
             <!-- Birdhouse 2 -->
             <g transform="translate(450, 120)">
-              <rect x="0" y="0" width="40" height="50" rx="2" stroke="#FF6B6B" stroke-width="2" fill="none"/>
+              <rect x="0" y="0" width="40" height="50" rx="2" stroke="#8ec07c" stroke-width="2" fill="none"/>
               <circle cx="20" cy="15" r="8" stroke="white" stroke-width="2" fill="none"/>
               <rect x="18" y="20" width="4" height="8" fill="white"/>
               <!-- Wings -->
               <path d="M -10 25 Q -5 20 0 25" stroke="white" stroke-width="2" fill="none"/>
               <path d="M 50 25 Q 45 20 40 25" stroke="white" stroke-width="2" fill="none"/>
               <!-- Glow -->
-              <circle cx="20" cy="60" r="8" fill="#FFD700" opacity="0.6"/>
+              <circle cx="20" cy="60" r="8" fill="#d79921" opacity="0.6"/>
             </g>
           </g>
         </svg>

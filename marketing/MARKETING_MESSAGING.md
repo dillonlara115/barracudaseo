@@ -4,7 +4,7 @@
 
 ## 1. Product Overview
 
-Barracuda is a fast, lightweight **SEO crawler and auditing platform** built for technical SEOs, agencies, and developers. It helps you uncover website issues, visualize structure, and prioritize fixes — all through a **powerful web dashboard** that also offers a **CLI interface** for automation.
+Barracuda is a fast, lightweight **SEO crawler and auditing platform** built for technical Agencies, agencies, and developers. It helps you uncover website issues, visualize structure, and prioritize fixes — all through a **powerful web dashboard** that also offers a **CLI interface** for automation.
 
 Unlike traditional crawlers that are bulky, expensive, or hard to scale, Barracuda gives you:
 
@@ -79,7 +79,7 @@ Run scheduled or triggered crawls from the command line or CI pipelines, exporti
 
 ## 5. Target Audience
 
-* **Technical SEOs** who need scalable crawl data and clean reporting
+* **Technical Agencies** who need scalable crawl data and clean reporting
 * **Agencies** managing multiple clients and domains
 * **Developers** who prefer API/CLI automation over GUIs
 * **Website owners** who want to understand their SEO issues without enterprise pricing
@@ -89,7 +89,7 @@ Run scheduled or triggered crawls from the command line or CI pipelines, exporti
 ## 6. Tone and Style
 
 * **Transparent**: Open source, clear limits, and no dark patterns.
-* **Empowering**: Built by SEOs and engineers for SEOs and engineers.
+* **Empowering**: Built by Agencies and engineers for Agencies and engineers.
 * **Actionable**: Focused on fixes, not just data.
 * **Modern**: Fast, clean UI with cloud-based performance.
 

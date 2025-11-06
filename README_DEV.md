@@ -60,15 +60,15 @@ marketing/
 
 | Token           | Hex       | Purpose          |
 | --------------- | --------- | ---------------- |
-| `primary`       | `#FF6B6B` | CTA / highlights |
-| `primary-focus` | `#FF5252` | hover states     |
-| `neutral`       | `#282828` | base background  |
-| `base-100`      | `#282828` | main BG          |
+| `primary`       | `#8ec07c` | CTA / highlights |
+| `primary-focus` | `#a0d28c` | hover states     |
+| `neutral`       | `#3c3836` | base background  |
+| `base-100`      | `#3c3836` | main BG          |
 | `base-content`  | `#FFFFFF` | default text     |
-| `info`          | `#3B82F6` | links / info     |
-| `success`       | `#15803D` | success states   |
-| `warning`       | `#F59E0B` | warnings         |
-| `error`         | `#B91C1C` | errors           |
+| `info`          | `#458588` | links / info     |
+| `success`       | `#8ec07c` | success states   |
+| `warning`       | `#d79921` | warnings         |
+| `error`         | `#cc241d` | errors           |
 
 Typography
 Import from google fonts
@@ -113,7 +113,7 @@ Paste into Cursor’s chat to bootstrap new sections quickly:
 
 > *System prompt:*
 > “We are building a dark SaaS marketing site for Barracuda SEO using SvelteKit + DaisyUI + Tailwind.
-> Use the brand theme (primary #FF6B6B, base #282828) and fonts Sora + DM Sans + JetBrains Mono.
+> Use the brand theme (primary #8ec07c, base #3c3836) and fonts Sora + DM Sans + JetBrains Mono.
 > Generate responsive, accessible Svelte components consistent with the app UI.”
 
 ### Example Tasks
