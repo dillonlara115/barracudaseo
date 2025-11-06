@@ -40,6 +40,7 @@ create policy "Project members can view project members"
 
 -- New INSERT policy: Only project owners can add members
 -- Check ownership via projects table directly (no recursion)
+drop policy if exists "Project owners can add members" on public.project_members;
 create policy "Project owners can add members"
   on public.project_members
   for insert
@@ -54,6 +55,7 @@ create policy "Project owners can add members"
 
 -- New UPDATE policy: Only project owners can update members
 -- Check ownership via projects table directly (no recursion)
+drop policy if exists "Project owners can update members" on public.project_members;
 create policy "Project owners can update members"
   on public.project_members
   for update
@@ -67,6 +69,7 @@ create policy "Project owners can update members"
   );
 
 -- New DELETE policy: Project owners can remove members, or users can remove themselves
+drop policy if exists "Project owners can remove members" on public.project_members;
 create policy "Project owners can remove members"
   on public.project_members
   for delete

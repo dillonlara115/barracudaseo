@@ -45,7 +45,7 @@
 				</p>
 			</div>
 			<div class="bg-[#2d2826] rounded-lg shadow-xl p-6 border border-[#8ec07c]/30 relative">
-				<div class="absolute -top-2 -right-2 bg-[#8ec07c] text-white px-2 py-1 rounded text-xs font-bold">Pro</div>
+				<div class="absolute -top-2 -right-2 bg-[#8ec07c] text-[#3c3836] px-2 py-1 rounded text-xs font-bold">Pro</div>
 				<div class="flex items-center gap-3 mb-3">
 					<div class="p-2 bg-[#8ec07c]/10 rounded-lg">
 						<Users class="w-5 h-5 text-[#8ec07c]" />

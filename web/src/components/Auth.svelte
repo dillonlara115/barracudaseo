@@ -2,7 +2,7 @@
   import { signIn, signUp, signOut } from '../lib/auth.js';
   import { user } from '../lib/auth.js';
   import { link, push } from 'svelte-spa-router';
-  import { Plug } from 'lucide-svelte';
+  import { Plug, CreditCard } from 'lucide-svelte';
   import Logo from './Logo.svelte';
 
   let isSignUp = false;
@@ -69,6 +69,12 @@
         <a href="/integrations" use:link role="menuitem">
           <Plug class="w-5 h-5" />
           Integrations
+        </a>
+      </li>
+      <li>
+        <a href="/billing" use:link role="menuitem">
+          <CreditCard class="w-5 h-5" />
+          Billing
         </a>
       </li>
       <li>
@@ -211,7 +217,7 @@
           <!-- Submit Button -->
           <button
             type="submit"
-            class="w-full bg-[#8ec07c] hover:bg-[#a0d28c] text-white font-medium py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] font-medium py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loading}
           >
             {#if loading}

@@ -10,6 +10,7 @@
   import CrawlView from './routes/CrawlView.svelte';
   import Integrations from './routes/Integrations.svelte';
   import Settings from './routes/Settings.svelte';
+  import Billing from './routes/Billing.svelte';
 
   let loading = true;
   let configError = null;
@@ -21,6 +22,8 @@
     '/project/:projectId/crawl/:crawlId': CrawlView,
     '/project/:projectId/settings': Settings,
     '/integrations': Integrations,
+    '/billing': Billing,
+    '/settings': Billing, // Alias for billing
   };
 
   // Check Supabase configuration

@@ -50,7 +50,7 @@
 				<p class="text-lg text-white/80 mb-6">
 					Ready to start crawling? Sign up for free and begin analyzing your website's SEO in minutes — no credit card required.
 				</p>
-				<a href="https://app.barracudaseo.com" class="inline-block bg-[#8ec07c] hover:bg-[#a0d28c] text-white px-8 py-4 rounded-lg font-medium text-lg transition-colors" target="_blank" rel="noopener noreferrer">
+				<a href="https://app.barracudaseo.com" class="inline-block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-4 rounded-lg font-medium text-lg transition-colors" target="_blank" rel="noopener noreferrer">
 					Start your free 100-page audit
 				</a>
 			</section>

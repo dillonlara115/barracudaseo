@@ -73,10 +73,22 @@ func (s *Server) Router() http.Handler {
 		s.logger.Info("Set GSC_CLIENT_ID, GSC_CLIENT_SECRET, or GSC_CREDENTIALS_JSON to enable")
 	}
 
+	// Initialize Stripe (non-blocking - will fail gracefully if credentials not set)
+	stripeConfig := GetStripeConfig()
+	if stripeConfig.SecretKey != "" {
+		InitializeStripe(stripeConfig.SecretKey)
+		s.logger.Info("Stripe initialized")
+	} else {
+		s.logger.Warn("Stripe integration disabled - set STRIPE_SECRET_KEY to enable")
+	}
+
 	// GSC OAuth callback (OAuth handles its own security)
 	mux.HandleFunc("/api/gsc/callback", s.handleGSCCallback)
 	// Internal cron endpoint for background sync (protected via shared secret)
 	mux.HandleFunc("/api/internal/gsc/sync", s.handleGSCGlobalSync)
+
+	// Stripe webhook (no auth required - verified by signature)
+	mux.HandleFunc("/api/stripe/webhook", s.handleStripeWebhook)
 
 	// API v1 routes
 	v1 := http.NewServeMux()
@@ -84,6 +96,8 @@ func (s *Server) Router() http.Handler {
 	v1.HandleFunc("/projects", s.handleProjects)
 	v1.HandleFunc("/projects/", s.handleProjectByID)
 	v1.HandleFunc("/exports", s.handleExports)
+	v1.HandleFunc("/billing/checkout", s.handleCreateCheckoutSession)
+	v1.HandleFunc("/billing/portal", s.handleCreateBillingPortalSession)
 
 	// Wrap v1 routes with authentication middleware
 	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", s.authMiddleware(v1)))

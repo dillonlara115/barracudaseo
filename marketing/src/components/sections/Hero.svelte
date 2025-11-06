@@ -10,7 +10,7 @@
 			Crawl smarter. Audit faster. Collaborate with your team.
 		</p>
 		<div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-			<a href="https://app.barracudaseo.com" class="bg-[#8ec07c] hover:bg-[#a0d28c] text-white px-8 py-4 rounded-lg font-medium text-lg transition-colors" target="_blank" rel="noopener noreferrer">
+			<a href="https://app.barracudaseo.com" class="bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-4 rounded-lg font-medium text-lg transition-colors" target="_blank" rel="noopener noreferrer">
 				Start your free 100-page audit
 			</a>
 			<a href="/features" class="border-2 border-white/20 hover:border-[#8ec07c] text-white px-8 py-4 rounded-lg font-medium text-lg transition-colors">

@@ -18,7 +18,7 @@
 				Discover and fix the SEO issues holding your website back. Barracuda delivers fast, reliable crawls with actionable insights—all in one sleek web dashboard.
 			</p>
 			<div class="flex flex-col sm:flex-row gap-4 justify-center">
-				<a href="https://app.barracudaseo.com" class="bg-[#8ec07c] hover:bg-[#a0d28c] text-white px-8 py-4 rounded-lg font-medium text-lg transition-colors" target="_blank" rel="noopener noreferrer">
+				<a href="https://app.barracudaseo.com" class="bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-4 rounded-lg font-medium text-lg transition-colors" target="_blank" rel="noopener noreferrer">
 					Start Your Free 100-Page Audit
 				</a>
 				<a href="#dashboard" class="border-2 border-white/20 hover:border-[#8ec07c] text-white px-8 py-4 rounded-lg font-medium text-lg transition-colors">
@@ -87,7 +87,7 @@
 				</div>
 			</div>
 			<div class="text-center">
-				<a href="https://app.barracudaseo.com" class="inline-flex items-center gap-2 bg-[#8ec07c] hover:bg-[#a0d28c] text-white px-6 py-3 rounded-lg font-medium transition-colors" target="_blank" rel="noopener noreferrer">
+				<a href="https://app.barracudaseo.com" class="inline-flex items-center gap-2 bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-6 py-3 rounded-lg font-medium transition-colors" target="_blank" rel="noopener noreferrer">
 					Start Crawling Free
 					<ChevronRight class="w-4 h-4" />
 				</a>
@@ -129,7 +129,7 @@
 					</p>
 				</div>
 				<div class="bg-[#3c3836] rounded-lg p-6 border border-[#8ec07c]/30 relative">
-					<div class="absolute -top-2 -right-2 bg-[#8ec07c] text-white px-2 py-1 rounded text-xs font-bold">Pro</div>
+					<div class="absolute -top-2 -right-2 bg-[#8ec07c] text-[#3c3836] px-2 py-1 rounded text-xs font-bold">Pro</div>
 					<h3 class="text-lg font-heading font-bold mb-3 text-[#8ec07c]">AI-Powered Recommendations</h3>
 					<p class="text-white/70">
 						See how to fix issues, not just what's broken. (Pro feature)
@@ -137,7 +137,7 @@
 				</div>
 			</div>
 			<div class="text-center">
-				<a href="https://app.barracudaseo.com" class="inline-flex items-center gap-2 bg-[#8ec07c] hover:bg-[#a0d28c] text-white px-6 py-3 rounded-lg font-medium transition-colors" target="_blank" rel="noopener noreferrer">
+				<a href="https://app.barracudaseo.com" class="inline-flex items-center gap-2 bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-6 py-3 rounded-lg font-medium transition-colors" target="_blank" rel="noopener noreferrer">
 					Try the Dashboard — Free for 100 Pages
 					<ChevronRight class="w-4 h-4" />
 				</a>
@@ -187,7 +187,7 @@
 				</div>
 			</div>
 			<div class="text-center">
-				<a href="/pricing" class="inline-flex items-center gap-2 bg-[#8ec07c] hover:bg-[#a0d28c] text-white px-6 py-3 rounded-lg font-medium transition-colors">
+				<a href="/pricing" class="inline-flex items-center gap-2 bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-6 py-3 rounded-lg font-medium transition-colors">
 					Upgrade to a Team Account
 					<ChevronRight class="w-4 h-4" />
 				</a>
@@ -236,7 +236,7 @@
 				</div>
 			</div>
 			<div class="text-center">
-				<a href="/pricing" class="inline-flex items-center gap-2 bg-[#8ec07c] hover:bg-[#a0d28c] text-white px-6 py-3 rounded-lg font-medium transition-colors">
+				<a href="/pricing" class="inline-flex items-center gap-2 bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-6 py-3 rounded-lg font-medium transition-colors">
 					Unlock Integrations — Go Pro
 					<ChevronRight class="w-4 h-4" />
 				</a>
@@ -339,7 +339,7 @@
 				</p>
 			</div>
 			<div class="text-center">
-				<a href="https://app.barracudaseo.com" class="inline-flex items-center gap-2 bg-[#8ec07c] hover:bg-[#a0d28c] text-white px-8 py-4 rounded-lg font-medium text-lg transition-colors" target="_blank" rel="noopener noreferrer">
+				<a href="https://app.barracudaseo.com" class="inline-flex items-center gap-2 bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-4 rounded-lg font-medium text-lg transition-colors" target="_blank" rel="noopener noreferrer">
 					Start Your Free 100-Page Crawl
 					<ChevronRight class="w-5 h-5" />
 				</a>
@@ -396,7 +396,7 @@
 				</div>
 			</div>
 			<div class="text-center mt-8">
-				<a href="/pricing" class="inline-flex items-center gap-2 bg-[#8ec07c] hover:bg-[#a0d28c] text-white px-6 py-3 rounded-lg font-medium transition-colors">
+				<a href="/pricing" class="inline-flex items-center gap-2 bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-6 py-3 rounded-lg font-medium transition-colors">
 					Explore Plans & Upgrade
 					<ChevronRight class="w-4 h-4" />
 				</a>
@@ -416,7 +416,7 @@
 				Join hundreds of Agencies and developers who use Barracuda to uncover issues, prioritize fixes, and grow their traffic.
 			</p>
 			<div class="flex flex-col sm:flex-row gap-4 justify-center">
-				<a href="https://app.barracudaseo.com" class="bg-[#8ec07c] hover:bg-[#a0d28c] text-white px-8 py-4 rounded-lg font-medium text-lg transition-colors" target="_blank" rel="noopener noreferrer">
+				<a href="https://app.barracudaseo.com" class="bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-4 rounded-lg font-medium text-lg transition-colors" target="_blank" rel="noopener noreferrer">
 					Start Free — No Credit Card Required
 				</a>
 				<a href="#dashboard" class="border-2 border-white/20 hover:border-[#8ec07c] text-white px-8 py-4 rounded-lg font-medium text-lg transition-colors">

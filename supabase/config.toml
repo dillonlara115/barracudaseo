@@ -348,9 +348,9 @@ s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
 
-[cron]
-enabled = true
+# [cron]
+# enabled = true
 
-[cron.jobs.gsc_daily_sync]
-schedule = "0 6 * * *"
-endpoint = "/functions/v1/gsc-sync"
+# [cron.jobs.gsc_daily_sync]
+# schedule = "0 6 * * *"
+# endpoint = "/functions/v1/gsc-sync"

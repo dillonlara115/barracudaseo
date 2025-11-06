@@ -14,6 +14,9 @@ RUN go mod download
 # Copy source code
 COPY . .
 
+# Update go.sum to include all dependencies
+RUN go mod tidy
+
 # Build frontend first (required for embedded files)
 WORKDIR /app/web
 RUN npm ci && npm run build

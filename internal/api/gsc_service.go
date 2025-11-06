@@ -185,8 +185,10 @@ func (s *Server) ensureGSCSyncState(projectID, propertyURL string) (*gscSyncStat
 	}
 
 	var rows []gscSyncState
-	if err := json.Unmarshal(data, &rows); err != nil {
-		return nil, fmt.Errorf("failed to parse gsc_sync_states: %w", err)
+	if len(data) > 0 {
+		if err := json.Unmarshal(data, &rows); err != nil {
+			return nil, fmt.Errorf("failed to parse gsc_sync_states: %w", err)
+		}
 	}
 
 	if len(rows) > 0 {

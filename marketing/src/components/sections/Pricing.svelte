@@ -44,36 +44,36 @@
 			<!-- Pro Tier -->
 			<div class="bg-[#8ec07c] rounded-lg shadow-xl p-8 border-2 border-[#8ec07c] relative">
 				<div class="absolute top-4 right-4 bg-white text-[#8ec07c] px-3 py-1 rounded-full text-xs font-bold">Popular</div>
-				<h3 class="text-2xl font-heading font-bold mb-2 text-white">Pro</h3>
+				<h3 class="text-2xl font-heading font-bold mb-2 text-[#3c3836]">Pro</h3>
 				<div class="mb-2">
-					<div class="text-4xl font-bold text-white">
+					<div class="text-4xl font-bold text-[#3c3836]">
 						$29
-						<span class="text-lg font-normal text-white/80">/month</span>
+						<span class="text-lg font-normal text-[#3c3836]/80">/month</span>
 					</div>
-					<p class="text-white/80 text-sm mt-1">+ $5 per additional team member</p>
+					<p class="text-[#3c3836]/80 text-sm mt-1">+ $5 per additional team member</p>
 				</div>
 				<ul class="space-y-3 mb-6">
-					<li class="flex items-center gap-2 text-white">
+					<li class="flex items-center gap-2 text-[#3c3836]">
 						<span>✓</span>
 						<span>Crawl up to <strong>10,000 pages</strong></span>
 					</li>
-					<li class="flex items-center gap-2 text-white">
+					<li class="flex items-center gap-2 text-[#3c3836]">
 						<span>✓</span>
 						<span><strong>Team collaboration</strong> — invite teammates with role-based permissions</span>
 					</li>
-					<li class="flex items-center gap-2 text-white">
+					<li class="flex items-center gap-2 text-[#3c3836]">
 						<span>✓</span>
 						<span>Full recommendation engine with contextual fixes</span>
 					</li>
-					<li class="flex items-center gap-2 text-white">
+					<li class="flex items-center gap-2 text-[#3c3836]">
 						<span>✓</span>
 						<span>Integrations: Google Search Console, Analytics, Clarity, Slack</span>
 					</li>
-					<li class="flex items-center gap-2 text-white">
+					<li class="flex items-center gap-2 text-[#3c3836]">
 						<span>✓</span>
 						<span>Historical comparisons and advanced exports</span>
 					</li>
-					<li class="flex items-center gap-2 text-white">
+					<li class="flex items-center gap-2 text-[#3c3836]">
 						<span>✓</span>
 						<span>CLI automation and priority support</span>
 					</li>
@@ -81,7 +81,7 @@
 				<a href="https://app.barracudaseo.com" class="block w-full text-center bg-white text-[#8ec07c] hover:bg-white/90 px-6 py-3 rounded-lg font-medium transition-colors" target="_blank" rel="noopener noreferrer">
 					Start Free Trial
 				</a>
-				<p class="text-center text-sm text-white/80 mt-4">Perfect for agencies and teams</p>
+				<p class="text-center text-sm text-[#3c3836]/80 mt-4">Perfect for agencies and teams</p>
 			</div>
 		</div>
 		<div class="mt-12 max-w-3xl mx-auto">
