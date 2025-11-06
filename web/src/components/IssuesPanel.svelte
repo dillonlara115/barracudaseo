@@ -2,6 +2,38 @@
   export let issues = [];
   export let filter = { severity: 'all', type: 'all', url: null };
   export let enrichedIssues = {}; // Map of enriched issue data: { "url|type": { issue, gsc_performance, enriched_priority, recommendation_reason } }
+  export let gscStatus = null;
+  export let gscLoading = false;
+  export let gscError = null;
+
+  const formatNumber = (value) => {
+    if (value === null || value === undefined) return '0';
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) return '0';
+    return Math.round(numeric).toLocaleString();
+  };
+
+  const formatCTR = (value) => {
+    if (value === null || value === undefined) return '0.00%';
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) return '0.00%';
+    const percent = numeric > 1 ? numeric : numeric * 100;
+    return `${percent.toFixed(2)}%`;
+  };
+
+  const formatPosition = (value) => {
+    if (value === null || value === undefined) return '0.0';
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) return '0.0';
+    return numeric.toFixed(1);
+  };
+
+  const formatDateTime = (value) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  };
 
   const normalizeSeverity = (value) => value ?? 'all';
   const normalizeType = (value) => value ?? 'all';
@@ -171,6 +203,11 @@
     { value: 'type', label: 'Group by Type' },
     { value: 'severity', label: 'Group by Severity' }
   ];
+  
+  $: gscIntegration = gscStatus?.integration || null;
+  $: gscSyncState = gscStatus?.sync_state || null;
+  $: gscLastSynced = gscSyncState?.last_synced_at ? formatDateTime(gscSyncState.last_synced_at) : null;
+  $: hasGSCEnrichment = enrichedIssues && Object.keys(enrichedIssues).length > 0;
   
   const getSeverityColor = (severity) => {
     switch (severity) {
@@ -401,6 +438,32 @@
           {/each}
         </form>
       </div>
+
+      {#if gscError}
+        <div class="alert alert-warning">
+          <span>{gscError}</span>
+        </div>
+      {:else if gscLoading}
+        <div class="alert alert-info">
+          <span>Loading Google Search Console metrics...</span>
+        </div>
+      {:else if gscIntegration && hasGSCEnrichment}
+        <div class="alert alert-success">
+          <span>
+            Enriched with Google Search Console data from {gscIntegration.property_url}.
+            {#if gscLastSynced}
+              Last synced {gscLastSynced}.
+            {/if}
+          </span>
+        </div>
+      {:else if gscIntegration}
+        <div class="alert alert-info">
+          <span>
+            Google Search Console is connected for {gscIntegration.property_url}. Refresh the cache to populate metrics.
+          </span>
+        </div>
+      {/if}
+
       <!-- Export button -->
       <div class="flex justify-end">
         <details class="dropdown dropdown-end">
@@ -495,21 +558,36 @@
                   <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                     <div>
                       <div class="text-base-content/70">Impressions</div>
-                      <div class="font-bold">{enriched.gsc_performance.impressions.toLocaleString()}</div>
+                      <div class="font-bold">{formatNumber(enriched.gsc_performance.impressions)}</div>
                     </div>
                     <div>
                       <div class="text-base-content/70">Clicks</div>
-                      <div class="font-bold">{enriched.gsc_performance.clicks.toLocaleString()}</div>
+                      <div class="font-bold">{formatNumber(enriched.gsc_performance.clicks)}</div>
                     </div>
                     <div>
                       <div class="text-base-content/70">CTR</div>
-                      <div class="font-bold">{(enriched.gsc_performance.ctr * 100).toFixed(2)}%</div>
+                      <div class="font-bold">{formatCTR(enriched.gsc_performance.ctr)}</div>
                     </div>
                     <div>
                       <div class="text-base-content/70">Position</div>
-                      <div class="font-bold">{enriched.gsc_performance.position.toFixed(1)}</div>
+                      <div class="font-bold">{formatPosition(enriched.gsc_performance.position)}</div>
                     </div>
                   </div>
+                  {#if enriched.gsc_performance.top_queries && enriched.gsc_performance.top_queries.length > 0}
+                    <div class="mt-3">
+                      <div class="text-xs font-semibold uppercase tracking-wide text-base-content/70 mb-1">Top Queries</div>
+                      <ul class="text-sm space-y-1">
+                        {#each enriched.gsc_performance.top_queries.slice(0, 5) as query}
+                          <li class="flex flex-wrap gap-2">
+                            <span class="font-semibold">{query.query}</span>
+                            <span class="text-base-content/60">
+                              {formatNumber(query.impressions)} impressions · {formatNumber(query.clicks)} clicks · {formatCTR(query.ctr)}
+                            </span>
+                          </li>
+                        {/each}
+                      </ul>
+                    </div>
+                  {/if}
                 </div>
               {/if}
               

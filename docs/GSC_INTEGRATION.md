@@ -150,6 +150,19 @@ Once connected, recommendations will show:
 - **CTR insights**: Pages with low CTR but high impressions get optimization suggestions
 - **Performance context**: Recommendations include actual search performance data
 
+## Automating Daily Syncs
+
+To keep cached data fresh without manual intervention:
+
+1. Configure the shared cron secret in both the API server and the Supabase Edge function environment:
+   - `GSC_SYNC_SECRET`: shared value used to authorize cron-triggered syncs.
+   - `CLOUD_RUN_API_URL` (or `BARRACUDA_API_URL`): base URL of the Barracuda API.
+   - Optional `GSC_SYNC_LOOKBACK_DAYS` to override the default 30-day window.
+2. Deploy the `gsc-sync` Edge function (`supabase/functions/gsc-sync`) and schedule it via Supabase Cron (configuration lives in `supabase/config.toml`).
+3. The cron job calls the protected API endpoint `/api/internal/gsc/sync`, which iterates over every project that has a connected GSC integration and refreshes the cached metrics.
+
+With those pieces in place, the application automatically refreshes Search Console data at 06:00 UTC each day (adjust the cron expression in `supabase/config.toml` to match your needs).
+
 ## API Endpoints
 
 - `GET /api/gsc/connect` - Get OAuth authorization URL
@@ -244,4 +257,3 @@ If you see "GSC integration disabled" in the server logs:
 - Maximum 25,000 URLs per property (GSC API limit)
 - Data refresh requires manual action
 - Single user per server instance (IP-based identification)
-

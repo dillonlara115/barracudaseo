@@ -86,13 +86,13 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 	// Create crawl record
 	crawlID := uuid.New().String()
 	crawl := map[string]interface{}{
-		"id":            crawlID,
-		"project_id":    req.ProjectID,
-		"initiated_by":  userID,
-		"source":        "cli",
-		"status":        "succeeded",
-		"started_at":    time.Now().UTC().Format(time.RFC3339),
-		"completed_at":  time.Now().UTC().Format(time.RFC3339),
+		"id":           crawlID,
+		"project_id":   req.ProjectID,
+		"initiated_by": userID,
+		"source":       "cli",
+		"status":       "succeeded",
+		"started_at":   time.Now().UTC().Format(time.RFC3339),
+		"completed_at": time.Now().UTC().Format(time.RFC3339),
 		"total_pages":  len(req.Pages),
 		"total_issues": len(summary.Issues),
 		"meta": map[string]interface{}{
@@ -112,21 +112,21 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 	pages := make([]map[string]interface{}, 0, len(req.Pages))
 	for _, page := range req.Pages {
 		pageData := map[string]interface{}{
-			"crawl_id":        crawlID,
-			"url":             page.URL,
-			"status_code":     page.StatusCode,
+			"crawl_id":         crawlID,
+			"url":              page.URL,
+			"status_code":      page.StatusCode,
 			"response_time_ms": page.ResponseTime,
-			"title":           page.Title,
+			"title":            page.Title,
 			"meta_description": page.MetaDesc,
-			"canonical_url":   page.Canonical,
-			"h1":              strings.Join(page.H1, ", "),
-			"word_count":      0, // TODO: calculate from content
+			"canonical_url":    page.Canonical,
+			"h1":               strings.Join(page.H1, ", "),
+			"word_count":       0, // TODO: calculate from content
 			"data": map[string]interface{}{
-				"h2":            page.H2,
-				"h3":            page.H3,
-				"h4":            page.H4,
-				"h5":            page.H5,
-				"h6":            page.H6,
+				"h2":             page.H2,
+				"h3":             page.H3,
+				"h4":             page.H4,
+				"h5":             page.H5,
+				"h6":             page.H6,
 				"internal_links": page.InternalLinks,
 				"external_links": page.ExternalLinks,
 				"images":         page.Images,
@@ -166,14 +166,14 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 		}
 
 		issueData := map[string]interface{}{
-			"crawl_id":     crawlID,
-			"project_id":   req.ProjectID,
-			"type":         string(issue.Type),
-			"severity":     issue.Severity,
-			"message":      issue.Message,
+			"crawl_id":       crawlID,
+			"project_id":     req.ProjectID,
+			"type":           string(issue.Type),
+			"severity":       issue.Severity,
+			"message":        issue.Message,
 			"recommendation": issue.Recommendation,
-			"value":        issue.Value,
-			"status":       "new",
+			"value":          issue.Value,
+			"status":         "new",
 		}
 		if pageID != nil {
 			issueData["page_id"] = *pageID
@@ -357,20 +357,20 @@ func (s *Server) handleProjectByID(w http.ResponseWriter, r *http.Request) {
 	// Extract project ID from path
 	// After StripPrefix("/api/v1"), the path is like "/projects/:id/crawl"
 	s.logger.Debug("handleProjectByID called", zap.String("path", r.URL.Path), zap.String("method", r.Method))
-	
+
 	path := strings.TrimPrefix(r.URL.Path, "/projects/")
-	
+
 	// Remove leading/trailing slashes and split
 	path = strings.Trim(path, "/")
 	parts := strings.Split(path, "/")
-	
+
 	s.logger.Debug("Path parsing", zap.String("trimmed_path", path), zap.Strings("parts", parts))
-	
+
 	if len(parts) == 0 {
 		s.respondError(w, http.StatusBadRequest, "project_id is required")
 		return
 	}
-	
+
 	projectID := parts[0]
 
 	if projectID == "" {
@@ -401,6 +401,9 @@ func (s *Server) handleProjectByID(w http.ResponseWriter, r *http.Request) {
 			} else {
 				s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			}
+			return
+		case "gsc":
+			s.handleProjectGSC(w, r, projectID, userID, parts[2:])
 			return
 		default:
 			s.logger.Debug("Unknown resource", zap.String("resource", resource), zap.String("path", r.URL.Path), zap.Strings("parts", parts))
@@ -539,14 +542,14 @@ func (s *Server) handleTriggerCrawl(w http.ResponseWriter, r *http.Request, proj
 	// Create crawl record with status "running"
 	crawlID := uuid.New().String()
 	crawl := map[string]interface{}{
-		"id":            crawlID,
-		"project_id":    projectID,
-		"initiated_by":  userID,
-		"source":        "web",
-		"status":        "running",
-		"started_at":    time.Now().UTC().Format(time.RFC3339),
-		"total_pages":   0,
-		"total_issues":  0,
+		"id":           crawlID,
+		"project_id":   projectID,
+		"initiated_by": userID,
+		"source":       "web",
+		"status":       "running",
+		"started_at":   time.Now().UTC().Format(time.RFC3339),
+		"total_pages":  0,
+		"total_issues": 0,
 		"meta": map[string]interface{}{
 			"url":            req.URL,
 			"max_depth":      req.MaxDepth,
@@ -599,7 +602,7 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 		ParseSitemap:  req.ParseSitemap,
 		DomainFilter:  "same",
 		ExportFormat:  "csv", // Required for validation, but not used since we store in DB
-		ExportPath:    "",     // Not used for web crawls
+		ExportPath:    "",    // Not used for web crawls
 	}
 
 	// Validate config
@@ -635,11 +638,11 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 			"h1":               strings.Join(page.H1, ", "),
 			"word_count":       0, // TODO: calculate from content
 			"data": map[string]interface{}{
-				"h2":            page.H2,
-				"h3":            page.H3,
-				"h4":            page.H4,
-				"h5":            page.H5,
-				"h6":            page.H6,
+				"h2":             page.H2,
+				"h3":             page.H3,
+				"h4":             page.H4,
+				"h5":             page.H5,
+				"h6":             page.H6,
 				"internal_links": page.InternalLinks,
 				"external_links": page.ExternalLinks,
 				"images":         page.Images,
@@ -716,14 +719,14 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 	issues := make([]map[string]interface{}, 0, len(summary.Issues))
 	for _, issue := range summary.Issues {
 		issueData := map[string]interface{}{
-			"crawl_id":      crawlID,
-			"project_id":    projectID,
-			"type":          string(issue.Type),
-			"severity":      issue.Severity,
-			"message":       issue.Message,
+			"crawl_id":       crawlID,
+			"project_id":     projectID,
+			"type":           string(issue.Type),
+			"severity":       issue.Severity,
+			"message":        issue.Message,
 			"recommendation": issue.Recommendation,
-			"value":         issue.Value,
-			"status":        "new",
+			"value":          issue.Value,
+			"status":         "new",
 		}
 		// Try to find page ID
 		if pageID, ok := pageURLToID[issue.URL]; ok {
@@ -785,7 +788,7 @@ func (s *Server) updateCrawlStatus(crawlID, status, errorMsg string) {
 // Uses service role client to bypass RLS since we've already validated the user's token
 func (s *Server) verifyProjectAccess(userID, projectID string) (bool, error) {
 	s.logger.Debug("Verifying project access", zap.String("user_id", userID), zap.String("project_id", projectID))
-	
+
 	// First check if user is a project member (using service role to bypass RLS)
 	var members []map[string]interface{}
 	data, _, err := s.serviceRole.From("project_members").
@@ -843,31 +846,13 @@ func (s *Server) verifyProjectAccess(userID, projectID string) (bool, error) {
 	return false, nil
 }
 
-// handleGSCConnect handles GET /api/gsc/connect - Get OAuth authorization URL
-func (s *Server) handleGSCConnect(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	authURL, state, err := gsc.GenerateAuthURL()
-	if err != nil {
-		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to generate auth URL: %v", err))
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, map[string]string{
-		"auth_url": authURL,
-		"state":    state,
-	})
-}
-
 // handleGSCCallback handles GET /api/gsc/callback - OAuth callback
 func (s *Server) handleGSCCallback(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	state := r.URL.Query().Get("state")
 
-	if !gsc.ValidateState(state) {
+	projectID, ok := gsc.ConsumeState(state)
+	if !ok {
 		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, `
@@ -904,13 +889,40 @@ func (s *Server) handleGSCCallback(w http.ResponseWriter, r *http.Request) {
 				</script>
 			</body>
 			</html>
-		`, err, err)
+	`, err, err)
 		return
 	}
 
-	// Store token (use RemoteAddr as userID for now)
-	userID := r.RemoteAddr
-	gsc.StoreToken(userID, token)
+	cfg := &gscIntegrationConfig{
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		TokenType:    token.TokenType,
+		Expiry:       token.Expiry,
+	}
+
+	if scope := token.Extra("scope"); scope != nil {
+		switch v := scope.(type) {
+		case string:
+			cfg.Scope = []string{v}
+		case []string:
+			cfg.Scope = v
+		case []interface{}:
+			for _, item := range v {
+				if str, ok := item.(string); ok {
+					cfg.Scope = append(cfg.Scope, str)
+				}
+			}
+		}
+	}
+
+	if err := s.saveGSCIntegration(projectID, cfg); err != nil {
+		s.logger.Error("Failed to persist GSC token", zap.Error(err))
+	}
+
+	gsc.StoreToken(projectID, token)
+	if _, err := s.ensureGSCSyncState(projectID, ""); err != nil {
+		s.logger.Warn("Failed to ensure sync state after OAuth", zap.Error(err))
+	}
 
 	// Return success page that closes popup and signals parent window
 	w.Header().Set("Content-Type", "text/html")
@@ -951,7 +963,7 @@ func (s *Server) handleGSCCallback(w http.ResponseWriter, r *http.Request) {
 			<script>
 				// Signal parent window that connection succeeded
 				if (window.opener) {
-					window.opener.postMessage({type: 'gsc_connected', user_id: '%s'}, '*');
+					window.opener.postMessage({type: 'gsc_connected', project_id: '%s'}, '*');
 				}
 				// Close popup after short delay
 				setTimeout(() => {
@@ -960,105 +972,5 @@ func (s *Server) handleGSCCallback(w http.ResponseWriter, r *http.Request) {
 			</script>
 		</body>
 		</html>
-	`, userID)
+	`, projectID)
 }
-
-// handleGSCProperties handles GET /api/gsc/properties - List GSC properties
-func (s *Server) handleGSCProperties(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	// Get userID from query or use default
-	userID := r.URL.Query().Get("user_id")
-	if userID == "" {
-		userID = r.RemoteAddr
-	}
-
-	properties, err := gsc.GetProperties(userID)
-	if err != nil {
-		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to get properties: %v", err))
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, properties)
-}
-
-// handleGSCPerformance handles POST /api/gsc/performance - Fetch performance data
-func (s *Server) handleGSCPerformance(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	var req struct {
-		UserID  string `json:"user_id"`
-		SiteURL string `json:"site_url"`
-		Days    int    `json:"days"` // Number of days to fetch (default 30)
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %v", err))
-		return
-	}
-
-	if req.UserID == "" {
-		req.UserID = r.RemoteAddr
-	}
-	if req.Days == 0 {
-		req.Days = 30
-	}
-
-	endDate := time.Now()
-	startDate := endDate.AddDate(0, 0, -req.Days)
-
-	performanceMap, err := gsc.FetchPerformanceData(req.UserID, req.SiteURL, startDate, endDate)
-	if err != nil {
-		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch performance data: %v", err))
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, performanceMap)
-}
-
-// handleGSCEnrichIssues handles POST /api/gsc/enrich-issues - Enrich issues with GSC data
-func (s *Server) handleGSCEnrichIssues(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	var req struct {
-		UserID  string            `json:"user_id"`
-		SiteURL string            `json:"site_url"`
-		Days    int               `json:"days"`
-		Issues  []analyzer.Issue  `json:"issues"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %v", err))
-		return
-	}
-
-	if req.UserID == "" {
-		req.UserID = r.RemoteAddr
-	}
-	if req.Days == 0 {
-		req.Days = 30
-	}
-
-	// Fetch performance data
-	endDate := time.Now()
-	startDate := endDate.AddDate(0, 0, -req.Days)
-	performanceMap, err := gsc.FetchPerformanceData(req.UserID, req.SiteURL, startDate, endDate)
-	if err != nil {
-		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch performance data: %v", err))
-		return
-	}
-
-	// Enrich issues
-	enrichedIssues := gsc.EnrichIssues(req.Issues, performanceMap)
-	s.respondJSON(w, http.StatusOK, enrichedIssues)
-}
-

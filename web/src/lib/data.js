@@ -1,5 +1,58 @@
 import { supabase } from './supabase.js';
 
+export const getApiUrl = () => import.meta.env.VITE_CLOUD_RUN_API_URL || 'http://localhost:8080';
+
+async function authorizedRequest(path, { method = 'GET', body, headers = {} } = {}) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    throw new Error('Not authenticated');
+  }
+
+  const requestHeaders = new Headers(headers);
+  requestHeaders.set('Authorization', `Bearer ${session.access_token}`);
+
+  let requestBody = body;
+  if (body && !(body instanceof FormData) && typeof body === 'object' && !(body instanceof Blob)) {
+    requestHeaders.set('Content-Type', 'application/json');
+    requestBody = JSON.stringify(body);
+  }
+
+  const response = await fetch(`${getApiUrl()}${path}`, {
+    method,
+    headers: requestHeaders,
+    body: requestBody,
+  });
+
+  return response;
+}
+
+async function authorizedJSON(path, options = {}) {
+  try {
+    const response = await authorizedRequest(path, options);
+
+    if (!response.ok) {
+      let message = `Request failed with status ${response.status}`;
+      try {
+        const errorPayload = await response.json();
+        message = errorPayload.error || errorPayload.message || message;
+      } catch (_) {
+        // Ignore JSON parse errors
+      }
+      throw new Error(message);
+    }
+
+    if (response.status === 204) {
+      return { data: null, error: null };
+    }
+
+    const data = await response.json();
+    return { data, error: null };
+  } catch (error) {
+    console.error('API request failed:', error);
+    return { data: null, error };
+  }
+}
+
 // Fetch user's projects
 export async function fetchProjects() {
   try {
@@ -248,3 +301,46 @@ export async function updateIssueStatus(issueId, status, notes = null) {
   }
 }
 
+export async function fetchProjectGSCStatus(projectId) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  return authorizedJSON(`/api/v1/projects/${projectId}/gsc/status`);
+}
+
+export async function fetchProjectGSCProperties(projectId) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  return authorizedJSON(`/api/v1/projects/${projectId}/gsc/properties`);
+}
+
+export async function updateProjectGSCProperty(projectId, propertyUrl, propertyType = null) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  if (!propertyUrl) return { data: null, error: new Error('propertyUrl is required') };
+  return authorizedJSON(`/api/v1/projects/${projectId}/gsc/property`, {
+    method: 'POST',
+    body: {
+      property_url: propertyUrl,
+      property_type: propertyType,
+    },
+  });
+}
+
+export async function triggerProjectGSCSync(projectId, options = {}) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  return authorizedJSON(`/api/v1/projects/${projectId}/gsc/trigger-sync`, {
+    method: 'POST',
+    body: options,
+  });
+}
+
+export async function fetchProjectGSCDimensions(projectId, type, params = {}) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  if (!type) return { data: null, error: new Error('type is required') };
+
+  const searchParams = new URLSearchParams({ type });
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      searchParams.set(key, value.toString());
+    }
+  });
+
+  return authorizedJSON(`/api/v1/projects/${projectId}/gsc/dimensions?${searchParams.toString()}`);
+}

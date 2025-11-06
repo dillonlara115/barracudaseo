@@ -71,3 +71,13 @@ After setup:
 4. You should see the consent screen asking for permission to "View Search Console data"
 5. Authorize and you're done!
 
+## Step 5: Schedule Automatic Syncs (Optional but Recommended)
+
+1. Set the shared cron secret in both your API environment and Supabase Edge functions:
+   - `GSC_SYNC_SECRET`
+   - `CLOUD_RUN_API_URL` / `BARRACUDA_API_URL`
+   - Optional `GSC_SYNC_LOOKBACK_DAYS` to tweak the data window (default 30).
+2. Deploy the `gsc-sync` Edge function (`supabase/functions/gsc-sync`) and enable the cron job defined in `supabase/config.toml` (`gsc_daily_sync` runs daily at 06:00 UTC).
+3. Once scheduled, the cron job will invoke `/api/internal/gsc/sync` with the shared secret and refresh cached Search Console data for every connected project.
+
+This keeps the dashboard up-to-date without requiring manual refreshes.

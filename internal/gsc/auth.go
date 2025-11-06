@@ -10,11 +10,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dillonlara115/barracuda/pkg/models"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/searchconsole/v1"
-	
-	"github.com/dillonlara115/barracuda/pkg/models"
 )
 
 var (
@@ -24,9 +23,14 @@ var (
 	tokenStore = make(map[string]*oauth2.Token)
 	tokenMu    sync.RWMutex
 	// State storage for OAuth flow
-	stateStore = make(map[string]time.Time)
+	stateStore = make(map[string]oauthState)
 	stateMu    sync.RWMutex
 )
+
+type oauthState struct {
+	ProjectID string
+	Expires   time.Time
+}
 
 // InitializeOAuth sets up OAuth2 configuration
 // Credentials can be provided via environment variables
@@ -35,7 +39,7 @@ func InitializeOAuth(redirectURL string) error {
 	// Get credentials from environment variables (required)
 	clientID := os.Getenv("GSC_CLIENT_ID")
 	clientSecret := os.Getenv("GSC_CLIENT_SECRET")
-	
+
 	// If not set, try credentials JSON
 	if clientID == "" || clientSecret == "" {
 		credentialsJSON := os.Getenv("GSC_CREDENTIALS_JSON")
@@ -49,7 +53,7 @@ func InitializeOAuth(redirectURL string) error {
 			return nil
 		}
 	}
-	
+
 	// Final check - if still empty, return error with helpful message
 	if clientID == "" || clientSecret == "" {
 		return fmt.Errorf("GSC OAuth credentials not configured. Set environment variables:\n" +
@@ -73,8 +77,8 @@ func InitializeOAuth(redirectURL string) error {
 	return nil
 }
 
-// GenerateAuthURL creates an OAuth2 authorization URL
-func GenerateAuthURL() (string, string, error) {
+// GenerateAuthURL creates an OAuth2 authorization URL and binds it to a project
+func GenerateAuthURL(projectID string) (string, string, error) {
 	if oauthConfig == nil {
 		return "", "", fmt.Errorf("OAuth not initialized. Call InitializeOAuth first")
 	}
@@ -88,7 +92,10 @@ func GenerateAuthURL() (string, string, error) {
 
 	// Store state with timestamp (expires in 10 minutes)
 	stateMu.Lock()
-	stateStore[state] = time.Now().Add(10 * time.Minute)
+	stateStore[state] = oauthState{
+		ProjectID: projectID,
+		Expires:   time.Now().Add(10 * time.Minute),
+	}
 	stateMu.Unlock()
 
 	// Clean up expired states
@@ -98,25 +105,25 @@ func GenerateAuthURL() (string, string, error) {
 	return url, state, nil
 }
 
-// ValidateState checks if OAuth state is valid
-func ValidateState(state string) bool {
+// ConsumeState validates OAuth state and returns the associated project ID
+func ConsumeState(state string) (string, bool) {
 	stateMu.RLock()
-	expires, exists := stateStore[state]
+	entry, exists := stateStore[state]
 	stateMu.RUnlock()
-	
+
 	if !exists {
-		return false
+		return "", false
 	}
-	if time.Now().After(expires) {
+	if time.Now().After(entry.Expires) {
 		stateMu.Lock()
 		delete(stateStore, state)
 		stateMu.Unlock()
-		return false
+		return "", false
 	}
 	stateMu.Lock()
 	delete(stateStore, state)
 	stateMu.Unlock()
-	return true
+	return entry.ProjectID, true
 }
 
 // ExchangeCode exchanges authorization code for token
@@ -146,7 +153,7 @@ func GetToken(userID string) (*oauth2.Token, bool) {
 	tokenMu.RLock()
 	token, exists := tokenStore[userID]
 	tokenMu.RUnlock()
-	
+
 	if !exists {
 		return nil, false
 	}
@@ -176,8 +183,8 @@ func cleanupExpiredStates() {
 	now := time.Now()
 	stateMu.Lock()
 	defer stateMu.Unlock()
-	for state, expires := range stateStore {
-		if now.After(expires) {
+	for state, entry := range stateStore {
+		if now.After(entry.Expires) {
 			delete(stateStore, state)
 		}
 	}
@@ -233,4 +240,3 @@ func GetProperties(userID string) ([]*models.GSCProperty, error) {
 
 	return properties, nil
 }
-

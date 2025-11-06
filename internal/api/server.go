@@ -18,7 +18,8 @@ type Config struct {
 	SupabaseURL        string
 	SupabaseServiceKey string
 	SupabaseAnonKey    string
-	Logger            *zap.Logger
+	CronSyncSecret     string
+	Logger             *zap.Logger
 }
 
 // Server represents the API server
@@ -27,6 +28,7 @@ type Server struct {
 	supabase    *supabase.Client
 	serviceRole *supabase.Client
 	logger      *zap.Logger
+	cronSecret  string
 }
 
 // NewServer creates a new API server instance
@@ -48,6 +50,7 @@ func NewServer(cfg Config) (*Server, error) {
 		supabase:    supabaseClient,
 		serviceRole: serviceRoleClient,
 		logger:      cfg.Logger,
+		cronSecret:  cfg.CronSyncSecret,
 	}, nil
 }
 
@@ -70,12 +73,10 @@ func (s *Server) Router() http.Handler {
 		s.logger.Info("Set GSC_CLIENT_ID, GSC_CLIENT_SECRET, or GSC_CREDENTIALS_JSON to enable")
 	}
 
-	// GSC OAuth endpoints (no auth required - OAuth handles its own security)
-	mux.HandleFunc("/api/gsc/connect", s.handleGSCConnect)
+	// GSC OAuth callback (OAuth handles its own security)
 	mux.HandleFunc("/api/gsc/callback", s.handleGSCCallback)
-	mux.HandleFunc("/api/gsc/properties", s.handleGSCProperties)
-	mux.HandleFunc("/api/gsc/performance", s.handleGSCPerformance)
-	mux.HandleFunc("/api/gsc/enrich-issues", s.handleGSCEnrichIssues)
+	// Internal cron endpoint for background sync (protected via shared secret)
+	mux.HandleFunc("/api/internal/gsc/sync", s.handleGSCGlobalSync)
 
 	// API v1 routes
 	v1 := http.NewServeMux()
@@ -239,4 +240,3 @@ type User struct {
 	ID    string `json:"id"`
 	Email string `json:"email"`
 }
-

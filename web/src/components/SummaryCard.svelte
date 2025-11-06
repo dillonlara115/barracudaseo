@@ -1,6 +1,11 @@
 <script>
   export let summary = null;
   export let navigateToTab = () => {};
+  export let gscTotals = null;
+  export let gscSyncState = null;
+  export let gscIntegration = null;
+  export let gscLoading = false;
+  export let gscError = null;
 
   if (!summary) {
     summary = {
@@ -14,6 +19,35 @@
       issues_by_type: {}
     };
   }
+
+  const formatNumber = (value) => {
+    if (value === null || value === undefined) return '0';
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) return '0';
+    return Math.round(numeric).toLocaleString();
+  };
+
+  const formatCTR = (value) => {
+    if (value === null || value === undefined) return '0.00%';
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) return '0.00%';
+    const percent = numeric > 1 ? numeric : numeric * 100;
+    return `${percent.toFixed(2)}%`;
+  };
+
+  const formatPosition = (value) => {
+    if (value === null || value === undefined) return '0.0';
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) return '0.0';
+    return numeric.toFixed(1);
+  };
+
+  const formatLastSynced = (value) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  };
 
   const getSeverityCount = (severity) => {
     if (!summary.issues) return 0;
@@ -33,6 +67,9 @@
   const handleViewSlowPages = () => {
     navigateToTab('results', { performance: true });
   };
+
+  $: lastSyncedDisplay = gscSyncState?.last_synced_at ? formatLastSynced(gscSyncState.last_synced_at) : null;
+  $: isGSCConnected = Boolean(gscIntegration?.property_url);
 </script>
 
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -85,6 +122,60 @@
     <div class="stat-value text-warning">{summary.pages_with_errors}</div>
   </div>
 </div>
+
+{#if gscTotals}
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-2">
+    <div class="stat bg-base-100 rounded-box shadow">
+      <div class="stat-figure text-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-8 h-8 stroke-current" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h2l1 2 1-6 1 12 1-8 1 4h3" />
+        </svg>
+      </div>
+      <div class="stat-title">Impressions</div>
+      <div class="stat-value text-primary">{formatNumber(gscTotals.impressions)}</div>
+    </div>
+
+    <div class="stat bg-base-100 rounded-box shadow">
+      <div class="stat-figure text-success">
+        <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-8 h-8 stroke-current" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <div class="stat-title">Clicks</div>
+      <div class="stat-value text-success">{formatNumber(gscTotals.clicks)}</div>
+    </div>
+
+    <div class="stat bg-base-100 rounded-box shadow">
+      <div class="stat-figure text-info">
+        <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-8 h-8 stroke-current" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a2 2 0 012-2h2a2 2 0 110 4h-1" />
+        </svg>
+      </div>
+      <div class="stat-title">CTR</div>
+      <div class="stat-value text-info">{formatCTR(gscTotals.ctr)}</div>
+    </div>
+
+    <div class="stat bg-base-100 rounded-box shadow">
+      <div class="stat-figure text-warning">
+        <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-8 h-8 stroke-current" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.79-3 4s1.343 4 3 4 3-1.79 3-4-1.343-4-3-4z" />
+        </svg>
+      </div>
+      <div class="stat-title">Avg Position</div>
+      <div class="stat-value text-warning">{formatPosition(gscTotals.position)}</div>
+    </div>
+  </div>
+
+  {#if lastSyncedDisplay}
+    <div class="text-xs text-base-content/60 mb-6">
+      Search Console data last synced {lastSyncedDisplay}.
+    </div>
+  {/if}
+{:else if isGSCConnected && !gscLoading && !gscError}
+  <div class="alert alert-info mb-6">
+    <span>Google Search Console is connected. Refresh the data to populate performance metrics.</span>
+  </div>
+{/if}
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
   <div class="card bg-base-100 shadow">
@@ -186,4 +277,3 @@
     </div>
   </div>
 {/if}
-

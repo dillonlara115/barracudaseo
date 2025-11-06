@@ -127,7 +127,8 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// GSC OAuth endpoints
 	apiMux.HandleFunc("/api/gsc/connect", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		authURL, state, err := gsc.GenerateAuthURL()
+		userID := r.RemoteAddr
+		authURL, state, err := gsc.GenerateAuthURL(userID)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Failed to generate auth URL: %v", err), http.StatusInternalServerError)
 			return
@@ -144,7 +145,8 @@ func runServe(cmd *cobra.Command, args []string) error {
 		code := r.URL.Query().Get("code")
 		state := r.URL.Query().Get("state")
 
-		if !gsc.ValidateState(state) {
+		userID, ok := gsc.ConsumeState(state)
+		if !ok {
 			http.Error(w, "Invalid state", http.StatusBadRequest)
 			return
 		}
@@ -171,8 +173,6 @@ func runServe(cmd *cobra.Command, args []string) error {
 			return
 		}
 
-		// Store token (use session ID or IP as userID for now)
-		userID := r.RemoteAddr
 		gsc.StoreToken(userID, token)
 
 		// Return success page that closes popup and signals parent window
@@ -214,7 +214,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 				<script>
 					// Signal parent window that connection succeeded
 					if (window.opener) {
-						window.opener.postMessage({type: 'gsc_connected', user_id: '%s'}, '*');
+						window.opener.postMessage({type: 'gsc_connected', project_id: '%s'}, '*');
 					}
 					// Close popup after short delay
 					setTimeout(() => {
@@ -229,7 +229,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	apiMux.HandleFunc("/api/gsc/properties", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		
+
 		// Get userID from query or use default
 		userID := r.URL.Query().Get("user_id")
 		if userID == "" {
@@ -250,7 +250,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	apiMux.HandleFunc("/api/gsc/performance", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		
+
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Method not allowed"})
@@ -258,9 +258,9 @@ func runServe(cmd *cobra.Command, args []string) error {
 		}
 
 		var req struct {
-			UserID   string `json:"user_id"`
-			SiteURL  string `json:"site_url"`
-			Days     int    `json:"days"` // Number of days to fetch (default 30)
+			UserID  string `json:"user_id"`
+			SiteURL string `json:"site_url"`
+			Days    int    `json:"days"` // Number of days to fetch (default 30)
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -294,7 +294,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	apiMux.HandleFunc("/api/gsc/enrich-issues", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		
+
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Method not allowed"})
@@ -302,9 +302,9 @@ func runServe(cmd *cobra.Command, args []string) error {
 		}
 
 		var req struct {
-			UserID        string `json:"user_id"`
-			SiteURL       string `json:"site_url"`
-			Days          int    `json:"days"`
+			UserID  string `json:"user_id"`
+			SiteURL string `json:"site_url"`
+			Days    int    `json:"days"`
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -358,7 +358,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// Try embedded files first (production build)
 	var fileServer http.Handler
 	var useEmbedded bool
-	
+
 	// Check if embedded files exist (they should if frontend was built before Go build)
 	if frontendFiles != nil {
 		// Try to read from embedded files
@@ -371,7 +371,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
-	
+
 	// Fallback to filesystem (for development)
 	if !useEmbedded {
 		webDir := "web/dist"
@@ -386,7 +386,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 			useEmbedded = false
 		}
 	}
-	
+
 	if fileServer != nil {
 		// Serve static files with SPA routing support
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -395,7 +395,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 				apiMux.ServeHTTP(w, r)
 				return
 			}
-			
+
 			if useEmbedded {
 				// For embedded files, check if file exists
 				fsys, _ := fs.Sub(frontendFiles, "web/dist")
@@ -403,7 +403,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 				if path == "" {
 					path = "index.html"
 				}
-				
+
 				// Try to open the file
 				if f, err := fsys.Open(path); err == nil {
 					defer f.Close()
@@ -415,7 +415,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 						return
 					}
 				}
-				
+
 				// For SPA routing, serve index.html for all non-API routes
 				if _, err := fsys.Open("index.html"); err == nil {
 					r.URL.Path = "/index.html"
@@ -436,7 +436,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 					fileServer.ServeHTTP(w, r)
 					return
 				}
-				
+
 				// For SPA routing, serve index.html for all non-API routes
 				indexPath := filepath.Join("web/dist", "index.html")
 				if _, err := os.Stat(indexPath); err == nil {
@@ -468,4 +468,3 @@ func runServe(cmd *cobra.Command, args []string) error {
 func SetFrontendFiles(fs fs.FS) {
 	frontendFiles = fs
 }
-

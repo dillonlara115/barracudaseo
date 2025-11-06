@@ -2,9 +2,15 @@
   import { onMount } from 'svelte';
   import { push } from 'svelte-spa-router';
   import { Search, BarChart3, Zap, Globe, Slack, FileText } from 'lucide-svelte';
-  import GSCConnection from '../components/GSCConnection.svelte';
+  import { fetchProjects } from '../lib/data.js';
+  import ProjectGSCSelector from '../components/ProjectGSCSelector.svelte';
   
   let summary = null; // Could be passed as prop or fetched if needed
+  let projects = [];
+  let selectedProjectId = null;
+  let selectedProject = null;
+  let loadingProjects = false;
+  let loadError = null;
   
   // Integration statuses
   let integrations = {
@@ -15,6 +21,27 @@
     slack: { connected: false, name: 'Slack' },
     jira: { connected: false, name: 'Jira' },
   };
+
+  onMount(async () => {
+    loadingProjects = true;
+    const { data, error } = await fetchProjects();
+    if (error) {
+      loadError = error.message || 'Failed to load projects';
+    } else {
+      projects = data || [];
+      if (projects.length > 0) {
+        selectedProject = projects[0];
+        selectedProjectId = selectedProject.id;
+      }
+    }
+    loadingProjects = false;
+  });
+
+  $: if (selectedProjectId) {
+    selectedProject = projects.find((p) => p.id === selectedProjectId) || selectedProject;
+  }
+
+  $: integrations.gsc.connected = Boolean(selectedProject?.settings?.gsc_property_url);
 </script>
 
 <div class="container mx-auto p-6 max-w-4xl">
@@ -44,12 +71,42 @@
             <p class="text-sm text-base-content/70 mt-1">
               Enhance recommendations with real search performance data. Prioritize fixes based on actual traffic.
             </p>
-          </div>
-          <div class="badge badge-success badge-lg" class:badge-success={integrations.gsc.connected} class:badge-ghost={!integrations.gsc.connected}>
-            {integrations.gsc.connected ? 'Connected' : 'Available'}
-          </div>
         </div>
-        <GSCConnection {summary} />
+        <div class="badge badge-success badge-lg" class:badge-success={integrations.gsc.connected} class:badge-ghost={!integrations.gsc.connected}>
+          {integrations.gsc.connected ? 'Connected' : 'Available'}
+        </div>
+      </div>
+        {#if loadError}
+          <div class="alert alert-error mt-4">
+            <span>{loadError}</span>
+          </div>
+        {:else if loadingProjects}
+          <div class="alert alert-info mt-4">
+            <span>Loading projects...</span>
+          </div>
+        {:else if projects.length === 0}
+          <div class="alert alert-warning mt-4">
+            <span>Create a project to connect Google Search Console.</span>
+          </div>
+        {:else}
+          {#if projects.length > 1}
+            <div class="form-control w-full mb-4">
+              <label class="label" for="gsc-project-select">
+                <span class="label-text">Project</span>
+              </label>
+              <select
+                id="gsc-project-select"
+                class="select select-bordered"
+                bind:value={selectedProjectId}
+              >
+                {#each projects as projectOption}
+                  <option value={projectOption.id}>{projectOption.name}</option>
+                {/each}
+              </select>
+            </div>
+          {/if}
+          <ProjectGSCSelector summary={summary} project={selectedProject} projectId={selectedProjectId} />
+        {/if}
       </div>
     </div>
 
@@ -174,4 +231,3 @@
     </div>
   </div>
 </div>
-

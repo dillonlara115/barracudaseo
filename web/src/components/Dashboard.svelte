@@ -7,7 +7,8 @@
   import LinkGraph from './LinkGraph.svelte';
   import RecommendationsPanel from './RecommendationsPanel.svelte';
   import Logo from './Logo.svelte';
-  import { fetchProjects } from '../lib/data.js';
+  import { fetchProjects, fetchProjectGSCStatus, fetchProjectGSCDimensions, triggerProjectGSCSync } from '../lib/data.js';
+  import { buildEnrichedIssues } from '../lib/gsc.js';
 
   export let summary = null;
   export let results = [];
@@ -31,10 +32,15 @@
     : initialTab;
   let issuesFilter = { severity: 'all', type: 'all', url: null };
   let resultsFilter = { status: 'all', performance: false };
-  
-  // Store enriched issues from GSC
-  let enrichedIssues = [];
-  let useEnrichedIssues = false;
+  let cachedEnrichedIssues = [];
+  let activeEnrichedIssues = [];
+  let enrichedIssuesMap = {};
+  let gscStatus = null;
+  let gscLoading = false;
+  let gscRefreshing = false;
+  let gscError = null;
+  let gscPageRows = [];
+  let gscInitializedProjectId = null;
 
   const navigateToTab = (tab, nextFilters = {}) => {
     // Update URL with tab query param
@@ -65,23 +71,80 @@
   };
 
   // Callback for GSC to update enriched issues
-  const handleEnrichedIssues = (enriched) => {
-    enrichedIssues = enriched;
-    useEnrichedIssues = true;
-    // Navigate to issues tab to see enriched data
-    navigateToTab('issues');
+  const formatDateTime = (value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   };
 
-  // Get issues to display - use enriched if available, otherwise regular
-  $: displayIssues = useEnrichedIssues && enrichedIssues.length > 0 
-    ? enrichedIssues.map(ei => ei.issue) 
+  async function loadGSCData(targetProjectId) {
+    if (!targetProjectId) return;
+
+    gscLoading = true;
+    gscError = null;
+    gscStatus = null;
+    gscPageRows = [];
+
+    const statusResult = await fetchProjectGSCStatus(targetProjectId);
+    if (statusResult.error) {
+      gscError = statusResult.error.message || 'Unable to load Google Search Console status.';
+      gscLoading = false;
+      return;
+    }
+
+    gscStatus = statusResult.data;
+
+    if (gscStatus?.integration?.property_url) {
+      const pageResult = await fetchProjectGSCDimensions(targetProjectId, 'page', { limit: 1000 });
+      if (pageResult.error) {
+        gscError = pageResult.error.message || 'Unable to load Search Console metrics.';
+      } else {
+        gscPageRows = pageResult.data?.rows || [];
+      }
+    }
+
+    gscLoading = false;
+  }
+
+  async function refreshGSCData() {
+    if (!projectId || gscRefreshing) return;
+    gscRefreshing = true;
+    gscError = null;
+    gscLoading = true;
+    const syncResult = await triggerProjectGSCSync(projectId, { lookback_days: 30 });
+    if (syncResult.error) {
+      gscError = syncResult.error.message || 'Failed to refresh Google Search Console data.';
+      gscRefreshing = false;
+      gscLoading = false;
+      return;
+    }
+    await loadGSCData(projectId);
+    gscRefreshing = false;
+  }
+
+  $: if (projectId && projectId !== gscInitializedProjectId) {
+    gscInitializedProjectId = projectId;
+    loadGSCData(projectId);
+  }
+
+  $: cachedEnrichedIssues = buildEnrichedIssues(summary?.issues || [], gscPageRows);
+
+  $: activeEnrichedIssues = cachedEnrichedIssues;
+
+  $: displayIssues = activeEnrichedIssues.length > 0
+    ? activeEnrichedIssues.map((ei) => ei.issue)
     : (summary?.issues || []);
   
-  // Get enriched issues data for components that need it
-  $: enrichedIssuesMap = enrichedIssues.reduce((acc, ei) => {
-    acc[ei.issue.url + '|' + ei.issue.type] = ei;
+  $: enrichedIssuesMap = activeEnrichedIssues.reduce((acc, ei) => {
+    if (ei?.issue?.url && ei?.issue?.type) {
+      acc[`${ei.issue.url}|${ei.issue.type}`] = ei;
+    }
     return acc;
   }, {});
+
+  $: gscProperty = gscStatus?.integration?.property_url || null;
+  $: gscLastSynced = gscStatus?.sync_state?.last_synced_at ? formatDateTime(gscStatus.sync_state.last_synced_at) : null;
 </script>
 
 <div class="navbar bg-base-100 shadow-lg border-b border-base-300">
@@ -154,7 +217,78 @@
 
 <div class="container mx-auto p-4">
   {#if activeTab === 'dashboard'}
-    <SummaryCard {summary} {navigateToTab} />
+    <div class="space-y-4">
+      {#if gscError}
+        <div class="alert alert-warning flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <span>{gscError}</span>
+          <div class="flex gap-2">
+            <button class="btn btn-sm btn-outline" on:click={() => loadGSCData(projectId)} disabled={gscLoading}>
+              {#if gscLoading}
+                <span class="loading loading-spinner loading-xs"></span>
+                Retrying...
+              {:else}
+                Retry
+              {/if}
+            </button>
+            <a class="btn btn-sm btn-ghost" href="/integrations">Manage</a>
+          </div>
+        </div>
+      {:else if gscProperty}
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 rounded-box border border-base-300 bg-base-100 p-4 shadow-sm">
+          <div>
+            <div class="text-sm font-semibold text-base-content/80">Google Search Console</div>
+            <div class="text-sm">
+              Connected to <span class="font-semibold">{gscProperty}</span>.
+              {#if gscLoading}
+                <span class="ml-1 text-xs text-base-content/60">(Refreshing...)</span>
+              {/if}
+            </div>
+            {#if gscLastSynced}
+              <div class="text-xs text-base-content/60">Last synced {gscLastSynced}</div>
+            {:else}
+              <div class="text-xs text-base-content/60">No cached metrics yet. Run a refresh to pull the latest data.</div>
+            {/if}
+          </div>
+          <div class="flex gap-2">
+            <button
+              class="btn btn-sm btn-outline"
+              on:click={refreshGSCData}
+              disabled={gscRefreshing || gscLoading}
+            >
+              {#if gscRefreshing || gscLoading}
+                <span class="loading loading-spinner loading-xs"></span>
+                Refreshing...
+              {:else}
+                Refresh Data
+              {/if}
+            </button>
+            <a class="btn btn-sm btn-ghost" href="/integrations">Manage</a>
+          </div>
+        </div>
+      {:else if gscLoading}
+        <div class="alert alert-info">
+          <span>Loading Google Search Console status...</span>
+        </div>
+      {:else}
+        <div class="alert alert-info">
+          <span>
+            Connect Google Search Console in
+            <a class="link link-primary" href="/integrations">Integrations</a>
+            to surface search performance metrics alongside crawl data.
+          </span>
+        </div>
+      {/if}
+
+      <SummaryCard
+        {summary}
+        {navigateToTab}
+        gscTotals={gscStatus?.summary?.totals}
+        gscSyncState={gscStatus?.sync_state}
+        gscIntegration={gscStatus?.integration}
+        gscLoading={gscLoading}
+        gscError={gscError}
+      />
+    </div>
   {:else if activeTab === 'results'}
     <ResultsTable 
       {results} 
@@ -163,7 +297,14 @@
       {navigateToTab}
     />
   {:else if activeTab === 'issues'}
-    <IssuesPanel issues={displayIssues} filter={issuesFilter} enrichedIssues={enrichedIssuesMap} />
+    <IssuesPanel
+      issues={displayIssues}
+      filter={issuesFilter}
+      enrichedIssues={enrichedIssuesMap}
+      gscStatus={gscStatus}
+      gscLoading={gscLoading}
+      gscError={gscError}
+    />
   {:else if activeTab === 'recommendations'}
     <div class="space-y-4">
       <RecommendationsPanel issues={displayIssues} {navigateToTab} enrichedIssues={enrichedIssuesMap} />

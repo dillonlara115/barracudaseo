@@ -17,10 +17,10 @@ import (
 )
 
 var (
-	apiPort     int
-	apiSupabaseURL string
+	apiPort               int
+	apiSupabaseURL        string
 	apiSupabaseServiceKey string
-	apiSupabaseAnonKey string
+	apiSupabaseAnonKey    string
 )
 
 var apiCmd = &cobra.Command{
@@ -45,7 +45,7 @@ func runAPI(cmd *cobra.Command, args []string) error {
 	// Load .env file if it exists (for production/shared defaults)
 	// Then load .env.local to override with local development values
 	// Ignore errors - these files are optional
-	_ = godotenv.Load()        // Load .env first
+	_ = godotenv.Load()                 // Load .env first
 	_ = godotenv.Overload(".env.local") // Override with .env.local if it exists
 
 	// Initialize logger
@@ -92,6 +92,7 @@ func runAPI(cmd *cobra.Command, args []string) error {
 		SupabaseURL:        supabaseURL,
 		SupabaseServiceKey: supabaseServiceKey,
 		SupabaseAnonKey:    supabaseAnonKey,
+		CronSyncSecret:     os.Getenv("GSC_SYNC_SECRET"),
 		Logger:             logger,
 	})
 	if err != nil {
@@ -137,4 +138,3 @@ func runAPI(cmd *cobra.Command, args []string) error {
 	logger.Info("Server exited")
 	return nil
 }
-

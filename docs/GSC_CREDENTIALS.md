@@ -64,8 +64,8 @@ Then run: `chmod +x start-server.sh && ./start-server.sh`
 - Keep credentials secure and private
 - Use different credentials for development vs production
 - Rotate credentials if they're exposed
+- Store automation secrets such as `GSC_SYNC_SECRET` only in secure server-side environments (API server and Supabase Edge functions), never in client bundles.
 
 ## Getting Credentials
 
 See `docs/GSC_SETUP_CHECKLIST.md` for detailed instructions on creating Google Cloud OAuth credentials.
-
