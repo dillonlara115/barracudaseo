@@ -11,7 +11,7 @@
   let creatingCheckout = false;
   let creatingPortal = false;
   
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+  const API_URL = import.meta.env.VITE_CLOUD_RUN_API_URL || 'http://localhost:8080';
   const STRIPE_PRICE_ID_PRO = import.meta.env.VITE_STRIPE_PRICE_ID_PRO || '';
   const STRIPE_PRICE_ID_PRO_ANNUAL = import.meta.env.VITE_STRIPE_PRICE_ID_PRO_ANNUAL || '';
   const STRIPE_PRICE_ID_TEAM_SEAT = import.meta.env.VITE_STRIPE_PRICE_ID_TEAM_SEAT || '';
@@ -21,11 +21,33 @@
 
   // Load data when component mounts and user is available
   onMount(() => {
+    // Check for success/cancel parameters from Stripe redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const canceled = urlParams.get('canceled');
+    
+    // Clean up URL parameters
+    if (success || canceled) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    
     // Subscribe to user store and load when user becomes available
     const unsubscribe = user.subscribe(async (currentUser) => {
-      if (currentUser && !hasLoaded) {
-        hasLoaded = true;
-        await loadSubscriptionData();
+      if (currentUser) {
+        if (!hasLoaded || success) {
+          // Always reload if returning from successful checkout
+          hasLoaded = true;
+          await loadSubscriptionData();
+          
+          // Show success message if returning from checkout
+          if (success) {
+            // Small delay to ensure data is loaded
+            setTimeout(() => {
+              // You could add a toast notification here if you have one
+              console.log('Payment successful! Subscription updated.');
+            }, 500);
+          }
+        }
       } else if (!currentUser && !hasLoaded) {
         // No user yet, but don't keep loading state forever
         loading = false;

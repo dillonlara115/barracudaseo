@@ -98,9 +98,7 @@ func (s *Server) Router() http.Handler {
 	v1.HandleFunc("/projects", s.handleProjects)
 	v1.HandleFunc("/projects/", s.handleProjectByID)
 	v1.HandleFunc("/exports", s.handleExports)
-	v1.HandleFunc("/billing/summary", s.handleBillingSummary)
-	v1.HandleFunc("/billing/checkout", s.handleCreateCheckoutSession)
-	v1.HandleFunc("/billing/portal", s.handleCreateBillingPortalSession)
+	v1.HandleFunc("/billing/", s.handleBilling)
 
 	// Wrap v1 routes with authentication middleware
 	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", s.authMiddleware(v1)))

@@ -67,6 +67,25 @@ type BillingSummaryResponse struct {
 	Subscription map[string]interface{} `json:"subscription"`
 }
 
+// handleBilling routes billing sub-paths
+func (s *Server) handleBilling(w http.ResponseWriter, r *http.Request) {
+	// Extract path after /billing/
+	// After StripPrefix("/api/v1"), the path is like "/billing/summary"
+	path := strings.TrimPrefix(r.URL.Path, "/billing/")
+	path = strings.Trim(path, "/")
+
+	switch path {
+	case "summary":
+		s.handleBillingSummary(w, r)
+	case "checkout":
+		s.handleCreateCheckoutSession(w, r)
+	case "portal":
+		s.handleCreateBillingPortalSession(w, r)
+	default:
+		s.respondError(w, http.StatusNotFound, fmt.Sprintf("Billing resource not found: %s", path))
+	}
+}
+
 // handleBillingSummary returns the authenticated user's profile and subscription info
 func (s *Server) handleBillingSummary(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -94,6 +113,28 @@ func (s *Server) handleBillingSummary(w http.ResponseWriter, r *http.Request) {
 		s.logger.Error("Failed to load subscription", zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, "Failed to load subscription")
 		return
+	}
+
+	// If no subscription found but user has stripe_customer_id, try to sync from Stripe
+	if subscription == nil && profile["stripe_customer_id"] != nil {
+		customerID, ok := profile["stripe_customer_id"].(string)
+		if ok && customerID != "" {
+			s.logger.Info("No subscription found in DB, attempting to sync from Stripe", 
+				zap.String("customer_id", customerID),
+				zap.String("user_id", userID))
+			
+			// Try to fetch latest subscription from Stripe
+			if err := s.syncSubscriptionFromStripe(customerID, userID); err != nil {
+				s.logger.Warn("Failed to sync subscription from Stripe", zap.Error(err))
+				// Continue - return null subscription rather than error
+			} else {
+				// Retry fetching subscription after sync
+				subscription, err = s.fetchLatestSubscription(userID)
+				if err != nil {
+					s.logger.Warn("Failed to fetch subscription after sync", zap.Error(err))
+				}
+			}
+		}
 	}
 
 	s.respondJSON(w, http.StatusOK, BillingSummaryResponse{
@@ -692,8 +733,7 @@ func (s *Server) fetchLatestSubscription(userID string) (map[string]interface{},
 	data, _, err := s.serviceRole.From("subscriptions").
 		Select("*", "", false).
 		Eq("user_id", userID).
-		Order("updated_at", nil).
-		Limit(1, "").
+		Order("created_at", nil).
 		Execute()
 
 	if err != nil {
@@ -708,7 +748,8 @@ func (s *Server) fetchLatestSubscription(userID string) (map[string]interface{},
 		return nil, nil
 	}
 
-	return subscriptions[0], nil
+	// Return the most recent subscription (last in ascending order)
+	return subscriptions[len(subscriptions)-1], nil
 }
 
 func (s *Server) getUserIDByStripeCustomerID(customerID string) (string, error) {
@@ -731,4 +772,43 @@ func (s *Server) getUserIDByStripeCustomerID(customerID string) (string, error) 
 		return "", fmt.Errorf("invalid user ID format")
 	}
 	return userID, nil
+}
+
+// syncSubscriptionFromStripe fetches the latest subscription from Stripe and syncs it to the database
+func (s *Server) syncSubscriptionFromStripe(customerID, userID string) error {
+	stripeConfig := GetStripeConfig()
+	if stripeConfig.SecretKey == "" {
+		return fmt.Errorf("Stripe not configured")
+	}
+
+	// List subscriptions for this customer
+	params := &stripe.SubscriptionListParams{
+		Customer: stripe.String(customerID),
+	}
+	params.Filters.AddFilter("limit", "", "10")
+	
+	iter := subscription.List(params)
+	
+	// Get the most recent active subscription
+	var latestSub *stripe.Subscription
+	for iter.Next() {
+		sub := iter.Subscription()
+		if latestSub == nil || sub.Created > latestSub.Created {
+			latestSub = sub
+		}
+	}
+	
+	if err := iter.Err(); err != nil {
+		return fmt.Errorf("failed to list subscriptions from Stripe: %w", err)
+	}
+	
+	if latestSub == nil {
+		s.logger.Info("No subscriptions found in Stripe for customer", zap.String("customer_id", customerID))
+		return nil // Not an error - just no subscription yet
+	}
+	
+	// Process the subscription update (this will create/update the DB record)
+	s.handleSubscriptionUpdate(latestSub)
+	
+	return nil
 }
