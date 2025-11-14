@@ -31,7 +31,7 @@
   let maxPages = 100; // Initial default, will be set when modal opens
   let workers = 10;
   let respectRobots = true;
-  let parseSitemap = false;
+  let parseSitemap = true; // Enable sitemap parsing by default to discover more pages
 
   // Use loadedProject or prop project
   $: currentProject = project || loadedProject;
@@ -158,10 +158,12 @@
 
     // Success - show progress instead of closing modal
     console.log('Crawl triggered successfully:', data);
+    console.log('Full API response:', JSON.stringify(data, null, 2));
     
     // The API returns { crawl_id, status, message }
     const crawlId = data.crawl_id || data.id || data.crawlId;
     console.log('Extracted crawlId:', crawlId, 'from data:', data);
+    console.log('Project ID:', projectId);
     
     if (!crawlId) {
       console.error('No crawl_id found in response:', data);
@@ -172,6 +174,7 @@
     activeCrawlId = crawlId;
     showProgress = true;
     console.log('Switching to progress view. activeCrawlId:', activeCrawlId, 'showProgress:', showProgress);
+    console.log('Will fetch crawl at: /api/v1/crawls/' + crawlId);
     
     // Don't dispatch 'created' event immediately - let the progress component handle completion
     // The parent will redirect when crawl completes via the 'completed' event

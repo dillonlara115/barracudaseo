@@ -13,14 +13,29 @@
   let loading = true;
   let error = null;
   let pollInterval = null;
+  let retryCount = 0;
+  const MAX_RETRIES = 10; // Retry for up to 20 seconds (10 retries * 2 seconds)
   
-  // Progress calculation
-  $: maxPages = crawl?.meta?.max_pages || crawl?.total_pages || 1000;
-  $: progress = maxPages > 0 ? Math.min((pageCount / maxPages) * 100, 100) : 0;
+  const toNumber = (value) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+  
+  // Progress calculation - use max_pages from crawl (limit), not total_pages (current count)
+  $: maxPages = crawl?.max_pages || crawl?.meta?.max_pages || 100;
   $: status = crawl?.status || 'pending';
   
   // Use actual page count from DB, but fallback to crawl.total_pages if available
-  $: displayPageCount = pageCount > 0 ? pageCount : (crawl?.total_pages || 0);
+  $: displayPageCount = (() => {
+    const counts = [
+      toNumber(pageCount),
+      toNumber(crawl?.page_count),
+      toNumber(crawl?.indexed_pages),
+      toNumber(crawl?.total_pages)
+    ];
+    return Math.max(...counts, 0);
+  })();
+  $: progress = maxPages > 0 ? Math.min((displayPageCount / maxPages) * 100, 100) : 0;
   
   // ETA calculation
   let startTime = null;
@@ -81,31 +96,60 @@
     console.log('CrawlProgress: Loading crawl', crawlId);
     
     try {
-      // Fetch crawl and page count in parallel
-      const [crawlResult, pageCountResult] = await Promise.all([
-        fetchCrawl(crawlId),
-        fetchCrawlPageCount(crawlId)
-      ]);
+      // Fetch crawl from backend API (now includes real-time page count)
+      const crawlResult = await fetchCrawl(crawlId);
       
       if (crawlResult.error) {
+        // If crawl not found and we haven't loaded yet, it might still be creating
+        // Retry for a reasonable amount of time before showing error
+        if (crawlResult.error.message && crawlResult.error.message.includes('not found') && !crawl) {
+          retryCount++;
+          if (retryCount < MAX_RETRIES) {
+            console.log(`CrawlProgress: Crawl not found yet, retrying (${retryCount}/${MAX_RETRIES})`, crawlId);
+            return; // Don't set error, will retry on next poll
+          } else {
+            console.error('CrawlProgress: Crawl not found after multiple retries', crawlId);
+            error = 'Crawl not found. It may still be initializing. Please refresh the page.';
+            loading = false;
+            return;
+          }
+        }
         console.error('CrawlProgress: Error fetching crawl', crawlResult.error);
         throw crawlResult.error;
       }
-      if (pageCountResult.error) {
-        console.error('CrawlProgress: Error fetching page count', pageCountResult.error);
-        throw pageCountResult.error;
-      }
+      
+      // Reset retry count on successful fetch
+      retryCount = 0;
       
       crawl = crawlResult.data;
-      pageCount = pageCountResult.count;
+      
+      // Use whichever count is currently highest to avoid regressions while the crawl streams in
+      const counts = [
+        toNumber(pageCount),
+        toNumber(crawl?.page_count),
+        toNumber(crawl?.total_pages),
+        toNumber(crawl?.indexed_pages)
+      ];
+      const bestCount = Math.max(...counts, 0);
+      if (bestCount > 0) {
+        pageCount = bestCount;
+      } else {
+        // Fallback: fetch page count separately if not in crawl data
+        const pageCountResult = await fetchCrawlPageCount(crawlId);
+        if (!pageCountResult.error) {
+          pageCount = pageCountResult.count;
+        }
+      }
       
       console.log('CrawlProgress: Loaded', { 
         crawl: !!crawl, 
         status: crawl?.status,
         crawlStatus: crawl?.status,
         pageCount,
+        pageCountFromBackend: crawl?.page_count,
         totalPagesFromCrawl: crawl?.total_pages,
-        maxPages: crawl?.meta?.max_pages,
+        maxPages: crawl?.max_pages || crawl?.meta?.max_pages,
+        meta: crawl?.meta,
         startedAt: crawl?.started_at,
         completedAt: crawl?.completed_at
       });
@@ -140,12 +184,15 @@
       return;
     }
     
+    // Initial load with a small delay to ensure crawl is created
+    await new Promise(resolve => setTimeout(resolve, 500));
     await loadCrawl();
     
     // Always start polling - it will stop automatically when crawl completes
+    // Poll more frequently for better real-time updates
     pollInterval = setInterval(async () => {
       await loadCrawl();
-    }, 2000);
+    }, 1000); // Poll every second instead of every 2 seconds
   });
   
   onDestroy(() => {
@@ -247,4 +294,3 @@
     </div>
   </div>
 {/if}
-

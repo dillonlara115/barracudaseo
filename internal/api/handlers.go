@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -506,6 +507,8 @@ func (s *Server) handleExports(w http.ResponseWriter, r *http.Request) {
 
 // handleTriggerCrawl handles POST /api/v1/projects/:id/crawl - trigger a new crawl
 func (s *Server) handleTriggerCrawl(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	s.logger.Info("handleTriggerCrawl called", zap.String("project_id", projectID), zap.String("user_id", userID))
+
 	// Verify access
 	hasAccess, err := s.verifyProjectAccess(userID, projectID)
 	if err != nil {
@@ -595,14 +598,42 @@ func (s *Server) handleTriggerCrawl(w http.ResponseWriter, r *http.Request, proj
 	}
 
 	// Insert crawl using service role (bypasses RLS)
-	_, _, err = s.serviceRole.From("crawls").Insert(crawl, false, "", "", "").Execute()
+	s.logger.Info("Attempting to insert crawl", zap.String("crawl_id", crawlID), zap.String("project_id", projectID))
+	data, _, err := s.serviceRole.From("crawls").Insert(crawl, false, "", "", "").Execute()
 	if err != nil {
-		s.logger.Error("Failed to insert crawl", zap.Error(err))
+		s.logger.Error("Failed to insert crawl", zap.String("crawl_id", crawlID), zap.Error(err), zap.Any("crawl_data", crawl))
 		s.respondError(w, http.StatusInternalServerError, "Failed to create crawl")
 		return
 	}
 
-	s.logger.Info("Crawl created", zap.String("crawl_id", crawlID), zap.String("status", "running"))
+	// Verify the crawl was inserted by checking the returned data
+	if len(data) == 0 {
+		s.logger.Warn("Crawl insert returned no data", zap.String("crawl_id", crawlID))
+	} else {
+		s.logger.Info("Crawl created and verified", zap.String("crawl_id", crawlID), zap.String("status", "running"), zap.Int("data_length", len(data)))
+	}
+
+	// Double-check: Verify crawl exists in database before returning
+	// Add a small delay to ensure transaction is committed
+	time.Sleep(100 * time.Millisecond)
+
+	var verifyCrawls []map[string]interface{}
+	verifyData, _, verifyErr := s.serviceRole.From("crawls").Select("id,project_id", "", false).Eq("id", crawlID).Execute()
+	if verifyErr != nil {
+		s.logger.Error("Failed to verify crawl after insert", zap.String("crawl_id", crawlID), zap.Error(verifyErr))
+	} else if err := json.Unmarshal(verifyData, &verifyCrawls); err == nil {
+		if len(verifyCrawls) > 0 {
+			verifyProjectID, _ := verifyCrawls[0]["project_id"].(string)
+			s.logger.Info("Crawl verified in database",
+				zap.String("crawl_id", crawlID),
+				zap.String("project_id", verifyProjectID),
+				zap.String("expected_project_id", projectID))
+		} else {
+			s.logger.Error("Crawl not found in database after insert!",
+				zap.String("crawl_id", crawlID),
+				zap.String("project_id", projectID))
+		}
+	}
 
 	// Start crawl asynchronously
 	go s.runCrawlAsync(crawlID, projectID, req)
@@ -706,7 +737,7 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 					}
 				}
 
-				// Update crawl total_pages in real-time
+				// Update crawl total_pages in real-time after batch insert
 				update := map[string]interface{}{
 					"total_pages": currentTotal,
 					"status":      "running", // Ensure status stays as running
@@ -715,23 +746,22 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 				if err != nil {
 					s.logger.Warn("Failed to update crawl progress", zap.Error(err))
 				} else {
-					s.logger.Info("Updated crawl progress", zap.Int("total_pages", currentTotal), zap.String("status", "running"))
+					s.logger.Info("Updated crawl progress (batch)", zap.Int("total_pages", currentTotal), zap.String("status", "running"))
 				}
 			}
 			pages = make([]map[string]interface{}, 0, batchSize)
 		} else {
-			// Update progress more frequently (every 5 pages or on final page)
-			if currentTotal%5 == 0 || currentTotal == totalPages {
-				update := map[string]interface{}{
-					"total_pages": currentTotal,
-					"status":      "running", // Ensure status stays as running
-				}
-				_, _, err := s.serviceRole.From("crawls").Update(update, "", "").Eq("id", crawlID).Execute()
-				if err != nil {
-					s.logger.Warn("Failed to update crawl progress", zap.Error(err))
-				} else {
-					s.logger.Info("Updated crawl progress", zap.Int("total_pages", currentTotal), zap.String("status", "running"))
-				}
+			// Update progress for every page (best real-time updates)
+			// Only skip if we just updated in a batch to avoid redundant updates
+			update := map[string]interface{}{
+				"total_pages": currentTotal,
+				"status":      "running", // Ensure status stays as running
+			}
+			_, _, err := s.serviceRole.From("crawls").Update(update, "", "").Eq("id", crawlID).Execute()
+			if err != nil {
+				s.logger.Warn("Failed to update crawl progress", zap.Error(err))
+			} else {
+				s.logger.Debug("Updated crawl progress (per-page)", zap.Int("total_pages", currentTotal), zap.String("status", "running"))
 			}
 		}
 	})
@@ -1056,11 +1086,17 @@ func (s *Server) handleCrawlByID(w http.ResponseWriter, r *http.Request) {
 	// Verify user has access to this crawl (via project membership)
 	hasAccess, err := s.verifyCrawlAccess(userID, crawlID)
 	if err != nil {
-		s.logger.Error("Failed to verify crawl access", zap.Error(err))
-		s.respondError(w, http.StatusInternalServerError, "Failed to verify crawl access")
-		return
-	}
-	if !hasAccess {
+		// If crawl doesn't exist, let handleGetCrawl return 404
+		if strings.Contains(err.Error(), "not found") {
+			s.logger.Debug("Crawl not found during access check, proceeding to fetch", zap.String("crawl_id", crawlID))
+			// Continue to handleGetCrawl which will return 404
+		} else {
+			s.logger.Error("Failed to verify crawl access", zap.String("crawl_id", crawlID), zap.String("user_id", userID), zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, "Failed to verify crawl access")
+			return
+		}
+	} else if !hasAccess {
+		// Crawl exists but user doesn't have access
 		s.respondError(w, http.StatusForbidden, "You don't have access to this crawl")
 		return
 	}
@@ -1091,28 +1127,103 @@ func (s *Server) handleCrawlByID(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleGetCrawl handles GET /api/v1/crawls/:id
+// handleGetCrawl handles GET /api/v1/crawls/:id - returns crawl with real-time page count
 func (s *Server) handleGetCrawl(w http.ResponseWriter, r *http.Request, crawlID string) {
+	s.logger.Info("Fetching crawl", zap.String("crawl_id", crawlID))
+
+	// Get crawl data using service role to ensure we get the latest updates
 	var crawls []map[string]interface{}
-	data, _, err := s.supabase.From("crawls").Select("*", "", false).Eq("id", crawlID).Execute()
+	data, _, err := s.serviceRole.From("crawls").Select("*", "", false).Eq("id", crawlID).Execute()
 	if err != nil {
-		s.logger.Error("Failed to get crawl", zap.Error(err))
+		s.logger.Error("Failed to query crawl from database", zap.String("crawl_id", crawlID), zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, "Failed to get crawl")
 		return
 	}
 
+	s.logger.Info("Crawl query executed", zap.String("crawl_id", crawlID), zap.Int("data_length", len(data)))
+
 	if err := json.Unmarshal(data, &crawls); err != nil {
-		s.logger.Error("Failed to parse crawl data", zap.Error(err))
+		s.logger.Error("Failed to parse crawl data", zap.String("crawl_id", crawlID), zap.Error(err), zap.String("raw_data", string(data)))
 		s.respondError(w, http.StatusInternalServerError, "Failed to parse crawl")
 		return
 	}
 
 	if len(crawls) == 0 {
+		s.logger.Warn("Crawl not found in database", zap.String("crawl_id", crawlID), zap.String("raw_response", string(data)))
 		s.respondError(w, http.StatusNotFound, "Crawl not found")
 		return
 	}
 
-	s.respondJSON(w, http.StatusOK, crawls[0])
+	statusStr := "unknown"
+	if status, ok := crawls[0]["status"].(string); ok {
+		statusStr = status
+	}
+	s.logger.Debug("Found crawl", zap.String("crawl_id", crawlID), zap.String("status", statusStr))
+
+	crawl := crawls[0]
+	originalTotalPages := 0
+	if tp, ok := crawl["total_pages"]; ok {
+		switch v := tp.(type) {
+		case float64:
+			originalTotalPages = int(v)
+		case int:
+			originalTotalPages = v
+		case int32:
+			originalTotalPages = int(v)
+		case int64:
+			originalTotalPages = int(v)
+		case string:
+			if parsed, err := strconv.Atoi(v); err == nil {
+				originalTotalPages = parsed
+			}
+		}
+	}
+
+	// Get real-time page count directly from pages table (more accurate than total_pages field)
+	var pages []map[string]interface{}
+	pageData, _, err := s.serviceRole.From("pages").
+		Select("id", "", false).
+		Eq("crawl_id", crawlID).
+		Execute()
+	pagesCount := 0
+	if err == nil {
+		if err := json.Unmarshal(pageData, &pages); err == nil {
+			// Update total_pages with actual count from database
+			pagesCount = len(pages)
+		}
+	}
+
+	// Use whichever count is greater so we preserve in-memory progress updates while crawl is running
+	effectiveCount := originalTotalPages
+	if pagesCount > effectiveCount {
+		effectiveCount = pagesCount
+	}
+
+	// total_pages in the crawl row already reflects streaming updates; keep it
+	crawl["page_count"] = effectiveCount
+	crawl["indexed_pages"] = pagesCount
+
+	// Ensure meta field is properly structured and includes max_pages for progress calculation
+	if meta, ok := crawl["meta"].(map[string]interface{}); ok {
+		// Meta exists, ensure max_pages is accessible
+		if maxPages, hasMaxPages := meta["max_pages"]; hasMaxPages {
+			// Add max_pages at top level for easier access
+			crawl["max_pages"] = maxPages
+		}
+	} else {
+		// Meta might be stored as JSON string, try to parse it
+		if metaStr, ok := crawl["meta"].(string); ok && metaStr != "" {
+			var meta map[string]interface{}
+			if err := json.Unmarshal([]byte(metaStr), &meta); err == nil {
+				crawl["meta"] = meta
+				if maxPages, hasMaxPages := meta["max_pages"]; hasMaxPages {
+					crawl["max_pages"] = maxPages
+				}
+			}
+		}
+	}
+
+	s.respondJSON(w, http.StatusOK, crawl)
 }
 
 // handleCrawlGraph handles GET /api/v1/crawls/:id/graph - returns link graph data
@@ -1184,22 +1295,30 @@ func (s *Server) verifyCrawlAccess(userID, crawlID string) (bool, error) {
 	var crawls []map[string]interface{}
 	data, _, err := s.serviceRole.From("crawls").Select("project_id", "", false).Eq("id", crawlID).Execute()
 	if err != nil {
+		s.logger.Error("Failed to query crawl for access verification", zap.String("crawl_id", crawlID), zap.Error(err))
 		return false, err
 	}
 
 	if err := json.Unmarshal(data, &crawls); err != nil {
+		s.logger.Error("Failed to parse crawl data for access verification", zap.String("crawl_id", crawlID), zap.Error(err))
 		return false, err
 	}
 
 	if len(crawls) == 0 {
-		return false, nil
+		s.logger.Warn("Crawl not found during access verification", zap.String("crawl_id", crawlID), zap.String("user_id", userID))
+		return false, fmt.Errorf("crawl not found: %s", crawlID)
 	}
 
 	projectID, ok := crawls[0]["project_id"].(string)
 	if !ok {
-		return false, nil
+		s.logger.Warn("Crawl missing project_id", zap.String("crawl_id", crawlID))
+		return false, fmt.Errorf("crawl missing project_id: %s", crawlID)
 	}
 
 	// Verify user has access to the project
-	return s.verifyProjectAccess(userID, projectID)
+	hasAccess, err := s.verifyProjectAccess(userID, projectID)
+	if err != nil {
+		return false, err
+	}
+	return hasAccess, nil
 }

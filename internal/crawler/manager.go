@@ -173,8 +173,12 @@ func (m *Manager) worker(id int) {
 				return
 			}
 
-			// Decrement pending counter
-			atomic.AddInt32(&m.pending, -1)
+			// Decrement pending counter (but don't let it go negative)
+			currentPending := atomic.AddInt32(&m.pending, -1)
+			if currentPending < 0 {
+				// Reset if it went negative (shouldn't happen, but safety check)
+				atomic.StoreInt32(&m.pending, 0)
+			}
 
 			// Check if we've reached max pages BEFORE processing
 			m.resultsMu.Lock()
@@ -380,11 +384,12 @@ func (m *Manager) worker(id int) {
 
 // monitorQueue closes the queue when all tasks are processed
 func (m *Manager) monitorQueue() {
-	ticker := time.NewTicker(1 * time.Second) // Check every second
+	ticker := time.NewTicker(2 * time.Second) // Check every 2 seconds (less frequent)
 	defer ticker.Stop()
 	
 	emptyCount := 0 // Count consecutive empty checks
-	const maxEmptyChecks = 3 // Close after 3 consecutive empty checks (3 seconds)
+	const maxEmptyChecks = 5 // Close after 5 consecutive empty checks (10 seconds total)
+	// Increased timeout to allow workers time to discover and enqueue links
 
 	for {
 		select {
@@ -403,20 +408,26 @@ func (m *Manager) monitorQueue() {
 				utils.NewField("pending", pending),
 				utils.NewField("queue_len", queueLen),
 				utils.NewField("results", resultCount),
-				utils.NewField("empty_count", emptyCount))
+				utils.NewField("empty_count", emptyCount),
+				utils.NewField("max_pages", m.config.MaxPages))
 			
-			if pending <= 0 && queueLen == 0 {
+			// Only close if:
+			// 1. Queue is empty AND no pending tasks
+			// 2. We haven't reached max pages (if we have, workers will cancel)
+			// 3. We've had multiple consecutive empty checks
+			if pending <= 0 && queueLen == 0 && resultCount < m.config.MaxPages {
 				emptyCount++
 				if emptyCount >= maxEmptyChecks {
 					utils.Info("Closing queue - no pending tasks after multiple checks", 
 						utils.NewField("empty_checks", emptyCount),
-						utils.NewField("total_results", resultCount))
+						utils.NewField("total_results", resultCount),
+						utils.NewField("max_pages", m.config.MaxPages))
 					atomic.StoreInt32(&m.queueClosed, 1)
 					close(m.queue)
 					return
 				}
 			} else {
-				// Reset counter if we have pending work
+				// Reset counter if we have pending work or reached max pages
 				emptyCount = 0
 			}
 		}

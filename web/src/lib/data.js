@@ -85,19 +85,26 @@ export async function fetchCrawls(projectId) {
   }
 }
 
-// Fetch a single crawl by ID
+// Fetch a single crawl by ID - use backend API for real-time updates
 export async function fetchCrawl(crawlId) {
   try {
-    const { data, error } = await supabase
-      .from('crawls')
-      .select('*')
-      .eq('id', crawlId)
-      .single();
-
-    if (error) throw error;
+    const response = await authorizedRequest(`/api/v1/crawls/${crawlId}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+      const errorMessage = errorData.error || `Failed to fetch crawl: ${response.status}`;
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      throw error;
+    }
+    const data = await response.json();
     return { data, error: null };
   } catch (error) {
-    return { data: null, error };
+    console.error('Error fetching crawl:', error);
+    // Return error object with message property for consistent handling
+    return { 
+      data: null, 
+      error: error instanceof Error ? error : new Error(String(error))
+    };
   }
 }
 
