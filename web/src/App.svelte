@@ -8,9 +8,10 @@
   import ProjectsList from './routes/ProjectsList.svelte';
   import ProjectView from './routes/ProjectView.svelte';
   import CrawlView from './routes/CrawlView.svelte';
-  import Integrations from './routes/Integrations.svelte';
+  import IntegrationsProtected from './routes/IntegrationsProtected.svelte';
   import Settings from './routes/Settings.svelte';
   import Billing from './routes/Billing.svelte';
+  import { loadSubscriptionData } from './lib/subscription.js';
 
   let loading = true;
   let configError = null;
@@ -21,7 +22,7 @@
     '/project/:id': ProjectView,
     '/project/:projectId/crawl/:crawlId': CrawlView,
     '/project/:projectId/settings': Settings,
-    '/integrations': Integrations,
+    '/integrations': IntegrationsProtected,
     '/billing': Billing,
     '/settings': Billing, // Alias for billing
   };
@@ -39,6 +40,13 @@
   }
 
   onMount(async () => {
+    // Fix double hash issue if present (e.g., #/#/billing -> #/billing)
+    if (window.location.hash.startsWith('#/#/')) {
+      const fixedHash = window.location.hash.replace('#/#/', '#/');
+      window.location.hash = fixedHash;
+      console.log('Auto-fixed hash from #/#/ to:', fixedHash);
+    }
+    
     // Check for auth callback (email confirmation, password reset, etc.)
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const accessToken = hashParams.get('access_token');
@@ -66,6 +74,9 @@
       if (!currentUser) {
         // Redirect to home if not authenticated
         push('/');
+      } else {
+        // Load subscription data when user is authenticated
+        await loadSubscriptionData();
       }
       loading = false;
     });
@@ -88,6 +99,7 @@
     </div>
   {:else}
     <!-- Router handles all authenticated routes -->
-    <Router {routes} useHash={false} />
+    <!-- Using hash mode for routing -->
+    <Router {routes} />
   {/if}
 </div>

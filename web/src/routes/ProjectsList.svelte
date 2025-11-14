@@ -29,7 +29,20 @@
       if (fetchError) throw fetchError;
       projects = data || [];
       
-      // Auto-redirect to first project if available
+      // Sort projects: prefer "barracudaseo" or alphabetically by name
+      projects.sort((a, b) => {
+        const aName = (a.name || '').toLowerCase();
+        const bName = (b.name || '').toLowerCase();
+        
+        // Put "barracudaseo" first if it exists
+        if (aName.includes('barracuda') && !bName.includes('barracuda')) return -1;
+        if (bName.includes('barracuda') && !aName.includes('barracuda')) return 1;
+        
+        // Otherwise sort alphabetically
+        return aName.localeCompare(bName);
+      });
+      
+      // Auto-redirect to first project if available (now sorted with barracudaseo first)
       if (projects.length > 0) {
         push(`/project/${projects[0].id}`);
       }

@@ -532,11 +532,45 @@ func (s *Server) handleTriggerCrawl(w http.ResponseWriter, r *http.Request, proj
 	if req.MaxDepth == 0 {
 		req.MaxDepth = 3
 	}
-	if req.MaxPages == 0 {
-		req.MaxPages = 1000
-	}
 	if req.Workers == 0 {
 		req.Workers = 10
+	}
+
+	// Get user profile to check subscription tier
+	profile, err := s.fetchProfile(userID)
+	if err != nil {
+		s.logger.Error("Failed to fetch user profile", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify subscription")
+		return
+	}
+
+	// Determine max pages limit based on subscription tier
+	subscriptionTier := "free"
+	if profile != nil {
+		if tier, ok := profile["subscription_tier"].(string); ok && tier != "" {
+			subscriptionTier = tier
+		}
+	}
+
+	var maxPagesLimit int
+	switch subscriptionTier {
+	case "pro":
+		maxPagesLimit = 10000
+	case "team":
+		maxPagesLimit = 25000
+	default: // free
+		maxPagesLimit = 100
+	}
+
+	// Set default max pages if not provided
+	if req.MaxPages == 0 {
+		req.MaxPages = maxPagesLimit
+	}
+
+	// Enforce subscription limit
+	if req.MaxPages > maxPagesLimit {
+		s.respondError(w, http.StatusForbidden, fmt.Sprintf("Your %s plan allows a maximum of %d pages per crawl. Please upgrade to crawl more pages.", subscriptionTier, maxPagesLimit))
+		return
 	}
 
 	// Create crawl record with status "running"
@@ -568,6 +602,8 @@ func (s *Server) handleTriggerCrawl(w http.ResponseWriter, r *http.Request, proj
 		return
 	}
 
+	s.logger.Info("Crawl created", zap.String("crawl_id", crawlID), zap.String("status", "running"))
+
 	// Start crawl asynchronously
 	go s.runCrawlAsync(crawlID, projectID, req)
 
@@ -581,8 +617,8 @@ func (s *Server) handleTriggerCrawl(w http.ResponseWriter, r *http.Request, proj
 
 // runCrawlAsync runs the crawler and stores results
 func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlRequest) {
-	// Initialize logger for crawler
-	if err := utils.InitLogger(false); err != nil {
+	// Initialize logger for crawler (enable debug temporarily to diagnose crawling issues)
+	if err := utils.InitLogger(true); err != nil {
 		s.logger.Error("Failed to initialize logger", zap.Error(err))
 		s.updateCrawlStatus(crawlID, "failed", fmt.Sprintf("Failed to initialize logger: %v", err))
 		return
@@ -650,6 +686,10 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 		}
 		pages = append(pages, pageData)
 
+		// Increment total pages processed (for each page)
+		atomic.AddInt32(&totalPagesProcessed, 1)
+		currentTotal := int(atomic.LoadInt32(&totalPagesProcessed))
+
 		// Insert in batches and update progress
 		if len(pages) >= batchSize {
 			var pageResults []map[string]interface{}
@@ -667,19 +707,32 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 				}
 
 				// Update crawl total_pages in real-time
-				atomic.AddInt32(&totalPagesProcessed, int32(len(pages)))
-				currentTotal := int(atomic.LoadInt32(&totalPagesProcessed))
 				update := map[string]interface{}{
 					"total_pages": currentTotal,
+					"status":      "running", // Ensure status stays as running
 				}
 				_, _, err = s.serviceRole.From("crawls").Update(update, "", "").Eq("id", crawlID).Execute()
 				if err != nil {
 					s.logger.Warn("Failed to update crawl progress", zap.Error(err))
 				} else {
-					s.logger.Debug("Updated crawl progress", zap.Int("total_pages", currentTotal))
+					s.logger.Info("Updated crawl progress", zap.Int("total_pages", currentTotal), zap.String("status", "running"))
 				}
 			}
 			pages = make([]map[string]interface{}, 0, batchSize)
+		} else {
+			// Update progress more frequently (every 5 pages or on final page)
+			if currentTotal%5 == 0 || currentTotal == totalPages {
+				update := map[string]interface{}{
+					"total_pages": currentTotal,
+					"status":      "running", // Ensure status stays as running
+				}
+				_, _, err := s.serviceRole.From("crawls").Update(update, "", "").Eq("id", crawlID).Execute()
+				if err != nil {
+					s.logger.Warn("Failed to update crawl progress", zap.Error(err))
+				} else {
+					s.logger.Info("Updated crawl progress", zap.Int("total_pages", currentTotal), zap.String("status", "running"))
+				}
+			}
 		}
 	})
 
@@ -709,7 +762,10 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 			}
 		}
 	}
-	finalTotal := int(atomic.LoadInt32(&totalPagesProcessed))
+	// Use the actual count from results, not the atomic counter (which might be off)
+	finalTotal := len(results)
+	// Ensure totalPagesProcessed matches finalTotal
+	atomic.StoreInt32(&totalPagesProcessed, int32(finalTotal))
 	pagesMu.Unlock()
 
 	// Analyze results
@@ -780,7 +836,9 @@ func (s *Server) updateCrawlStatus(crawlID, status, errorMsg string) {
 
 	_, _, err := s.serviceRole.From("crawls").Update(update, "", "").Eq("id", crawlID).Execute()
 	if err != nil {
-		s.logger.Error("Failed to update crawl status", zap.String("crawl_id", crawlID), zap.Error(err))
+		s.logger.Error("Failed to update crawl status", zap.String("crawl_id", crawlID), zap.String("status", status), zap.Error(err))
+	} else {
+		s.logger.Info("Updated crawl status", zap.String("crawl_id", crawlID), zap.String("status", status))
 	}
 }
 

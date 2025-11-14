@@ -2,7 +2,11 @@
   import { onMount } from 'svelte';
   import { user } from '../lib/auth.js';
   import { supabase } from '../lib/supabase.js';
-  import { CreditCard, Check, X, Loader } from 'lucide-svelte';
+  import { CreditCard, Check, X, Loader, ArrowLeft } from 'lucide-svelte';
+  import { userProfile } from '../lib/subscription.js';
+  import { push, link } from 'svelte-spa-router';
+  import Logo from './Logo.svelte';
+  import Auth from './Auth.svelte';
 
   let loading = true;
   let profile = null;
@@ -34,19 +38,17 @@
     // Subscribe to user store and load when user becomes available
     const unsubscribe = user.subscribe(async (currentUser) => {
       if (currentUser) {
-        if (!hasLoaded || success) {
-          // Always reload if returning from successful checkout
-          hasLoaded = true;
-          await loadSubscriptionData();
-          
-          // Show success message if returning from checkout
-          if (success) {
-            // Small delay to ensure data is loaded
-            setTimeout(() => {
-              // You could add a toast notification here if you have one
-              console.log('Payment successful! Subscription updated.');
-            }, 500);
-          }
+        // Always load data, even if already loaded (to refresh)
+        hasLoaded = true;
+        await loadBillingData();
+        
+        // Show success message if returning from checkout
+        if (success) {
+          // Small delay to ensure data is loaded
+          setTimeout(() => {
+            // You could add a toast notification here if you have one
+            console.log('Payment successful! Subscription updated.');
+          }, 500);
         }
       } else if (!currentUser && !hasLoaded) {
         // No user yet, but don't keep loading state forever
@@ -89,7 +91,7 @@
     return token;
   }
 
-  async function loadSubscriptionData() {
+  async function loadBillingData() {
     if (!$user) {
       loading = false;
       return;
@@ -113,12 +115,13 @@
       }
 
       const data = await response.json();
-      console.log('Billing summary response:', data); // Debug log
       
       // Backend should always return a profile (it creates one if missing)
       // But handle the case where it might be null/undefined
       if (data?.profile) {
         profile = data.profile;
+        // Update the subscription store
+        userProfile.set(data.profile);
       } else {
         // Fallback: create a default profile object
         profile = {
@@ -127,6 +130,7 @@
           subscription_status: 'active',
           team_size: 1
         };
+        userProfile.set(profile);
       }
       
       subscription = data?.subscription || null;
@@ -258,8 +262,27 @@
   $: isProOrTeam = profile?.subscription_tier === 'pro' || profile?.subscription_tier === 'team';
 </script>
 
+<!-- Header Navigation -->
+<div class="navbar bg-base-100 shadow-lg border-b border-base-300 gap-2">
+  <div class="flex-1">
+    <a href="#/" use:link class="btn btn-ghost">
+      <Logo size="md" />
+    </a>
+  </div>
+  <div class="flex gap-2">
+    <Auth />
+  </div>
+</div>
+
 <div class="container mx-auto p-6 max-w-4xl">
   <div class="mb-6">
+    <button 
+      class="btn btn-ghost btn-sm mb-4"
+      on:click={() => push('#/')}
+    >
+      <ArrowLeft class="w-4 h-4 mr-2" />
+      Back to Projects
+    </button>
     <h1 class="text-3xl font-bold mb-2">Billing & Subscription</h1>
     <p class="text-base-content/70">
       Manage your subscription and billing information.
@@ -270,12 +293,15 @@
     <div class="flex items-center justify-center min-h-[400px]">
       <span class="loading loading-spinner loading-lg"></span>
     </div>
-  {:else if error}
-    <div class="alert alert-error mb-6">
-      <X class="w-5 h-5" />
-      <span>{error}</span>
-    </div>
-  {:else if profile}
+  {:else}
+    {#if error}
+      <div class="alert alert-error mb-6">
+        <X class="w-5 h-5" />
+        <span>{error}</span>
+      </div>
+    {/if}
+    
+    {#if profile}
     <div class="space-y-6">
       <!-- Current Plan Card -->
       <div class="card bg-base-100 shadow-lg">
@@ -453,6 +479,12 @@
         </div>
       {/if}
     </div>
+    {:else}
+      <!-- No profile loaded - show loading or error message -->
+      <div class="alert alert-warning">
+        <span>Unable to load subscription information. Please try refreshing the page.</span>
+      </div>
+    {/if}
   {/if}
 </div>
 

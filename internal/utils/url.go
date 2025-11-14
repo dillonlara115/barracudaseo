@@ -43,13 +43,32 @@ func ExtractDomain(rawURL string) (string, error) {
 }
 
 // IsSameDomain checks if two URLs belong to the same domain
+// It handles www vs non-www by treating them as the same domain
 func IsSameDomain(url1, url2 string) bool {
 	domain1, err1 := ExtractDomain(url1)
 	domain2, err2 := ExtractDomain(url2)
 	if err1 != nil || err2 != nil {
 		return false
 	}
-	return domain1 == domain2
+	
+	// Exact match
+	if domain1 == domain2 {
+		return true
+	}
+	
+	// Handle www vs non-www: treat as same domain
+	// Remove www. prefix for comparison
+	normalizeDomain := func(domain string) string {
+		if strings.HasPrefix(domain, "www.") {
+			return domain[4:]
+		}
+		return domain
+	}
+	
+	normalized1 := normalizeDomain(domain1)
+	normalized2 := normalizeDomain(domain2)
+	
+	return normalized1 == normalized2
 }
 
 // ResolveURL resolves a relative URL against a base URL

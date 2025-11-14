@@ -35,6 +35,7 @@ type Manager struct {
 	pending          int32 // Track pending tasks (atomic)
 	queueClosed      int32 // Atomic flag to track if queue is closed
 	progressCallback ProgressCallback // Optional callback for progress updates
+	normalizedStartURL string // Store normalized start URL for domain comparison
 }
 
 // crawlTask represents a URL to be crawled with its depth
@@ -83,6 +84,9 @@ func (m *Manager) Crawl() ([]*models.PageResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid start URL: %w", err)
 	}
+	
+	// Store normalized start URL for domain comparison
+	m.normalizedStartURL = startURL
 
 	// Parse sitemap if enabled
 	var seedURLs []string
@@ -182,8 +186,11 @@ func (m *Manager) worker(id int) {
 			}
 			m.resultsMu.Unlock()
 
-			// Check depth limit
+			// Check depth limit - pages at max depth should still be crawled,
+			// but we won't discover links from them (handled later)
+			// Only skip if depth exceeds max depth
 			if task.Depth > m.config.MaxDepth {
+				utils.Debug("Skipping task - depth exceeds max", utils.NewField("url", task.URL), utils.NewField("depth", task.Depth), utils.NewField("max_depth", m.config.MaxDepth))
 				continue
 			}
 
@@ -244,6 +251,16 @@ func (m *Manager) worker(id int) {
 
 			// If fetch failed or not HTML, don't discover links
 			if result.Error != nil || result.PageResult.StatusCode != 200 {
+				utils.Info("Skipping link discovery - fetch failed or non-200", 
+					utils.NewField("url", task.URL),
+					utils.NewField("error", result.Error),
+					utils.NewField("status", result.PageResult.StatusCode))
+				continue
+			}
+
+			// Check if we have body content
+			if len(result.Body) == 0 {
+				utils.Warn("No body content to parse", utils.NewField("url", task.URL))
 				continue
 			}
 
@@ -260,6 +277,13 @@ func (m *Manager) worker(id int) {
 				utils.Error("Failed to parse HTML", utils.NewField("url", task.URL), utils.NewField("error", err.Error()))
 				continue
 			}
+			
+			utils.Info("Parsed page", 
+				utils.NewField("url", task.URL), 
+				utils.NewField("depth", task.Depth),
+				utils.NewField("internal_links", len(parsedData.InternalLinks)),
+				utils.NewField("external_links", len(parsedData.ExternalLinks)),
+				utils.NewField("body_size", len(result.Body)))
 
 			// Merge parsed data into page result
 			result.PageResult.Title = parsedData.Title
@@ -279,35 +303,70 @@ func (m *Manager) worker(id int) {
 			m.linkGraph.AddEdges(task.URL, parsedData.ExternalLinks)
 
 			// Enqueue discovered internal links for crawling
+			// Only discover links if we haven't reached max depth yet
 			if task.Depth < m.config.MaxDepth {
+				enqueuedCount := 0
+				skippedCount := 0
+				domainSkippedCount := 0
+				visitedSkippedCount := 0
+				
+				utils.Info("Discovering links", 
+					utils.NewField("url", task.URL),
+					utils.NewField("depth", task.Depth),
+					utils.NewField("max_depth", m.config.MaxDepth),
+					utils.NewField("total_internal_links", len(parsedData.InternalLinks)))
+				
 				for _, linkURL := range parsedData.InternalLinks {
-					// Check domain filter
-					if m.config.DomainFilter == "same" && !utils.IsSameDomain(linkURL, m.config.StartURL) {
+					// Check domain filter (use normalized start URL for comparison)
+					if m.config.DomainFilter == "same" && !utils.IsSameDomain(linkURL, m.normalizedStartURL) {
+						domainSkippedCount++
+						utils.Info("Skipping link - different domain", 
+							utils.NewField("link", linkURL), 
+							utils.NewField("start_url", m.normalizedStartURL))
 						continue
 					}
 
 					// Check if already visited
 					if _, visited := m.visited.Load(linkURL); visited {
+						visitedSkippedCount++
+						utils.Info("Skipping link - already visited", utils.NewField("link", linkURL))
 						continue
 					}
 
 					// Enqueue new task (check if queue is still open)
 					// Check if queue is closed before attempting to send
 					if atomic.LoadInt32(&m.queueClosed) == 1 {
+						utils.Warn("Queue closed, stopping link discovery", utils.NewField("url", task.URL))
 						return
 					}
 					
 					select {
 					case <-m.ctx.Done():
+						utils.Info("Context cancelled, stopping link discovery")
 						return
 					case m.queue <- crawlTask{URL: linkURL, Depth: task.Depth + 1}:
 						// Successfully enqueued
 						atomic.AddInt32(&m.pending, 1)
+						enqueuedCount++
+						utils.Info("Enqueued link", utils.NewField("link", linkURL), utils.NewField("new_depth", task.Depth+1))
 					default:
 						// Queue full, skip (but don't panic)
-						utils.Debug("Queue full, skipping link", utils.NewField("url", linkURL))
+						utils.Warn("Queue full, skipping link", utils.NewField("url", linkURL))
+						skippedCount++
 					}
 				}
+				utils.Info("Link discovery complete", 
+					utils.NewField("url", task.URL),
+					utils.NewField("enqueued", enqueuedCount),
+					utils.NewField("skipped_domain", domainSkippedCount),
+					utils.NewField("skipped_visited", visitedSkippedCount),
+					utils.NewField("skipped_queue_full", skippedCount),
+					utils.NewField("total_internal", len(parsedData.InternalLinks)))
+			} else {
+				utils.Info("Max depth reached, not discovering links", 
+					utils.NewField("url", task.URL),
+					utils.NewField("depth", task.Depth),
+					utils.NewField("max_depth", m.config.MaxDepth))
 			}
 
 			// Check if we've reached max pages
@@ -321,42 +380,44 @@ func (m *Manager) worker(id int) {
 
 // monitorQueue closes the queue when all tasks are processed
 func (m *Manager) monitorQueue() {
-	ticker := time.NewTicker(500 * time.Millisecond) // Check less frequently
+	ticker := time.NewTicker(1 * time.Second) // Check every second
 	defer ticker.Stop()
+	
+	emptyCount := 0 // Count consecutive empty checks
+	const maxEmptyChecks = 3 // Close after 3 consecutive empty checks (3 seconds)
 
 	for {
 		select {
 		case <-m.ctx.Done():
+			utils.Info("Monitor queue: context cancelled, closing queue")
 			atomic.StoreInt32(&m.queueClosed, 1)
 			close(m.queue)
 			return
 		case <-ticker.C:
 			// Check if queue is empty and no pending tasks
-			// Wait a bit longer to ensure workers have finished processing
 			pending := atomic.LoadInt32(&m.pending)
 			queueLen := len(m.queue)
+			resultCount := len(m.results)
+			
+			utils.Info("Monitor queue check", 
+				utils.NewField("pending", pending),
+				utils.NewField("queue_len", queueLen),
+				utils.NewField("results", resultCount),
+				utils.NewField("empty_count", emptyCount))
 			
 			if pending <= 0 && queueLen == 0 {
-				// Give workers more time to finish processing and discover links
-				time.Sleep(1 * time.Second)
-				
-				// Check again - if still empty, close the queue
-				pending = atomic.LoadInt32(&m.pending)
-				queueLen = len(m.queue)
-				
-				if pending <= 0 && queueLen == 0 {
-					// Final check - wait a bit more to be safe
-					time.Sleep(500 * time.Millisecond)
-					pending = atomic.LoadInt32(&m.pending)
-					queueLen = len(m.queue)
-					
-					if pending <= 0 && queueLen == 0 {
-						utils.Debug("Closing queue - no pending tasks")
-						atomic.StoreInt32(&m.queueClosed, 1)
-						close(m.queue)
-						return
-					}
+				emptyCount++
+				if emptyCount >= maxEmptyChecks {
+					utils.Info("Closing queue - no pending tasks after multiple checks", 
+						utils.NewField("empty_checks", emptyCount),
+						utils.NewField("total_results", resultCount))
+					atomic.StoreInt32(&m.queueClosed, 1)
+					close(m.queue)
+					return
 				}
+			} else {
+				// Reset counter if we have pending work
+				emptyCount = 0
 			}
 		}
 	}

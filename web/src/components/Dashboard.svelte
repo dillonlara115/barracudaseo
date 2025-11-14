@@ -9,6 +9,7 @@
   import Logo from './Logo.svelte';
   import { fetchProjects, fetchProjectGSCStatus, fetchProjectGSCDimensions, triggerProjectGSCSync } from '../lib/data.js';
   import { buildEnrichedIssues } from '../lib/gsc.js';
+  import { userProfile, isProOrTeam } from '../lib/subscription.js';
 
   export let summary = null;
   export let results = [];
@@ -262,7 +263,11 @@
                 Refresh Data
               {/if}
             </button>
-            <a class="btn btn-sm btn-ghost" href="/integrations" use:link>Manage</a>
+            {#if isProOrTeam($userProfile)}
+              <a class="btn btn-sm btn-ghost" href="#/integrations" use:link>Manage</a>
+            {:else}
+              <a class="btn btn-sm btn-ghost" href="#/billing" use:link>Upgrade</a>
+            {/if}
           </div>
         </div>
       {:else if gscLoading}
@@ -272,9 +277,16 @@
       {:else}
         <div class="alert alert-info">
           <span>
-            Connect Google Search Console in
-            <a class="link link-primary" href="/integrations" use:link>Integrations</a>
-            to surface search performance metrics alongside crawl data.
+            {#if isProOrTeam($userProfile)}
+              Connect Google Search Console in
+              <a class="link link-primary" href="#/integrations" use:link>Integrations</a>
+              to surface search performance metrics alongside crawl data.
+            {:else}
+              <span>
+                Connect Google Search Console to surface search performance metrics alongside crawl data.
+                <a class="link link-primary" href="#/billing" use:link>Upgrade to Pro</a> to access integrations.
+              </span>
+            {/if}
           </span>
         </div>
       {/if}

@@ -1,6 +1,8 @@
 <script>
   import { createEventDispatcher, onMount } from 'svelte';
   import { triggerCrawl, fetchProjects } from '../lib/data.js';
+  import { userProfile, getSubscriptionTier } from '../lib/subscription.js';
+  import { link } from 'svelte-spa-router';
   
   import CrawlProgress from './CrawlProgress.svelte';
   
@@ -18,10 +20,15 @@
   let loadedProject = null;
   let hasUrl = false;
   
+  // Get subscription tier and limits
+  $: subscriptionTier = getSubscriptionTier($userProfile);
+  $: maxPagesLimit = subscriptionTier === 'free' ? 100 : subscriptionTier === 'pro' ? 10000 : 25000;
+  $: isFreePlan = subscriptionTier === 'free';
+  
   // Form fields
   let url = '';
   let maxDepth = 3;
-  let maxPages = 1000;
+  let maxPages = 100; // Initial default, will be set when modal opens
   let workers = 10;
   let respectRobots = true;
   let parseSitemap = false;
@@ -98,6 +105,12 @@
     if (currentProject?.settings?.url) {
       url = currentProject.settings.url;
     }
+    
+    // Reset maxPages to plan limit when opening modal
+    if (maxPagesLimit) {
+      maxPages = maxPagesLimit;
+    }
+    
     showModal = true;
   }
 
@@ -115,6 +128,12 @@
       new URL(crawlUrl);
     } catch (e) {
       error = 'Invalid URL format in project settings';
+      return;
+    }
+
+    // Validate max pages against subscription limit
+    if (maxPages > maxPagesLimit) {
+      error = `Your ${subscriptionTier} plan allows a maximum of ${maxPagesLimit} pages per crawl. Please upgrade to crawl more pages.`;
       return;
     }
 
@@ -164,7 +183,7 @@
       url = '';
     }
     maxDepth = 3;
-    maxPages = 1000;
+    maxPages = maxPagesLimit;
     workers = 10;
     respectRobots = true;
     parseSitemap = false;
@@ -182,7 +201,7 @@
       url = '';
     }
     maxDepth = 3;
-    maxPages = 1000;
+    maxPages = maxPagesLimit;
     workers = 10;
     respectRobots = true;
     parseSitemap = false;
@@ -283,18 +302,32 @@
           <div class="form-control">
             <label class="label" for="max-pages-input">
               <span class="label-text text-base-content">Max Pages</span>
+              {#if isFreePlan}
+                <span class="badge badge-warning badge-sm">Free Plan Limit</span>
+              {/if}
             </label>
             <input 
               id="max-pages-input"
               type="number" 
               class="input input-bordered bg-base-100 text-base-content" 
               min="1"
-              max="10000"
+              max={maxPagesLimit}
               bind:value={maxPages}
               disabled={loading}
             />
             <div class="label">
-              <span class="label-text-alt text-base-content opacity-70">Maximum number of pages to crawl. The crawl will stop once this limit is reached.</span>
+              <span class="label-text-alt text-base-content opacity-70">
+                Maximum number of pages to crawl. The crawl will stop once this limit is reached.
+                {#if isFreePlan}
+                  <br />
+                  <span class="text-warning">Free plan limit: {maxPagesLimit} pages. 
+                    <a href="#/billing" use:link class="link link-primary">Upgrade to Pro</a> for up to 10,000+ pages.
+                  </span>
+                {:else}
+                  <br />
+                  <span class="text-success">Your {subscriptionTier} plan allows up to {maxPagesLimit} pages per crawl.</span>
+                {/if}
+              </span>
             </div>
           </div>
         </div>

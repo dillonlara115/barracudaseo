@@ -101,9 +101,13 @@
       
       console.log('CrawlProgress: Loaded', { 
         crawl: !!crawl, 
-        status: crawl?.status, 
+        status: crawl?.status,
+        crawlStatus: crawl?.status,
         pageCount,
-        maxPages: crawl?.meta?.max_pages 
+        totalPagesFromCrawl: crawl?.total_pages,
+        maxPages: crawl?.meta?.max_pages,
+        startedAt: crawl?.started_at,
+        completedAt: crawl?.completed_at
       });
       
       if (!startTime && crawl?.started_at) {

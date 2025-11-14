@@ -722,6 +722,19 @@ func (s *Server) ensureProfileExists(userID, authHeader string) (map[string]inte
 		Insert(defaultProfile, false, "", "", "").
 		Execute()
 	if err != nil {
+		// If profile already exists (race condition), fetch it instead
+		// Check for PostgreSQL duplicate key error (23505)
+		if strings.Contains(err.Error(), "23505") || strings.Contains(err.Error(), "duplicate key") {
+			s.logger.Debug("Profile already exists, fetching instead", zap.String("user_id", userID))
+			existingProfile, fetchErr := s.fetchProfile(userID)
+			if fetchErr != nil {
+				return nil, fmt.Errorf("failed to fetch existing profile: %w", fetchErr)
+			}
+			if existingProfile == nil {
+				return nil, fmt.Errorf("profile should exist but was not found after duplicate key error")
+			}
+			return existingProfile, nil
+		}
 		return nil, fmt.Errorf("failed to create profile: %w", err)
 	}
 

@@ -4,6 +4,7 @@
   import { link, push } from 'svelte-spa-router';
   import { Plug, CreditCard } from 'lucide-svelte';
   import Logo from './Logo.svelte';
+  import { userProfile, isProOrTeam } from '../lib/subscription.js';
 
   let isSignUp = false;
   let email = '';
@@ -65,14 +66,16 @@
       <span class="ml-2">{$user?.email || 'User'}</span>
     </button>
     <ul tabindex="0" role="menu" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+      {#if isProOrTeam($userProfile)}
+        <li>
+          <a href="#/integrations" use:link role="menuitem">
+            <Plug class="w-5 h-5" />
+            Integrations
+          </a>
+        </li>
+      {/if}
       <li>
-        <a href="/integrations" use:link role="menuitem">
-          <Plug class="w-5 h-5" />
-          Integrations
-        </a>
-      </li>
-      <li>
-        <a href="/billing" use:link role="menuitem">
+        <a href="#/billing" use:link role="menuitem">
           <CreditCard class="w-5 h-5" />
           Billing
         </a>
