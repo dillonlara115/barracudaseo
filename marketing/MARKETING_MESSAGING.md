@@ -99,7 +99,7 @@ Run scheduled or triggered crawls from the command line or CI pipelines, exporti
 
 **Website Hero**
 
-> *“Find. Fix. Ship better SEO.”*
+> *“Find. Fix. Get Results`.”*
 > Barracuda is an open, fast, and web-based SEO crawler that helps you discover technical issues, prioritize fixes, and improve your site’s performance — without enterprise bloat.
 
 **Subheader**

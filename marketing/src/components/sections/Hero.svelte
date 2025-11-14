@@ -1,7 +1,7 @@
 <section class="min-h-[80vh] flex items-center justify-center bg-gradient-to-b from-[#3c3836] via-[#8ec07c]/20 to-[#3c3836] py-20 px-4">
 	<div class="text-center max-w-4xl mx-auto">
 		<h1 class="mb-6 text-5xl md:text-6xl font-heading font-bold text-white">
-			Find. Fix. Ship better SEO.
+			Find. Fix. Get Results.
 		</h1>
 		<p class="mb-10 text-xl md:text-2xl text-white/80 font-body max-w-2xl mx-auto">
 			Barracuda is a web-based SEO crawler and auditing tool that helps you discover technical issues, prioritize fixes, and improve your site's performance — without enterprise bloat.
