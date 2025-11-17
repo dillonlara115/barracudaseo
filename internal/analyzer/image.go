@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/dillonlara115/barracuda/internal/utils"
 	"github.com/dillonlara115/barracuda/pkg/models"
 )
 
@@ -56,7 +57,7 @@ func CheckImageSize(imageURL string, timeout time.Duration) ImageSizeInfo {
 		}
 	}
 
-	// If HEAD doesn't provide size, try GET but limit body read
+	// If HEAD doesn't provide size (Content-Length is 0 or -1), try GET but limit body read
 	if resp.StatusCode == 200 && resp.ContentLength <= 0 {
 		getReq, err := http.NewRequest("GET", imageURL, nil)
 		if err != nil {
@@ -90,7 +91,13 @@ func CheckImageSize(imageURL string, timeout time.Duration) ImageSizeInfo {
 					info.SizeKB = bytesRead / 1024
 				}
 			}
+		} else {
+			// GET request failed, return error
+			info.Error = fmt.Errorf("GET request returned status %d", getResp.StatusCode)
 		}
+	} else if resp.StatusCode != 200 {
+		// HEAD request failed
+		info.Error = fmt.Errorf("HEAD request returned status %d", resp.StatusCode)
 	}
 
 	return info
@@ -100,6 +107,9 @@ func CheckImageSize(imageURL string, timeout time.Duration) ImageSizeInfo {
 func AnalyzeImages(results []*models.PageResult, timeout time.Duration) []Issue {
 	var issues []Issue
 	imageSizeCache := make(map[string]ImageSizeInfo)
+	totalImages := 0
+	imagesWithoutAlt := 0
+	largeImages := 0
 
 	for _, result := range results {
 		if result.StatusCode != 200 || result.Error != "" {
@@ -107,8 +117,11 @@ func AnalyzeImages(results []*models.PageResult, timeout time.Duration) []Issue 
 		}
 
 		for _, img := range result.Images {
+			totalImages++
+			
 			// Check for missing alt text
 			if img.Alt == "" {
+				imagesWithoutAlt++
 				issues = append(issues, Issue{
 					Type:           IssueMissingImageAlt,
 					Severity:       "warning",
@@ -122,6 +135,7 @@ func AnalyzeImages(results []*models.PageResult, timeout time.Duration) []Issue 
 			// Check image size (with caching)
 			if sizeInfo, cached := imageSizeCache[img.URL]; cached {
 				if sizeInfo.SizeKB > MaxImageSizeKB {
+					largeImages++
 					issues = append(issues, Issue{
 						Type:           IssueLargeImage,
 						Severity:       "warning",
@@ -137,6 +151,7 @@ func AnalyzeImages(results []*models.PageResult, timeout time.Duration) []Issue 
 				imageSizeCache[img.URL] = sizeInfo
 
 				if sizeInfo.Error == nil && sizeInfo.SizeKB > MaxImageSizeKB {
+					largeImages++
 					issues = append(issues, Issue{
 						Type:           IssueLargeImage,
 						Severity:       "warning",
@@ -148,6 +163,15 @@ func AnalyzeImages(results []*models.PageResult, timeout time.Duration) []Issue 
 				}
 			}
 		}
+	}
+
+	// Log summary for debugging
+	if totalImages > 0 {
+		utils.Debug("Image analysis complete",
+			utils.NewField("total_images", totalImages),
+			utils.NewField("missing_alt", imagesWithoutAlt),
+			utils.NewField("large_images", largeImages),
+			utils.NewField("threshold_kb", MaxImageSizeKB))
 	}
 
 	return issues
