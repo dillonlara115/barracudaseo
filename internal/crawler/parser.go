@@ -47,6 +47,13 @@ func (p *Parser) Parse(htmlContent []byte) (*models.PageResult, error) {
 		ExternalLinks: make([]string, 0),
 		Images:        make([]models.Image, 0),
 	}
+	
+	// Log HTML content size for debugging
+	utils.Debug("Parsing HTML", 
+		utils.NewField("url", p.baseURL),
+		utils.NewField("html_size", len(htmlContent)),
+		utils.NewField("h1_count_in_html", doc.Find("h1").Length()),
+		utils.NewField("link_count_in_html", doc.Find("a[href]").Length()))
 
 	// Extract title
 	result.Title = strings.TrimSpace(doc.Find("title").First().Text())
@@ -66,38 +73,104 @@ func (p *Parser) Parse(htmlContent []byte) (*models.PageResult, error) {
 	})
 
 	// Extract headings
+	// Helper function to extract clean text from heading elements
+	// Handles nested elements (spans, divs, etc.) and normalizes whitespace
+	extractHeadingText := func(s *goquery.Selection) string {
+		// Remove script and style elements that might contain text we don't want
+		// Clone first to avoid modifying the original document
+		clone := s.Clone()
+		clone.Find("script, style").Remove()
+		
+		// Get text content - goquery's Text() method extracts text from all nested elements
+		// This will get text from <span>, <div>, etc. nested inside the heading
+		text := clone.Text()
+		
+		// Normalize whitespace: strings.Fields splits on any whitespace (spaces, tabs, newlines)
+		// and strings.Join combines them with single spaces
+		// This handles <br> tags, multiple spaces, tabs, etc.
+		text = strings.Join(strings.Fields(text), " ")
+		
+		// Final trim to remove leading/trailing spaces
+		return strings.TrimSpace(text)
+	}
+	
 	doc.Find("h1").Each(func(i int, s *goquery.Selection) {
-		text := strings.TrimSpace(s.Text())
+		// Get raw HTML for debugging
+		rawHTML, _ := s.Html()
+		
+		// Try multiple extraction methods
+		var text string
+		
+		// Method 1: Direct text extraction (should work for most cases)
+		directText := s.Text()
+		text = strings.TrimSpace(directText)
+		
+		// Method 2: If empty, try normalizing whitespace
+		if text == "" && len(directText) > 0 {
+			text = strings.Join(strings.Fields(directText), " ")
+			text = strings.TrimSpace(text)
+		}
+		
+		// Method 3: If still empty, try the helper function with cloning
+		if text == "" {
+			text = extractHeadingText(s)
+		}
+		
+		// Method 4: Last resort - try getting text from all child elements
+		if text == "" {
+			var parts []string
+			s.Contents().Each(func(j int, child *goquery.Selection) {
+				childText := strings.TrimSpace(child.Text())
+				if childText != "" {
+					parts = append(parts, childText)
+				}
+			})
+			if len(parts) > 0 {
+				text = strings.Join(parts, " ")
+				text = strings.Join(strings.Fields(text), " ")
+				text = strings.TrimSpace(text)
+			}
+		}
+		
 		if text != "" {
 			result.H1 = append(result.H1, text)
+		} else {
+			// Log when H1 tag exists but text extraction returns empty
+			utils.Debug("H1 tag found but text extraction returned empty", 
+				utils.NewField("url", p.baseURL),
+				utils.NewField("h1_html", rawHTML),
+				utils.NewField("h1_count", doc.Find("h1").Length()),
+				utils.NewField("direct_text", directText),
+				utils.NewField("direct_text_len", len(directText)),
+				utils.NewField("direct_text_bytes", []byte(directText)))
 		}
 	})
 	doc.Find("h2").Each(func(i int, s *goquery.Selection) {
-		text := strings.TrimSpace(s.Text())
+		text := extractHeadingText(s)
 		if text != "" {
 			result.H2 = append(result.H2, text)
 		}
 	})
 	doc.Find("h3").Each(func(i int, s *goquery.Selection) {
-		text := strings.TrimSpace(s.Text())
+		text := extractHeadingText(s)
 		if text != "" {
 			result.H3 = append(result.H3, text)
 		}
 	})
 	doc.Find("h4").Each(func(i int, s *goquery.Selection) {
-		text := strings.TrimSpace(s.Text())
+		text := extractHeadingText(s)
 		if text != "" {
 			result.H4 = append(result.H4, text)
 		}
 	})
 	doc.Find("h5").Each(func(i int, s *goquery.Selection) {
-		text := strings.TrimSpace(s.Text())
+		text := extractHeadingText(s)
 		if text != "" {
 			result.H5 = append(result.H5, text)
 		}
 	})
 	doc.Find("h6").Each(func(i int, s *goquery.Selection) {
-		text := strings.TrimSpace(s.Text())
+		text := extractHeadingText(s)
 		if text != "" {
 			result.H6 = append(result.H6, text)
 		}

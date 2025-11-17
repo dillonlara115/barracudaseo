@@ -701,6 +701,41 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 		pagesMu.Lock()
 		defer pagesMu.Unlock()
 
+		// Ensure arrays are never nil - use empty slices instead
+		// This prevents JSONB from storing null instead of []
+		internalLinks := page.InternalLinks
+		if internalLinks == nil {
+			internalLinks = []string{}
+		}
+		externalLinks := page.ExternalLinks
+		if externalLinks == nil {
+			externalLinks = []string{}
+		}
+		h2 := page.H2
+		if h2 == nil {
+			h2 = []string{}
+		}
+		h3 := page.H3
+		if h3 == nil {
+			h3 = []string{}
+		}
+		h4 := page.H4
+		if h4 == nil {
+			h4 = []string{}
+		}
+		h5 := page.H5
+		if h5 == nil {
+			h5 = []string{}
+		}
+		h6 := page.H6
+		if h6 == nil {
+			h6 = []string{}
+		}
+		images := page.Images
+		if images == nil {
+			images = []models.Image{}
+		}
+
 		pageData := map[string]interface{}{
 			"crawl_id":         crawlID,
 			"url":              page.URL,
@@ -712,16 +747,27 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 			"h1":               strings.Join(page.H1, ", "),
 			"word_count":       0, // TODO: calculate from content
 			"data": map[string]interface{}{
-				"h2":             page.H2,
-				"h3":             page.H3,
-				"h4":             page.H4,
-				"h5":             page.H5,
-				"h6":             page.H6,
-				"internal_links": page.InternalLinks,
-				"external_links": page.ExternalLinks,
-				"images":         page.Images,
+				"h2":             h2,
+				"h3":             h3,
+				"h4":             h4,
+				"h5":             h5,
+				"h6":             h6,
+				"internal_links": internalLinks,
+				"external_links": externalLinks,
+				"images":         images,
 			},
 		}
+		
+		// Log page data being stored for debugging (first few pages only)
+		if len(pages) < 3 {
+			s.logger.Info("Storing page data", 
+				zap.String("url", page.URL),
+				zap.Int("h1_count", len(page.H1)),
+				zap.Strings("h1_values", page.H1),
+				zap.Int("internal_links_count", len(internalLinks)),
+				zap.Int("external_links_count", len(externalLinks)))
+		}
+		
 		pages = append(pages, pageData)
 
 		// Increment total pages processed (for each page)
@@ -1255,10 +1301,38 @@ func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlI
 
 	s.logger.Info("Fetched pages for graph", zap.String("crawl_id", crawlID), zap.Int("page_count", len(pages)))
 	
-	// Log raw data structure for first page if available
+	// Log raw data structure for first few pages if available
 	if len(pages) > 0 {
-		firstPageRaw, _ := json.Marshal(pages[0])
-		s.logger.Info("First page raw data", zap.String("crawl_id", crawlID), zap.String("first_page_json", string(firstPageRaw)))
+		for i := 0; i < min(3, len(pages)); i++ {
+			firstPageRaw, _ := json.Marshal(pages[i])
+			pageURL := "unknown"
+			if url, ok := pages[i]["url"].(string); ok {
+				pageURL = url
+			}
+			s.logger.Info("Page raw data", 
+				zap.String("crawl_id", crawlID), 
+				zap.Int("page_index", i),
+				zap.String("url", pageURL),
+				zap.String("page_json", string(firstPageRaw)))
+			
+			// Check data field specifically
+			if dataVal, exists := pages[i]["data"]; exists {
+				s.logger.Info("Page data field", 
+					zap.String("crawl_id", crawlID),
+					zap.Int("page_index", i),
+					zap.String("url", pageURL),
+					zap.Any("data_type", fmt.Sprintf("%T", dataVal)),
+					zap.Any("data_is_nil", dataVal == nil),
+					zap.Any("data_value", dataVal))
+			} else {
+				s.logger.Warn("Page missing data field", 
+					zap.String("crawl_id", crawlID),
+					zap.Int("page_index", i),
+					zap.String("url", pageURL))
+			}
+		}
+	} else {
+		s.logger.Warn("No pages found for crawl", zap.String("crawl_id", crawlID))
 	}
 
 	// Build graph structure: map[sourceURL][]targetURL
@@ -1325,20 +1399,85 @@ func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlI
 		// Extract internal and external links
 		var allLinks []string
 
-		if internalLinks, ok := dataField["internal_links"].([]interface{}); ok {
-			for _, link := range internalLinks {
-				if linkStr, ok := link.(string); ok {
-					allLinks = append(allLinks, linkStr)
+		// Helper function to extract links from various possible formats
+		extractLinks := func(linksVal interface{}) []string {
+			if linksVal == nil {
+				return nil
+			}
+			
+			var links []string
+			
+			// Try []interface{} (most common from JSON unmarshal)
+			if linkSlice, ok := linksVal.([]interface{}); ok {
+				for _, link := range linkSlice {
+					if linkStr, ok := link.(string); ok && linkStr != "" {
+						links = append(links, linkStr)
+					}
+				}
+				return links
+			}
+			
+			// Try []string (direct string array)
+			if linkSlice, ok := linksVal.([]string); ok {
+				for _, link := range linkSlice {
+					if link != "" {
+						links = append(links, link)
+					}
+				}
+				return links
+			}
+			
+			// Try json.RawMessage or string that needs unmarshaling
+			var linkSlice []string
+			if jsonBytes, err := json.Marshal(linksVal); err == nil {
+				if err := json.Unmarshal(jsonBytes, &linkSlice); err == nil {
+					return linkSlice
+				}
+				// Try as []interface{} if []string fails
+				var linkSliceInterface []interface{}
+				if err := json.Unmarshal(jsonBytes, &linkSliceInterface); err == nil {
+					for _, link := range linkSliceInterface {
+						if linkStr, ok := link.(string); ok && linkStr != "" {
+							links = append(links, linkStr)
+						}
+					}
+					return links
 				}
 			}
+			
+			return nil
 		}
 
-		if externalLinks, ok := dataField["external_links"].([]interface{}); ok {
-			for _, link := range externalLinks {
-				if linkStr, ok := link.(string); ok {
-					allLinks = append(allLinks, linkStr)
-				}
+		// Extract internal links
+		if internalLinksVal, exists := dataField["internal_links"]; exists {
+			links := extractLinks(internalLinksVal)
+			if len(links) > 0 {
+				allLinks = append(allLinks, links...)
+			} else if i < 3 {
+				// Log when links exist but extraction returns empty
+				s.logger.Debug("Internal links extraction returned empty", 
+					zap.String("url", url),
+					zap.Any("internal_links_raw", internalLinksVal),
+					zap.Any("internal_links_type", fmt.Sprintf("%T", internalLinksVal)))
 			}
+		} else if i < 3 {
+			s.logger.Debug("No internal_links key in data field", zap.String("url", url))
+		}
+
+		// Extract external links
+		if externalLinksVal, exists := dataField["external_links"]; exists {
+			links := extractLinks(externalLinksVal)
+			if len(links) > 0 {
+				allLinks = append(allLinks, links...)
+			} else if i < 3 {
+				// Log when links exist but extraction returns empty
+				s.logger.Debug("External links extraction returned empty", 
+					zap.String("url", url),
+					zap.Any("external_links_raw", externalLinksVal),
+					zap.Any("external_links_type", fmt.Sprintf("%T", externalLinksVal)))
+			}
+		} else if i < 3 {
+			s.logger.Debug("No external_links key in data field", zap.String("url", url))
 		}
 
 		if len(allLinks) > 0 {
@@ -1347,10 +1486,16 @@ func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlI
 			totalLinks += len(allLinks)
 		} else if i < 3 {
 			// Log first few pages with no links for debugging
+			internalLinksVal := dataField["internal_links"]
+			externalLinksVal := dataField["external_links"]
 			s.logger.Debug("Page has no links", 
 				zap.String("url", url),
-				zap.Any("has_internal_links", dataField["internal_links"] != nil),
-				zap.Any("has_external_links", dataField["external_links"] != nil))
+				zap.Any("has_internal_links", internalLinksVal != nil),
+				zap.Any("internal_links_type", fmt.Sprintf("%T", internalLinksVal)),
+				zap.Any("internal_links_value", internalLinksVal),
+				zap.Any("has_external_links", externalLinksVal != nil),
+				zap.Any("external_links_type", fmt.Sprintf("%T", externalLinksVal)),
+				zap.Any("external_links_value", externalLinksVal))
 		}
 	}
 

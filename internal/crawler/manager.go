@@ -242,29 +242,26 @@ func (m *Manager) worker(id int) {
 				utils.NewField("total", resultCount),
 			)
 
-			// Call progress callback if set (for real-time updates)
-			if m.progressCallback != nil {
-				m.progressCallback(result.PageResult, resultCount)
-			}
-
-			// Check if we've reached max pages after storing
-			if resultCount >= m.config.MaxPages {
-				m.cancel()
-				return
-			}
-
-			// If fetch failed or not HTML, don't discover links
+			// If fetch failed or not HTML, call progress callback and continue
 			if result.Error != nil || result.PageResult.StatusCode != 200 {
 				utils.Info("Skipping link discovery - fetch failed or non-200", 
 					utils.NewField("url", task.URL),
 					utils.NewField("error", result.Error),
 					utils.NewField("status", result.PageResult.StatusCode))
+				// Call progress callback even for failed pages
+				if m.progressCallback != nil {
+					m.progressCallback(result.PageResult, resultCount)
+				}
 				continue
 			}
 
 			// Check if we have body content
 			if len(result.Body) == 0 {
 				utils.Warn("No body content to parse", utils.NewField("url", task.URL))
+				// Call progress callback even if no body
+				if m.progressCallback != nil {
+					m.progressCallback(result.PageResult, resultCount)
+				}
 				continue
 			}
 
@@ -272,6 +269,10 @@ func (m *Manager) worker(id int) {
 			parser, err := NewParser(task.URL)
 			if err != nil {
 				utils.Error("Failed to create parser", utils.NewField("url", task.URL), utils.NewField("error", err.Error()))
+				// Call progress callback even if parser creation failed
+				if m.progressCallback != nil {
+					m.progressCallback(result.PageResult, resultCount)
+				}
 				continue
 			}
 
@@ -279,12 +280,18 @@ func (m *Manager) worker(id int) {
 			parsedData, err := parser.Parse(result.Body)
 			if err != nil {
 				utils.Error("Failed to parse HTML", utils.NewField("url", task.URL), utils.NewField("error", err.Error()))
+				// Call progress callback even if parsing failed
+				if m.progressCallback != nil {
+					m.progressCallback(result.PageResult, resultCount)
+				}
 				continue
 			}
 			
 			utils.Info("Parsed page", 
 				utils.NewField("url", task.URL), 
 				utils.NewField("depth", task.Depth),
+				utils.NewField("h1_count", len(parsedData.H1)),
+				utils.NewField("h1_values", parsedData.H1),
 				utils.NewField("internal_links", len(parsedData.InternalLinks)),
 				utils.NewField("external_links", len(parsedData.ExternalLinks)),
 				utils.NewField("body_size", len(result.Body)))
@@ -301,6 +308,18 @@ func (m *Manager) worker(id int) {
 			result.PageResult.H6 = parsedData.H6
 			result.PageResult.InternalLinks = parsedData.InternalLinks
 			result.PageResult.ExternalLinks = parsedData.ExternalLinks
+
+			// Call progress callback AFTER parsing and merging data
+			// This ensures the stored page has all the parsed SEO data (H1, links, etc.)
+			if m.progressCallback != nil {
+				m.progressCallback(result.PageResult, resultCount)
+			}
+
+			// Check if we've reached max pages after storing
+			if resultCount >= m.config.MaxPages {
+				m.cancel()
+				return
+			}
 
 			// Add edges to link graph
 			m.linkGraph.AddEdges(task.URL, parsedData.InternalLinks)
