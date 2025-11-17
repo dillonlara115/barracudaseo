@@ -167,6 +167,7 @@
       push(`/project/${projectId}/crawl/${newCrawl.id}?tab=${tab}`);
     }
   }
+
 </script>
 
 {#if loading}
@@ -184,7 +185,7 @@
   
   <div class="container mx-auto p-4">
     <div class="flex justify-between items-center mb-4">
-      <CrawlSelector {crawls} selectedCrawl={selectedCrawl} on:select={(e) => handleCrawlSelect(e.detail)} />
+      <CrawlSelector {crawls} selectedCrawl={selectedCrawl} {projectId} on:select={(e) => handleCrawlSelect(e.detail)} />
       <TriggerCrawlButton {projectId} project={project} on:created={handleCrawlCreated} />
     </div>
   </div>

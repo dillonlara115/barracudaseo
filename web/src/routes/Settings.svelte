@@ -3,6 +3,7 @@
   import { params, push } from 'svelte-spa-router';
   import { fetchProjects } from '../lib/data.js';
   import ProjectGSCSelector from '../components/ProjectGSCSelector.svelte';
+  import CrawlManagement from '../components/CrawlManagement.svelte';
   
   let project = null;
   let summary = null; // For enriching issues if needed
@@ -44,6 +45,11 @@
     // Navigate to issues tab to see enriched data
     push(`/project/${projectId}/crawl/${$params.crawlId || ''}?tab=issues`);
   }
+
+  function handleCrawlDeleted(e) {
+    // Crawl was deleted, could reload or show notification
+    // The CrawlManagement component handles its own reload
+  }
 </script>
 
 <div class="container mx-auto p-6 max-w-4xl">
@@ -70,6 +76,15 @@
     </div>
   {:else if project}
     <div class="space-y-6">
+      <!-- Crawl Management -->
+      {#if project.id}
+        <CrawlManagement projectId={project.id} on:deleted={handleCrawlDeleted} />
+      {:else}
+        <div class="alert alert-warning">
+          <span>Project ID not available.</span>
+        </div>
+      {/if}
+
       <!-- Google Search Console Integration -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">

@@ -1,9 +1,10 @@
 <script>
   import { createEventDispatcher } from 'svelte';
-  import { push } from 'svelte-spa-router';
+  import { link } from 'svelte-spa-router';
   
   export let crawls = [];
   export let selectedCrawl = null;
+  export let projectId = null;
   
   const dispatch = createEventDispatcher();
 
@@ -19,9 +20,24 @@
 </script>
 
 <div class="mb-4">
-  <label class="label">
-    <span class="label-text text-base-content font-semibold">Select Crawl:</span>
-  </label>
+  <div class="flex items-center justify-between mb-2">
+    <label class="label py-0">
+      <span class="label-text text-base-content font-semibold">Select Crawl:</span>
+    </label>
+    {#if projectId && crawls.length > 0}
+      <a 
+        href="/project/{projectId}/settings" 
+        use:link
+        class="btn btn-ghost btn-xs text-base-content/70 hover:text-base-content"
+        title="Manage crawls"
+      >
+        Manage
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+    {/if}
+  </div>
   <select 
     class="select select-bordered w-full max-w-xs bg-base-200 text-base-content"
     value={selectedCrawl?.id}

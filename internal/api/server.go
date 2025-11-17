@@ -93,8 +93,11 @@ func (s *Server) Router() http.Handler {
 
 	// API v1 routes
 	v1 := http.NewServeMux()
-	v1.HandleFunc("/crawls", s.handleCrawls)
+	// Register /crawls/ FIRST (more specific) - Go's ServeMux matches longest prefix first
+	// This ensures /crawls/:id matches /crawls/ before /crawls
 	v1.HandleFunc("/crawls/", s.handleCrawlByID)
+	// Register /crawls second for collection operations
+	v1.HandleFunc("/crawls", s.handleCrawls)
 	v1.HandleFunc("/projects", s.handleProjects)
 	v1.HandleFunc("/projects/", s.handleProjectByID)
 	v1.HandleFunc("/exports", s.handleExports)

@@ -83,6 +83,7 @@
       push(`/project/${projectId}/crawl/${newCrawl.id}`);
     }
   }
+
 </script>
 
 {#if loading}
@@ -109,7 +110,7 @@
         <span>No crawls found for this project. Start a crawl to get started.</span>
       </div>
     {:else}
-      <CrawlSelector {crawls} on:select={(e) => handleCrawlSelect(e.detail)} />
+      <CrawlSelector {crawls} {projectId} on:select={(e) => handleCrawlSelect(e.detail)} />
     {/if}
   </div>
 {/if}

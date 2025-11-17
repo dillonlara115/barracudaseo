@@ -41,12 +41,32 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 
 // handleCrawls handles crawl-related endpoints
 func (s *Server) handleCrawls(w http.ResponseWriter, r *http.Request) {
+	s.logger.Info("handleCrawls called", zap.String("method", r.Method), zap.String("path", r.URL.Path), zap.String("raw_path", r.URL.RawPath))
+	
+	// Check if this is actually a request for a specific crawl ID
+	// The path will be /crawls/:id after StripPrefix removes /api/v1
+	path := r.URL.Path
+	if strings.HasPrefix(path, "/crawls/") {
+		// Extract the ID part
+		idPart := strings.TrimPrefix(path, "/crawls/")
+		idPart = strings.Trim(idPart, "/")
+		// Split to handle sub-resources like /crawls/:id/graph
+		parts := strings.Split(idPart, "/")
+		if len(parts) > 0 && parts[0] != "" {
+			// This is a request for a specific crawl, route to handleCrawlByID
+			s.logger.Info("handleCrawls routing to handleCrawlByID", zap.String("method", r.Method), zap.String("path", r.URL.Path), zap.String("id_part", idPart))
+			s.handleCrawlByID(w, r)
+			return
+		}
+	}
+	
 	switch r.Method {
 	case http.MethodPost:
 		s.handleCreateCrawl(w, r)
 	case http.MethodGet:
 		s.handleListCrawls(w, r)
 	default:
+		s.logger.Warn("Method not allowed in handleCrawls", zap.String("method", r.Method))
 		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
 }
@@ -1118,6 +1138,11 @@ func (s *Server) handleGSCCallback(w http.ResponseWriter, r *http.Request) {
 
 // handleCrawlByID handles crawl-specific endpoints like /crawls/:id/graph
 func (s *Server) handleCrawlByID(w http.ResponseWriter, r *http.Request) {
+	s.logger.Info("handleCrawlByID called", 
+		zap.String("method", r.Method),
+		zap.String("path", r.URL.Path),
+		zap.String("raw_path", r.URL.RawPath))
+	
 	userID, ok := userIDFromContext(r.Context())
 	if !ok {
 		s.respondError(w, http.StatusUnauthorized, "User not authenticated")
@@ -1125,9 +1150,17 @@ func (s *Server) handleCrawlByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Extract crawl ID from path: /crawls/:id/...
+	// The path comes in as /crawls/:id (after StripPrefix removes /api/v1)
 	path := strings.TrimPrefix(r.URL.Path, "/crawls/")
 	path = strings.Trim(path, "/")
 	parts := strings.Split(path, "/")
+
+	s.logger.Info("handleCrawlByID path parsing", 
+		zap.String("method", r.Method),
+		zap.String("path", r.URL.Path),
+		zap.String("trimmed_path", path),
+		zap.Strings("parts", parts),
+		zap.Int("parts_len", len(parts)))
 
 	if len(parts) == 0 || parts[0] == "" {
 		s.respondError(w, http.StatusBadRequest, "crawl_id is required")
@@ -1136,27 +1169,10 @@ func (s *Server) handleCrawlByID(w http.ResponseWriter, r *http.Request) {
 
 	crawlID := parts[0]
 
-	// Verify user has access to this crawl (via project membership)
-	hasAccess, err := s.verifyCrawlAccess(userID, crawlID)
-	if err != nil {
-		// If crawl doesn't exist, let handleGetCrawl return 404
-		if strings.Contains(err.Error(), "not found") {
-			s.logger.Debug("Crawl not found during access check, proceeding to fetch", zap.String("crawl_id", crawlID))
-			// Continue to handleGetCrawl which will return 404
-		} else {
-			s.logger.Error("Failed to verify crawl access", zap.String("crawl_id", crawlID), zap.String("user_id", userID), zap.Error(err))
-			s.respondError(w, http.StatusInternalServerError, "Failed to verify crawl access")
-			return
-		}
-	} else if !hasAccess {
-		// Crawl exists but user doesn't have access
-		s.respondError(w, http.StatusForbidden, "You don't have access to this crawl")
-		return
-	}
-
-	// Handle sub-resources
+	// Handle sub-resources first (before access check, as they might have different auth)
 	if len(parts) > 1 {
 		resource := parts[1]
+		s.logger.Info("Handling sub-resource", zap.String("resource", resource), zap.String("crawl_id", crawlID))
 		switch resource {
 		case "graph":
 			if r.Method == http.MethodGet {
@@ -1171,11 +1187,33 @@ func (s *Server) handleCrawlByID(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Verify user has access to this crawl (via project membership)
+	hasAccess, err := s.verifyCrawlAccess(userID, crawlID)
+	if err != nil {
+		// If crawl doesn't exist, let the handler return 404
+		if strings.Contains(err.Error(), "not found") {
+			s.logger.Info("Crawl not found during access check", zap.String("crawl_id", crawlID))
+			// Continue to handler which will return 404
+		} else {
+			s.logger.Error("Failed to verify crawl access", zap.String("crawl_id", crawlID), zap.String("user_id", userID), zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, "Failed to verify crawl access")
+			return
+		}
+	} else if !hasAccess {
+		// Crawl exists but user doesn't have access
+		s.respondError(w, http.StatusForbidden, "You don't have access to this crawl")
+		return
+	}
+
 	// Handle main crawl operations
+	s.logger.Info("Handling main crawl operation", zap.String("method", r.Method), zap.String("crawl_id", crawlID))
 	switch r.Method {
 	case http.MethodGet:
 		s.handleGetCrawl(w, r, crawlID)
+	case http.MethodDelete:
+		s.handleDeleteCrawl(w, r, crawlID, userID)
 	default:
+		s.logger.Warn("Method not allowed for crawl", zap.String("method", r.Method), zap.String("crawl_id", crawlID))
 		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
 }
@@ -1530,6 +1568,75 @@ func getMapKeys(m map[string]interface{}) []string {
 		keys = append(keys, k)
 	}
 	return keys
+}
+
+// handleDeleteCrawl handles DELETE /api/v1/crawls/:id - deletes a crawl and all associated data
+func (s *Server) handleDeleteCrawl(w http.ResponseWriter, r *http.Request, crawlID string, userID string) {
+	s.logger.Info("Deleting crawl", zap.String("crawl_id", crawlID), zap.String("user_id", userID))
+
+	// Verify user has access to this crawl (via project membership)
+	hasAccess, err := s.verifyCrawlAccess(userID, crawlID)
+	if err != nil {
+		s.logger.Error("Failed to verify crawl access for deletion", zap.String("crawl_id", crawlID), zap.String("user_id", userID), zap.Error(err))
+		if strings.Contains(err.Error(), "not found") {
+			s.respondError(w, http.StatusNotFound, "Crawl not found")
+		} else {
+			s.respondError(w, http.StatusInternalServerError, "Failed to verify crawl access")
+		}
+		return
+	}
+
+	if !hasAccess {
+		s.logger.Warn("User attempted to delete crawl without access", zap.String("crawl_id", crawlID), zap.String("user_id", userID))
+		s.respondError(w, http.StatusForbidden, "You don't have access to this crawl")
+		return
+	}
+
+	// Check if crawl is currently running - don't allow deletion of running crawls
+	var crawls []map[string]interface{}
+	data, _, err := s.serviceRole.From("crawls").Select("status", "", false).Eq("id", crawlID).Execute()
+	if err != nil {
+		s.logger.Error("Failed to query crawl status", zap.String("crawl_id", crawlID), zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to check crawl status")
+		return
+	}
+
+	if err := json.Unmarshal(data, &crawls); err != nil {
+		s.logger.Error("Failed to parse crawl status", zap.String("crawl_id", crawlID), zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to parse crawl status")
+		return
+	}
+
+	if len(crawls) == 0 {
+		s.respondError(w, http.StatusNotFound, "Crawl not found")
+		return
+	}
+
+	status, ok := crawls[0]["status"].(string)
+	if !ok {
+		status = "unknown"
+	}
+
+	if status == "running" {
+		s.logger.Warn("Attempted to delete running crawl", zap.String("crawl_id", crawlID))
+		s.respondError(w, http.StatusBadRequest, "Cannot delete a crawl that is currently running")
+		return
+	}
+
+	// Delete the crawl - cascade delete will automatically remove associated pages and issues
+	// due to foreign key constraints: pages.crawl_id and issues.crawl_id both have "on delete cascade"
+	_, _, err = s.serviceRole.From("crawls").Delete("", "").Eq("id", crawlID).Execute()
+	if err != nil {
+		s.logger.Error("Failed to delete crawl", zap.String("crawl_id", crawlID), zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to delete crawl")
+		return
+	}
+
+	s.logger.Info("Successfully deleted crawl", zap.String("crawl_id", crawlID), zap.String("user_id", userID))
+	s.respondJSON(w, http.StatusOK, map[string]string{
+		"message": "Crawl deleted successfully",
+		"crawl_id": crawlID,
+	})
 }
 
 // verifyCrawlAccess checks if user has access to a crawl (via project membership)

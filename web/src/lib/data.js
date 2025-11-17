@@ -368,3 +368,28 @@ export async function fetchCrawlGraph(crawlId) {
   if (!crawlId) return { data: null, error: new Error('crawlId is required') };
   return authorizedJSON(`/api/v1/crawls/${crawlId}/graph`);
 }
+
+// Delete a crawl
+export async function deleteCrawl(crawlId) {
+  if (!crawlId) return { data: null, error: new Error('crawlId is required') };
+  try {
+    const response = await authorizedRequest(`/api/v1/crawls/${crawlId}`, {
+      method: 'DELETE'
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+      const errorMessage = errorData.error || `Failed to delete crawl: ${response.status}`;
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      throw error;
+    }
+    const data = await response.json();
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error deleting crawl:', error);
+    return { 
+      data: null, 
+      error: error instanceof Error ? error : new Error(String(error))
+    };
+  }
+}
