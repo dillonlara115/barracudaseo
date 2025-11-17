@@ -7,7 +7,8 @@
     fetchProjectGSCProperties,
     updateProjectGSCProperty,
     fetchProjectGSCDimensions,
-    triggerProjectGSCSync
+    triggerProjectGSCSync,
+    fetchProjectGSCConnect
   } from '../lib/data.js';
   import { buildEnrichedIssues } from '../lib/gsc.js';
   
@@ -31,6 +32,9 @@
   let gscError = null;
   let lastProjectId = null;
   let propertySelectId = 'gsc-property-select';
+  let isConnecting = false;
+  let connectSuccess = false;
+  let activePopup = null;
 
   const formatDateTime = (value) => {
     if (!value) return null;
@@ -63,10 +67,42 @@
 
     if (typeof window !== 'undefined') {
       const handleMessage = async (event) => {
-        if (event.data?.type === 'gsc_connected' && event.data?.project_id === projectId) {
+        // Only handle GSC-related messages
+        if (!event.data?.type || !event.data.type.startsWith('gsc_')) {
+          return;
+        }
+        
+        // If project_id is specified, it must match (unless we're in a popup context)
+        if (event.data?.project_id && event.data.project_id !== projectId) {
+          console.log('Message project_id mismatch, ignoring', { 
+            expected: projectId, 
+            received: event.data.project_id,
+            type: event.data.type 
+          });
+          return;
+        }
+        
+        console.log('GSC message received', { 
+          type: event.data.type, 
+          projectId, 
+          receivedProjectId: event.data.project_id,
+          hasActivePopup: !!activePopup
+        });
+        
+        if (event.data?.type === 'gsc_connected') {
+          console.log('GSC connected message received');
           await initialize();
+          connectSuccess = true;
+          isConnecting = false;
+          // Clear success message after 5 seconds
+          setTimeout(() => {
+            connectSuccess = false;
+          }, 5000);
         } else if (event.data?.type === 'gsc_error') {
+          console.error('GSC error message received', event.data.error);
           error = event.data.error || 'Failed to connect to Google Search Console.';
+          isConnecting = false;
+          connectSuccess = false;
         }
       };
 
@@ -235,6 +271,120 @@
 
     isEnriching = false;
   }
+
+  async function connectGSC() {
+    if (!projectId) {
+      error = 'Project ID is required';
+      return;
+    }
+
+    isConnecting = true;
+    error = null;
+
+    try {
+      const result = await fetchProjectGSCConnect(projectId);
+      if (result.error) {
+        error = result.error.message || 'Failed to get authorization URL';
+        isConnecting = false;
+        return;
+      }
+
+      const { auth_url } = result.data;
+      if (!auth_url) {
+        error = 'No authorization URL returned';
+        isConnecting = false;
+        return;
+      }
+
+      // Open OAuth popup window
+      const width = 600;
+      const height = 700;
+      const left = (window.screen.width - width) / 2;
+      const top = (window.screen.height - height) / 2;
+      
+      const popup = window.open(
+        auth_url,
+        'gsc-oauth',
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+      );
+
+      if (!popup) {
+        error = 'Popup blocked. Please allow popups for this site.';
+        isConnecting = false;
+        return;
+      }
+
+      // Store popup reference
+      activePopup = popup;
+
+      // Listen for OAuth completion message from popup
+      const messageHandler = async (event) => {
+        // Only handle GSC messages
+        if (!event.data?.type || !event.data.type.startsWith('gsc_')) {
+          return;
+        }
+        
+        console.log('OAuth popup message received', event.data);
+        
+        // If project_id is specified, it must match
+        if (event.data?.project_id && event.data.project_id !== projectId) {
+          console.log('Popup message project_id mismatch', { expected: projectId, received: event.data.project_id });
+          return;
+        }
+        
+        if (event.data?.type === 'gsc_connected') {
+          console.log('GSC connected via popup handler');
+          if (popup && !popup.closed) {
+            popup.close();
+          }
+          activePopup = null;
+          window.removeEventListener('message', messageHandler);
+          clearInterval(checkClosed);
+          await initialize();
+          connectSuccess = true;
+          isConnecting = false;
+          // Clear success message after 5 seconds
+          setTimeout(() => {
+            connectSuccess = false;
+          }, 5000);
+        } else if (event.data?.type === 'gsc_error') {
+          console.error('GSC error via popup handler', event.data.error);
+          if (popup && !popup.closed) {
+            popup.close();
+          }
+          activePopup = null;
+          window.removeEventListener('message', messageHandler);
+          clearInterval(checkClosed);
+          error = event.data.error || 'Failed to connect Google Search Console';
+          isConnecting = false;
+          connectSuccess = false;
+        }
+      };
+
+      window.addEventListener('message', messageHandler);
+
+      // Check if popup was closed manually
+      const checkClosed = setInterval(() => {
+        if (popup.closed) {
+          console.log('Popup closed manually');
+          clearInterval(checkClosed);
+          window.removeEventListener('message', messageHandler);
+          activePopup = null;
+          // Only reset connecting state if we haven't received a message
+          // Give it a moment in case message is still coming
+          setTimeout(() => {
+            if (isConnecting && !connectSuccess) {
+              isConnecting = false;
+              error = 'Connection cancelled or popup was closed';
+            }
+          }, 1000);
+        }
+      }, 500);
+    } catch (err) {
+      error = err.message || 'Failed to connect Google Search Console';
+      isConnecting = false;
+    }
+  }
 </script>
 
 {#if gscLoading}
@@ -246,11 +396,45 @@
     <span>{gscError}</span>
   </div>
 {:else if !isConnected}
-  <div class="alert alert-info">
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-    </svg>
-    <span>Connect your Google Search Console account in <a href="/integrations" use:link class="link link-primary">Integrations</a> to select a property for this project.</span>
+  <div class="space-y-4">
+    {#if connectSuccess}
+      <div class="alert alert-success">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span>Successfully connected to Google Search Console! Please wait while we load your properties...</span>
+      </div>
+    {:else}
+      <div class="alert alert-info">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <div class="flex-1">
+          <div class="font-semibold mb-1">Connect Google Search Console</div>
+          <div class="text-sm">Connect your Google Search Console account to enhance recommendations with real search performance data.</div>
+        </div>
+      </div>
+      <button
+        class="btn btn-primary w-full"
+        on:click={connectGSC}
+        disabled={isConnecting || !projectId}
+      >
+        {#if isConnecting}
+          <span class="loading loading-spinner loading-sm"></span>
+          Connecting...
+        {:else}
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+          </svg>
+          Connect Google Search Console
+        {/if}
+      </button>
+    {/if}
+    {#if error}
+      <div class="alert alert-error">
+        <span>{error}</span>
+      </div>
+    {/if}
   </div>
 {:else}
   <div class="space-y-4">

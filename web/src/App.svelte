@@ -11,10 +11,15 @@
   import IntegrationsProtected from './routes/IntegrationsProtected.svelte';
   import Settings from './routes/Settings.svelte';
   import Billing from './routes/Billing.svelte';
+  import PrivacyPolicy from './routes/PrivacyPolicy.svelte';
+  import TermsOfService from './routes/TermsOfService.svelte';
   import { loadSubscriptionData } from './lib/subscription.js';
 
   let loading = true;
   let configError = null;
+  let currentHash = '';
+  
+  $: isLegalPage = currentHash === '#/privacy' || currentHash === '#/terms';
 
   // Route definitions
   const routes = {
@@ -25,6 +30,8 @@
     '/integrations': IntegrationsProtected,
     '/billing': Billing,
     '/settings': Billing, // Alias for billing
+    '/privacy': PrivacyPolicy,
+    '/terms': TermsOfService,
   };
 
   // Check Supabase configuration
@@ -40,6 +47,18 @@
   }
 
   onMount(async () => {
+    // Watch hash changes for legal pages
+    if (typeof window !== 'undefined') {
+      currentHash = window.location.hash;
+      const updateHash = () => {
+        currentHash = window.location.hash;
+      };
+      window.addEventListener('hashchange', updateHash);
+      
+      // Also check periodically in case hashchange doesn't fire
+      setInterval(updateHash, 100);
+    }
+    
     // Fix double hash issue if present (e.g., #/#/billing -> #/billing)
     if (window.location.hash.startsWith('#/#/')) {
       const fixedHash = window.location.hash.replace('#/#/', '#/');
@@ -72,8 +91,10 @@
     // React to auth state changes
     user.subscribe(async (currentUser) => {
       if (!currentUser) {
-        // Redirect to home if not authenticated
-        push('/');
+        // Don't redirect if on legal pages
+        if (!isLegalPage) {
+          push('/');
+        }
       } else {
         // Load subscription data when user is authenticated
         await loadSubscriptionData();
@@ -90,15 +111,20 @@
       <ConfigError error={configError} />
     </div>
   {:else if !$user}
-    <!-- Show auth UI when not logged in -->
-    <Auth />
+    <!-- Show auth UI when not logged in, or legal pages -->
+    {#if isLegalPage}
+      <!-- Public legal pages - accessible without login -->
+      <Router {routes} />
+    {:else}
+      <Auth />
+    {/if}
   {:else if loading}
     <!-- Loading state -->
     <div class="flex items-center justify-center min-h-screen">
       <span class="loading loading-spinner loading-lg"></span>
     </div>
   {:else}
-    <!-- Router handles all authenticated routes -->
+    <!-- Router handles all routes (including public legal pages) -->
     <!-- Using hash mode for routing -->
     <Router {routes} />
   {/if}

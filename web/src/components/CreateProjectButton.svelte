@@ -8,22 +8,46 @@
   
   let showCreateModal = false;
   let newProjectName = '';
-  let newProjectDomain = '';
   let newProjectUrl = '';
   let creating = false;
   let error = null;
 
+  // Extract domain from URL
+  function extractDomain(url) {
+    if (!url) return '';
+    try {
+      const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+      return urlObj.hostname.replace(/^www\./, ''); // Remove www. prefix
+    } catch (e) {
+      // If URL parsing fails, try to extract domain manually
+      const cleaned = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+      return cleaned;
+    }
+  }
+
   async function handleCreateProject() {
-    if (!newProjectName || !newProjectDomain || !newProjectUrl) {
-      error = 'Name, domain, and URL are required';
+    if (!newProjectName || !newProjectUrl) {
+      error = 'Name and starting URL are required';
       return;
     }
 
     // Validate URL format
+    let validatedUrl = newProjectUrl.trim();
+    if (!validatedUrl.startsWith('http://') && !validatedUrl.startsWith('https://')) {
+      validatedUrl = `https://${validatedUrl}`;
+    }
+
     try {
-      new URL(newProjectUrl);
+      new URL(validatedUrl);
     } catch (e) {
       error = 'Invalid URL format';
+      return;
+    }
+
+    // Extract domain from URL
+    const domain = extractDomain(validatedUrl);
+    if (!domain) {
+      error = 'Could not extract domain from URL';
       return;
     }
 
@@ -33,8 +57,8 @@
     try {
       const { data, error: createError } = await createProject(
         newProjectName,
-        newProjectDomain,
-        { url: newProjectUrl }
+        domain,
+        { url: validatedUrl }
       );
 
       if (createError) throw createError;
@@ -44,7 +68,6 @@
       
       // Reset form and close modal
       newProjectName = '';
-      newProjectDomain = '';
       newProjectUrl = '';
       showCreateModal = false;
     } catch (err) {
@@ -88,18 +111,6 @@
 
       <div class="form-control w-full mb-4">
         <label class="label">
-          <span class="label-text text-base-content">Domain</span>
-        </label>
-        <input
-          type="text"
-          placeholder="example.com"
-          class="input input-bordered w-full bg-base-200 text-base-content placeholder-gray-500 border-base-300 focus:border-primary"
-          bind:value={newProjectDomain}
-        />
-      </div>
-
-      <div class="form-control w-full mb-4">
-        <label class="label">
           <span class="label-text text-base-content">Starting URL</span>
         </label>
         <input
@@ -109,7 +120,7 @@
           bind:value={newProjectUrl}
         />
         <label class="label">
-          <span class="label-text-alt text-base-content opacity-70">This URL will be used as the default starting point for all crawls</span>
+          <span class="label-text-alt text-base-content opacity-70">The domain will be automatically extracted from this URL</span>
         </label>
       </div>
 
@@ -126,7 +137,7 @@
         <button
           class="btn btn-primary text-primary-content"
           on:click={handleCreateProject}
-          disabled={creating || !newProjectName || !newProjectDomain || !newProjectUrl}
+          disabled={creating || !newProjectName || !newProjectUrl}
         >
           {#if creating}
             <span class="loading loading-spinner loading-sm"></span>

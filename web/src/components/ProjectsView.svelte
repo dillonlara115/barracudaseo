@@ -61,7 +61,7 @@
     </a>
   </div>
   <div class="flex gap-2">
-    <Auth />
+    
     <div class="dropdown dropdown-end">
       <button type="button" tabindex="0" class="btn btn-ghost">
         {selectedProject ? selectedProject.name : 'Select Project'}
@@ -92,6 +92,7 @@
         </li>
       </ul>
     </div>
+    <Auth />
   </div>
 </div>
 

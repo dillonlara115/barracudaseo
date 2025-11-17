@@ -234,9 +234,9 @@
         {#if isSignUp}
           <p class="text-sm text-gray-500 mt-6 text-center">
             By creating an account, I agree with Barracuda's 
-            <button type="button" class="text-[#8ec07c] hover:underline bg-transparent border-none p-0 cursor-pointer">Privacy Policy</button> 
+            <a href="#/privacy" use:link class="text-[#8ec07c] hover:underline">Privacy Policy</a> 
             and 
-            <button type="button" class="text-[#8ec07c] hover:underline bg-transparent border-none p-0 cursor-pointer">Terms of Service</button>.
+            <a href="#/terms" use:link class="text-[#8ec07c] hover:underline">Terms of Service</a>.
           </p>
         {/if}
       </div>

@@ -319,6 +319,11 @@ export async function updateIssueStatus(issueId, status, notes = null) {
   }
 }
 
+export async function fetchProjectGSCConnect(projectId) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  return authorizedJSON(`/api/v1/projects/${projectId}/gsc/connect`);
+}
+
 export async function fetchProjectGSCStatus(projectId) {
   if (!projectId) return { data: null, error: new Error('projectId is required') };
   return authorizedJSON(`/api/v1/projects/${projectId}/gsc/status`);
