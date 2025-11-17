@@ -13,6 +13,8 @@
   import Billing from './routes/Billing.svelte';
   import PrivacyPolicy from './routes/PrivacyPolicy.svelte';
   import TermsOfService from './routes/TermsOfService.svelte';
+  import GSCDashboard from './routes/GSCDashboard.svelte';
+  import GSCKeywords from './routes/GSCKeywords.svelte';
   import { loadSubscriptionData } from './lib/subscription.js';
 
   let loading = true;
@@ -32,6 +34,8 @@
     '/settings': Billing, // Alias for billing
     '/privacy': PrivacyPolicy,
     '/terms': TermsOfService,
+    '/project/:projectId/gsc': GSCDashboard,
+    '/project/:projectId/gsc/keywords': GSCKeywords,
   };
 
   // Check Supabase configuration

@@ -197,6 +197,20 @@
           Link Graph
         </button>
       </li>
+      {#if projectId && gscStatus?.integration?.property_url}
+        <li>
+          <a 
+            href="/project/{projectId}/gsc" 
+            use:link
+            class="btn btn-ghost"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+            </svg>
+            GSC Dashboard
+          </a>
+        </li>
+      {/if}
       {#if projectId}
         <li>
           <a 
@@ -219,81 +233,11 @@
 <div class="container mx-auto p-4">
   {#if activeTab === 'dashboard'}
     <div class="space-y-4">
-      {#if gscError}
-        <div class="alert alert-warning flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <span>{gscError}</span>
-          <div class="flex gap-2">
-            <button class="btn btn-sm btn-outline" on:click={() => loadGSCData(projectId)} disabled={gscLoading}>
-              {#if gscLoading}
-                <span class="loading loading-spinner loading-xs"></span>
-                Retrying...
-              {:else}
-                Retry
-              {/if}
-            </button>
-            <a class="btn btn-sm btn-ghost" href="/integrations" use:link>Manage</a>
-          </div>
-        </div>
-      {:else if gscProperty}
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 rounded-box border border-base-300 bg-base-100 p-4 shadow-sm">
-          <div>
-            <div class="text-sm font-semibold text-base-content/80">Google Search Console</div>
-            <div class="text-sm">
-              Connected to <span class="font-semibold">{gscProperty}</span>.
-              {#if gscLoading}
-                <span class="ml-1 text-xs text-base-content/60">(Refreshing...)</span>
-              {/if}
-            </div>
-            {#if gscLastSynced}
-              <div class="text-xs text-base-content/60">Last synced {gscLastSynced}</div>
-            {:else}
-              <div class="text-xs text-base-content/60">No cached metrics yet. Run a refresh to pull the latest data.</div>
-            {/if}
-          </div>
-          <div class="flex gap-2">
-            <button
-              class="btn btn-sm btn-outline"
-              on:click={refreshGSCData}
-              disabled={gscRefreshing || gscLoading}
-            >
-              {#if gscRefreshing || gscLoading}
-                <span class="loading loading-spinner loading-xs"></span>
-                Refreshing...
-              {:else}
-                Refresh Data
-              {/if}
-            </button>
-            {#if isProOrTeam($userProfile)}
-              <a class="btn btn-sm btn-ghost" href="#/integrations" use:link>Manage</a>
-            {:else}
-              <a class="btn btn-sm btn-ghost" href="#/billing" use:link>Upgrade</a>
-            {/if}
-          </div>
-        </div>
-      {:else if gscLoading}
-        <div class="alert alert-info">
-          <span>Loading Google Search Console status...</span>
-        </div>
-      {:else}
-        <div class="alert alert-info">
-          <span>
-            {#if isProOrTeam($userProfile)}
-              Connect Google Search Console in
-              <a class="link link-primary" href="#/integrations" use:link>Integrations</a>
-              to surface search performance metrics alongside crawl data.
-            {:else}
-              <span>
-                Connect Google Search Console to surface search performance metrics alongside crawl data.
-                <a class="link link-primary" href="#/billing" use:link>Upgrade to Pro</a> to access integrations.
-              </span>
-            {/if}
-          </span>
-        </div>
-      {/if}
 
       <SummaryCard
         {summary}
         {navigateToTab}
+        {projectId}
         gscTotals={gscStatus?.summary?.totals}
         gscSyncState={gscStatus?.sync_state}
         gscIntegration={gscStatus?.integration}

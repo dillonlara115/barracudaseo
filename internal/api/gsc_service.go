@@ -308,9 +308,11 @@ func (s *Server) syncProjectGSCData(projectID string, cfg *gscIntegrationConfig,
 				"row_type":        rowType,
 				"dimension_value": row.Value,
 				"metrics":         row.Metrics,
+				"top_queries":     []interface{}{}, // Always include as empty array, will be set for page rows with query data
 			}
+			// Only set top_queries for page rows that have query data
 			if rowType == "page" {
-				if queries, ok := report.PageQueries[row.Value]; ok {
+				if queries, ok := report.PageQueries[row.Value]; ok && len(queries) > 0 {
 					record["top_queries"] = queries
 				}
 			}

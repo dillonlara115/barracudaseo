@@ -43,7 +43,9 @@
     return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   };
 
-  $: isConnected = Boolean(gscStatus?.integration?.property_url);
+  // Connected if integration exists with access token (property_url is optional)
+  $: isConnected = Boolean(gscStatus?.integration?.access_token);
+  $: hasPropertySelected = Boolean(gscStatus?.integration?.property_url);
   $: lastSyncedDisplay = gscStatus?.sync_state?.last_synced_at ? formatDateTime(gscStatus.sync_state.last_synced_at) : null;
   $: if (!selectedProperty && project?.settings?.gsc_property_url) {
     selectedProperty = project.settings.gsc_property_url;
@@ -114,6 +116,7 @@
   async function initialize() {
     if (!projectId) return;
     await loadStatus();
+    // Load properties if connected (even if no property selected yet)
     if (isConnected) {
       await loadProperties();
     } else {
@@ -441,32 +444,55 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 rounded-box border border-base-300 bg-base-100 p-4 shadow-sm">
       <div>
         <div class="text-sm font-semibold text-base-content/80">Google Search Console</div>
-        <div class="text-sm">
-          Connected to <span class="font-semibold">{gscStatus?.integration?.property_url}</span>.
-        </div>
-        {#if lastSyncedDisplay}
-          <div class="text-xs text-base-content/60">Last synced {lastSyncedDisplay}</div>
+        {#if hasPropertySelected}
+          <div class="text-sm">
+            Connected to <span class="font-semibold">{gscStatus?.integration?.property_url}</span>.
+          </div>
+          {#if lastSyncedDisplay}
+            <div class="text-xs text-base-content/60">Last synced {lastSyncedDisplay}</div>
+          {:else}
+            <div class="text-xs text-base-content/60">No cached metrics yet. Refresh to pull the latest data.</div>
+          {/if}
         {:else}
-          <div class="text-xs text-base-content/60">No cached metrics yet. Refresh to pull the latest data.</div>
+          <div class="text-sm">
+            Connected. Please select a property below.
+          </div>
         {/if}
       </div>
-      <div class="flex gap-2">
-        <button
-          class="btn btn-sm btn-outline"
-          on:click={refreshGSCData}
-          disabled={gscRefreshing || gscLoading}
-        >
-          {#if gscRefreshing}
-            <span class="loading loading-spinner loading-xs"></span>
-            Refreshing...
-          {:else}
-            Refresh Data
-          {/if}
-        </button>
-      </div>
+      {#if hasPropertySelected}
+        <div class="flex gap-2">
+          <a
+            href="/project/{projectId}/gsc"
+            use:link
+            class="btn btn-sm btn-primary"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+            </svg>
+            View Dashboard
+          </a>
+          <button
+            class="btn btn-sm btn-outline"
+            on:click={refreshGSCData}
+            disabled={gscRefreshing || gscLoading}
+          >
+            {#if gscRefreshing}
+              <span class="loading loading-spinner loading-xs"></span>
+              Refreshing...
+            {:else}
+              Refresh Data
+            {/if}
+          </button>
+        </div>
+      {/if}
     </div>
 
-    {#if properties.length === 0}
+    {#if isLoadingProperties}
+      <div class="alert alert-info">
+        <span class="loading loading-spinner loading-sm"></span>
+        <span>Loading properties...</span>
+      </div>
+    {:else if properties.length === 0}
       <div class="alert alert-warning">
         <span>No Google Search Console properties found. Confirm access in Search Console.</span>
       </div>
