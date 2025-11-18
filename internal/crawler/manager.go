@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -88,20 +89,27 @@ func (m *Manager) Crawl() ([]*models.PageResult, error) {
 	// Store normalized start URL for domain comparison
 	m.normalizedStartURL = startURL
 
-	// Parse sitemap if enabled
-	var seedURLs []string
-	if m.config.ParseSitemap {
-		sitemapURL := m.sitemapParser.DiscoverSitemapURL(startURL)
-		utils.Info("Parsing sitemap", utils.NewField("url", sitemapURL))
-		
-		urls, err := m.sitemapParser.ParseSitemap(sitemapURL)
-		if err != nil {
-			utils.Debug("Failed to parse sitemap", utils.NewField("url", sitemapURL), utils.NewField("error", err.Error()))
-		} else {
-			seedURLs = urls
-			utils.Info("Found URLs in sitemap", utils.NewField("count", len(seedURLs)))
+		// Parse sitemap if enabled
+		var seedURLs []string
+		if m.config.ParseSitemap {
+			sitemapURL := m.sitemapParser.DiscoverSitemapURL(startURL)
+			utils.Info("Parsing sitemap", utils.NewField("url", sitemapURL))
+			
+			urls, err := m.sitemapParser.ParseSitemap(sitemapURL)
+			if err != nil {
+				utils.Debug("Failed to parse sitemap", utils.NewField("url", sitemapURL), utils.NewField("error", err.Error()))
+			} else {
+				// Filter out image URLs from sitemap
+				for _, url := range urls {
+					if !utils.IsImageURL(url) {
+						seedURLs = append(seedURLs, url)
+					} else {
+						utils.Debug("Skipping image URL from sitemap", utils.NewField("url", url))
+					}
+				}
+				utils.Info("Found URLs in sitemap", utils.NewField("count", len(seedURLs)), utils.NewField("filtered_images", len(urls)-len(seedURLs)))
+			}
 		}
-	}
 
 	// If no sitemap URLs found, use start URL
 	if len(seedURLs) == 0 {
@@ -203,6 +211,12 @@ func (m *Manager) worker(id int) {
 				continue
 			}
 
+			// Skip image URLs - they should never be crawled as pages
+			if utils.IsImageURL(task.URL) {
+				utils.Debug("Skipping image URL - not a crawlable page", utils.NewField("url", task.URL))
+				continue
+			}
+
 			// Check robots.txt before fetching
 			if allowed, err := m.robotsChecker.IsAllowed(task.URL); err != nil {
 				utils.Debug("Robots check error", utils.NewField("url", task.URL), utils.NewField("error", err.Error()))
@@ -222,6 +236,12 @@ func (m *Manager) worker(id int) {
 
 			// Fetch the URL with retry logic
 			result := m.fetcher.FetchWithRetry(task.URL, 3)
+
+			// Skip non-HTML content (images, PDFs, etc.) - don't add to results
+			if result.Error != nil && strings.Contains(result.Error.Error(), "skipped non-HTML") {
+				utils.Debug("Skipping non-HTML content", utils.NewField("url", task.URL), utils.NewField("error", result.Error.Error()))
+				continue
+			}
 
 			// Store result (check limit again before storing)
 			m.resultsMu.Lock()
@@ -294,6 +314,7 @@ func (m *Manager) worker(id int) {
 				utils.NewField("h1_values", parsedData.H1),
 				utils.NewField("internal_links", len(parsedData.InternalLinks)),
 				utils.NewField("external_links", len(parsedData.ExternalLinks)),
+				utils.NewField("images", len(parsedData.Images)),
 				utils.NewField("body_size", len(result.Body)))
 
 			// Merge parsed data into page result
@@ -308,6 +329,7 @@ func (m *Manager) worker(id int) {
 			result.PageResult.H6 = parsedData.H6
 			result.PageResult.InternalLinks = parsedData.InternalLinks
 			result.PageResult.ExternalLinks = parsedData.ExternalLinks
+			result.PageResult.Images = parsedData.Images
 
 			// Call progress callback AFTER parsing and merging data
 			// This ensures the stored page has all the parsed SEO data (H1, links, etc.)
@@ -340,6 +362,13 @@ func (m *Manager) worker(id int) {
 					utils.NewField("total_internal_links", len(parsedData.InternalLinks)))
 				
 				for _, linkURL := range parsedData.InternalLinks {
+					// Skip image URLs - they should not be crawled as pages
+					if utils.IsImageURL(linkURL) {
+						skippedCount++
+						utils.Debug("Skipping image URL", utils.NewField("link", linkURL))
+						continue
+					}
+					
 					// Check domain filter (use normalized start URL for comparison)
 					if m.config.DomainFilter == "same" && !utils.IsSameDomain(linkURL, m.normalizedStartURL) {
 						domainSkippedCount++

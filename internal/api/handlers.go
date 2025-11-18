@@ -721,6 +721,18 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 		pagesMu.Lock()
 		defer pagesMu.Unlock()
 
+		// Skip storing image URLs - they should not be stored as pages
+		if utils.IsImageURL(page.URL) {
+			s.logger.Debug("Skipping image URL in progress callback", zap.String("url", page.URL))
+			return
+		}
+
+		// Skip storing non-HTML content
+		if page.Error != "" && strings.Contains(page.Error, "skipped non-HTML") {
+			s.logger.Debug("Skipping non-HTML content in progress callback", zap.String("url", page.URL), zap.String("error", page.Error))
+			return
+		}
+
 		// Ensure arrays are never nil - use empty slices instead
 		// This prevents JSONB from storing null instead of []
 		internalLinks := page.InternalLinks
@@ -871,8 +883,29 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 	atomic.StoreInt32(&totalPagesProcessed, int32(finalTotal))
 	pagesMu.Unlock()
 
-	// Analyze results
-	summary := analyzer.AnalyzeWithImages(results, config.Timeout)
+	// Filter out image URLs from results before analysis (safety check)
+	filteredResults := make([]*models.PageResult, 0, len(results))
+	imageCount := 0
+	for _, result := range results {
+		if utils.IsImageURL(result.URL) {
+			imageCount++
+			s.logger.Info("Filtering out image URL before analysis", 
+				zap.String("url", result.URL),
+				zap.Int("status_code", result.StatusCode),
+				zap.String("error", result.Error))
+		} else {
+			filteredResults = append(filteredResults, result)
+		}
+	}
+	if imageCount > 0 {
+		s.logger.Info("Filtered out image URLs before analysis", 
+			zap.Int("total_results", len(results)),
+			zap.Int("image_urls_filtered", imageCount),
+			zap.Int("remaining_results", len(filteredResults)))
+	}
+
+	// Analyze results (only non-image URLs)
+	summary := analyzer.AnalyzeWithImages(filteredResults, config.Timeout)
 
 	// Store issues
 	issues := make([]map[string]interface{}, 0, len(summary.Issues))

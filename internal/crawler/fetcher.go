@@ -114,6 +114,27 @@ func (f *Fetcher) Fetch(url string) *FetchResult {
 		result.PageResult.RedirectChain = redirectChain
 	}
 
+	// Check Content-Type header - skip non-HTML content (images, PDFs, etc.)
+	contentType := resp.Header.Get("Content-Type")
+	if contentType != "" {
+		contentTypeLower := strings.ToLower(contentType)
+		// Skip image content types
+		if strings.HasPrefix(contentTypeLower, "image/") {
+			result.Error = fmt.Errorf("skipped non-HTML content: %s", contentType)
+			result.PageResult.Error = result.Error.Error()
+			return result
+		}
+		// Skip other non-HTML content types
+		nonHTMLTypes := []string{"application/pdf", "application/zip", "application/json", "application/xml"}
+		for _, nonHTML := range nonHTMLTypes {
+			if strings.HasPrefix(contentTypeLower, nonHTML) {
+				result.Error = fmt.Errorf("skipped non-HTML content: %s", contentType)
+				result.PageResult.Error = result.Error.Error()
+				return result
+			}
+		}
+	}
+
 	// Read body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

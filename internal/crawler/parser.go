@@ -226,6 +226,7 @@ func (p *Parser) Parse(htmlContent []byte) (*models.PageResult, error) {
 	})
 
 	// Extract images
+	imageCount := 0
 	doc.Find("img").Each(func(i int, s *goquery.Selection) {
 		src, exists := s.Attr("src")
 		if !exists {
@@ -235,12 +236,14 @@ func (p *Parser) Parse(htmlContent []byte) (*models.PageResult, error) {
 		// Resolve relative URLs
 		resolvedURL, err := utils.ResolveURL(p.baseURL, src)
 		if err != nil {
+			utils.Debug("Failed to resolve image URL", utils.NewField("src", src), utils.NewField("error", err.Error()))
 			return
 		}
 
 		// Normalize URL
 		normalizedURL, err := utils.NormalizeURL(resolvedURL)
 		if err != nil {
+			utils.Debug("Failed to normalize image URL", utils.NewField("resolved_url", resolvedURL), utils.NewField("error", err.Error()))
 			return
 		}
 
@@ -268,7 +271,14 @@ func (p *Parser) Parse(htmlContent []byte) (*models.PageResult, error) {
 			URL: normalizedURL,
 			Alt: alt,
 		})
+		imageCount++
 	})
+	
+	if imageCount > 0 {
+		utils.Debug("Extracted images from page", 
+			utils.NewField("url", p.baseURL),
+			utils.NewField("image_count", imageCount))
+	}
 
 	return result, nil
 }

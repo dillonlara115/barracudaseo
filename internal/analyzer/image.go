@@ -112,9 +112,22 @@ func AnalyzeImages(results []*models.PageResult, timeout time.Duration) []Issue 
 	largeImages := 0
 
 	for _, result := range results {
+		// Skip image URLs - they should not be analyzed as pages
+		if utils.IsImageURL(result.URL) {
+			continue
+		}
+
 		if result.StatusCode != 200 || result.Error != "" {
 			continue
 		}
+
+		if len(result.Images) == 0 {
+			continue
+		}
+
+		utils.Debug("Analyzing images from page", 
+			utils.NewField("url", result.URL),
+			utils.NewField("image_count", len(result.Images)))
 
 		for _, img := range result.Images {
 			totalImages++

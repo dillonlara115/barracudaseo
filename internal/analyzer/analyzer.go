@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dillonlara115/barracuda/internal/utils"
 	"github.com/dillonlara115/barracuda/pkg/models"
 )
 
@@ -74,6 +75,12 @@ func Analyze(results []*models.PageResult) *Summary {
 
 	// Analyze basic issues first
 	for _, result := range results {
+		// Skip image URLs entirely - they should never be analyzed for page-level SEO issues
+		if utils.IsImageURL(result.URL) {
+			utils.Debug("Skipping image URL in analyzer", utils.NewField("url", result.URL))
+			continue
+		}
+
 		// Track response times
 		totalResponseTime += result.ResponseTime
 		if result.ResponseTime > 2000 { // Slower than 2 seconds
@@ -97,6 +104,14 @@ func Analyze(results []*models.PageResult) *Summary {
 				})
 				summary.IssuesByType[IssueBrokenLink]++
 			}
+			// Skip SEO analysis for pages with errors (images, PDFs, etc.)
+			continue
+		}
+
+		// Skip SEO analysis for non-HTML pages (status code 200 but has error indicating non-HTML content)
+		if result.StatusCode == 200 && result.Error != "" && strings.Contains(result.Error, "skipped non-HTML") {
+			summary.PagesWithErrors++
+			continue
 		}
 
 		// Track redirects

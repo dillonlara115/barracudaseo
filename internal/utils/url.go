@@ -98,3 +98,61 @@ func IsValidURL(rawURL string) bool {
 	return err == nil
 }
 
+// IsImageURL checks if a URL points to an image file based on its extension
+// This function checks both the path extension and common image URL patterns
+func IsImageURL(rawURL string) bool {
+	if rawURL == "" {
+		return false
+	}
+	
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return false
+	}
+	
+	// Get the path (without query parameters or fragments)
+	path := u.Path
+	if path == "" {
+		return false
+	}
+	
+	// Remove trailing slash
+	path = strings.TrimSuffix(path, "/")
+	if path == "" {
+		return false
+	}
+	
+	// Find the last dot in the path
+	lastDot := strings.LastIndex(path, ".")
+	if lastDot == -1 {
+		// No extension found
+		return false
+	}
+	
+	// Make sure the dot is not at the end
+	if lastDot >= len(path)-1 {
+		return false
+	}
+	
+	// Get file extension (lowercase) - everything after the last dot
+	ext := strings.ToLower(path[lastDot:])
+	if ext == "" {
+		return false
+	}
+	
+	// Common image extensions (must match exactly)
+	imageExtensions := []string{
+		".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg",
+		".bmp", ".ico", ".tiff", ".tif", ".avif", ".heic", ".heif",
+		".jp2", ".j2k", ".jpx", ".jpf", ".jpm", ".mj2", ".mjp2",
+	}
+	
+	for _, imgExt := range imageExtensions {
+		if ext == imgExt {
+			return true
+		}
+	}
+	
+	return false
+}
+
