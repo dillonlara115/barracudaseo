@@ -82,12 +82,13 @@ make docker-push
 
 ```bash
 # Deploy with environment variables
+# Note: Add Stripe variables if using billing features
 gcloud run deploy barracuda-api \
   --image $GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/barracuda/barracuda-api:latest \
   --platform managed \
   --region $GCP_REGION \
   --allow-unauthenticated \
-  --set-env-vars="PUBLIC_SUPABASE_URL=https://your-project.supabase.co,PUBLIC_SUPABASE_ANON_KEY=your-anon-key" \
+  --set-env-vars="PUBLIC_SUPABASE_URL=https://your-project.supabase.co,PUBLIC_SUPABASE_ANON_KEY=your-anon-key,STRIPE_SECRET_KEY=sk_live_...,STRIPE_WEBHOOK_SECRET=whsec_...,STRIPE_PRICE_ID_PRO=price_...,STRIPE_PRICE_ID_PRO_ANNUAL=price_...,STRIPE_SUCCESS_URL=https://app.barracudaseo.com/billing?success=true,STRIPE_CANCEL_URL=https://app.barracudaseo.com/billing?canceled=true" \
   --set-secrets="SUPABASE_SERVICE_ROLE_KEY=supabase-service-role-key:latest" \
   --memory=512Mi \
   --cpu=1 \
@@ -100,6 +101,12 @@ gcloud run services describe barracuda-api \
   --platform managed \
   --region $GCP_REGION \
   --format="value(status.url)"
+```
+
+**Alternative**: Use the update script to add Stripe variables after initial deployment:
+```bash
+# Add Stripe variables to .env file, then run:
+./scripts/update-cloud-run-env.sh
 ```
 
 ## Step 7: Test Deployed API
@@ -117,10 +124,26 @@ curl $API_URL/health
 
 ## Environment Variables Reference
 
+### Required Variables
+
 - `PUBLIC_SUPABASE_URL` - Your Supabase project URL
 - `PUBLIC_SUPABASE_ANON_KEY` - Supabase anon key (safe to expose)
 - `SUPABASE_SERVICE_ROLE_KEY` - Service role key (from Secret Manager)
 - `PORT` - Automatically set by Cloud Run (default: 8080)
+
+### Stripe Variables (Required for Billing Features)
+
+If you're using Stripe for billing/subscriptions, add these variables:
+
+- `STRIPE_SECRET_KEY` - Stripe API secret key (`sk_live_...` for production, `sk_test_...` for testing)
+- `STRIPE_WEBHOOK_SECRET` - Webhook signing secret (`whsec_...`)
+- `STRIPE_PRICE_ID_PRO` - Monthly Pro plan price ID (`price_...`)
+- `STRIPE_PRICE_ID_PRO_ANNUAL` - Annual Pro plan price ID (`price_...`)
+- `STRIPE_SUCCESS_URL` - Redirect URL after successful checkout (e.g., `https://app.barracudaseo.com/billing?success=true`)
+- `STRIPE_CANCEL_URL` - Redirect URL if checkout canceled (e.g., `https://app.barracudaseo.com/billing?canceled=true`)
+- `STRIPE_PRICE_ID_TEAM_SEAT` - (Optional) Team seat add-on price ID
+
+**Note**: See [STRIPE_PRODUCTION_FIX.md](./STRIPE_PRODUCTION_FIX.md) for detailed Stripe setup instructions.
 
 ## Updating the Deployment
 

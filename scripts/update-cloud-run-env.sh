@@ -26,10 +26,36 @@ echo "Project: $GCP_PROJECT_ID"
 echo "Region: $GCP_REGION"
 echo ""
 
+# Build environment variables string
+ENV_VARS="PUBLIC_SUPABASE_URL=$PUBLIC_SUPABASE_URL,PUBLIC_SUPABASE_ANON_KEY=$PUBLIC_SUPABASE_ANON_KEY"
+
+# Add Stripe variables if they're set
+if [ -n "$STRIPE_SECRET_KEY" ]; then
+    ENV_VARS="$ENV_VARS,STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY"
+fi
+if [ -n "$STRIPE_WEBHOOK_SECRET" ]; then
+    ENV_VARS="$ENV_VARS,STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET"
+fi
+if [ -n "$STRIPE_PRICE_ID_PRO" ]; then
+    ENV_VARS="$ENV_VARS,STRIPE_PRICE_ID_PRO=$STRIPE_PRICE_ID_PRO"
+fi
+if [ -n "$STRIPE_PRICE_ID_PRO_ANNUAL" ]; then
+    ENV_VARS="$ENV_VARS,STRIPE_PRICE_ID_PRO_ANNUAL=$STRIPE_PRICE_ID_PRO_ANNUAL"
+fi
+if [ -n "$STRIPE_PRICE_ID_TEAM_SEAT" ]; then
+    ENV_VARS="$ENV_VARS,STRIPE_PRICE_ID_TEAM_SEAT=$STRIPE_PRICE_ID_TEAM_SEAT"
+fi
+if [ -n "$STRIPE_SUCCESS_URL" ]; then
+    ENV_VARS="$ENV_VARS,STRIPE_SUCCESS_URL=$STRIPE_SUCCESS_URL"
+fi
+if [ -n "$STRIPE_CANCEL_URL" ]; then
+    ENV_VARS="$ENV_VARS,STRIPE_CANCEL_URL=$STRIPE_CANCEL_URL"
+fi
+
 gcloud run services update barracuda-api \
     --platform managed \
     --region $GCP_REGION \
-    --update-env-vars="PUBLIC_SUPABASE_URL=$PUBLIC_SUPABASE_URL,PUBLIC_SUPABASE_ANON_KEY=$PUBLIC_SUPABASE_ANON_KEY" \
+    --update-env-vars="$ENV_VARS" \
     --quiet
 
 echo ""

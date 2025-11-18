@@ -141,12 +141,34 @@ deploy-backend: docker-push
 	SUPABASE_ANON="$${PUBLIC_SUPABASE_ANON_KEY:-$(PUBLIC_SUPABASE_ANON_KEY)}"; \
 	GCP_PROJ="$${GCP_PROJECT_ID:-$(GCP_PROJECT_ID)}"; \
 	GCP_REG="$${GCP_REGION:-$(GCP_REGION)}"; \
+	ENV_VARS="PUBLIC_SUPABASE_URL=$$SUPABASE_URL,PUBLIC_SUPABASE_ANON_KEY=$$SUPABASE_ANON"; \
+	if [ -n "$$STRIPE_SECRET_KEY" ]; then \
+		ENV_VARS="$$ENV_VARS,STRIPE_SECRET_KEY=$$STRIPE_SECRET_KEY"; \
+	fi; \
+	if [ -n "$$STRIPE_WEBHOOK_SECRET" ]; then \
+		ENV_VARS="$$ENV_VARS,STRIPE_WEBHOOK_SECRET=$$STRIPE_WEBHOOK_SECRET"; \
+	fi; \
+	if [ -n "$$STRIPE_PRICE_ID_PRO" ]; then \
+		ENV_VARS="$$ENV_VARS,STRIPE_PRICE_ID_PRO=$$STRIPE_PRICE_ID_PRO"; \
+	fi; \
+	if [ -n "$$STRIPE_PRICE_ID_PRO_ANNUAL" ]; then \
+		ENV_VARS="$$ENV_VARS,STRIPE_PRICE_ID_PRO_ANNUAL=$$STRIPE_PRICE_ID_PRO_ANNUAL"; \
+	fi; \
+	if [ -n "$$STRIPE_PRICE_ID_TEAM_SEAT" ]; then \
+		ENV_VARS="$$ENV_VARS,STRIPE_PRICE_ID_TEAM_SEAT=$$STRIPE_PRICE_ID_TEAM_SEAT"; \
+	fi; \
+	if [ -n "$$STRIPE_SUCCESS_URL" ]; then \
+		ENV_VARS="$$ENV_VARS,STRIPE_SUCCESS_URL=$$STRIPE_SUCCESS_URL"; \
+	fi; \
+	if [ -n "$$STRIPE_CANCEL_URL" ]; then \
+		ENV_VARS="$$ENV_VARS,STRIPE_CANCEL_URL=$$STRIPE_CANCEL_URL"; \
+	fi; \
 	gcloud run deploy $(IMAGE_NAME) \
 		--image $$GCP_REG-docker.pkg.dev/$$GCP_PROJ/$(REPOSITORY)/$(IMAGE_NAME):$(IMAGE_TAG) \
 		--platform managed \
 		--region $$GCP_REG \
 		--allow-unauthenticated \
-		--set-env-vars="PUBLIC_SUPABASE_URL=$$SUPABASE_URL,PUBLIC_SUPABASE_ANON_KEY=$$SUPABASE_ANON" \
+		--set-env-vars="$$ENV_VARS" \
 		--set-secrets="SUPABASE_SERVICE_ROLE_KEY=supabase-service-role-key:latest" \
 		--memory=512Mi \
 		--cpu=1 \

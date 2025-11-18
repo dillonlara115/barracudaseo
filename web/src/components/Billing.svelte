@@ -21,6 +21,7 @@
   const STRIPE_PRICE_ID_TEAM_SEAT = import.meta.env.VITE_STRIPE_PRICE_ID_TEAM_SEAT || '';
   
   let selectedBillingPeriod = 'monthly'; // 'monthly' or 'annual'
+  let teamSeatsQuantity = 0; // Number of additional team seats to add
   let hasLoaded = false; // Track if we've attempted to load
 
   // Load data when component mounts and user is available
@@ -170,6 +171,7 @@
         body: JSON.stringify({
           price_id: priceId,
           quantity: 1,
+          team_seats_quantity: teamSeatsQuantity || 0,
         }),
       });
 
@@ -452,6 +454,36 @@
               </ul>
             </div>
 
+            <!-- Team Seats Selection -->
+            {#if STRIPE_PRICE_ID_TEAM_SEAT}
+              <div class="mb-4 p-4 border border-base-300 rounded-lg">
+                <label class="label">
+                  <span class="label-text font-semibold">Additional Team Seats</span>
+                  <span class="label-text-alt">$5/month each</span>
+                </label>
+                <div class="flex items-center gap-4 mt-2">
+                  <input 
+                    type="number" 
+                    min="0" 
+                    max="20" 
+                    bind:value={teamSeatsQuantity}
+                    class="input input-bordered w-24"
+                    placeholder="0"
+                  />
+                  <span class="text-sm text-base-content/70">
+                    {#if teamSeatsQuantity > 0}
+                      {teamSeatsQuantity} seat{teamSeatsQuantity === 1 ? '' : 's'} = ${teamSeatsQuantity * 5}/month
+                    {:else}
+                      No additional seats
+                    {/if}
+                  </span>
+                </div>
+                <p class="text-xs text-base-content/60 mt-2">
+                  Pro plan includes 1 user. Add more seats for your team members.
+                </p>
+              </div>
+            {/if}
+
             <button 
               class="btn btn-primary w-full"
               on:click={() => {
@@ -466,7 +498,11 @@
                 <Loader class="w-4 h-4 animate-spin" />
                 Processing...
               {:else}
-                Upgrade to Pro {selectedBillingPeriod === 'annual' ? '(Annual)' : ''}
+                {#if teamSeatsQuantity > 0}
+                  Upgrade to Pro {selectedBillingPeriod === 'annual' ? '(Annual)' : ''} + {teamSeatsQuantity} seat{teamSeatsQuantity === 1 ? '' : 's'}
+                {:else}
+                  Upgrade to Pro {selectedBillingPeriod === 'annual' ? '(Annual)' : ''}
+                {/if}
               {/if}
             </button>
 

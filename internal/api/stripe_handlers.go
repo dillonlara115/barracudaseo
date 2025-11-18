@@ -54,6 +54,7 @@ func GetStripeConfig() StripeConfig {
 type CreateCheckoutSessionRequest struct {
 	PriceID string `json:"price_id"` // Stripe price ID (e.g., "price_xxxxx")
 	Quantity int   `json:"quantity,omitempty"` // For team seats, default 1
+	TeamSeatsQuantity int `json:"team_seats_quantity,omitempty"` // Number of additional team seats to add (0 = none)
 }
 
 // CreateCheckoutSessionResponse represents the checkout session response
@@ -171,10 +172,21 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 		req.Quantity = 1
 	}
 
+	// Validate team seats quantity
+	if req.TeamSeatsQuantity < 0 {
+		req.TeamSeatsQuantity = 0
+	}
+
 	// Get or create Stripe customer
 	stripeConfig := GetStripeConfig()
 	if stripeConfig.SecretKey == "" {
 		s.respondError(w, http.StatusInternalServerError, "Stripe not configured")
+		return
+	}
+	
+	// Validate team seat price ID if team seats are requested
+	if req.TeamSeatsQuantity > 0 && stripeConfig.PriceIDTeamSeat == "" {
+		s.respondError(w, http.StatusBadRequest, "Team seats are not available. Please contact support.")
 		return
 	}
 
@@ -284,16 +296,27 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
+	// Build line items: Pro plan + optional team seat add-on
+	lineItems := []*stripe.CheckoutSessionLineItemParams{
+		{
+			Price:    stripe.String(req.PriceID),
+			Quantity: stripe.Int64(int64(req.Quantity)),
+		},
+	}
+	
+	// Add team seat add-on if requested
+	if req.TeamSeatsQuantity > 0 {
+		lineItems = append(lineItems, &stripe.CheckoutSessionLineItemParams{
+			Price:    stripe.String(stripeConfig.PriceIDTeamSeat),
+			Quantity: stripe.Int64(int64(req.TeamSeatsQuantity)),
+		})
+	}
+
 	// Create checkout session
 	checkoutParams := &stripe.CheckoutSessionParams{
 		Customer: stripe.String(customerID),
 		Mode:     stripe.String(string(stripe.CheckoutSessionModeSubscription)),
-		LineItems: []*stripe.CheckoutSessionLineItemParams{
-			{
-				Price:    stripe.String(req.PriceID),
-				Quantity: stripe.Int64(int64(req.Quantity)),
-			},
-		},
+		LineItems: lineItems,
 		SuccessURL: stripe.String(stripeConfig.SuccessURL),
 		CancelURL:  stripe.String(stripeConfig.CancelURL),
 		Metadata: map[string]string{
@@ -436,29 +459,46 @@ func (s *Server) handleSubscriptionUpdate(sub *stripe.Subscription) {
 		return
 	}
 
-	// Determine tier based on price ID
+	// Determine tier and team size by checking ALL subscription items
+	// Team seats are an add-on to Pro plans, not a separate tier
 	tier := "free"
+	teamSize := 1 // Default team size (1 user included with Pro)
 	stripeConfig := GetStripeConfig()
-	if len(sub.Items.Data) > 0 && sub.Items.Data[0].Price != nil {
-		priceID := sub.Items.Data[0].Price.ID
+	var proPriceID string
+
+	// Loop through all subscription items to find Pro plan and team seat add-ons
+	for _, item := range sub.Items.Data {
+		if item.Price == nil {
+			continue
+		}
+
+		priceID := item.Price.ID
+
+		// Check if this is a Pro plan (monthly or annual)
 		if priceID == stripeConfig.PriceIDPro || priceID == stripeConfig.PriceIDProAnnual {
 			tier = "pro"
-		} else if priceID == stripeConfig.PriceIDTeamSeat {
-			tier = "team"
+			proPriceID = priceID
+		}
+
+		// Check if this is a team seat add-on
+		// Team seats are an add-on to Pro, not a separate tier
+		if priceID == stripeConfig.PriceIDTeamSeat {
+			// Extract team size from team seat add-on quantity
+			// Quantity represents number of additional seats (beyond the 1 included)
+			// Total team size = 1 (base) + quantity (add-on seats)
+			teamSize = 1 + int(item.Quantity)
+			// Don't override tier - keep it as "pro" if Pro plan exists
 		}
 	}
 
-	// Calculate quantity (team size)
-	quantity := 1
-	if len(sub.Items.Data) > 0 {
-		quantity = int(sub.Items.Data[0].Quantity)
-	}
-
-	// Get price ID safely
-	priceID := ""
-	if len(sub.Items.Data) > 0 && sub.Items.Data[0].Price != nil {
+	// Use Pro price ID if found, otherwise fall back to first item
+	priceID := proPriceID
+	if priceID == "" && len(sub.Items.Data) > 0 && sub.Items.Data[0].Price != nil {
 		priceID = sub.Items.Data[0].Price.ID
 	}
+
+	// Quantity for subscription record should be team size
+	quantity := teamSize
 
 	// Insert or update subscription record
 	subscriptionData := map[string]interface{}{
@@ -515,6 +555,7 @@ func (s *Server) handleSubscriptionUpdate(sub *stripe.Subscription) {
 		"stripe_subscription_id":      sub.ID,
 		"subscription_tier":            tier,
 		"subscription_status":          string(sub.Status),
+		"team_size":                    teamSize, // Include team size from add-on
 		"subscription_current_period_end": time.Unix(sub.CurrentPeriodEnd, 0).Format(time.RFC3339),
 		"subscription_cancel_at_period_end": sub.CancelAtPeriodEnd,
 	}
@@ -533,6 +574,7 @@ func (s *Server) handleSubscriptionUpdate(sub *stripe.Subscription) {
 		zap.String("user_id", userID),
 		zap.String("subscription_id", sub.ID),
 		zap.String("tier", tier),
+		zap.Int("team_size", teamSize),
 		zap.String("status", string(sub.Status)),
 	)
 }
