@@ -268,8 +268,9 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// Validate or create Stripe customer
 	if customerID == "" {
-		// Create Stripe customer
+		// Create new Stripe customer
 		params := &stripe.CustomerParams{
 			Email: stripe.String(user.Email),
 			Metadata: map[string]string{
@@ -294,6 +295,50 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 		if err != nil {
 			s.logger.Warn("Failed to save Stripe customer ID", zap.Error(err))
 		}
+	} else {
+		// Verify customer exists in Stripe (handles cases where customer was deleted or from different account)
+		_, err := customer.Get(customerID, nil)
+		if err != nil {
+			// Check if it's a resource_missing error
+			if stripeErr, ok := err.(*stripe.Error); ok && stripeErr.Code == stripe.ErrorCodeResourceMissing {
+				s.logger.Warn("Customer ID in database does not exist in Stripe, creating new customer",
+					zap.String("old_customer_id", customerID),
+					zap.String("user_id", userID))
+				
+				// Create new Stripe customer
+				params := &stripe.CustomerParams{
+					Email: stripe.String(user.Email),
+					Metadata: map[string]string{
+						"user_id": userID,
+					},
+				}
+				cust, createErr := customer.New(params)
+				if createErr != nil {
+					s.logger.Error("Failed to create Stripe customer after validation failure", zap.Error(createErr))
+					s.respondError(w, http.StatusInternalServerError, "Failed to create customer")
+					return
+				}
+				customerID = cust.ID
+
+				// Update customer ID in profile
+				_, _, updateErr := s.serviceRole.From("profiles").
+					Update(map[string]interface{}{
+						"stripe_customer_id": customerID,
+					}, "", "").
+					Eq("id", userID).
+					Execute()
+				if updateErr != nil {
+					s.logger.Warn("Failed to update Stripe customer ID after recreation", zap.Error(updateErr))
+				}
+			} else {
+				// Other Stripe error - log and return error
+				s.logger.Error("Failed to verify Stripe customer", 
+					zap.Error(err),
+					zap.String("customer_id", customerID))
+				s.respondError(w, http.StatusInternalServerError, "Failed to verify customer")
+				return
+			}
+		}
 	}
 
 	// Build line items: Pro plan + optional team seat add-on
@@ -312,6 +357,13 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 		})
 	}
 
+	// Validate URLs are configured
+	if stripeConfig.SuccessURL == "" || stripeConfig.CancelURL == "" {
+		s.logger.Error("Stripe success/cancel URLs not configured")
+		s.respondError(w, http.StatusInternalServerError, "Checkout URLs not configured")
+		return
+	}
+
 	// Create checkout session
 	checkoutParams := &stripe.CheckoutSessionParams{
 		Customer: stripe.String(customerID),
@@ -326,7 +378,18 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 
 	sess, err := session.New(checkoutParams)
 	if err != nil {
-		s.logger.Error("Failed to create checkout session", zap.Error(err))
+		// Enhanced error logging with Stripe error details
+		if stripeErr, ok := err.(*stripe.Error); ok {
+			s.logger.Error("Failed to create checkout session",
+				zap.Error(err),
+				zap.String("stripe_error_type", string(stripeErr.Type)),
+				zap.String("stripe_error_code", string(stripeErr.Code)),
+				zap.String("stripe_error_message", stripeErr.Msg),
+				zap.String("customer_id", customerID),
+				zap.String("user_id", userID))
+		} else {
+			s.logger.Error("Failed to create checkout session", zap.Error(err))
+		}
 		s.respondError(w, http.StatusInternalServerError, "Failed to create checkout session")
 		return
 	}

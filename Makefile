@@ -96,8 +96,8 @@ docker-build:
 		echo "Error: GCP_PROJECT_ID not set. Set it or run: gcloud config set project YOUR_PROJECT_ID"; \
 		exit 1; \
 	fi
-	@echo "Building Docker image: $(IMAGE_URI)"
-	docker build -t $(IMAGE_URI) .
+	@echo "Building Docker image for linux/amd64 (Cloud Run requirement): $(IMAGE_URI)"
+	docker build --platform linux/amd64 -t $(IMAGE_URI) .
 	@echo "✓ Docker image built successfully"
 
 # Push Docker image to Artifact Registry
