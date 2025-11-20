@@ -1,58 +1,125 @@
 #!/bin/bash
 # Update Cloud Run environment variables
+# This script uses --update-env-vars which MERGES with existing variables
+# (doesn't replace them, so existing vars persist)
+#
+# Usage:
+#   ./scripts/update-cloud-run-env.sh           # Uses .env, then .env.local (if exists)
+#   ./scripts/update-cloud-run-env.sh --production  # Uses only .env (skips .env.local)
 
 set -e
 
-# Load from .env if it exists
-if [ -f .env ]; then
-    export $(cat .env | grep -v '^#' | xargs)
+# Check for --production flag
+SKIP_LOCAL=false
+if [ "$1" == "--production" ]; then
+    SKIP_LOCAL=true
+    echo "Production mode: Skipping .env.local"
 fi
 
-# Check required variables
-if [ -z "$PUBLIC_SUPABASE_URL" ] || [ -z "$PUBLIC_SUPABASE_ANON_KEY" ]; then
-    echo "Error: PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY must be set"
-    echo "Either:"
-    echo "  1. Set them in your .env file, or"
-    echo "  2. Export them: export PUBLIC_SUPABASE_URL=... export PUBLIC_SUPABASE_ANON_KEY=..."
-    exit 1
+# Load from .env (production defaults)
+if [ -f .env ]; then
+    # Filter out comments (lines starting with #) and empty lines
+    # Also remove inline comments (everything after # on a line)
+    export $(cat .env | grep -v '^#' | grep -v '^[[:space:]]*$' | sed 's/#.*$//' | xargs)
+fi
+
+# Load from .env.local (local overrides) unless --production flag is set
+if [ "$SKIP_LOCAL" = false ] && [ -f .env.local ]; then
+    echo "Loading local overrides from .env.local..."
+    # Filter out comments and empty lines, remove inline comments
+    export $(cat .env.local | grep -v '^#' | grep -v '^[[:space:]]*$' | sed 's/#.*$//' | xargs)
 fi
 
 # Get project and region from gcloud config or environment
 GCP_PROJECT_ID=${GCP_PROJECT_ID:-$(gcloud config get-value project 2>/dev/null)}
 GCP_REGION=${GCP_REGION:-us-central1}
 
-echo "Updating Cloud Run service: barracuda-api"
+SERVICE_NAME=${SERVICE_NAME:-barracuda-api}
+
+echo "Updating Cloud Run service: $SERVICE_NAME"
 echo "Project: $GCP_PROJECT_ID"
 echo "Region: $GCP_REGION"
 echo ""
+echo "Note: This merges with existing variables (doesn't replace them)"
+echo ""
 
-# Build environment variables string
-ENV_VARS="PUBLIC_SUPABASE_URL=$PUBLIC_SUPABASE_URL,PUBLIC_SUPABASE_ANON_KEY=$PUBLIC_SUPABASE_ANON_KEY"
+# Build environment variables string (only include variables that are set)
+ENV_VARS=""
 
-# Add Stripe variables if they're set
+# Required variables
+if [ -n "$PUBLIC_SUPABASE_URL" ]; then
+    ENV_VARS="PUBLIC_SUPABASE_URL=$PUBLIC_SUPABASE_URL"
+fi
+if [ -n "$PUBLIC_SUPABASE_ANON_KEY" ]; then
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,PUBLIC_SUPABASE_ANON_KEY=$PUBLIC_SUPABASE_ANON_KEY"
+    else
+        ENV_VARS="PUBLIC_SUPABASE_ANON_KEY=$PUBLIC_SUPABASE_ANON_KEY"
+    fi
+fi
+
+# Stripe variables
 if [ -n "$STRIPE_SECRET_KEY" ]; then
-    ENV_VARS="$ENV_VARS,STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY"
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY"
+    else
+        ENV_VARS="STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY"
+    fi
 fi
 if [ -n "$STRIPE_WEBHOOK_SECRET" ]; then
-    ENV_VARS="$ENV_VARS,STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET"
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET"
+    else
+        ENV_VARS="STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET"
+    fi
 fi
 if [ -n "$STRIPE_PRICE_ID_PRO" ]; then
-    ENV_VARS="$ENV_VARS,STRIPE_PRICE_ID_PRO=$STRIPE_PRICE_ID_PRO"
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,STRIPE_PRICE_ID_PRO=$STRIPE_PRICE_ID_PRO"
+    else
+        ENV_VARS="STRIPE_PRICE_ID_PRO=$STRIPE_PRICE_ID_PRO"
+    fi
 fi
 if [ -n "$STRIPE_PRICE_ID_PRO_ANNUAL" ]; then
-    ENV_VARS="$ENV_VARS,STRIPE_PRICE_ID_PRO_ANNUAL=$STRIPE_PRICE_ID_PRO_ANNUAL"
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,STRIPE_PRICE_ID_PRO_ANNUAL=$STRIPE_PRICE_ID_PRO_ANNUAL"
+    else
+        ENV_VARS="STRIPE_PRICE_ID_PRO_ANNUAL=$STRIPE_PRICE_ID_PRO_ANNUAL"
+    fi
 fi
 if [ -n "$STRIPE_PRICE_ID_TEAM_SEAT" ]; then
-    ENV_VARS="$ENV_VARS,STRIPE_PRICE_ID_TEAM_SEAT=$STRIPE_PRICE_ID_TEAM_SEAT"
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,STRIPE_PRICE_ID_TEAM_SEAT=$STRIPE_PRICE_ID_TEAM_SEAT"
+    else
+        ENV_VARS="STRIPE_PRICE_ID_TEAM_SEAT=$STRIPE_PRICE_ID_TEAM_SEAT"
+    fi
 fi
 if [ -n "$STRIPE_SUCCESS_URL" ]; then
-    ENV_VARS="$ENV_VARS,STRIPE_SUCCESS_URL=$STRIPE_SUCCESS_URL"
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,STRIPE_SUCCESS_URL=$STRIPE_SUCCESS_URL"
+    else
+        ENV_VARS="STRIPE_SUCCESS_URL=$STRIPE_SUCCESS_URL"
+    fi
 fi
 if [ -n "$STRIPE_CANCEL_URL" ]; then
-    ENV_VARS="$ENV_VARS,STRIPE_CANCEL_URL=$STRIPE_CANCEL_URL"
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,STRIPE_CANCEL_URL=$STRIPE_CANCEL_URL"
+    else
+        ENV_VARS="STRIPE_CANCEL_URL=$STRIPE_CANCEL_URL"
+    fi
 fi
 
-gcloud run services update barracuda-api \
+if [ -z "$ENV_VARS" ]; then
+    echo "Error: No environment variables to update."
+    echo "Set variables in your .env file or export them."
+    exit 1
+fi
+
+echo "Updating variables:"
+echo "$ENV_VARS" | tr ',' '\n' | sed 's/^/  - /'
+echo ""
+
+gcloud run services update $SERVICE_NAME \
     --platform managed \
     --region $GCP_REGION \
     --update-env-vars="$ENV_VARS" \
@@ -62,7 +129,7 @@ echo ""
 echo "✓ Environment variables updated!"
 echo ""
 echo "Service URL:"
-gcloud run services describe barracuda-api \
+gcloud run services describe $SERVICE_NAME \
     --platform managed \
     --region $GCP_REGION \
     --format="value(status.url)"

@@ -37,11 +37,23 @@
     }
     
     // Subscribe to user store and load when user becomes available
-    const unsubscribe = user.subscribe(async (currentUser) => {
+    let unsubscribe;
+    unsubscribe = user.subscribe(async (currentUser) => {
       if (currentUser) {
-        // Always load data, even if already loaded (to refresh)
-        hasLoaded = true;
-        await loadBillingData();
+        // Check if we have a valid session before making API calls
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          // User exists but no session (email not confirmed?)
+          loading = false;
+          error = 'Please confirm your email address to access billing information.';
+          return;
+        }
+        
+        // Only load if we haven't loaded yet or if explicitly refreshing
+        if (!hasLoaded) {
+          hasLoaded = true;
+          await loadBillingData();
+        }
         
         // Show success message if returning from checkout
         if (success) {
@@ -176,16 +188,34 @@
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create checkout session');
+        let errorMessage = `Failed to create checkout session (${response.status})`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (parseError) {
+          // If response isn't JSON, try to get text
+          try {
+            const text = await response.text();
+            if (text) {
+              errorMessage = `Server error: ${text.substring(0, 200)}`;
+            }
+          } catch (_) {
+            // Ignore text parsing errors
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
       
+      if (!data || !data.url) {
+        throw new Error('Invalid response from server: missing checkout URL');
+      }
+      
       // Redirect to Stripe checkout
       window.location.href = data.url;
     } catch (err) {
-      error = err.message;
+      error = err.message || 'An unexpected error occurred. Please try again.';
       console.error('Failed to create checkout session:', err);
     } finally {
       creatingCheckout = false;
@@ -209,16 +239,34 @@
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create billing portal session');
+        let errorMessage = `Failed to create billing portal session (${response.status})`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (parseError) {
+          // If response isn't JSON, try to get text
+          try {
+            const text = await response.text();
+            if (text) {
+              errorMessage = `Server error: ${text.substring(0, 200)}`;
+            }
+          } catch (_) {
+            // Ignore text parsing errors
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
       
+      if (!data || !data.url) {
+        throw new Error('Invalid response from server: missing portal URL');
+      }
+      
       // Open billing portal in new window
       window.location.href = data.url;
     } catch (err) {
-      error = err.message;
+      error = err.message || 'An unexpected error occurred. Please try again.';
       console.error('Failed to open billing portal:', err);
     } finally {
       creatingPortal = false;

@@ -17,6 +17,14 @@
   let success = null;
 
   $: isAuthenticated = $user !== null;
+  
+  // Redirect to dashboard when authenticated
+  $: if (isAuthenticated && $user) {
+    // Small delay to show success message, then redirect
+    setTimeout(() => {
+      push('#/');
+    }, 1500);
+  }
 
   async function handleSubmit() {
     loading = true;
@@ -28,11 +36,22 @@
       if (isSignUp) {
         const { data, error: signUpError } = await signUp(email, password, displayName);
         if (signUpError) throw signUpError;
-        success = 'Account created successfully!';
+        
+        // Check if email confirmation is required
+        if (data.user && !data.session) {
+          success = 'Account created! Please check your email to confirm your account.';
+        } else if (data.session) {
+          success = 'Account created successfully! Redirecting...';
+          // User is immediately authenticated (email confirmation disabled)
+          // Redirect will happen via reactive statement above
+        } else {
+          success = 'Account created successfully!';
+        }
       } else {
         const { data, error: signInError } = await signIn(email, password);
         if (signInError) throw signInError;
-        success = 'Signed in successfully!';
+        success = 'Signed in successfully! Redirecting...';
+        // Redirect will happen via reactive statement above
       }
     } catch (err) {
       error = err.message || 'An error occurred';

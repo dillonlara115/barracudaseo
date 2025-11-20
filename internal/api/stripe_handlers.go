@@ -180,6 +180,9 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 	// Get or create Stripe customer
 	stripeConfig := GetStripeConfig()
 	if stripeConfig.SecretKey == "" {
+		s.logger.Error("Stripe secret key not configured",
+			zap.String("user_id", userID),
+			zap.String("price_id", req.PriceID))
 		s.respondError(w, http.StatusInternalServerError, "Stripe not configured")
 		return
 	}
@@ -213,9 +216,16 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 	// If profile doesn't exist, create it
 	if len(profiles) == 0 {
 		// Get user email from Auth API
-		user, err := s.validateTokenViaAPI(r.Header.Get("Authorization")[7:]) // Remove "Bearer " prefix
+		authHeader := r.Header.Get("Authorization")
+		token := strings.TrimSpace(authHeader)
+		if strings.HasPrefix(strings.ToLower(token), "bearer ") && len(token) >= 7 {
+			token = strings.TrimSpace(token[7:])
+		}
+		user, err := s.validateTokenViaAPI(token)
 		if err != nil {
-			s.logger.Error("Failed to get user email for profile creation", zap.Error(err))
+			s.logger.Error("Failed to get user email for profile creation", 
+				zap.Error(err),
+				zap.String("user_id", userID))
 			s.respondError(w, http.StatusInternalServerError, "Failed to get user email")
 			return
 		}
@@ -261,9 +271,16 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Get user email from Auth API (needed for creating Stripe customer if needed)
-	user, err := s.validateTokenViaAPI(r.Header.Get("Authorization")[7:]) // Remove "Bearer " prefix
+	authHeader := r.Header.Get("Authorization")
+	token := strings.TrimSpace(authHeader)
+	if strings.HasPrefix(strings.ToLower(token), "bearer ") && len(token) >= 7 {
+		token = strings.TrimSpace(token[7:])
+	}
+	user, err := s.validateTokenViaAPI(token)
 	if err != nil {
-		s.logger.Error("Failed to get user email", zap.Error(err))
+		s.logger.Error("Failed to get user email", 
+			zap.Error(err),
+			zap.String("user_id", userID))
 		s.respondError(w, http.StatusInternalServerError, "Failed to get user email")
 		return
 	}
@@ -359,7 +376,11 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 
 	// Validate URLs are configured
 	if stripeConfig.SuccessURL == "" || stripeConfig.CancelURL == "" {
-		s.logger.Error("Stripe success/cancel URLs not configured")
+		s.logger.Error("Stripe success/cancel URLs not configured",
+			zap.String("user_id", userID),
+			zap.String("success_url", stripeConfig.SuccessURL),
+			zap.String("cancel_url", stripeConfig.CancelURL),
+			zap.String("price_id", req.PriceID))
 		s.respondError(w, http.StatusInternalServerError, "Checkout URLs not configured")
 		return
 	}

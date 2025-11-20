@@ -6,10 +6,29 @@ import { supabase } from './supabase.js';
 export const userProfile = writable(null);
 export const userSubscription = writable(null);
 
+// Prevent multiple simultaneous calls
+let isLoading = false;
+let lastLoadTime = 0;
+const LOAD_DEBOUNCE_MS = 1000; // Don't load more than once per second
+
 /**
  * Load user subscription data from the API
  */
 export async function loadSubscriptionData() {
+  // Prevent multiple simultaneous calls
+  if (isLoading) {
+    return;
+  }
+  
+  // Debounce rapid calls
+  const now = Date.now();
+  if (now - lastLoadTime < LOAD_DEBOUNCE_MS) {
+    return;
+  }
+  
+  isLoading = true;
+  lastLoadTime = now;
+  
   try {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
@@ -21,7 +40,7 @@ export async function loadSubscriptionData() {
     }
     
     if (!session) {
-      console.log('No session available');
+      // No session - user not authenticated, set defaults
       userProfile.set(null);
       userSubscription.set(null);
       return;
@@ -31,7 +50,6 @@ export async function loadSubscriptionData() {
     let currentSession = session;
     const expiresAt = session.expires_at;
     if (expiresAt && expiresAt * 1000 < Date.now() + 60000) {
-      console.log('Session expiring soon, refreshing...');
       const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError) {
         console.error('Failed to refresh session:', refreshError);
@@ -53,11 +71,10 @@ export async function loadSubscriptionData() {
 
     if (!response.ok) {
       if (response.status === 401) {
-        console.error('Unauthorized - token may be expired. Attempting to refresh session...');
-        // Try refreshing the session once more
+        // 401 means unauthorized - try refreshing once, then give up
         const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
         if (!refreshError && refreshed.session) {
-          // Retry with refreshed token
+          // Retry with refreshed token (only once)
           const retryResponse = await fetch(`${apiUrl}/api/v1/billing/summary`, {
             headers: {
               'Authorization': `Bearer ${refreshed.session.access_token}`,
@@ -70,7 +87,13 @@ export async function loadSubscriptionData() {
             return;
           }
         }
+        // If refresh failed or retry failed, user is not authenticated
+        // Set defaults and don't retry again
+        userProfile.set(null);
+        userSubscription.set(null);
+        return;
       }
+      // For other errors, log but don't retry
       console.error('Failed to load subscription data:', response.status);
       return;
     }
@@ -80,6 +103,8 @@ export async function loadSubscriptionData() {
     userSubscription.set(data.subscription || null);
   } catch (error) {
     console.error('Error loading subscription data:', error);
+  } finally {
+    isLoading = false;
   }
 }
 
