@@ -216,3 +216,4 @@
 {"level":"info","ts":1763661733.5802462,"caller":"api/server.go:246","msg":"HTTP request","method":"GET","path":"/api/v1/projects/6bce17c4-02c7-4716-b553-d4950171f37c/gsc/dimensions","status":200,"duration":0.062583984,"remote_addr":"127.0.0.1:52750"}
 {"level":"info","ts":1763661733.5871363,"caller":"api/server.go:246","msg":"HTTP request","method":"GET","path":"/api/v1/projects/6bce17c4-02c7-4716-b553-d4950171f37c/gsc/dimensions","status":200,"duration":0.052290044,"remote_addr":"127.0.0.1:52740"}
 {"level":"info","ts":1763661733.5876803,"caller":"api/server.go:246","msg":"HTTP request","method":"GET","path":"/api/v1/projects/6bce17c4-02c7-4716-b553-d4950171f37c/gsc/dimensions","status":200,"duration":0.051055615,"remote_addr":"127.0.0.1:54998"}
+{"level":"info","ts":1763662257.4913144,"caller":"api/server.go:246","msg":"HTTP request","method":"GET","path":"/api/v1/billing/summary","status":200,"duration":1.135529838,"remote_addr":"127.0.0.1:46442"}
