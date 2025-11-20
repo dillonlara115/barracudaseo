@@ -61,7 +61,15 @@ export async function fetchProjects() {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching projects:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      throw error;
+    }
+    
+    console.log('Fetched projects:', data?.length || 0, 'projects');
+    console.log('Projects data:', data);
+    
     return { data, error: null };
   } catch (error) {
     console.error('Error fetching projects:', error);
