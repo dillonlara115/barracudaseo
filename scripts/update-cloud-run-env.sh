@@ -138,6 +138,13 @@ if [ -n "$APP_URL" ]; then
         ENV_VARS="APP_URL=$APP_URL"
     fi
 fi
+if [ -n "$BETA_INVITE_CODE" ]; then
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,BETA_INVITE_CODE=$BETA_INVITE_CODE"
+    else
+        ENV_VARS="BETA_INVITE_CODE=$BETA_INVITE_CODE"
+    fi
+fi
 
 if [ -z "$ENV_VARS" ]; then
     echo "Error: No environment variables to update."

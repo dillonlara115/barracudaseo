@@ -173,7 +173,7 @@ deploy-backend: docker-push
 		--platform managed \
 		--region $$GCP_REG \
 		--allow-unauthenticated \
-		--set-env-vars="$$ENV_VARS" \
+		--update-env-vars="$$ENV_VARS" \
 		--set-secrets="SUPABASE_SERVICE_ROLE_KEY=supabase-service-role-key:latest" \
 		--memory=512Mi \
 		--cpu=1 \
@@ -189,5 +189,30 @@ deploy-backend: docker-push
 		--region $$GCP_REG \
 		--format="value(status.url)"
 
+# Deploy only the image (preserves existing env vars) - faster for regular deployments
+deploy-image: docker-push
+	@if [ -z "$(GCP_PROJECT_ID)" ] && [ -z "$(GCP_PROJECT_ID)" ]; then \
+		GCP_PROJECT_ID=$$(gcloud config get-value project 2>/dev/null); \
+		if [ -z "$$GCP_PROJECT_ID" ]; then \
+			echo "Error: GCP_PROJECT_ID not set"; \
+			exit 1; \
+		fi; \
+	fi; \
+	GCP_PROJ="$${GCP_PROJECT_ID:-$(GCP_PROJECT_ID)}"; \
+	GCP_REG="$${GCP_REGION:-$(GCP_REGION)}"; \
+	echo "Deploying new image (preserving existing env vars)..."; \
+	gcloud run services update $(IMAGE_NAME) \
+		--image $$GCP_REG-docker.pkg.dev/$$GCP_PROJ/$(REPOSITORY)/$(IMAGE_NAME):$(IMAGE_TAG) \
+		--platform managed \
+		--region $$GCP_REG \
+		--quiet; \
+	echo "✓ Image deployment complete!"; \
+	echo "Service URL:"; \
+	gcloud run services describe $(IMAGE_NAME) \
+		--platform managed \
+		--region $$GCP_REG \
+		--format="value(status.url)"
+
 # Quick deploy (rebuild and deploy in one command)
+# Use deploy-image for faster deployments that don't change env vars
 deploy: deploy-backend

@@ -79,8 +79,8 @@
 
       const data = await response.json();
       members = data.members || [];
-      // Use team_size_limit from API response
-      teamSizeLimit = data.team_size_limit ?? 1;
+      // Use team_size_limit from API response, default to 1 if undefined/null/0
+      teamSizeLimit = (data.team_size_limit != null && data.team_size_limit > 0) ? data.team_size_limit : 1;
       activeCount = data.active_count || 0;
       isOwner = data.is_owner || false;
       

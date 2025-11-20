@@ -923,11 +923,21 @@ func (s *Server) handleSubscriptionUpdate(sub *stripe.Subscription) {
 		return
 	}
 
+	// Determine subscription status
+	// If cancelled but cancel_at_period_end is true, status is still "active" until period ends
+	// We should show it as "cancelling" or "canceled" based on cancel_at_period_end
+	subscriptionStatus := string(sub.Status)
+	if sub.CancelAtPeriodEnd && (sub.Status == stripe.SubscriptionStatusActive || sub.Status == stripe.SubscriptionStatusTrialing) {
+		subscriptionStatus = "cancelling" // Will cancel at period end
+	} else if sub.Status == stripe.SubscriptionStatusCanceled || sub.Status == stripe.SubscriptionStatusUnpaid || sub.Status == stripe.SubscriptionStatusPastDue {
+		subscriptionStatus = "canceled"
+	}
+
 	// Update profile with subscription info
 	profileUpdate := map[string]interface{}{
 		"stripe_subscription_id":            sub.ID,
 		"subscription_tier":                 tier,
-		"subscription_status":               string(sub.Status),
+		"subscription_status":               subscriptionStatus,
 		"team_size":                         teamSize, // Include team size from add-on
 		"subscription_current_period_end":   time.Unix(sub.CurrentPeriodEnd, 0).Format(time.RFC3339),
 		"subscription_cancel_at_period_end": sub.CancelAtPeriodEnd,
@@ -1058,7 +1068,7 @@ func (s *Server) handleCreateBillingPortalSession(w http.ResponseWriter, r *http
 		}
 
 		if customerID == "" {
-			s.respondError(w, http.StatusBadRequest, "No active subscription found")
+			s.respondError(w, http.StatusBadRequest, "No Stripe customer found. Please create a subscription first.")
 			return
 		}
 	}
@@ -1069,16 +1079,41 @@ func (s *Server) handleCreateBillingPortalSession(w http.ResponseWriter, r *http
 		return
 	}
 
+	// Use billing page URL instead of success URL for return
+	returnURL := stripeConfig.SuccessURL
+	// Extract base URL and use billing page
+	if strings.Contains(returnURL, "/billing") {
+		returnURL = strings.Split(returnURL, "?")[0] // Remove query params
+	} else {
+		// If success URL doesn't contain /billing, construct it
+		baseURL := strings.Split(returnURL, "/")[0:3]
+		returnURL = strings.Join(baseURL, "/") + "/billing"
+	}
+
 	// Create billing portal session
 	params := &stripe.BillingPortalSessionParams{
 		Customer:  stripe.String(customerID),
-		ReturnURL: stripe.String(stripeConfig.SuccessURL),
+		ReturnURL: stripe.String(returnURL),
 	}
 
 	sess, err := billingportalsession.New(params)
 	if err != nil {
-		s.logger.Error("Failed to create billing portal session", zap.Error(err))
-		s.respondError(w, http.StatusInternalServerError, "Failed to create billing portal session")
+		// Enhanced error logging with Stripe error details
+		if stripeErr, ok := err.(*stripe.Error); ok {
+			s.logger.Error("Failed to create billing portal session",
+				zap.Error(err),
+				zap.String("stripe_error_type", string(stripeErr.Type)),
+				zap.String("stripe_error_code", string(stripeErr.Code)),
+				zap.String("stripe_error_message", stripeErr.Msg),
+				zap.String("customer_id", customerID),
+				zap.String("user_id", userID))
+		} else {
+			s.logger.Error("Failed to create billing portal session",
+				zap.Error(err),
+				zap.String("customer_id", customerID),
+				zap.String("user_id", userID))
+		}
+		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to create billing portal session: %v", err))
 		return
 	}
 
@@ -1186,8 +1221,17 @@ func (s *Server) fetchLatestSubscription(userID string) (map[string]interface{},
 		return nil, nil
 	}
 
-	// Return the most recent subscription (last in ascending order)
-	return subscriptions[len(subscriptions)-1], nil
+	// Get the most recent subscription
+	sub := subscriptions[len(subscriptions)-1]
+	
+	// Process status to show "cancelling" if cancel_at_period_end is true
+	if cancelAtPeriodEnd, ok := sub["cancel_at_period_end"].(bool); ok && cancelAtPeriodEnd {
+		if status, ok := sub["status"].(string); ok && (status == "active" || status == "trialing") {
+			sub["status"] = "cancelling"
+		}
+	}
+
+	return sub, nil
 }
 
 func (s *Server) getUserIDByStripeCustomerID(customerID string) (string, error) {
