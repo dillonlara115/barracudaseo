@@ -18,18 +18,13 @@
 
   $: isAuthenticated = $user !== null;
   
-  // Redirect to dashboard when authenticated
-  $: if (isAuthenticated && $user) {
-    // Small delay to show success message, then redirect
-    setTimeout(() => {
-      push('#/');
-    }, 1500);
-  }
+  let shouldRedirect = false; // Track if we should redirect after signup/signin
 
   async function handleSubmit() {
     loading = true;
     error = null;
     success = null;
+    shouldRedirect = false; // Reset redirect flag
 
     try {
       const displayName = isSignUp ? `${firstName} ${lastName}`.trim() : '';
@@ -40,10 +35,10 @@
         // Check if email confirmation is required
         if (data.user && !data.session) {
           success = 'Account created! Please check your email to confirm your account.';
+          // Don't redirect - user needs to confirm email
         } else if (data.session) {
           success = 'Account created successfully! Redirecting...';
-          // User is immediately authenticated (email confirmation disabled)
-          // Redirect will happen via reactive statement above
+          shouldRedirect = true; // Set flag to redirect
         } else {
           success = 'Account created successfully!';
         }
@@ -51,13 +46,22 @@
         const { data, error: signInError } = await signIn(email, password);
         if (signInError) throw signInError;
         success = 'Signed in successfully! Redirecting...';
-        // Redirect will happen via reactive statement above
+        shouldRedirect = true; // Set flag to redirect
       }
     } catch (err) {
       error = err.message || 'An error occurred';
     } finally {
       loading = false;
     }
+  }
+
+  // Only redirect if we just completed signup/signin AND user is authenticated
+  $: if (shouldRedirect && isAuthenticated && $user) {
+    // Small delay to show success message, then redirect
+    setTimeout(() => {
+      push('#/');
+      shouldRedirect = false; // Reset flag after redirect
+    }, 1500);
   }
 
   async function handleSignOut() {

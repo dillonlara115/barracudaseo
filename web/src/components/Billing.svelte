@@ -7,6 +7,7 @@
   import { push, link } from 'svelte-spa-router';
   import Logo from './Logo.svelte';
   import Auth from './Auth.svelte';
+  import TeamManagement from './TeamManagement.svelte';
 
   let loading = true;
   let profile = null;
@@ -23,6 +24,11 @@
   let selectedBillingPeriod = 'monthly'; // 'monthly' or 'annual'
   let teamSeatsQuantity = 0; // Number of additional team seats to add
   let hasLoaded = false; // Track if we've attempted to load
+  
+  let redeemCode = '';
+  let redeemTeamSize = 1;
+  let redeeming = false;
+  let redeemError = null;
 
   // Load data when component mounts and user is available
   onMount(() => {
@@ -310,6 +316,62 @@
 
   $: planFeatures = getPlanFeatures(profile?.subscription_tier || 'free');
   $: isProOrTeam = profile?.subscription_tier === 'pro' || profile?.subscription_tier === 'team';
+
+  async function redeemBetaCode() {
+    if (!redeemCode.trim()) return;
+    
+    redeeming = true;
+    redeemError = null;
+    
+    try {
+      const token = await getValidAccessToken();
+      const response = await fetch(`${API_URL}/api/v1/billing/redeem`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          code: redeemCode,
+          team_size: redeemTeamSize || 1
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to redeem code');
+      }
+
+      const result = await response.json();
+      
+      // Success! Reload data
+      redeemCode = '';
+      
+      // Close modal if it was open
+      const modalCheckbox = document.getElementById('beta-team-modal');
+      if (modalCheckbox) {
+        modalCheckbox.checked = false;
+      }
+      
+      // Show success message
+      const successMsg = document.createElement('div');
+      successMsg.className = 'alert alert-success fixed bottom-4 right-4 w-auto z-50';
+      successMsg.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>Success! Plan updated with ${result.team_size || redeemTeamSize} seats.</span>`;
+      document.body.appendChild(successMsg);
+      setTimeout(() => successMsg.remove(), 3000);
+      
+      // Force reload billing data with a small delay to ensure DB update is committed
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await loadBillingData();
+      
+      // Also log the updated profile for debugging
+      console.log('Profile after update:', profile);
+    } catch (err) {
+      redeemError = err.message;
+    } finally {
+      redeeming = false;
+    }
+  }
 </script>
 
 <!-- Header Navigation -->
@@ -371,18 +433,26 @@
             </div>
             
             {#if isProOrTeam}
-              <button 
-                class="btn btn-primary"
-                on:click={openBillingPortal}
-                disabled={creatingPortal}
-              >
-                {#if creatingPortal}
-                  <Loader class="w-4 h-4 animate-spin" />
-                {:else}
-                  <CreditCard class="w-4 h-4" />
-                {/if}
-                Manage Billing
-              </button>
+              {#if profile?.stripe_subscription_id}
+                <!-- Paid User: Manage Billing Button -->
+                <button 
+                  class="btn btn-primary"
+                  on:click={openBillingPortal}
+                  disabled={creatingPortal}
+                >
+                  {#if creatingPortal}
+                    <Loader class="w-4 h-4 animate-spin" />
+                  {:else}
+                    <CreditCard class="w-4 h-4" />
+                  {/if}
+                  Manage Subscription
+                </button>
+              {:else}
+                <!-- Beta User: Manage Team Button -->
+                <label for="beta-team-modal" class="btn btn-primary btn-outline">
+                  Manage Team Size
+                </label>
+              {/if}
             {/if}
           </div>
 
@@ -396,6 +466,34 @@
               <p class="text-lg font-semibold">{planFeatures.users}</p>
             </div>
           </div>
+
+          {#if isProOrTeam && profile?.stripe_subscription_id}
+            <div class="divider my-4"></div>
+            <div class="bg-base-200 rounded-lg p-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="font-semibold text-sm mb-1">Team Management</h3>
+                  <p class="text-xs text-base-content/70">
+                    Currently {planFeatures.users} seat{planFeatures.users === 1 ? '' : 's'} active. Add more team members to collaborate.
+                  </p>
+                </div>
+                <button 
+                  class="btn btn-primary btn-sm"
+                  on:click={openBillingPortal}
+                  disabled={creatingPortal}
+                >
+                  {#if creatingPortal}
+                    <Loader class="w-4 h-4 animate-spin" />
+                  {:else}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                  {/if}
+                  Add Seats
+                </button>
+              </div>
+            </div>
+          {/if}
 
           {#if subscription}
             <div class="divider my-4"></div>
@@ -457,6 +555,11 @@
           </div>
         </div>
       </div>
+
+      <!-- Team Management -->
+      {#if isProOrTeam}
+        <TeamManagement />
+      {/if}
 
       <!-- Upgrade Options -->
       {#if !isProOrTeam}
@@ -559,10 +662,130 @@
                 Stripe is not configured. Please set VITE_STRIPE_PRICE_ID_PRO and VITE_STRIPE_PRICE_ID_PRO_ANNUAL environment variables.
               </p>
             {/if}
+
+            <!-- Beta Code Redemption -->
+            <div class="divider mt-6">OR</div>
+            
+            <div class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
+              <input type="checkbox" /> 
+              <div class="collapse-title text-sm font-medium">
+                Have a beta invite code?
+              </div>
+              <div class="collapse-content"> 
+                <div class="form-control pt-2 gap-4">
+                  <!-- Team Size Input -->
+                  <div class="form-control w-full">
+                    <label class="label">
+                      <span class="label-text">Team Size (Optional)</span>
+                      <span class="label-text-alt">Max 10 for Beta</span>
+                    </label>
+                    <div class="join">
+                      <button class="btn join-item" on:click={() => redeemTeamSize = Math.max(1, redeemTeamSize - 1)}>-</button>
+                      <input type="number" min="1" max="10" bind:value={redeemTeamSize} class="input input-bordered join-item w-full text-center" />
+                      <button class="btn join-item" on:click={() => redeemTeamSize = Math.min(10, redeemTeamSize + 1)}>+</button>
+                    </div>
+                    <label class="label">
+                      <span class="label-text-alt">Includes {redeemTeamSize} user{redeemTeamSize > 1 ? 's' : ''}</span>
+                    </label>
+                  </div>
+
+                  <div class="join w-full">
+                    <input 
+                      type="text" 
+                      placeholder="Enter code" 
+                      class="input input-bordered join-item w-full"
+                      bind:value={redeemCode}
+                    />
+                    <button 
+                      class="btn btn-primary join-item" 
+                      on:click={redeemBetaCode}
+                      disabled={redeeming || !redeemCode}
+                    >
+                      {#if redeeming}
+                        <Loader class="w-4 h-4 animate-spin" />
+                      {:else}
+                        Redeem
+                      {/if}
+                    </button>
+                  </div>
+                  {#if redeemError}
+                    <label class="label">
+                      <span class="label-text-alt text-error">{redeemError}</span>
+                    </label>
+                  {/if}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       {/if}
     </div>
+
+    <!-- Modal for Beta Users to Update Team Size -->
+    <input 
+      type="checkbox" 
+      id="beta-team-modal" 
+      class="modal-toggle"
+      on:change={(e) => {
+        // Initialize team size with current value when modal opens
+        if (e.target.checked && profile?.team_size) {
+          redeemTeamSize = profile.team_size || 1;
+        }
+      }}
+    />
+    <div class="modal" role="dialog">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg">Update Team Size</h3>
+        <p class="py-4">Enter your beta invite code again to update your team size.</p>
+        
+        <div class="form-control gap-4">
+          <div>
+            <label class="label">
+              <span class="label-text">New Team Size</span>
+              {#if profile?.team_size}
+                <span class="label-text-alt">Current: {profile.team_size}</span>
+              {/if}
+            </label>
+            <div class="join w-full">
+              <button class="btn join-item" on:click={() => redeemTeamSize = Math.max(1, redeemTeamSize - 1)}>-</button>
+              <input type="number" min="1" max="10" bind:value={redeemTeamSize} class="input input-bordered join-item w-full text-center" />
+              <button class="btn join-item" on:click={() => redeemTeamSize = Math.min(10, redeemTeamSize + 1)}>+</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="label">
+              <span class="label-text">Beta Invite Code</span>
+            </label>
+            <input 
+              type="text" 
+              placeholder="Enter code to confirm" 
+              class="input input-bordered w-full"
+              bind:value={redeemCode}
+            />
+          </div>
+          
+          {#if redeemError}
+            <div class="text-error text-sm">{redeemError}</div>
+          {/if}
+        </div>
+
+        <div class="modal-action">
+          <label for="beta-team-modal" class="btn">Cancel</label>
+          <button 
+            class="btn btn-primary" 
+            on:click={redeemBetaCode}
+            disabled={redeeming || !redeemCode}
+          >
+            {#if redeeming}
+              <Loader class="w-4 h-4 animate-spin" />
+            {/if}
+            Update Team
+          </button>
+        </div>
+      </div>
+    </div>
+
     {:else}
       <!-- No profile loaded - show loading or error message -->
       <div class="alert alert-warning">

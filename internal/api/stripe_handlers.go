@@ -10,23 +10,23 @@ import (
 	"time"
 
 	"github.com/stripe/stripe-go/v78"
+	billingportalsession "github.com/stripe/stripe-go/v78/billingportal/session"
 	"github.com/stripe/stripe-go/v78/checkout/session"
 	"github.com/stripe/stripe-go/v78/customer"
-	"github.com/stripe/stripe-go/v78/webhook"
-	billingportalsession "github.com/stripe/stripe-go/v78/billingportal/session"
 	subscription "github.com/stripe/stripe-go/v78/subscription"
+	"github.com/stripe/stripe-go/v78/webhook"
 	"go.uber.org/zap"
 )
 
 // StripeConfig holds Stripe configuration
 type StripeConfig struct {
-	SecretKey         string
-	WebhookSecret     string
-	PriceIDPro        string // Monthly Pro plan
-	PriceIDProAnnual  string // Annual Pro plan
-	PriceIDTeamSeat   string
-	SuccessURL        string
-	CancelURL         string
+	SecretKey        string
+	WebhookSecret    string
+	PriceIDPro       string // Monthly Pro plan
+	PriceIDProAnnual string // Annual Pro plan
+	PriceIDTeamSeat  string
+	SuccessURL       string
+	CancelURL        string
 }
 
 // InitializeStripe initializes Stripe with API key
@@ -44,7 +44,7 @@ func GetStripeConfig() StripeConfig {
 		WebhookSecret:    os.Getenv("STRIPE_WEBHOOK_SECRET"),
 		PriceIDPro:       os.Getenv("STRIPE_PRICE_ID_PRO"),        // Monthly Pro plan
 		PriceIDProAnnual: os.Getenv("STRIPE_PRICE_ID_PRO_ANNUAL"), // Annual Pro plan
-		PriceIDTeamSeat:  os.Getenv("STRIPE_PRICE_ID_TEAM_SEAT"),   // Team seat add-on
+		PriceIDTeamSeat:  os.Getenv("STRIPE_PRICE_ID_TEAM_SEAT"),  // Team seat add-on
 		SuccessURL:       os.Getenv("STRIPE_SUCCESS_URL"),
 		CancelURL:        os.Getenv("STRIPE_CANCEL_URL"),
 	}
@@ -52,9 +52,9 @@ func GetStripeConfig() StripeConfig {
 
 // CreateCheckoutSessionRequest represents a request to create a checkout session
 type CreateCheckoutSessionRequest struct {
-	PriceID string `json:"price_id"` // Stripe price ID (e.g., "price_xxxxx")
-	Quantity int   `json:"quantity,omitempty"` // For team seats, default 1
-	TeamSeatsQuantity int `json:"team_seats_quantity,omitempty"` // Number of additional team seats to add (0 = none)
+	PriceID           string `json:"price_id"`                      // Stripe price ID (e.g., "price_xxxxx")
+	Quantity          int    `json:"quantity,omitempty"`            // For team seats, default 1
+	TeamSeatsQuantity int    `json:"team_seats_quantity,omitempty"` // Number of additional team seats to add (0 = none)
 }
 
 // CreateCheckoutSessionResponse represents the checkout session response
@@ -82,9 +82,132 @@ func (s *Server) handleBilling(w http.ResponseWriter, r *http.Request) {
 		s.handleCreateCheckoutSession(w, r)
 	case "portal":
 		s.handleCreateBillingPortalSession(w, r)
+	case "redeem":
+		s.handleRedeemCode(w, r)
 	default:
 		s.respondError(w, http.StatusNotFound, fmt.Sprintf("Billing resource not found: %s", path))
 	}
+}
+
+// handleRedeemCode handles POST /api/v1/billing/redeem
+func (s *Server) handleRedeemCode(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	userID, ok := userIDFromContext(r.Context())
+	if !ok || userID == "" {
+		s.respondError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	var req struct {
+		Code     string `json:"code"`
+		TeamSize int    `json:"team_size"` // Optional: requested team size
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	betaCode := os.Getenv("BETA_INVITE_CODE")
+	if betaCode == "" {
+		s.respondError(w, http.StatusServiceUnavailable, "Beta redemption is not active")
+		return
+	}
+
+	if req.Code != betaCode {
+		s.respondError(w, http.StatusForbidden, "Invalid beta code")
+		return
+	}
+
+	// Get current profile to check existing team_size
+	currentProfile, profileErr := s.fetchProfile(userID)
+	if profileErr != nil {
+		s.logger.Error("Failed to fetch current profile", zap.Error(profileErr))
+		s.respondError(w, http.StatusInternalServerError, "Failed to fetch profile")
+		return
+	}
+
+	// Determine team size - preserve existing if not specified, otherwise use requested
+	teamSize := 1
+	if req.TeamSize > 0 {
+		// Cap team size for beta users to prevent abuse
+		// e.g. max 10 users for beta
+		if req.TeamSize > 10 {
+			teamSize = 10
+		} else {
+			teamSize = req.TeamSize
+		}
+	} else if currentProfile != nil {
+		// Preserve existing team_size if user is already pro and not specifying new size
+		if currentTier, _ := currentProfile["subscription_tier"].(string); currentTier == "pro" || currentTier == "team" {
+			if size, ok := currentProfile["team_size"].(float64); ok && size > 0 {
+				teamSize = int(size)
+			} else if size, ok := currentProfile["team_size"].(int); ok && size > 0 {
+				teamSize = size
+			}
+		}
+	}
+
+	// Determine tier based on team size or default to pro
+	tier := "pro"
+	if teamSize > 1 {
+		// You might want to set this to "team" tier if that's how your logic works,
+		// or keep it "pro" with team_size > 1. Based on handleSubscriptionUpdate,
+		// it seems "pro" handles team sizes > 1 as well (via add-ons).
+		// But let's stick to "pro" to match the subscription logic unless > limits.
+		// If you have a specific "team" tier string, use it here.
+		// Based on migration: check (subscription_tier in ('free', 'pro', 'team'))
+		// Let's use 'team' if size > 1 for clarity, or 'pro' is fine too.
+		// The frontend check is: isProOrTeam = tier == 'pro' || tier == 'team'
+	}
+
+	// Update profile to pro with team size
+	updateData := map[string]interface{}{
+		"subscription_tier":   tier,
+		"subscription_status": "active",
+		"team_size":           teamSize,
+	}
+
+	s.logger.Info("Updating profile with beta code",
+		zap.String("user_id", userID),
+		zap.String("tier", tier),
+		zap.Int("team_size", teamSize),
+		zap.Any("update_data", updateData))
+
+	_, _, err := s.serviceRole.From("profiles").
+		Update(updateData, "", "").
+		Eq("id", userID).
+		Execute()
+
+	if err != nil {
+		s.logger.Error("Failed to apply beta code", zap.Error(err), zap.String("user_id", userID))
+		s.respondError(w, http.StatusInternalServerError, "Failed to apply beta code")
+		return
+	}
+
+	// Verify the update worked by fetching the profile
+	updatedProfile, fetchErr := s.fetchProfile(userID)
+	if fetchErr != nil {
+		s.logger.Warn("Failed to verify profile update", zap.Error(fetchErr))
+	} else if updatedProfile != nil {
+		actualTeamSize, _ := updatedProfile["team_size"]
+		s.logger.Info("Profile updated successfully",
+			zap.String("user_id", userID),
+			zap.Int("requested_team_size", teamSize),
+			zap.Any("actual_team_size", actualTeamSize))
+	}
+
+	s.logger.Info("Beta code redeemed",
+		zap.String("user_id", userID),
+		zap.Int("team_size", teamSize))
+
+	s.respondJSON(w, http.StatusOK, map[string]interface{}{
+		"status":    "success",
+		"team_size": teamSize,
+	})
 }
 
 // handleBillingSummary returns the authenticated user's profile and subscription info
@@ -120,10 +243,10 @@ func (s *Server) handleBillingSummary(w http.ResponseWriter, r *http.Request) {
 	if subscription == nil && profile["stripe_customer_id"] != nil {
 		customerID, ok := profile["stripe_customer_id"].(string)
 		if ok && customerID != "" {
-			s.logger.Info("No subscription found in DB, attempting to sync from Stripe", 
+			s.logger.Info("No subscription found in DB, attempting to sync from Stripe",
 				zap.String("customer_id", customerID),
 				zap.String("user_id", userID))
-			
+
 			// Try to fetch latest subscription from Stripe
 			if err := s.syncSubscriptionFromStripe(customerID, userID); err != nil {
 				s.logger.Warn("Failed to sync subscription from Stripe", zap.Error(err))
@@ -186,7 +309,7 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 		s.respondError(w, http.StatusInternalServerError, "Stripe not configured")
 		return
 	}
-	
+
 	// Validate team seat price ID if team seats are requested
 	if req.TeamSeatsQuantity > 0 && stripeConfig.PriceIDTeamSeat == "" {
 		s.respondError(w, http.StatusBadRequest, "Team seats are not available. Please contact support.")
@@ -200,19 +323,19 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 		Select("stripe_customer_id", "", false).
 		Eq("id", userID).
 		Execute()
-	
+
 	if err != nil {
 		s.logger.Error("Failed to get user profile", zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, "Failed to get user profile")
 		return
 	}
-	
+
 	if err := json.Unmarshal(data, &profiles); err != nil {
 		s.logger.Error("Failed to parse user profile", zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, "Failed to get user profile")
 		return
 	}
-	
+
 	// If profile doesn't exist, create it
 	if len(profiles) == 0 {
 		// Get user email from Auth API
@@ -223,46 +346,46 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 		}
 		user, err := s.validateTokenViaAPI(token)
 		if err != nil {
-			s.logger.Error("Failed to get user email for profile creation", 
+			s.logger.Error("Failed to get user email for profile creation",
 				zap.Error(err),
 				zap.String("user_id", userID))
 			s.respondError(w, http.StatusInternalServerError, "Failed to get user email")
 			return
 		}
-		
+
 		// Create profile using service role (bypasses RLS)
 		_, _, err = s.serviceRole.From("profiles").
 			Insert(map[string]interface{}{
-				"id": userID,
+				"id":           userID,
 				"display_name": user.Email,
 			}, false, "", "", "").
 			Execute()
-		
+
 		if err != nil {
 			s.logger.Error("Failed to create user profile", zap.Error(err))
 			s.respondError(w, http.StatusInternalServerError, "Failed to create user profile")
 			return
 		}
-		
+
 		// Re-fetch the newly created profile
 		data, _, err = s.serviceRole.From("profiles").
 			Select("stripe_customer_id", "", false).
 			Eq("id", userID).
 			Execute()
-		
+
 		if err != nil {
 			s.logger.Error("Failed to fetch newly created profile", zap.Error(err))
 			s.respondError(w, http.StatusInternalServerError, "Failed to get user profile")
 			return
 		}
-		
+
 		if err := json.Unmarshal(data, &profiles); err != nil || len(profiles) == 0 {
 			s.logger.Error("Failed to parse newly created profile", zap.Error(err))
 			s.respondError(w, http.StatusInternalServerError, "Failed to get user profile")
 			return
 		}
 	}
-	
+
 	customerID := ""
 	if len(profiles) > 0 {
 		if val, ok := profiles[0]["stripe_customer_id"].(string); ok {
@@ -278,7 +401,7 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 	}
 	user, err := s.validateTokenViaAPI(token)
 	if err != nil {
-		s.logger.Error("Failed to get user email", 
+		s.logger.Error("Failed to get user email",
 			zap.Error(err),
 			zap.String("user_id", userID))
 		s.respondError(w, http.StatusInternalServerError, "Failed to get user email")
@@ -321,7 +444,7 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 				s.logger.Warn("Customer ID in database does not exist in Stripe, creating new customer",
 					zap.String("old_customer_id", customerID),
 					zap.String("user_id", userID))
-				
+
 				// Create new Stripe customer
 				params := &stripe.CustomerParams{
 					Email: stripe.String(user.Email),
@@ -349,7 +472,7 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 				}
 			} else {
 				// Other Stripe error - log and return error
-				s.logger.Error("Failed to verify Stripe customer", 
+				s.logger.Error("Failed to verify Stripe customer",
 					zap.Error(err),
 					zap.String("customer_id", customerID))
 				s.respondError(w, http.StatusInternalServerError, "Failed to verify customer")
@@ -365,7 +488,7 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 			Quantity: stripe.Int64(int64(req.Quantity)),
 		},
 	}
-	
+
 	// Add team seat add-on if requested
 	if req.TeamSeatsQuantity > 0 {
 		lineItems = append(lineItems, &stripe.CheckoutSessionLineItemParams{
@@ -387,9 +510,9 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 
 	// Create checkout session
 	checkoutParams := &stripe.CheckoutSessionParams{
-		Customer: stripe.String(customerID),
-		Mode:     stripe.String(string(stripe.CheckoutSessionModeSubscription)),
-		LineItems: lineItems,
+		Customer:   stripe.String(customerID),
+		Mode:       stripe.String(string(stripe.CheckoutSessionModeSubscription)),
+		LineItems:  lineItems,
 		SuccessURL: stripe.String(stripeConfig.SuccessURL),
 		CancelURL:  stripe.String(stripeConfig.CancelURL),
 		Metadata: map[string]string{
@@ -535,7 +658,7 @@ func (s *Server) handleCheckoutSessionCompleted(session *stripe.CheckoutSession)
 func (s *Server) handleSubscriptionUpdate(sub *stripe.Subscription) {
 	// Get customer ID and find user
 	customerID := sub.Customer.ID
-	
+
 	// Find user by Stripe customer ID
 	userID, err := s.getUserIDByStripeCustomerID(customerID)
 	if err != nil {
@@ -586,16 +709,16 @@ func (s *Server) handleSubscriptionUpdate(sub *stripe.Subscription) {
 
 	// Insert or update subscription record
 	subscriptionData := map[string]interface{}{
-		"user_id":                 userID,
-		"stripe_subscription_id":  sub.ID,
-		"stripe_customer_id":      customerID,
-		"stripe_price_id":         priceID,
-		"status":                  string(sub.Status),
-		"tier":                    tier,
-		"quantity":                quantity,
-		"current_period_start":    time.Unix(sub.CurrentPeriodStart, 0).Format(time.RFC3339),
-		"current_period_end":      time.Unix(sub.CurrentPeriodEnd, 0).Format(time.RFC3339),
-		"cancel_at_period_end":    sub.CancelAtPeriodEnd,
+		"user_id":                userID,
+		"stripe_subscription_id": sub.ID,
+		"stripe_customer_id":     customerID,
+		"stripe_price_id":        priceID,
+		"status":                 string(sub.Status),
+		"tier":                   tier,
+		"quantity":               quantity,
+		"current_period_start":   time.Unix(sub.CurrentPeriodStart, 0).Format(time.RFC3339),
+		"current_period_end":     time.Unix(sub.CurrentPeriodEnd, 0).Format(time.RFC3339),
+		"cancel_at_period_end":   sub.CancelAtPeriodEnd,
 	}
 
 	if sub.CanceledAt > 0 {
@@ -608,7 +731,7 @@ func (s *Server) handleSubscriptionUpdate(sub *stripe.Subscription) {
 		Select("id", "", false).
 		Eq("stripe_subscription_id", sub.ID).
 		Execute()
-	
+
 	if selectErr == nil && selectData != nil {
 		if err := json.Unmarshal(selectData, &existing); err == nil && len(existing) > 0 {
 			// Update existing subscription
@@ -628,7 +751,7 @@ func (s *Server) handleSubscriptionUpdate(sub *stripe.Subscription) {
 			Insert(subscriptionData, false, "", "", "").
 			Execute()
 	}
-	
+
 	if err != nil {
 		s.logger.Error("Failed to upsert subscription", zap.Error(err))
 		return
@@ -636,11 +759,11 @@ func (s *Server) handleSubscriptionUpdate(sub *stripe.Subscription) {
 
 	// Update profile with subscription info
 	profileUpdate := map[string]interface{}{
-		"stripe_subscription_id":      sub.ID,
-		"subscription_tier":            tier,
-		"subscription_status":          string(sub.Status),
-		"team_size":                    teamSize, // Include team size from add-on
-		"subscription_current_period_end": time.Unix(sub.CurrentPeriodEnd, 0).Format(time.RFC3339),
+		"stripe_subscription_id":            sub.ID,
+		"subscription_tier":                 tier,
+		"subscription_status":               string(sub.Status),
+		"team_size":                         teamSize, // Include team size from add-on
+		"subscription_current_period_end":   time.Unix(sub.CurrentPeriodEnd, 0).Format(time.RFC3339),
 		"subscription_cancel_at_period_end": sub.CancelAtPeriodEnd,
 	}
 
@@ -654,7 +777,7 @@ func (s *Server) handleSubscriptionUpdate(sub *stripe.Subscription) {
 		// Don't return - subscription was created successfully
 	}
 
-	s.logger.Info("Subscription updated", 
+	s.logger.Info("Subscription updated",
 		zap.String("user_id", userID),
 		zap.String("subscription_id", sub.ID),
 		zap.String("tier", tier),
@@ -723,17 +846,17 @@ func (s *Server) handleCreateBillingPortalSession(w http.ResponseWriter, r *http
 		Select("stripe_customer_id", "", false).
 		Eq("id", userID).
 		Execute()
-	
+
 	if err != nil {
 		s.respondError(w, http.StatusInternalServerError, "Failed to get user profile")
 		return
 	}
-	
+
 	if err := json.Unmarshal(data, &profiles); err != nil || len(profiles) == 0 {
 		s.respondError(w, http.StatusInternalServerError, "Failed to get user profile")
 		return
 	}
-	
+
 	customerID, ok := profiles[0]["stripe_customer_id"].(string)
 	if !ok || customerID == "" {
 		// Attempt to fall back to latest subscription
@@ -897,15 +1020,15 @@ func (s *Server) getUserIDByStripeCustomerID(customerID string) (string, error) 
 		Select("id", "", false).
 		Eq("stripe_customer_id", customerID).
 		Execute()
-	
+
 	if err != nil {
 		return "", fmt.Errorf("failed to query profiles: %w", err)
 	}
-	
+
 	if err := json.Unmarshal(data, &profiles); err != nil || len(profiles) == 0 {
 		return "", fmt.Errorf("user not found for customer ID: %s", customerID)
 	}
-	
+
 	userID, ok := profiles[0]["id"].(string)
 	if !ok {
 		return "", fmt.Errorf("invalid user ID format")
@@ -925,9 +1048,9 @@ func (s *Server) syncSubscriptionFromStripe(customerID, userID string) error {
 		Customer: stripe.String(customerID),
 	}
 	params.Filters.AddFilter("limit", "", "10")
-	
+
 	iter := subscription.List(params)
-	
+
 	// Get the most recent active subscription
 	var latestSub *stripe.Subscription
 	for iter.Next() {
@@ -936,18 +1059,18 @@ func (s *Server) syncSubscriptionFromStripe(customerID, userID string) error {
 			latestSub = sub
 		}
 	}
-	
+
 	if err := iter.Err(); err != nil {
 		return fmt.Errorf("failed to list subscriptions from Stripe: %w", err)
 	}
-	
+
 	if latestSub == nil {
 		s.logger.Info("No subscriptions found in Stripe for customer", zap.String("customer_id", customerID))
 		return nil // Not an error - just no subscription yet
 	}
-	
+
 	// Process the subscription update (this will create/update the DB record)
 	s.handleSubscriptionUpdate(latestSub)
-	
+
 	return nil
 }
