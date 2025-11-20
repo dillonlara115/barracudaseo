@@ -352,13 +352,14 @@ func (s *Server) handleCreateProject(w http.ResponseWriter, r *http.Request) {
 
 // handleListProjects handles GET /api/v1/projects
 func (s *Server) handleListProjects(w http.ResponseWriter, r *http.Request) {
-	_, ok := userIDFromContext(r.Context())
+	userID, ok := userIDFromContext(r.Context())
 	if !ok {
 		s.respondError(w, http.StatusUnauthorized, "User not authenticated")
 		return
 	}
 
 	// RLS policies will automatically filter to projects user has access to
+	// This now includes team-based access (team members can see projects from teammates)
 	var projects []map[string]interface{}
 	data, _, err := s.supabase.From("projects").Select("*", "", false).Execute()
 	if err != nil {
@@ -374,6 +375,7 @@ func (s *Server) handleListProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.logger.Debug("Listed projects", zap.String("user_id", userID), zap.Int("count", len(projects)))
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{
 		"projects": projects,
 		"count":    len(projects),
@@ -980,6 +982,7 @@ func (s *Server) updateCrawlStatus(crawlID, status, errorMsg string) {
 
 // verifyProjectAccess checks if user has access to a project
 // Uses service role client to bypass RLS since we've already validated the user's token
+// Now includes team-based access: team members can access projects created by other team members
 func (s *Server) verifyProjectAccess(userID, projectID string) (bool, error) {
 	s.logger.Debug("Verifying project access", zap.String("user_id", userID), zap.String("project_id", projectID))
 
@@ -1008,7 +1011,7 @@ func (s *Server) verifyProjectAccess(userID, projectID string) (bool, error) {
 		return true, nil
 	}
 
-	// If not a member, check if user is the project owner (using service role to bypass RLS)
+	// If not a member, check if user is the project owner or team member
 	var projects []map[string]interface{}
 	projectData, _, err := s.serviceRole.From("projects").
 		Select("owner_id", "", false).
@@ -1030,14 +1033,93 @@ func (s *Server) verifyProjectAccess(userID, projectID string) (bool, error) {
 
 	if len(projects) > 0 {
 		ownerID, ok := projects[0]["owner_id"].(string)
-		s.logger.Debug("Owner check", zap.String("owner_id", ownerID), zap.Bool("type_ok", ok), zap.Bool("matches", ok && ownerID == userID))
-		if ok && ownerID == userID {
-			return true, nil
+		if ok {
+			// Check if user is the project owner
+			if ownerID == userID {
+				s.logger.Debug("User is project owner", zap.String("user_id", userID), zap.String("owner_id", ownerID))
+				return true, nil
+			}
+
+			// Check if user and project owner are on the same team
+			areTeammates, err := s.areUsersOnSameTeam(userID, ownerID)
+			if err != nil {
+				s.logger.Warn("Failed to check team membership", zap.Error(err))
+				// Continue to deny access if check fails
+			} else if areTeammates {
+				s.logger.Debug("Users are teammates", zap.String("user_id", userID), zap.String("owner_id", ownerID))
+				return true, nil
+			}
 		}
 	}
 
 	s.logger.Debug("Access denied", zap.String("user_id", userID), zap.String("project_id", projectID))
 	return false, nil
+}
+
+// areUsersOnSameTeam checks if two users are part of the same team (same account_owner_id)
+func (s *Server) areUsersOnSameTeam(userID1, userID2 string) (bool, error) {
+	if userID1 == userID2 {
+		return true, nil
+	}
+
+	// Get team info for both users
+	profile1, err := s.fetchProfile(userID1)
+	if err != nil || profile1 == nil {
+		return false, err
+	}
+
+	profile2, err := s.fetchProfile(userID2)
+	if err != nil || profile2 == nil {
+		return false, err
+	}
+
+	// Get account owner IDs for both users using the same logic as getTeamInfo
+	accountOwnerID1 := s.getAccountOwnerID(userID1, profile1)
+	accountOwnerID2 := s.getAccountOwnerID(userID2, profile2)
+
+	// If either user is not part of a team, they're not teammates
+	if accountOwnerID1 == "" || accountOwnerID2 == "" {
+		return false, nil
+	}
+
+	// Check if they have the same account owner
+	return accountOwnerID1 == accountOwnerID2, nil
+}
+
+// getAccountOwnerID returns the account owner ID for a user (helper for team checks)
+func (s *Server) getAccountOwnerID(userID string, profile map[string]interface{}) string {
+	tier, _ := profile["subscription_tier"].(string)
+	stripeSubscriptionID, _ := profile["stripe_subscription_id"].(string)
+	
+	// Determine account owner
+	var accountOwnerID string
+	
+	if stripeSubscriptionID != "" {
+		// User is a paid account owner
+		accountOwnerID = userID
+	} else if tier == "pro" || tier == "team" {
+		// User is a beta account owner (has pro/team tier but no Stripe subscription)
+		accountOwnerID = userID
+	} else {
+		// Check if user is a team member
+		var teamMembers []map[string]interface{}
+		data, _, err := s.serviceRole.From("team_members").
+			Select("account_owner_id", "", false).
+			Eq("user_id", userID).
+			Eq("status", "active").
+			Execute()
+		
+		if err == nil && data != nil {
+			if err := json.Unmarshal(data, &teamMembers); err == nil && len(teamMembers) > 0 {
+				ownerID, ok := teamMembers[0]["account_owner_id"].(string)
+				if ok {
+					accountOwnerID = ownerID
+				}
+			}
+		}
+	}
+	
+	return accountOwnerID
 }
 
 // handleGSCCallback handles GET /api/gsc/callback - OAuth callback
