@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Hero from '../components/sections/Hero.svelte';
+	import VideoWalkthrough from '../components/sections/VideoWalkthrough.svelte';
 	import Features from '../components/sections/Features.svelte';
 	import Pricing from '../components/sections/Pricing.svelte';
 </script>
@@ -10,5 +11,6 @@
 </svelte:head>
 
 <Hero />
+<VideoWalkthrough />
 <Features />
 <Pricing />

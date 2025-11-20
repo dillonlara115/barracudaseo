@@ -68,15 +68,29 @@ func (s *Server) Router() http.Handler {
 	mux.HandleFunc("/health", s.handleHealth)
 
 	// Initialize GSC OAuth (non-blocking - will fail gracefully if credentials not set)
-	// Use the API port for redirect URL
-	apiPort := os.Getenv("PORT")
-	if apiPort == "" {
-		apiPort = "8080"
+	// Determine redirect URL - use GSC_REDIRECT_URL if set, otherwise use APP_URL or localhost
+	var gscRedirectURL string
+	if redirectURL := os.Getenv("GSC_REDIRECT_URL"); redirectURL != "" {
+		// Explicit redirect URL (e.g., https://barracuda-api-xxx.run.app/api/gsc/callback)
+		gscRedirectURL = redirectURL
+	} else if appURL := os.Getenv("APP_URL"); appURL != "" {
+		// Use APP_URL for production (e.g., https://app.barracudaseo.com)
+		// Note: This assumes the API is accessible at the same domain
+		// For Cloud Run, you should set GSC_REDIRECT_URL explicitly
+		gscRedirectURL = fmt.Sprintf("%s/api/gsc/callback", strings.TrimSuffix(appURL, "/"))
+	} else {
+		// Fallback to localhost for local development
+		apiPort := os.Getenv("PORT")
+		if apiPort == "" {
+			apiPort = "8080"
+		}
+		gscRedirectURL = fmt.Sprintf("http://localhost:%s/api/gsc/callback", apiPort)
 	}
-	gscRedirectURL := fmt.Sprintf("http://localhost:%s/api/gsc/callback", apiPort)
 	if err := gsc.InitializeOAuth(gscRedirectURL); err != nil {
 		s.logger.Warn("GSC integration disabled", zap.Error(err))
 		s.logger.Info("Set GSC_CLIENT_ID, GSC_CLIENT_SECRET, or GSC_CREDENTIALS_JSON to enable")
+	} else {
+		s.logger.Info("GSC OAuth initialized", zap.String("redirect_url", gscRedirectURL))
 	}
 
 	// Initialize Stripe (non-blocking - will fail gracefully if credentials not set)

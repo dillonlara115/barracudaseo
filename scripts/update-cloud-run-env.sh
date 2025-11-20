@@ -145,6 +145,28 @@ if [ -n "$BETA_INVITE_CODE" ]; then
         ENV_VARS="BETA_INVITE_CODE=$BETA_INVITE_CODE"
     fi
 fi
+# GSC OAuth variables
+if [ -n "$GSC_CLIENT_ID" ]; then
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,GSC_CLIENT_ID=$GSC_CLIENT_ID"
+    else
+        ENV_VARS="GSC_CLIENT_ID=$GSC_CLIENT_ID"
+    fi
+fi
+if [ -n "$GSC_CLIENT_SECRET" ]; then
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,GSC_CLIENT_SECRET=$GSC_CLIENT_SECRET"
+    else
+        ENV_VARS="GSC_CLIENT_SECRET=$GSC_CLIENT_SECRET"
+    fi
+fi
+if [ -n "$GSC_REDIRECT_URL" ]; then
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,GSC_REDIRECT_URL=$GSC_REDIRECT_URL"
+    else
+        ENV_VARS="GSC_REDIRECT_URL=$GSC_REDIRECT_URL"
+    fi
+fi
 
 if [ -z "$ENV_VARS" ]; then
     echo "Error: No environment variables to update."

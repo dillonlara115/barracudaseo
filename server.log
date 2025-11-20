@@ -217,3 +217,10 @@
 {"level":"info","ts":1763661733.5871363,"caller":"api/server.go:246","msg":"HTTP request","method":"GET","path":"/api/v1/projects/6bce17c4-02c7-4716-b553-d4950171f37c/gsc/dimensions","status":200,"duration":0.052290044,"remote_addr":"127.0.0.1:52740"}
 {"level":"info","ts":1763661733.5876803,"caller":"api/server.go:246","msg":"HTTP request","method":"GET","path":"/api/v1/projects/6bce17c4-02c7-4716-b553-d4950171f37c/gsc/dimensions","status":200,"duration":0.051055615,"remote_addr":"127.0.0.1:54998"}
 {"level":"info","ts":1763662257.4913144,"caller":"api/server.go:246","msg":"HTTP request","method":"GET","path":"/api/v1/billing/summary","status":200,"duration":1.135529838,"remote_addr":"127.0.0.1:46442"}
+{"level":"info","ts":1763671478.1595488,"caller":"api/server.go:246","msg":"HTTP request","method":"GET","path":"/api/gsc/callback","status":400,"duration":0.006981595,"remote_addr":"127.0.0.1:40792"}
+{"level":"info","ts":1763671478.6278298,"caller":"api/server.go:246","msg":"HTTP request","method":"GET","path":"/favicon.ico","status":404,"duration":0.003150991,"remote_addr":"127.0.0.1:40792"}
+{"level":"info","ts":1763671500.2154841,"caller":"api/server.go:246","msg":"HTTP request","method":"GET","path":"/api/gsc/callback","status":400,"duration":0.000023144,"remote_addr":"127.0.0.1:40792"}
+{"level":"info","ts":1763671500.444674,"caller":"api/server.go:246","msg":"HTTP request","method":"GET","path":"/favicon.ico","status":404,"duration":0.00001528,"remote_addr":"127.0.0.1:40792"}
+{"level":"info","ts":1763671595.1851628,"caller":"api/server.go:246","msg":"HTTP request","method":"GET","path":"/api/gsc/callback","status":400,"duration":0.000245788,"remote_addr":"127.0.0.1:46926"}
+{"level":"info","ts":1763671640.46289,"caller":"api/server.go:246","msg":"HTTP request","method":"GET","path":"/api/gsc/callback","status":400,"duration":0.000019716,"remote_addr":"127.0.0.1:46926"}
+{"level":"info","ts":1763671640.6436708,"caller":"api/server.go:246","msg":"HTTP request","method":"GET","path":"/favicon.ico","status":404,"duration":0.000017763,"remote_addr":"127.0.0.1:46926"}
