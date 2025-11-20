@@ -25,11 +25,12 @@ type Config struct {
 
 // Server represents the API server
 type Server struct {
-	config      Config
-	supabase    *supabase.Client
-	serviceRole *supabase.Client
-	logger      *zap.Logger
-	cronSecret  string
+	config       Config
+	supabase     *supabase.Client
+	serviceRole  *supabase.Client
+	logger       *zap.Logger
+	cronSecret   string
+	emailService EmailService
 }
 
 // NewServer creates a new API server instance
@@ -46,12 +47,16 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, fmt.Errorf("failed to create Supabase service role client: %w", err)
 	}
 
+	// Initialize email service
+	emailService := NewEmailService(cfg.SupabaseURL, cfg.SupabaseServiceKey, cfg.Logger)
+
 	return &Server{
-		config:      cfg,
-		supabase:    supabaseClient,
-		serviceRole: serviceRoleClient,
-		logger:      cfg.Logger,
-		cronSecret:  cfg.CronSyncSecret,
+		config:       cfg,
+		supabase:     supabaseClient,
+		serviceRole:  serviceRoleClient,
+		logger:       cfg.Logger,
+		cronSecret:   cfg.CronSyncSecret,
+		emailService: emailService,
 	}, nil
 }
 
@@ -114,6 +119,18 @@ func (s *Server) Router() http.Handler {
 // authMiddleware validates Supabase JWT tokens
 func (s *Server) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Allow public access to team invite details endpoint (no auth required)
+		if r.Method == http.MethodGet && strings.HasSuffix(r.URL.Path, "/details") {
+			// Extract token from path (e.g., "/team/abc123/details" -> "abc123")
+			path := strings.TrimPrefix(r.URL.Path, "/team/")
+			path = strings.Trim(path, "/")
+			parts := strings.Split(path, "/")
+			if len(parts) == 2 && parts[1] == "details" {
+				s.handleGetInviteDetailsPublic(w, r, parts[0])
+				return
+			}
+		}
+
 		// Extract token from Authorization header
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {

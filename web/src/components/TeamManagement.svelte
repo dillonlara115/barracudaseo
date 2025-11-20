@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { user } from '../lib/auth.js';
   import { supabase } from '../lib/supabase.js';
-  import { X, Loader, Mail, UserPlus, Trash2, Check, AlertCircle } from 'lucide-svelte';
+  import { X, Loader, Mail, UserPlus, Trash2, Check, AlertCircle, Send } from 'lucide-svelte';
 
   let loading = true;
   let members = [];
@@ -15,6 +15,7 @@
   let inviting = false;
   let inviteError = null;
   let showInviteModal = false;
+  let resendingInviteId = null;
 
   const API_URL = import.meta.env.VITE_CLOUD_RUN_API_URL || 'http://localhost:8080';
 
@@ -139,6 +140,41 @@
       inviteError = err.message;
     } finally {
       inviting = false;
+    }
+  }
+
+  async function resendInvite(memberId) {
+    resendingInviteId = memberId;
+    
+    try {
+      const token = await getValidAccessToken();
+      const response = await fetch(`${API_URL}/api/v1/team/${memberId}/resend`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to resend invite');
+      }
+
+      const result = await response.json();
+      
+      // Show success message
+      const successMsg = document.createElement('div');
+      successMsg.className = 'alert alert-success fixed bottom-4 right-4 w-auto z-50';
+      successMsg.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>Invitation resent successfully!</span>`;
+      document.body.appendChild(successMsg);
+      setTimeout(() => successMsg.remove(), 3000);
+
+      await loadTeamMembers();
+    } catch (err) {
+      error = err.message || 'Failed to resend invite';
+      console.error('Failed to resend invite:', err);
+    } finally {
+      resendingInviteId = null;
     }
   }
 
@@ -274,19 +310,48 @@
                   </td>
                   {#if isOwner}
                     <td>
-                      {#if member.status === 'pending' || member.status === 'active'}
-                        {#if member.user_id !== $user?.id}
-                          <button 
-                            class="btn btn-xs btn-error btn-outline"
-                            on:click={() => removeMember(member.id)}
-                          >
-                            <Trash2 class="w-3 h-3" />
-                            Remove
-                          </button>
-                        {:else}
-                          <span class="text-xs text-base-content/50">You</span>
+                      <div class="flex gap-2">
+                        {#if member.status === 'pending'}
+                          {#if member.user_id !== $user?.id}
+                            <button 
+                              class="btn btn-xs btn-primary btn-outline"
+                              on:click={() => resendInvite(member.id)}
+                              disabled={resendingInviteId === member.id}
+                              title="Resend invitation email"
+                            >
+                              {#if resendingInviteId === member.id}
+                                <Loader class="w-3 h-3 animate-spin" />
+                              {:else}
+                                <Send class="w-3 h-3" />
+                              {/if}
+                              Resend
+                            </button>
+                            <button 
+                              class="btn btn-xs btn-error btn-outline"
+                              on:click={() => removeMember(member.id)}
+                              title="Remove team member"
+                            >
+                              <Trash2 class="w-3 h-3" />
+                              Remove
+                            </button>
+                          {:else}
+                            <span class="text-xs text-base-content/50">You</span>
+                          {/if}
+                        {:else if member.status === 'active'}
+                          {#if member.user_id !== $user?.id}
+                            <button 
+                              class="btn btn-xs btn-error btn-outline"
+                              on:click={() => removeMember(member.id)}
+                              title="Remove team member"
+                            >
+                              <Trash2 class="w-3 h-3" />
+                              Remove
+                            </button>
+                          {:else}
+                            <span class="text-xs text-base-content/50">You</span>
+                          {/if}
                         {/if}
-                      {/if}
+                      </div>
                     </td>
                   {/if}
                 </tr>

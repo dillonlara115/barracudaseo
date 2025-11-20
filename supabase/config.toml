@@ -184,14 +184,25 @@ otp_length = 6
 otp_expiry = 3600
 
 # Use a production-ready SMTP server
+# Recommended: Use Resend (https://resend.com/docs/send-with-supabase-smtp)
+# [auth.email.smtp]
+# enabled = true
+# host = "smtp.resend.com"
+# port = 465
+# user = "resend"
+# pass = "env(RESEND_API_KEY)"
+# admin_email = "noreply@mail.barracudaseo.com"
+# sender_name = "Barracuda SEO"
+
+# Alternative: SendGrid
 # [auth.email.smtp]
 # enabled = true
 # host = "smtp.sendgrid.net"
 # port = 587
 # user = "apikey"
 # pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+# admin_email = "noreply@mail.barracudaseo.com"
+# sender_name = "Barracuda SEO"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

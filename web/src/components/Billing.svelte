@@ -12,6 +12,7 @@
   let loading = true;
   let profile = null;
   let subscription = null;
+  let teamInfo = null; // Team membership info
   let error = null;
   let creatingCheckout = false;
   let creatingPortal = false;
@@ -153,6 +154,7 @@
       }
       
       subscription = data?.subscription || null;
+      teamInfo = data?.team_info || null; // Team membership info
     } catch (err) {
       error = err.message || 'Failed to load subscription data';
       console.error('Failed to load subscription data:', err);
@@ -432,7 +434,7 @@
               {/if}
             </div>
             
-            {#if isProOrTeam}
+            {#if isProOrTeam && (!teamInfo || teamInfo.is_owner)}
               {#if profile?.stripe_subscription_id}
                 <!-- Paid User: Manage Billing Button -->
                 <button 
@@ -467,31 +469,44 @@
             </div>
           </div>
 
-          {#if isProOrTeam && profile?.stripe_subscription_id}
+          {#if teamInfo}
             <div class="divider my-4"></div>
             <div class="bg-base-200 rounded-lg p-4">
-              <div class="flex items-center justify-between">
+              {#if teamInfo.is_owner}
+                <!-- Account Owner View -->
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="font-semibold text-sm mb-1">Team Management</h3>
+                    <p class="text-xs text-base-content/70">
+                      {teamInfo.active_count} of {teamInfo.team_size_limit} seat{teamInfo.team_size_limit === 1 ? '' : 's'} used
+                    </p>
+                  </div>
+                  {#if profile?.stripe_subscription_id}
+                    <button 
+                      class="btn btn-primary btn-sm"
+                      on:click={openBillingPortal}
+                      disabled={creatingPortal}
+                    >
+                      {#if creatingPortal}
+                        <Loader class="w-4 h-4 animate-spin" />
+                      {:else}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                      {/if}
+                      Add Seats
+                    </button>
+                  {/if}
+                </div>
+              {:else}
+                <!-- Team Member View -->
                 <div>
-                  <h3 class="font-semibold text-sm mb-1">Team Management</h3>
+                  <h3 class="font-semibold text-sm mb-1">Team Member</h3>
                   <p class="text-xs text-base-content/70">
-                    Currently {planFeatures.users} seat{planFeatures.users === 1 ? '' : 's'} active. Add more team members to collaborate.
+                    You're part of a team with {teamInfo.active_count} of {teamInfo.team_size_limit} seat{teamInfo.team_size_limit === 1 ? '' : 's'} used. Contact your account owner to manage billing.
                   </p>
                 </div>
-                <button 
-                  class="btn btn-primary btn-sm"
-                  on:click={openBillingPortal}
-                  disabled={creatingPortal}
-                >
-                  {#if creatingPortal}
-                    <Loader class="w-4 h-4 animate-spin" />
-                  {:else}
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                  {/if}
-                  Add Seats
-                </button>
-              </div>
+              {/if}
             </div>
           {/if}
 
@@ -557,12 +572,12 @@
       </div>
 
       <!-- Team Management -->
-      {#if isProOrTeam}
+      {#if isProOrTeam && (!teamInfo || teamInfo.is_owner)}
         <TeamManagement />
       {/if}
 
       <!-- Upgrade Options -->
-      {#if !isProOrTeam}
+      {#if !isProOrTeam && (!teamInfo || teamInfo.is_owner)}
         <div class="card bg-base-100 shadow">
           <div class="card-body">
             <h2 class="card-title text-xl mb-4">Upgrade Plan</h2>

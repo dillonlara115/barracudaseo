@@ -19,6 +19,21 @@
   $: isAuthenticated = $user !== null;
   
   let shouldRedirect = false; // Track if we should redirect after signup/signin
+  
+  // Check for invite token in URL (supports both hash and search params)
+  let inviteToken = null;
+  if (typeof window !== 'undefined') {
+    let params;
+    // Check hash first (hash-based routing)
+    if (window.location.hash.includes('?')) {
+      const hashPart = window.location.hash.split('?')[1];
+      params = new URLSearchParams(hashPart);
+    } else {
+      // Fallback to search params
+      params = new URLSearchParams(window.location.search);
+    }
+    inviteToken = params.get('invite_token');
+  }
 
   async function handleSubmit() {
     loading = true;
@@ -59,7 +74,12 @@
   $: if (shouldRedirect && isAuthenticated && $user) {
     // Small delay to show success message, then redirect
     setTimeout(() => {
-      push('#/');
+      // If there's an invite token, redirect to accept page
+      if (inviteToken) {
+        push(`#/team/accept?token=${inviteToken}`);
+      } else {
+        push('#/');
+      }
       shouldRedirect = false; // Reset flag after redirect
     }, 1500);
   }
@@ -145,6 +165,20 @@
               Log in
             </button>
           </p>
+        {/if}
+
+        {#if inviteToken}
+          <div class="bg-blue-900/30 border border-blue-700 text-blue-200 px-4 py-3 rounded-lg mb-4">
+            <div class="flex items-start space-x-2">
+              <svg class="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p class="font-medium mb-1">Account Activated</p>
+                <p class="text-sm">Please complete your account setup to accept the team invitation.</p>
+              </div>
+            </div>
+          </div>
         {/if}
 
         {#if error}

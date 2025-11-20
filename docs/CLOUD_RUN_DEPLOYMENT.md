@@ -145,6 +145,17 @@ If you're using Stripe for billing/subscriptions, add these variables:
 
 **Note**: See [STRIPE_PRODUCTION_FIX.md](./STRIPE_PRODUCTION_FIX.md) for detailed Stripe setup instructions.
 
+### Email Variables (Required for Team Invites)
+
+If you're using Resend or Elastic Email for sending team invite emails:
+
+- `EMAIL_PROVIDER` - Email provider: `resend`, `elastic`, or `supabase` (default: `supabase`)
+- `RESEND_API_KEY` - Your Resend API key (starts with `re_`) - Required if using Resend API directly
+- `EMAIL_FROM_ADDRESS` - Sender email address (e.g., `noreply@mail.barracudaseo.com`) - Must match verified domain
+- `APP_URL` - Base URL for invite links (e.g., `https://app.barracudaseo.com`)
+
+**Note**: If using Resend via Supabase SMTP, you only need to configure SMTP in Supabase Dashboard (no env vars needed). See [EMAIL_CONFIGURATION.md](./EMAIL_CONFIGURATION.md) for details.
+
 ## Updating the Deployment
 
 After making code changes:

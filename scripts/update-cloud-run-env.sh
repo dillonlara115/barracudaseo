@@ -109,6 +109,36 @@ if [ -n "$STRIPE_CANCEL_URL" ]; then
     fi
 fi
 
+# Email variables (for Resend/Elastic Email)
+if [ -n "$EMAIL_PROVIDER" ]; then
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,EMAIL_PROVIDER=$EMAIL_PROVIDER"
+    else
+        ENV_VARS="EMAIL_PROVIDER=$EMAIL_PROVIDER"
+    fi
+fi
+if [ -n "$RESEND_API_KEY" ]; then
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,RESEND_API_KEY=$RESEND_API_KEY"
+    else
+        ENV_VARS="RESEND_API_KEY=$RESEND_API_KEY"
+    fi
+fi
+if [ -n "$EMAIL_FROM_ADDRESS" ]; then
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,EMAIL_FROM_ADDRESS=$EMAIL_FROM_ADDRESS"
+    else
+        ENV_VARS="EMAIL_FROM_ADDRESS=$EMAIL_FROM_ADDRESS"
+    fi
+fi
+if [ -n "$APP_URL" ]; then
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,APP_URL=$APP_URL"
+    else
+        ENV_VARS="APP_URL=$APP_URL"
+    fi
+fi
+
 if [ -z "$ENV_VARS" ]; then
     echo "Error: No environment variables to update."
     echo "Set variables in your .env file or export them."

@@ -66,6 +66,14 @@ type CreateCheckoutSessionResponse struct {
 type BillingSummaryResponse struct {
 	Profile      map[string]interface{} `json:"profile"`
 	Subscription map[string]interface{} `json:"subscription"`
+	TeamInfo     *TeamInfo              `json:"team_info,omitempty"` // Team membership info
+}
+
+type TeamInfo struct {
+	IsOwner        bool   `json:"is_owner"`                   // Whether user is account owner
+	AccountOwnerID string `json:"account_owner_id,omitempty"` // ID of account owner (if team member)
+	TeamSizeLimit  int    `json:"team_size_limit,omitempty"`  // Team size limit
+	ActiveCount    int    `json:"active_count,omitempty"`     // Number of active team members
 }
 
 // handleBilling routes billing sub-paths
@@ -232,30 +240,70 @@ func (s *Server) handleBillingSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	subscription, err := s.fetchLatestSubscription(userID)
-	if err != nil {
-		s.logger.Error("Failed to load subscription", zap.Error(err))
-		s.respondError(w, http.StatusInternalServerError, "Failed to load subscription")
-		return
-	}
+	// Check team membership status first
+	teamInfo := s.getTeamInfo(userID, profile)
 
-	// If no subscription found but user has stripe_customer_id, try to sync from Stripe
-	if subscription == nil && profile["stripe_customer_id"] != nil {
-		customerID, ok := profile["stripe_customer_id"].(string)
-		if ok && customerID != "" {
-			s.logger.Info("No subscription found in DB, attempting to sync from Stripe",
-				zap.String("customer_id", customerID),
-				zap.String("user_id", userID))
+	var subData map[string]interface{}
 
-			// Try to fetch latest subscription from Stripe
-			if err := s.syncSubscriptionFromStripe(customerID, userID); err != nil {
-				s.logger.Warn("Failed to sync subscription from Stripe", zap.Error(err))
-				// Continue - return null subscription rather than error
-			} else {
-				// Retry fetching subscription after sync
-				subscription, err = s.fetchLatestSubscription(userID)
-				if err != nil {
-					s.logger.Warn("Failed to fetch subscription after sync", zap.Error(err))
+	// If user is a team member, use account owner's profile and subscription
+	if teamInfo != nil && !teamInfo.IsOwner {
+		ownerProfile, err := s.fetchProfile(teamInfo.AccountOwnerID)
+		if err == nil && ownerProfile != nil {
+			// Override profile with owner's subscription tier
+			profile["subscription_tier"] = ownerProfile["subscription_tier"]
+			profile["subscription_status"] = ownerProfile["subscription_status"]
+			profile["team_size"] = ownerProfile["team_size"]
+
+			// Get owner's subscription
+			subData, err = s.fetchLatestSubscription(teamInfo.AccountOwnerID)
+			if err != nil {
+				s.logger.Warn("Failed to load owner subscription", zap.Error(err))
+			}
+
+			// If no subscription found but owner has stripe_customer_id, try to sync from Stripe
+			if subData == nil && ownerProfile["stripe_customer_id"] != nil {
+				customerID, ok := ownerProfile["stripe_customer_id"].(string)
+				if ok && customerID != "" {
+					// Try to fetch latest subscription from Stripe
+					if err := s.syncSubscriptionFromStripe(customerID, teamInfo.AccountOwnerID); err != nil {
+						s.logger.Warn("Failed to sync owner subscription from Stripe", zap.Error(err))
+					} else {
+						// Retry fetching subscription after sync
+						subData, err = s.fetchLatestSubscription(teamInfo.AccountOwnerID)
+						if err != nil {
+							s.logger.Warn("Failed to fetch owner subscription after sync", zap.Error(err))
+						}
+					}
+				}
+			}
+		}
+	} else {
+		// User is account owner - get their own subscription
+		subData, err = s.fetchLatestSubscription(userID)
+		if err != nil {
+			s.logger.Error("Failed to load subscription", zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, "Failed to load subscription")
+			return
+		}
+
+		// If no subscription found but user has stripe_customer_id, try to sync from Stripe
+		if subData == nil && profile["stripe_customer_id"] != nil {
+			customerID, ok := profile["stripe_customer_id"].(string)
+			if ok && customerID != "" {
+				s.logger.Info("No subscription found in DB, attempting to sync from Stripe",
+					zap.String("customer_id", customerID),
+					zap.String("user_id", userID))
+
+				// Try to fetch latest subscription from Stripe
+				if err := s.syncSubscriptionFromStripe(customerID, userID); err != nil {
+					s.logger.Warn("Failed to sync subscription from Stripe", zap.Error(err))
+					// Continue - return null subscription rather than error
+				} else {
+					// Retry fetching subscription after sync
+					subData, err = s.fetchLatestSubscription(userID)
+					if err != nil {
+						s.logger.Warn("Failed to fetch subscription after sync", zap.Error(err))
+					}
 				}
 			}
 		}
@@ -263,8 +311,116 @@ func (s *Server) handleBillingSummary(w http.ResponseWriter, r *http.Request) {
 
 	s.respondJSON(w, http.StatusOK, BillingSummaryResponse{
 		Profile:      profile,
-		Subscription: subscription,
+		Subscription: subData,
+		TeamInfo:     teamInfo,
 	})
+}
+
+// getTeamInfo determines if user is account owner or team member
+func (s *Server) getTeamInfo(userID string, profile map[string]interface{}) *TeamInfo {
+	tier, _ := profile["subscription_tier"].(string)
+	stripeSubscriptionID, _ := profile["stripe_subscription_id"].(string)
+
+	// Determine account owner
+	var accountOwnerID string
+	isOwner := false
+
+	if stripeSubscriptionID != "" {
+		// User is a paid account owner
+		accountOwnerID = userID
+		isOwner = true
+	} else if tier == "pro" || tier == "team" {
+		// User is a beta account owner (has pro/team tier but no Stripe subscription)
+		accountOwnerID = userID
+		isOwner = true
+	} else {
+		// Check if user is a team member
+		var teamMembers []map[string]interface{}
+		data, _, err := s.serviceRole.From("team_members").
+			Select("account_owner_id", "", false).
+			Eq("user_id", userID).
+			Eq("status", "active").
+			Execute()
+
+		if err == nil && data != nil {
+			if err := json.Unmarshal(data, &teamMembers); err == nil && len(teamMembers) > 0 {
+				ownerID, ok := teamMembers[0]["account_owner_id"].(string)
+				if ok {
+					accountOwnerID = ownerID
+					isOwner = false
+				}
+			}
+		}
+
+		// If not found, user is not part of any team
+		if accountOwnerID == "" {
+			return nil
+		}
+	}
+
+	// Get team size limit and active count
+	teamSizeLimit := 1
+	activeCount := 0
+
+	if isOwner {
+		// Get from owner's profile
+		if size, ok := profile["team_size"].(float64); ok {
+			teamSizeLimit = int(size)
+		} else if size, ok := profile["team_size"].(int); ok {
+			teamSizeLimit = size
+		}
+
+		// Count active members
+		var members []map[string]interface{}
+		data, _, err := s.serviceRole.From("team_members").
+			Select("status", "", false).
+			Eq("account_owner_id", accountOwnerID).
+			Execute()
+
+		if err == nil && data != nil {
+			if err := json.Unmarshal(data, &members); err == nil {
+				for _, m := range members {
+					if status, ok := m["status"].(string); ok && status == "active" {
+						activeCount++
+					}
+				}
+			}
+		}
+	} else {
+		// Get from owner's profile
+		ownerProfile, err := s.fetchProfile(accountOwnerID)
+		if err == nil && ownerProfile != nil {
+			if size, ok := ownerProfile["team_size"].(float64); ok {
+				teamSizeLimit = int(size)
+			} else if size, ok := ownerProfile["team_size"].(int); ok {
+				teamSizeLimit = size
+			}
+
+			// Count active members
+			var members []map[string]interface{}
+			data, _, err := s.serviceRole.From("team_members").
+				Select("status", "", false).
+				Eq("account_owner_id", accountOwnerID).
+				Execute()
+
+			if err == nil && data != nil {
+				if err := json.Unmarshal(data, &members); err == nil {
+					for _, m := range members {
+						if status, ok := m["status"].(string); ok && status == "active" {
+							activeCount++
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return &TeamInfo{
+		IsOwner:        isOwner,
+		AccountOwnerID: accountOwnerID,
+		TeamSizeLimit:  teamSizeLimit,
+		ActiveCount:    activeCount,
+	}
 }
 
 // handleCreateCheckoutSession creates a Stripe checkout session
@@ -278,6 +434,16 @@ func (s *Server) handleCreateCheckoutSession(w http.ResponseWriter, r *http.Requ
 	if !ok || userID == "" {
 		s.respondError(w, http.StatusUnauthorized, "Unauthorized")
 		return
+	}
+
+	// Check if user is a team member (team members cannot create checkout sessions)
+	profile, err := s.fetchProfile(userID)
+	if err == nil && profile != nil {
+		teamInfo := s.getTeamInfo(userID, profile)
+		if teamInfo != nil && !teamInfo.IsOwner {
+			s.respondError(w, http.StatusForbidden, "Team members cannot manage billing. Please contact your account owner.")
+			return
+		}
 	}
 
 	var req CreateCheckoutSessionRequest
@@ -838,6 +1004,16 @@ func (s *Server) handleCreateBillingPortalSession(w http.ResponseWriter, r *http
 	if !ok || userID == "" {
 		s.respondError(w, http.StatusUnauthorized, "Unauthorized")
 		return
+	}
+
+	// Check if user is a team member (team members cannot access billing portal)
+	profile, err := s.fetchProfile(userID)
+	if err == nil && profile != nil {
+		teamInfo := s.getTeamInfo(userID, profile)
+		if teamInfo != nil && !teamInfo.IsOwner {
+			s.respondError(w, http.StatusForbidden, "Team members cannot manage billing. Please contact your account owner.")
+			return
+		}
 	}
 
 	// Get user's Stripe customer ID

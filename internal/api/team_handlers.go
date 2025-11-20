@@ -1,8 +1,10 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -79,9 +81,17 @@ func (s *Server) handleTeam(w http.ResponseWriter, r *http.Request) {
 		// Handle /team/:id for specific member operations
 		if strings.Contains(path, "/") {
 			parts := strings.Split(path, "/")
+			s.logger.Info("Parsing team member action", 
+				zap.String("path", path),
+				zap.Strings("parts", parts),
+				zap.Int("parts_count", len(parts)))
 			if len(parts) >= 2 {
 				memberID := parts[0]
 				action := parts[1]
+				s.logger.Info("Team member action", 
+					zap.String("member_id", memberID),
+					zap.String("action", action),
+					zap.String("method", r.Method))
 				switch action {
 				case "remove":
 					if r.Method == http.MethodDelete {
@@ -92,6 +102,18 @@ func (s *Server) handleTeam(w http.ResponseWriter, r *http.Request) {
 				case "accept":
 					if r.Method == http.MethodPost {
 						s.handleAcceptInvite(w, r, memberID)
+					} else {
+						s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+					}
+				case "resend":
+					if r.Method == http.MethodPost {
+						s.handleResendInvite(w, r, memberID)
+					} else {
+						s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+					}
+				case "details":
+					if r.Method == http.MethodGet {
+						s.handleGetInviteDetails(w, r, memberID)
 					} else {
 						s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 					}
@@ -413,23 +435,175 @@ func (s *Server) handleInviteTeamMember(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// TODO: Send invite email (implement email service)
-	// For now, return the invite token so it can be used
+	// Build invite URL
 	appURL := os.Getenv("APP_URL")
 	if appURL == "" {
-		appURL = "https://app.barracudaseo.com"
+		// Default to localhost for local development, production URL otherwise
+		// Check if running locally (common indicators)
+		if os.Getenv("PORT") == "" || os.Getenv("PORT") == "8080" {
+			appURL = "http://localhost:5173"
+		} else {
+			appURL = "https://app.barracudaseo.com"
+		}
 	}
-	inviteURL := fmt.Sprintf("%s/team/accept?token=%s", appURL, inviteToken)
+	inviteURL := fmt.Sprintf("%s/#/team/accept?token=%s", appURL, inviteToken)
+
+	// Check if user exists, create if not (hybrid approach)
+	inviteeUserID, userCreated, err := s.ensureUserExists(strings.ToLower(req.Email))
+	if err != nil {
+		s.logger.Warn("Failed to ensure user exists, but invite created", zap.Error(err), zap.String("email", req.Email))
+		inviteeUserID = "" // Will be set when user accepts invite
+	}
+
+	// Send invite email via configured email service
+	if err := s.emailService.SendTeamInvite(strings.ToLower(req.Email), inviteURL, userCreated); err != nil {
+		s.logger.Warn("Failed to send invite email, but invite created", zap.Error(err), zap.String("email", req.Email))
+		// Don't fail the request - invite URL is still returned
+	}
 
 	s.logger.Info("Team member invited",
 		zap.String("account_owner_id", userID),
 		zap.String("email", req.Email),
-		zap.String("invite_token", inviteToken))
+		zap.String("invite_token", inviteToken),
+		zap.String("invitee_user_id", inviteeUserID),
+		zap.Bool("user_created", userCreated))
 
 	s.respondJSON(w, http.StatusCreated, map[string]interface{}{
 		"message":    "Invite sent successfully",
 		"invite_url": inviteURL,
-		"invite_token": inviteToken, // For testing - remove in production
+		"user_created": userCreated, // For debugging
+	})
+}
+
+// handleResendInvite resends an invitation to a pending team member
+func (s *Server) handleResendInvite(w http.ResponseWriter, r *http.Request, memberID string) {
+	userID, ok := userIDFromContext(r.Context())
+	if !ok || userID == "" {
+		s.respondError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	// Get user's profile to verify account ownership
+	profile, err := s.fetchProfile(userID)
+	if err != nil {
+		s.logger.Error("Failed to fetch profile", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to fetch profile")
+		return
+	}
+
+	if profile == nil {
+		s.respondError(w, http.StatusNotFound, "Profile not found")
+		return
+	}
+
+	// Check if user is account owner
+	tier, _ := profile["subscription_tier"].(string)
+	if tier != "pro" && tier != "team" {
+		s.respondError(w, http.StatusForbidden, "Team management requires a Pro or Team subscription")
+		return
+	}
+
+	stripeSubscriptionID, _ := profile["stripe_subscription_id"].(string)
+	if stripeSubscriptionID == "" && tier != "pro" && tier != "team" {
+		s.respondError(w, http.StatusForbidden, "Only account owners can resend invitations")
+		return
+	}
+
+	// Get the team member record
+	var members []map[string]interface{}
+	data, _, err := s.serviceRole.From("team_members").
+		Select("*", "", false).
+		Eq("id", memberID).
+		Eq("account_owner_id", userID).
+		Execute()
+
+	if err != nil {
+		s.logger.Error("Failed to fetch team member", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to fetch team member")
+		return
+	}
+
+	if err := json.Unmarshal(data, &members); err != nil || len(members) == 0 {
+		s.respondError(w, http.StatusNotFound, "Team member not found")
+		return
+	}
+
+	member := members[0]
+	memberEmail, _ := member["email"].(string)
+	memberStatus, _ := member["status"].(string)
+
+	// Only allow resending for pending invites
+	if memberStatus != "pending" {
+		s.respondError(w, http.StatusBadRequest, "Can only resend invitations for pending members")
+		return
+	}
+
+	// Get or generate invite token
+	inviteToken, _ := member["invite_token"].(string)
+	if inviteToken == "" {
+		// Generate new token if one doesn't exist
+		inviteToken = uuid.New().String()
+		// Update the record with the new token
+		_, _, err = s.serviceRole.From("team_members").
+			Update(map[string]interface{}{
+				"invite_token": inviteToken,
+			}, "", "").
+			Eq("id", memberID).
+			Execute()
+		if err != nil {
+			s.logger.Error("Failed to update invite token", zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, "Failed to update invite token")
+			return
+		}
+	}
+
+	// Build invite URL
+	appURL := os.Getenv("APP_URL")
+	if appURL == "" {
+		// Default to localhost for local development, production URL otherwise
+		// Check if running locally (common indicators)
+		if os.Getenv("PORT") == "" || os.Getenv("PORT") == "8080" {
+			appURL = "http://localhost:5173"
+		} else {
+			appURL = "https://app.barracudaseo.com"
+		}
+	}
+	inviteURL := fmt.Sprintf("%s/#/team/accept?token=%s", appURL, inviteToken)
+
+	// Check if user exists (for determining if it's a new user)
+	_, userCreated, err := s.ensureUserExists(strings.ToLower(memberEmail))
+	if err != nil {
+		s.logger.Warn("Failed to ensure user exists, but resending invite", zap.Error(err), zap.String("email", memberEmail))
+		userCreated = false // Assume existing user if we can't check
+	}
+
+	// Send invite email via configured email service
+	if err := s.emailService.SendTeamInvite(strings.ToLower(memberEmail), inviteURL, userCreated); err != nil {
+		s.logger.Warn("Failed to send resend email, but invite URL is valid", zap.Error(err), zap.String("email", memberEmail))
+		// Don't fail the request - invite URL is still returned
+	}
+
+	// Update invited_at timestamp
+	_, _, err = s.serviceRole.From("team_members").
+		Update(map[string]interface{}{
+			"invited_at": time.Now().Format(time.RFC3339),
+		}, "", "").
+		Eq("id", memberID).
+		Execute()
+
+	if err != nil {
+		s.logger.Warn("Failed to update invited_at timestamp", zap.Error(err))
+		// Don't fail - email was sent
+	}
+
+	s.logger.Info("Team invite resent",
+		zap.String("account_owner_id", userID),
+		zap.String("member_id", memberID),
+		zap.String("email", memberEmail))
+
+	s.respondJSON(w, http.StatusOK, map[string]interface{}{
+		"message":    "Invitation resent successfully",
+		"invite_url": inviteURL,
 	})
 }
 
@@ -580,5 +754,253 @@ func (s *Server) handleAcceptInvite(w http.ResponseWriter, r *http.Request, toke
 		zap.String("member_id", memberID))
 
 	s.respondJSON(w, http.StatusOK, map[string]string{"message": "Invite accepted successfully"})
+}
+
+// handleGetInviteDetailsPublic is a public version that doesn't require auth context
+func (s *Server) handleGetInviteDetailsPublic(w http.ResponseWriter, r *http.Request, tokenOrID string) {
+	s.handleGetInviteDetails(w, r, tokenOrID)
+}
+
+// handleGetInviteDetails returns invite details by token (no auth required)
+func (s *Server) handleGetInviteDetails(w http.ResponseWriter, r *http.Request, tokenOrID string) {
+	// Find invite by token
+	var members []map[string]interface{}
+	data, _, err := s.serviceRole.From("team_members").
+		Select("id,email,role,status,invited_at", "", false).
+		Eq("invite_token", tokenOrID).
+		Eq("status", "pending").
+		Execute()
+
+	if err != nil {
+		s.logger.Error("Failed to fetch invite details", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to fetch invite details")
+		return
+	}
+
+	if err := json.Unmarshal(data, &members); err != nil || len(members) == 0 {
+		s.respondError(w, http.StatusNotFound, "Invite not found or already accepted")
+		return
+	}
+
+	member := members[0]
+
+	s.respondJSON(w, http.StatusOK, map[string]interface{}{
+		"email":      member["email"],
+		"role":       member["role"],
+		"invited_at": member["invited_at"],
+	})
+}
+
+// ensureUserExists checks if a user exists by email, creates one if not
+// Returns: (userID, userCreated, error)
+func (s *Server) ensureUserExists(email string) (string, bool, error) {
+	// Check if user exists via Supabase Admin API
+	supabaseURL := s.config.SupabaseURL
+	serviceKey := s.config.SupabaseServiceKey
+
+	// Query for user by email
+	checkURL := fmt.Sprintf("%s/auth/v1/admin/users?email=%s", supabaseURL, email)
+	req, err := http.NewRequest("GET", checkURL, nil)
+	if err != nil {
+		return "", false, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("apikey", serviceKey)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", serviceKey))
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", false, fmt.Errorf("failed to check user: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", false, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", false, fmt.Errorf("failed to check user: status %d, body: %s", resp.StatusCode, string(body))
+	}
+
+	var usersResponse struct {
+		Users []struct {
+			ID    string `json:"id"`
+			Email string `json:"email"`
+		} `json:"users"`
+	}
+
+	if err := json.Unmarshal(body, &usersResponse); err != nil {
+		return "", false, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	// If user exists, return their ID
+	if len(usersResponse.Users) > 0 {
+		return usersResponse.Users[0].ID, false, nil
+	}
+
+	// User doesn't exist - create one
+	createURL := fmt.Sprintf("%s/auth/v1/admin/users", supabaseURL)
+	createPayload := map[string]interface{}{
+		"email": email,
+		"email_confirm": true, // Auto-confirm email for team invites
+		"user_metadata": map[string]interface{}{
+			"invited_to_team": true,
+		},
+	}
+
+	jsonData, err := json.Marshal(createPayload)
+	if err != nil {
+		return "", false, fmt.Errorf("failed to marshal create payload: %w", err)
+	}
+
+	createReq, err := http.NewRequest("POST", createURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return "", false, fmt.Errorf("failed to create request: %w", err)
+	}
+	createReq.Header.Set("apikey", serviceKey)
+	createReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", serviceKey))
+	createReq.Header.Set("Content-Type", "application/json")
+
+	createResp, err := client.Do(createReq)
+	if err != nil {
+		return "", false, fmt.Errorf("failed to create user: %w", err)
+	}
+	defer createResp.Body.Close()
+
+	createBody, err := io.ReadAll(createResp.Body)
+	if err != nil {
+		return "", false, fmt.Errorf("failed to read create response: %w", err)
+	}
+
+	if createResp.StatusCode != http.StatusOK && createResp.StatusCode != http.StatusCreated {
+		return "", false, fmt.Errorf("failed to create user: status %d, body: %s", createResp.StatusCode, string(createBody))
+	}
+
+	var createdUser struct {
+		ID    string `json:"id"`
+		Email string `json:"email"`
+	}
+
+	if err := json.Unmarshal(createBody, &createdUser); err != nil {
+		return "", false, fmt.Errorf("failed to parse create response: %w", err)
+	}
+
+	s.logger.Info("Created new user for team invite", zap.String("email", email), zap.String("user_id", createdUser.ID))
+	return createdUser.ID, true, nil
+}
+
+// sendSupabaseMagicLink sends a magic link for new users via Supabase
+// This is called when using Supabase email provider for new users
+func (s *Server) sendSupabaseMagicLink(userID, email, inviteURL string) error {
+	supabaseURL := s.config.SupabaseURL
+	serviceKey := s.config.SupabaseServiceKey
+
+	// Update user metadata with invite URL
+	updateURL := fmt.Sprintf("%s/auth/v1/admin/users/%s", supabaseURL, userID)
+	updatePayload := map[string]interface{}{
+		"user_metadata": map[string]interface{}{
+			"team_invite_url": inviteURL,
+			"invited_to_team": true,
+		},
+	}
+
+	jsonData, err := json.Marshal(updatePayload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal update payload: %w", err)
+	}
+
+	req, err := http.NewRequest("PUT", updateURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to create update request: %w", err)
+	}
+	req.Header.Set("apikey", serviceKey)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", serviceKey))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		s.logger.Warn("Failed to update user metadata with invite URL", zap.Error(err))
+		// Continue - invite URL is still valid
+	} else {
+		resp.Body.Close()
+	}
+
+	// Send magic link to new user (Supabase will handle email sending)
+	magicLinkURL := fmt.Sprintf("%s/auth/v1/admin/users/%s/generate_link", supabaseURL, userID)
+	magicLinkPayload := map[string]interface{}{
+		"type":         "magiclink",
+		"redirect_to":  inviteURL, // Redirect to invite acceptance after signup
+	}
+
+	jsonData, err = json.Marshal(magicLinkPayload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal magic link payload: %w", err)
+	}
+
+	req, err = http.NewRequest("POST", magicLinkURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to create magic link request: %w", err)
+	}
+	req.Header.Set("apikey", serviceKey)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", serviceKey))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err = client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to generate magic link: %w", err)
+	}
+	defer resp.Body.Close()
+
+	s.logger.Info("Magic link generated for new user", zap.String("email", email))
+	return nil
+}
+
+// sendSupabaseInvite sends an invite email for existing users via Supabase Admin API
+func (s *Server) sendSupabaseInvite(userID, email, inviteURL string) error {
+	supabaseURL := s.config.SupabaseURL
+	serviceKey := s.config.SupabaseServiceKey
+
+	inviteURLAPI := fmt.Sprintf("%s/auth/v1/admin/users/%s/invite", supabaseURL, userID)
+	
+	invitePayload := map[string]interface{}{
+		"data": map[string]interface{}{
+			"invite_url": inviteURL,
+			"team_invite": true,
+		},
+		"redirect_to": inviteURL,
+	}
+
+	jsonData, err := json.Marshal(invitePayload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal invite payload: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", inviteURLAPI, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to create invite request: %w", err)
+	}
+	req.Header.Set("apikey", serviceKey)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", serviceKey))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send invite: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return fmt.Errorf("invite endpoint returned error: status %d, body: %s", resp.StatusCode, string(body))
+	}
+
+	return nil
 }
 

@@ -15,13 +15,15 @@
   import TermsOfService from './routes/TermsOfService.svelte';
   import GSCDashboard from './routes/GSCDashboard.svelte';
   import GSCKeywords from './routes/GSCKeywords.svelte';
+  import TeamAccept from './routes/TeamAccept.svelte';
   import { loadSubscriptionData } from './lib/subscription.js';
 
   let loading = true;
   let configError = null;
-  let currentHash = '';
+  let currentHash = typeof window !== 'undefined' ? window.location.hash : '';
   
   $: isLegalPage = currentHash === '#/privacy' || currentHash === '#/terms';
+  $: isPublicPage = isLegalPage || currentHash.startsWith('#/team/accept');
 
   // Route definitions
   const routes = {
@@ -36,6 +38,8 @@
     '/terms': TermsOfService,
     '/project/:projectId/gsc': GSCDashboard,
     '/project/:projectId/gsc/keywords': GSCKeywords,
+    '/team/accept': TeamAccept,
+    '/auth': Auth, // Auth route for when user is authenticated but needs to redirect
   };
 
   // Check Supabase configuration
@@ -95,13 +99,36 @@
     // React to auth state changes
     user.subscribe(async (currentUser) => {
       if (!currentUser) {
-        // Don't redirect if on legal pages
-        if (!isLegalPage) {
+        // Don't redirect if on public pages (legal pages or invite acceptance)
+        if (!isPublicPage) {
           push('/');
         }
       } else {
         // Load subscription data when user is authenticated
         await loadSubscriptionData();
+        
+        // If user just authenticated and is on /auth route, check for invite token and redirect
+        if (currentHash.startsWith('#/auth')) {
+          let params;
+          if (currentHash.includes('?')) {
+            const hashPart = currentHash.split('?')[1];
+            params = new URLSearchParams(hashPart);
+          } else {
+            params = new URLSearchParams(window.location.search);
+          }
+          const inviteToken = params.get('invite_token');
+          if (inviteToken) {
+            // Redirect to accept invite page
+            setTimeout(() => {
+              push(`#/team/accept?token=${inviteToken}`);
+            }, 500);
+          } else {
+            // Redirect to home
+            setTimeout(() => {
+              push('#/');
+            }, 500);
+          }
+        }
       }
       loading = false;
     });
@@ -115,9 +142,9 @@
       <ConfigError error={configError} />
     </div>
   {:else if !$user}
-    <!-- Show auth UI when not logged in, or legal pages -->
-    {#if isLegalPage}
-      <!-- Public legal pages - accessible without login -->
+    <!-- Show auth UI when not logged in, or public pages -->
+    {#if isPublicPage}
+      <!-- Public pages - accessible without login (legal pages, invite acceptance) -->
       <Router {routes} />
     {:else}
       <Auth />
