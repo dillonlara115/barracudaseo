@@ -6,7 +6,6 @@
   import Logo from './Logo.svelte';
   import { userProfile, isProOrTeam } from '../lib/subscription.js';
 
-  let isSignUp = false;
   let email = '';
   let password = '';
   let firstName = '';
@@ -34,6 +33,10 @@
     }
     inviteToken = params.get('invite_token');
   }
+  
+  // Default to signup tab if there's an invite token (user needs to create account)
+  // This ensures users coming from invite links see the signup form first
+  let isSignUp = typeof window !== 'undefined' && inviteToken !== null;
 
   async function handleSubmit() {
     loading = true;
@@ -124,7 +127,7 @@
         </a>
       </li>
       <li>
-        <button type="button" role="menuitem" on:click={handleSignOut} class="text-error w-full text-left">
+        <button type="button" role="menuitem" on:click={handleSignOut} class="text-base-content hover:bg-error hover:text-error-content w-full text-left font-semibold">
           Sign Out
         </button>
       </li>

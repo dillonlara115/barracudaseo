@@ -322,9 +322,12 @@
     display: flex;
     flex-wrap: nowrap;
     overflow-x: auto;
+    overflow-y: hidden;
     gap: 0.5rem;
     scrollbar-width: thin;
     scrollbar-color: var(--fallback-bc, #d1d5db) transparent;
+    width: 100%;
+    max-width: 100%;
   }
   .scrolling-inline-form::-webkit-scrollbar {
     height: 6px;
@@ -335,10 +338,12 @@
     border-radius: 4px;
   }
   .scrolling-inline-form .btn {
-    min-width: 64px;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
+    min-width: max-content;
+    white-space: nowrap;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
     font-size: 0.85rem;
+    flex-shrink: 0;
   }
   .search-sort-bar {
     display: flex;
@@ -384,41 +389,41 @@
         </select>
       </div>
 
-      <!-- Responsive filters: stack on mobile, row on large -->
-      <div class="filter-group-wrap">
-        <div class="space-y-2 w-full">
-          <div class="text-xs font-semibold uppercase tracking-wide text-base-content/70">Severity</div>
-          <!-- Horizontally scrolling form for overflow, especially on mobile -->
-          <form class="filter filter-sm scrolling-inline-form" autocomplete="off">
-            {#each severityOptions as option}
-              <input
-                class="btn"
-                type="radio"
-                name="severity-filter"
-                value={option.value}
-                aria-label={option.label}
-                data-title={option.label}
-                bind:group={severityFilter}
-              />
-            {/each}
-          </form>
-        </div>
-        <div class="space-y-2 w-full">
-          <div class="text-xs font-semibold uppercase tracking-wide text-base-content/70">Type</div>
-          <form class="filter filter-sm scrolling-inline-form" autocomplete="off">
-            {#each typeFilterOptions as option}
-              <input
-                class="btn"
-                type="radio"
-                name="type-filter"
-                value={option.value}
-                aria-label={option.label}
-                data-title={option.label}
-                bind:group={typeFilter}
-              />
-            {/each}
-          </form>
-        </div>
+      <!-- Severity filter on its own line -->
+      <div class="space-y-2 w-full">
+        <div class="text-xs font-semibold uppercase tracking-wide text-base-content/70">Severity</div>
+        <!-- Horizontally scrolling form for overflow, especially on mobile -->
+        <form class="filter filter-sm scrolling-inline-form" autocomplete="off">
+          {#each severityOptions as option}
+            <input
+              class="btn"
+              type="radio"
+              name="severity-filter"
+              value={option.value}
+              aria-label={option.label}
+              data-title={option.label}
+              bind:group={severityFilter}
+            />
+          {/each}
+        </form>
+      </div>
+      
+      <!-- Type filter on its own line -->
+      <div class="space-y-2 w-full">
+        <div class="text-xs font-semibold uppercase tracking-wide text-base-content/70">Type</div>
+        <form class="filter filter-sm scrolling-inline-form" autocomplete="off">
+          {#each typeFilterOptions as option}
+            <input
+              class="btn"
+              type="radio"
+              name="type-filter"
+              value={option.value}
+              aria-label={option.label}
+              data-title={option.label}
+              bind:group={typeFilter}
+            />
+          {/each}
+        </form>
       </div>
       
       <!-- Group By filter on separate line -->

@@ -327,7 +327,7 @@
                               Resend
                             </button>
                             <button 
-                              class="btn btn-xs btn-error btn-outline"
+                              class="btn btn-xs btn-error"
                               on:click={() => removeMember(member.id)}
                               title="Remove team member"
                             >
@@ -340,7 +340,7 @@
                         {:else if member.status === 'active'}
                           {#if member.user_id !== $user?.id}
                             <button 
-                              class="btn btn-xs btn-error btn-outline"
+                              class="btn btn-xs btn-error"
                               on:click={() => removeMember(member.id)}
                               title="Remove team member"
                             >

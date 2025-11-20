@@ -406,3 +406,10 @@ export async function deleteCrawl(crawlId) {
     };
   }
 }
+
+export async function disconnectProjectGSC(projectId) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  return authorizedJSON(`/api/v1/projects/${projectId}/gsc/disconnect`, {
+    method: 'POST'
+  });
+}

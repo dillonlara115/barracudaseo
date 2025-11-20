@@ -189,12 +189,14 @@
                 {/if}
               </td>
               <td onclick={(e) => e.stopPropagation()}>
-                <span class="badge badge-ghost">
-                  {result.internal_links?.length || 0} internal
-                </span>
-                <span class="badge badge-ghost">
-                  {result.external_links?.length || 0} external
-                </span>
+                <div class="flex flex-col gap-1">
+                  <span class="badge badge-ghost whitespace-nowrap">
+                    {result.internal_links?.length || 0} internal
+                  </span>
+                  <span class="badge badge-ghost whitespace-nowrap">
+                    {result.external_links?.length || 0} external
+                  </span>
+                </div>
               </td>
               <td onclick={(e) => e.stopPropagation()}>
                 <button 

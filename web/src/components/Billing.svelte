@@ -285,14 +285,15 @@
     switch (tier) {
       case 'pro':
         return {
-          pages: '10,000+',
+          pages: '10,000',
           users: profile?.team_size || 1,
           integrations: true,
           recommendations: true,
         };
       case 'team':
+        // Team plans are custom - use same features as Pro but with custom limits
         return {
-          pages: '25,000+',
+          pages: 'Custom',
           users: profile?.team_size || 5,
           integrations: true,
           recommendations: true,
@@ -461,7 +462,7 @@
           <div class="grid grid-cols-2 gap-4 mt-4">
             <div>
               <p class="text-sm text-base-content/70">Crawl Limit</p>
-              <p class="text-lg font-semibold">{planFeatures.pages} pages</p>
+              <p class="text-lg font-semibold">{planFeatures.pages}{planFeatures.pages !== 'Custom' ? ' pages' : ''}</p>
             </div>
             <div>
               <p class="text-sm text-base-content/70">Team Members</p>
@@ -612,12 +613,16 @@
                 <p class="text-sm text-base-content/70 mb-2">Billed annually, save 20%</p>
               {/if}
               <ul class="text-sm space-y-1 mb-4">
-                <li>✓ Crawl up to 10,000 pages</li>
-                <li>✓ Team collaboration (1 user included, +$5/user)</li>
-                <li>✓ All integrations</li>
-                <li>✓ AI recommendations</li>
-                <li>✓ Priority support</li>
+                <li>✓ Crawl up to <strong>10,000 pages</strong></li>
+                <li>✓ <strong>Team collaboration</strong> — invite teammates with role-based permissions (1 user included, +$5/user/month)</li>
+                <li>✓ Integrations: Google Search Console, Analytics, Clarity, Slack</li>
+                <li>✓ Full recommendation engine with contextual fixes</li>
+                <li>✓ Historical comparisons and advanced exports</li>
+                <li>✓ CLI automation and priority support</li>
               </ul>
+              <p class="text-xs text-base-content/60 mt-2">
+                Need 5+ team members or custom crawl limits? <a href="mailto:sales@barracudaseo.com" class="link link-primary">Contact Sales</a> for custom Team plans.
+              </p>
             </div>
 
             <!-- Team Seats Selection -->
@@ -645,7 +650,10 @@
                   </span>
                 </div>
                 <p class="text-xs text-base-content/60 mt-2">
-                  Pro plan includes 1 user. Add more seats for your team members.
+                  Pro plan includes 1 user. Add more seats for your team members at $5/user/month.
+                </p>
+                <p class="text-xs text-base-content/50 mt-1">
+                  Need 5+ team members or custom crawl limits? <a href="mailto:sales@barracudaseo.com" class="link link-primary">Contact Sales</a> for custom Team plans.
                 </p>
               </div>
             {/if}

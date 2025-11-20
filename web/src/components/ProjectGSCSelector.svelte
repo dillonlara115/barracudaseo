@@ -8,7 +8,8 @@
     updateProjectGSCProperty,
     fetchProjectGSCDimensions,
     triggerProjectGSCSync,
-    fetchProjectGSCConnect
+    fetchProjectGSCConnect,
+    disconnectProjectGSC
   } from '../lib/data.js';
   import { buildEnrichedIssues } from '../lib/gsc.js';
   
@@ -388,6 +389,39 @@
       isConnecting = false;
     }
   }
+
+  async function disconnectGSC() {
+    if (!projectId) return;
+    
+    if (!confirm('Are you sure you want to disconnect Google Search Console? This will stop data synchronization.')) {
+      return;
+    }
+
+    isSaving = true;
+    error = null;
+
+    const result = await disconnectProjectGSC(projectId);
+    if (result.error) {
+      error = result.error.message || 'Failed to disconnect Google Search Console';
+      isSaving = false;
+      return;
+    }
+
+    // Reset local state
+    gscStatus = null;
+    properties = [];
+    selectedProperty = null;
+    isConnected = false;
+    
+    // Clear project settings locally if present
+    if (project && project.settings) {
+      delete project.settings.gsc_property_url;
+      project.settings = { ...project.settings };
+    }
+
+    await initialize();
+    isSaving = false;
+  }
 </script>
 
 {#if gscLoading}
@@ -552,6 +586,18 @@
         </button>
       </div>
     {/if}
+
+    <!-- Disconnect Button -->
+    <div class="pt-4 border-t border-base-200 mt-4">
+      <h3 class="text-sm font-bold text-base-content/70 mb-2">Danger Zone</h3>
+      <button
+        class="btn btn-error btn-sm"
+        on:click={disconnectGSC}
+        disabled={isSaving || gscLoading}
+      >
+        Disconnect Google Search Console
+      </button>
+    </div>
 
     {#if error}
       <div class="alert alert-error">

@@ -31,9 +31,13 @@ func (s *Server) handleProjectGSC(w http.ResponseWriter, r *http.Request, projec
 		return
 	}
 
+	s.logger.Debug("GSC handler", zap.String("projectID", projectID), zap.Strings("segments", segments), zap.String("first_segment", segments[0]), zap.String("path", r.URL.Path))
+
 	switch segments[0] {
 	case "connect":
 		s.handleProjectGSCConnect(w, r, projectID)
+	case "disconnect":
+		s.handleProjectGSCDisconnect(w, r, projectID)
 	case "properties":
 		s.handleProjectGSCProperties(w, r, projectID)
 	case "property":
@@ -496,4 +500,72 @@ func getFloat(v interface{}) float64 {
 	default:
 		return 0
 	}
+}
+
+func (s *Server) handleProjectGSCDisconnect(w http.ResponseWriter, r *http.Request, projectID string) {
+	if r.Method != http.MethodPost && r.Method != http.MethodDelete {
+		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	// Delete integration record
+	_, _, err := s.serviceRole.
+		From("api_integrations").
+		Delete("", "").
+		Eq("project_id", projectID).
+		Eq("provider", "gsc").
+		Execute()
+
+	if err != nil {
+		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to remove integration: %v", err))
+		return
+	}
+
+	// Delete sync state
+	_, _, err = s.serviceRole.
+		From("gsc_sync_states").
+		Delete("", "").
+		Eq("project_id", projectID).
+		Execute()
+
+	if err != nil {
+		s.logger.Warn("Failed to remove sync state", zap.Error(err))
+		// Not fatal
+	}
+
+	// Also clear the gsc_property_url from project settings
+	// We first fetch the project to get current settings
+	data, _, err := s.serviceRole.
+		From("projects").
+		Select("settings", "", false).
+		Eq("id", projectID).
+		Execute()
+
+	if err == nil && len(data) > 0 {
+		var rows []struct {
+			Settings map[string]interface{} `json:"settings"`
+		}
+		if err := json.Unmarshal(data, &rows); err == nil && len(rows) > 0 {
+			settings := rows[0].Settings
+			if settings == nil {
+				settings = make(map[string]interface{})
+			}
+			// Remove the property URL
+			delete(settings, "gsc_property_url")
+			
+			// Update project
+			_, _, _ = s.serviceRole.
+				From("projects").
+				Update(map[string]interface{}{"settings": settings}, "", "").
+				Eq("id", projectID).
+				Execute()
+		}
+	}
+    
+    // Clear in-memory token cache if present
+    gsc.StoreToken(projectID, nil)
+
+	s.respondJSON(w, http.StatusOK, map[string]string{
+		"status": "disconnected",
+	})
 }

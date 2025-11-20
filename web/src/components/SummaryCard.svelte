@@ -1,5 +1,6 @@
 <script>
   import { link } from 'svelte-spa-router';
+  import { TrendingUp, Hash } from 'lucide-svelte';
   
   export let summary = null;
   export let navigateToTab = () => {};
@@ -150,9 +151,7 @@
 
     <div class="stat bg-base-100 rounded-box shadow">
       <div class="stat-figure text-info">
-        <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-8 h-8 stroke-current" fill="none" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a2 2 0 012-2h2a2 2 0 110 4h-1" />
-        </svg>
+        <TrendingUp class="w-8 h-8" />
       </div>
       <div class="stat-title">CTR</div>
       <div class="stat-value text-info">{formatCTR(gscTotals.ctr)}</div>
@@ -160,9 +159,7 @@
 
     <div class="stat bg-base-100 rounded-box shadow">
       <div class="stat-figure text-warning">
-        <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-8 h-8 stroke-current" fill="none" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.79-3 4s1.343 4 3 4 3-1.79 3-4-1.343-4-3-4z" />
-        </svg>
+        <Hash class="w-8 h-8" />
       </div>
       <div class="stat-title">Avg Position</div>
       <div class="stat-value text-warning">{formatPosition(gscTotals.position)}</div>

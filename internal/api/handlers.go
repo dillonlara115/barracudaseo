@@ -576,6 +576,20 @@ func (s *Server) handleTriggerCrawl(w http.ResponseWriter, r *http.Request, proj
 		return
 	}
 
+	// Check if user is a team member - if so, use account owner's subscription tier
+	teamInfo := s.getTeamInfo(userID, profile)
+	if teamInfo != nil && !teamInfo.IsOwner {
+		// User is a team member - fetch account owner's profile for subscription tier
+		ownerProfile, err := s.fetchProfile(teamInfo.AccountOwnerID)
+		if err == nil && ownerProfile != nil {
+			profile = ownerProfile // Use owner's profile for subscription checks
+			s.logger.Info("Using account owner's subscription tier for team member",
+				zap.String("user_id", userID),
+				zap.String("account_owner_id", teamInfo.AccountOwnerID),
+				zap.Any("owner_tier", ownerProfile["subscription_tier"]))
+		}
+	}
+
 	// Determine max pages limit based on subscription tier
 	subscriptionTier := "free"
 	if profile != nil {
