@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { push, querystring, link } from 'svelte-spa-router';
+  import { push, querystring, link, location } from 'svelte-spa-router';
   import SummaryCard from './SummaryCard.svelte';
   import ResultsTable from './ResultsTable.svelte';
   import IssuesPanel from './IssuesPanel.svelte';
@@ -19,6 +19,9 @@
   export let projectId = null;
   export let crawlId = null;
   export let project = null; // Accept project as prop from parent
+
+  // Check if we're on the settings page
+  $: isSettingsPage = $location?.includes('/settings');
 
   // Load project if not provided
   onMount(async () => {
@@ -46,25 +49,9 @@
   let gscInitializedProjectId = null;
 
   const navigateToTab = (tab, nextFilters = {}) => {
-    // Update URL with tab query param
-    if (projectId && crawlId) {
-      const params = new URLSearchParams();
-      params.set('tab', tab);
-      push(`/project/${projectId}/crawl/${crawlId}?${params.toString()}`);
-    } else if (projectId && (tab === 'gsc-dashboard' || tab === 'gsc-keywords')) {
-      // GSC tabs work at project level, redirect to first crawl or project view
-      const params = new URLSearchParams();
-      params.set('tab', tab);
-      // Try to keep in crawl context if available, otherwise go to project
-      if (crawlId) {
-        push(`/project/${projectId}/crawl/${crawlId}?${params.toString()}`);
-      } else {
-        push(`/project/${projectId}?${params.toString()}`);
-      }
-    }
-
     const { severity, type, url, status, performance } = nextFilters;
 
+    // Update filters first (before navigation)
     if (severity !== undefined || type !== undefined || url !== undefined) {
       issuesFilter = {
         ...issuesFilter,
@@ -80,6 +67,29 @@
         ...(status !== undefined ? { status } : {}),
         ...(performance !== undefined ? { performance } : {})
       };
+    }
+
+    // Update URL with tab query param (after filter update)
+    if (projectId && crawlId) {
+      const params = new URLSearchParams();
+      params.set('tab', tab);
+      push(`/project/${projectId}/crawl/${crawlId}?${params.toString()}`);
+    } else if (projectId && (tab === 'gsc-dashboard' || tab === 'gsc-keywords')) {
+      // GSC tabs work at project level, redirect to first crawl or project view
+      const params = new URLSearchParams();
+      params.set('tab', tab);
+      // Try to keep in crawl context if available, otherwise go to project
+      if (crawlId) {
+        push(`/project/${projectId}/crawl/${crawlId}?${params.toString()}`);
+      } else {
+        push(`/project/${projectId}?${params.toString()}`);
+      }
+    } else if (projectId) {
+      // Fallback: if we have projectId but no crawlId, still try to navigate
+      // This handles edge cases where crawlId might not be set yet
+      const params = new URLSearchParams();
+      params.set('tab', tab);
+      push(`/project/${projectId}?${params.toString()}`);
     }
   };
 
@@ -167,7 +177,7 @@
       <li>
         <button 
           type="button" 
-          class="{activeTab === 'dashboard' ? 'active' : ''}"
+          class:active={activeTab === 'dashboard'}
           on:click={() => navigateToTab('dashboard')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
@@ -179,7 +189,7 @@
       <li>
         <button 
           type="button" 
-          class="{activeTab === 'results' ? 'active' : ''}"
+          class:active={activeTab === 'results'}
           on:click={() => navigateToTab('results')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
@@ -191,7 +201,7 @@
       <li>
         <button 
           type="button" 
-          class="{activeTab === 'issues' ? 'active' : ''}"
+          class:active={activeTab === 'issues'}
           on:click={() => navigateToTab('issues')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
@@ -203,7 +213,7 @@
       <li>
         <button 
           type="button" 
-          class="{activeTab === 'recommendations' ? 'active' : ''}"
+          class:active={activeTab === 'recommendations'}
           on:click={() => navigateToTab('recommendations')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
@@ -215,7 +225,7 @@
       <li>
         <button 
           type="button" 
-          class="{activeTab === 'graph' ? 'active' : ''}"
+          class:active={activeTab === 'graph'}
           on:click={() => navigateToTab('graph')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
@@ -230,7 +240,7 @@
         <li>
           <button 
             type="button" 
-            class="{activeTab === 'gsc-dashboard' ? 'active' : ''}"
+            class:active={activeTab === 'gsc-dashboard'}
             on:click={() => navigateToTab('gsc-dashboard')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
@@ -242,7 +252,7 @@
         <li>
           <button 
             type="button" 
-            class="{activeTab === 'gsc-keywords' ? 'active' : ''}"
+            class:active={activeTab === 'gsc-keywords'}
             on:click={() => navigateToTab('gsc-keywords')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
@@ -259,6 +269,7 @@
           <a 
             href="/project/{projectId}/settings" 
             use:link
+            class:active={isSettingsPage}
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
@@ -328,3 +339,26 @@
   {/if}
   </main>
 </div>
+
+<style>
+  /* Make active menu items more prominent */
+  .menu li button.active,
+  .menu li a.active {
+    background-color: hsl(var(--p) / 0.1) !important;
+    color: hsl(var(--p)) !important;
+    font-weight: 600;
+    border-left: 3px solid hsl(var(--p));
+  }
+  
+  /* Add hover effect for non-active items */
+  .menu li button:not(.active):hover,
+  .menu li a:not(.active):hover {
+    background-color: hsl(var(--bc) / 0.05);
+  }
+  
+  /* Ensure icons in active items are also colored */
+  .menu li button.active svg,
+  .menu li a.active svg {
+    color: hsl(var(--p));
+  }
+</style>

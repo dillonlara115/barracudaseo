@@ -1,8 +1,9 @@
 <script>
   import { onMount } from 'svelte';
   import { user } from '../lib/auth.js';
+  import { updateEmail } from '../lib/auth.js';
   import { supabase } from '../lib/supabase.js';
-  import { CreditCard, Check, X, Loader, ArrowLeft } from 'lucide-svelte';
+  import { CreditCard, Check, X, Loader, ArrowLeft, Mail } from 'lucide-svelte';
   import { userProfile } from '../lib/subscription.js';
   import { push, link } from 'svelte-spa-router';
   import Logo from './Logo.svelte';
@@ -30,6 +31,14 @@
   let redeemTeamSize = 1;
   let redeeming = false;
   let redeemError = null;
+
+  // Email change state
+  let newEmail = '';
+  let passwordForEmailChange = '';
+  let updatingEmail = false;
+  let emailChangeError = null;
+  let emailChangeSuccess = null;
+  let showEmailChangeForm = false;
 
   // Load data when component mounts and user is available
   onMount(() => {
@@ -375,6 +384,60 @@
       redeeming = false;
     }
   }
+
+  async function handleEmailChange() {
+    if (!newEmail.trim()) {
+      emailChangeError = 'Please enter a new email address';
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      emailChangeError = 'Please enter a valid email address';
+      return;
+    }
+
+    // Check if email is different from current
+    if ($user && newEmail.toLowerCase() === $user.email?.toLowerCase()) {
+      emailChangeError = 'New email must be different from your current email';
+      return;
+    }
+
+    if (!passwordForEmailChange) {
+      emailChangeError = 'Please enter your password to confirm this change';
+      return;
+    }
+
+    updatingEmail = true;
+    emailChangeError = null;
+    emailChangeSuccess = null;
+
+    try {
+      const { data, error: updateError } = await updateEmail(newEmail, passwordForEmailChange);
+      
+      if (updateError) {
+        throw updateError;
+      }
+
+      emailChangeSuccess = 'Email change request sent! Please check both your old and new email addresses to confirm the change.';
+      newEmail = '';
+      passwordForEmailChange = '';
+      showEmailChangeForm = false;
+      
+      // Refresh user data after a short delay
+      setTimeout(async () => {
+        const { data: { user: updatedUser } } = await supabase.auth.getUser();
+        if (updatedUser) {
+          user.set(updatedUser);
+        }
+      }, 1000);
+    } catch (err) {
+      emailChangeError = err.message || 'Failed to update email address. Please try again.';
+    } finally {
+      updatingEmail = false;
+    }
+  }
 </script>
 
 <!-- Header Navigation -->
@@ -418,6 +481,111 @@
     
     {#if profile}
     <div class="space-y-6">
+      <!-- Account Settings Card -->
+      <div class="card bg-base-100 shadow-lg">
+        <div class="card-body">
+          <h2 class="card-title text-xl mb-4">
+            <Mail class="w-5 h-5" />
+            Account Settings
+          </h2>
+          
+          <div class="space-y-4">
+            <!-- Current Email Display -->
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">Current Email</span>
+              </label>
+              <div class="flex items-center gap-2">
+                <input 
+                  type="email" 
+                  value={$user?.email || ''} 
+                  disabled
+                  class="input input-bordered flex-1 bg-base-200"
+                />
+                <button 
+                  class="btn btn-outline btn-sm"
+                  on:click={() => {
+                    showEmailChangeForm = !showEmailChangeForm;
+                    emailChangeError = null;
+                    emailChangeSuccess = null;
+                    newEmail = '';
+                    passwordForEmailChange = '';
+                  }}
+                >
+                  {showEmailChangeForm ? 'Cancel' : 'Change Email'}
+                </button>
+              </div>
+            </div>
+
+            <!-- Email Change Form -->
+            {#if showEmailChangeForm}
+              <div class="border-t border-base-300 pt-4 mt-4">
+                {#if emailChangeError}
+                  <div class="alert alert-error mb-4">
+                    <X class="w-5 h-5" />
+                    <span>{emailChangeError}</span>
+                  </div>
+                {/if}
+
+                {#if emailChangeSuccess}
+                  <div class="alert alert-success mb-4">
+                    <Check class="w-5 h-5" />
+                    <span>{emailChangeSuccess}</span>
+                  </div>
+                {/if}
+
+                <div class="space-y-4">
+                  <div>
+                    <label class="label">
+                      <span class="label-text font-semibold">New Email Address</span>
+                    </label>
+                    <input 
+                      type="email" 
+                      placeholder="Enter new email address"
+                      class="input input-bordered w-full"
+                      bind:value={newEmail}
+                      disabled={updatingEmail}
+                    />
+                  </div>
+
+                  <div>
+                    <label class="label">
+                      <span class="label-text font-semibold">Confirm Password</span>
+                      <span class="label-text-alt">Required to change email</span>
+                    </label>
+                    <input 
+                      type="password" 
+                      placeholder="Enter your password"
+                      class="input input-bordered w-full"
+                      bind:value={passwordForEmailChange}
+                      disabled={updatingEmail}
+                    />
+                    <label class="label">
+                      <span class="label-text-alt text-base-content/60">
+                        For security, you'll need to confirm the change via email on both your old and new email addresses.
+                      </span>
+                    </label>
+                  </div>
+
+                  <button 
+                    class="btn btn-primary w-full"
+                    on:click={handleEmailChange}
+                    disabled={updatingEmail || !newEmail.trim() || !passwordForEmailChange}
+                  >
+                    {#if updatingEmail}
+                      <Loader class="w-4 h-4 animate-spin" />
+                      Updating Email...
+                    {:else}
+                      Update Email Address
+                    {/if}
+                  </button>
+                </div>
+              </div>
+            {/if}
+          </div>
+        </div>
+      </div>
+
       <!-- Current Plan Card -->
       <div class="card bg-base-100 shadow-lg">
         <div class="card-body">

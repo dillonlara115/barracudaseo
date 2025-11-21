@@ -43,11 +43,19 @@
     selectedPage = null;
   };
 
-  const viewIssuesForPage = (url) => {
+  const viewIssuesForPage = (url, event) => {
+    if (event) {
+      event.stopPropagation();
+    }
     if (navigateToTab) {
       navigateToTab('issues', { url: url });
+    } else {
+      console.warn('navigateToTab function not provided');
     }
-    closeModal();
+    // Close modal if it's open
+    if (showModal) {
+      closeModal();
+    }
   };
 
   $: filteredResults = results.filter(r => {
@@ -201,7 +209,9 @@
               <td onclick={(e) => e.stopPropagation()}>
                 <button 
                   class="btn btn-sm btn-primary"
-                  on:click={(e) => { e.stopPropagation(); viewIssuesForPage(result.url); }}
+                  on:click={(e) => viewIssuesForPage(result.url, e)}
+                  disabled={issueCount === 0}
+                  title={issueCount === 0 ? 'No issues for this page' : 'View issues for this page'}
                 >
                   View Issues
                 </button>

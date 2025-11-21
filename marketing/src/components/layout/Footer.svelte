@@ -12,6 +12,7 @@
 				<div class="flex flex-col gap-2">
 					<a href="/features" class="text-white/70 hover:text-[#8ec07c] transition-colors">Features</a>
 					<a href="/pricing" class="text-white/70 hover:text-[#8ec07c] transition-colors">Pricing</a>
+					<a href="/roadmap" class="text-white/70 hover:text-[#8ec07c] transition-colors">Roadmap</a>
 					<a href="https://app.barracudaseo.com" class="text-white/70 hover:text-[#8ec07c] transition-colors" target="_blank" rel="noopener noreferrer">Dashboard</a>
 				</div>
 			</div>
@@ -19,6 +20,7 @@
 				<span class="block font-heading font-bold mb-4">Company</span>
 				<div class="flex flex-col gap-2">
 					<a href="/about" class="text-white/70 hover:text-[#8ec07c] transition-colors">About</a>
+					<a href="/faq" class="text-white/70 hover:text-[#8ec07c] transition-colors">FAQ</a>
 				</div>
 			</div>
 			<div>

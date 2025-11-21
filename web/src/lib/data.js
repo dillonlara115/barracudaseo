@@ -224,6 +224,63 @@ export async function createProject(name, domain, settings = {}) {
   }
 }
 
+// Update a project
+export async function updateProject(projectId, updates) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  
+  try {
+    const response = await authorizedRequest(`/api/v1/projects/${projectId}`, {
+      method: 'PUT',
+      body: updates
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+      const errorMessage = errorData.error || `Failed to update project: ${response.status}`;
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      throw error;
+    }
+
+    const data = await response.json();
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error updating project:', error);
+    return { 
+      data: null, 
+      error: error instanceof Error ? error : new Error(String(error))
+    };
+  }
+}
+
+// Delete a project
+export async function deleteProject(projectId) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  
+  try {
+    const response = await authorizedRequest(`/api/v1/projects/${projectId}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+      const errorMessage = errorData.error || `Failed to delete project: ${response.status}`;
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      throw error;
+    }
+
+    const data = await response.json();
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error deleting project:', error);
+    return { 
+      data: null, 
+      error: error instanceof Error ? error : new Error(String(error))
+    };
+  }
+}
+
 // Trigger a new crawl for a project
 export async function triggerCrawl(projectId, crawlConfig) {
   try {

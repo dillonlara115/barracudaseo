@@ -102,3 +102,40 @@ export async function getCurrentUser() {
   return user;
 }
 
+// Update user email
+// Note: Supabase will send confirmation emails to both old and new email addresses
+// (if double_confirm_changes is enabled in Supabase config)
+export async function updateEmail(newEmail, password = null) {
+  try {
+    // Verify password by attempting to sign in (for security)
+    // This ensures the user knows their password before changing email
+    if (password) {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser || !currentUser.email) {
+        throw new Error('No user found');
+      }
+
+      // Verify password by attempting to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: currentUser.email,
+        password: password
+      });
+
+      if (signInError) {
+        throw new Error('Password incorrect. Please verify your password.');
+      }
+    }
+
+    // Update email - Supabase will send confirmation emails to both addresses
+    // The email change will only be applied after both confirmations
+    const { data, error } = await supabase.auth.updateUser({
+      email: newEmail
+    });
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+

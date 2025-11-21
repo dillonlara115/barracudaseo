@@ -446,6 +446,10 @@ func (s *Server) handleProjectByID(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		s.handleGetProject(w, r, projectID, userID)
+	case http.MethodPut, http.MethodPatch:
+		s.handleUpdateProject(w, r, projectID, userID)
+	case http.MethodDelete:
+		s.handleDeleteProject(w, r, projectID, userID)
 	default:
 		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
@@ -486,6 +490,104 @@ func (s *Server) handleGetProject(w http.ResponseWriter, r *http.Request, projec
 	}
 
 	s.respondJSON(w, http.StatusOK, projects[0])
+}
+
+// handleUpdateProject handles PUT/PATCH /api/v1/projects/:id
+func (s *Server) handleUpdateProject(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	// Verify access
+	hasAccess, err := s.verifyProjectAccess(userID, projectID)
+	if err != nil {
+		s.logger.Error("Failed to verify project access", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify project access")
+		return
+	}
+	if !hasAccess {
+		s.respondError(w, http.StatusForbidden, "You don't have access to this project")
+		return
+	}
+
+	var req CreateProjectRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request body: %v", err))
+		return
+	}
+
+	// Build update map with only provided fields
+	updateData := make(map[string]interface{})
+	if req.Name != "" {
+		updateData["name"] = req.Name
+	}
+	if req.Domain != "" {
+		updateData["domain"] = req.Domain
+	}
+	if req.Settings != nil {
+		updateData["settings"] = req.Settings
+	}
+
+	if len(updateData) == 0 {
+		s.respondError(w, http.StatusBadRequest, "No fields to update")
+		return
+	}
+
+	// Update project (RLS will enforce permissions)
+	var projects []map[string]interface{}
+	data, _, err := s.supabase.From("projects").
+		Update(updateData, "", "").
+		Eq("id", projectID).
+		Select("*", "", false).
+		Execute()
+
+	if err != nil {
+		s.logger.Error("Failed to update project", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to update project")
+		return
+	}
+
+	// Parse data into projects slice
+	if err := json.Unmarshal(data, &projects); err != nil {
+		s.logger.Error("Failed to parse project data", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to parse project")
+		return
+	}
+
+	if len(projects) == 0 {
+		s.respondError(w, http.StatusNotFound, "Project not found")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, projects[0])
+}
+
+// handleDeleteProject handles DELETE /api/v1/projects/:id
+func (s *Server) handleDeleteProject(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	// Verify access
+	hasAccess, err := s.verifyProjectAccess(userID, projectID)
+	if err != nil {
+		s.logger.Error("Failed to verify project access", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify project access")
+		return
+	}
+	if !hasAccess {
+		s.respondError(w, http.StatusForbidden, "You don't have access to this project")
+		return
+	}
+
+	// Delete project (RLS will enforce permissions, cascade deletes will handle related data)
+	_, _, err = s.supabase.From("projects").
+		Delete("", "").
+		Eq("id", projectID).
+		Execute()
+
+	if err != nil {
+		s.logger.Error("Failed to delete project", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to delete project")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, map[string]interface{}{
+		"message": "Project deleted successfully",
+		"id":      projectID,
+	})
 }
 
 // handleListProjectCrawls handles GET /api/v1/projects/:id/crawls

@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { push } from 'svelte-spa-router';
-  import { Search, BarChart3, Zap, Globe, Slack, FileText } from 'lucide-svelte';
+  import { Search, BarChart3, Zap, Globe, Slack } from 'lucide-svelte';
   import { fetchProjects } from '../lib/data.js';
   import ProjectGSCSelector from '../components/ProjectGSCSelector.svelte';
   
@@ -19,7 +19,6 @@
     pagespeed: { connected: false, name: 'PageSpeed Insights' },
     bing: { connected: false, name: 'Bing Webmaster Tools' },
     slack: { connected: false, name: 'Slack' },
-    jira: { connected: false, name: 'Jira' },
   };
 
   onMount(async () => {
@@ -202,30 +201,6 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
           <span>Receive real-time notifications about critical SEO issues and crawl status updates directly in your Slack workspace.</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Jira -->
-    <div class="card bg-base-100 shadow">
-      <div class="card-body">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h2 class="card-title text-xl">
-              <FileText class="w-6 h-6 mr-2" />
-              Jira
-            </h2>
-            <p class="text-sm text-base-content/70 mt-1">
-              Automatically create Jira tickets for SEO issues that need to be fixed by your development team.
-            </p>
-          </div>
-          <div class="badge badge-ghost badge-lg">Coming Soon</div>
-        </div>
-        <div class="alert alert-info">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <span>Streamline your workflow by automatically creating tickets for SEO issues, making it easy to track and assign fixes to your team.</span>
         </div>
       </div>
     </div>

@@ -3,6 +3,8 @@
 	import VideoWalkthrough from '../components/sections/VideoWalkthrough.svelte';
 	import Features from '../components/sections/Features.svelte';
 	import Pricing from '../components/sections/Pricing.svelte';
+	import FutureUpdates from '../components/sections/FutureUpdates.svelte';
+	import FAQ from '../components/sections/FAQ.svelte';
 </script>
 
 <svelte:head>
@@ -14,3 +16,5 @@
 <VideoWalkthrough />
 <Features />
 <Pricing />
+<FutureUpdates />
+<FAQ />
