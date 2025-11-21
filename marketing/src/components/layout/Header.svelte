@@ -47,25 +47,31 @@
 							Features
 						</a>
 					</li>
-					<li class="relative" onmouseenter={() => useCasesDropdownOpen = true} onmouseleave={() => useCasesDropdownOpen = false}>
+					<li 
+						class="relative" 
+						onmouseenter={() => useCasesDropdownOpen = true} 
+						onmouseleave={() => useCasesDropdownOpen = false}
+					>
 						<button 
-							class={`flex items-center gap-1 hover:text-[#8ec07c] transition-colors ${$page.url.pathname.startsWith('/use-cases') ? 'text-[#8ec07c]' : 'text-white'}`}
+							class={`flex items-center gap-1 hover:text-[#8ec07c] transition-colors py-2 px-1 -mx-1 ${$page.url.pathname.startsWith('/use-cases') ? 'text-[#8ec07c]' : 'text-white'}`}
 							onclick={toggleUseCasesDropdown}
 						>
 							Use Cases
 							<ChevronDown class={`w-4 h-4 transition-transform ${useCasesDropdownOpen ? 'rotate-180' : ''}`} />
 						</button>
 						{#if useCasesDropdownOpen}
-							<div class="absolute top-full left-0 mt-2 w-48 bg-[#2d2826] border border-white/10 rounded-lg shadow-lg py-2 z-50">
-								<a href="/use-cases/local-seo" class="block px-4 py-2 text-white/70 hover:text-[#8ec07c] hover:bg-[#3c3836] transition-colors">
-									Local SEO
-								</a>
-								<a href="/use-cases/programmatic-seo" class="block px-4 py-2 text-white/70 hover:text-[#8ec07c] hover:bg-[#3c3836] transition-colors">
-									Programmatic SEO
-								</a>
-								<a href="/use-cases/e-commerce" class="block px-4 py-2 text-white/70 hover:text-[#8ec07c] hover:bg-[#3c3836] transition-colors">
-									E-commerce
-								</a>
+							<div class="absolute top-full left-0 pt-1 w-48 z-50">
+								<div class="bg-[#2d2826] border border-white/10 rounded-lg shadow-lg py-2">
+									<a href="/use-cases/local-seo" class="block px-4 py-2 text-white/70 hover:text-[#8ec07c] hover:bg-[#3c3836] transition-colors">
+										Local SEO
+									</a>
+									<a href="/use-cases/programmatic-seo" class="block px-4 py-2 text-white/70 hover:text-[#8ec07c] hover:bg-[#3c3836] transition-colors">
+										Programmatic SEO
+									</a>
+									<a href="/use-cases/e-commerce" class="block px-4 py-2 text-white/70 hover:text-[#8ec07c] hover:bg-[#3c3836] transition-colors">
+										E-commerce
+									</a>
+								</div>
 							</div>
 						{/if}
 					</li>

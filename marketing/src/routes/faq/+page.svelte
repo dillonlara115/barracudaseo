@@ -295,39 +295,6 @@
 					{/if}
 				</div>
 
-				<!-- FAQ 8 -->
-				<div class="bg-[#2d2826] rounded-lg border border-white/10 overflow-hidden">
-					<button
-						class="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-[#3c3836] transition-colors"
-						onclick={() => toggleItem(8)}
-					>
-						<h2 class="text-xl font-heading font-bold text-white pr-4">
-							How are crawls stored and secured?
-						</h2>
-						<svg
-							class="w-5 h-5 text-[#8ec07c] flex-shrink-0 transition-transform {openItems[8] ? 'rotate-180' : ''}"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-						</svg>
-					</button>
-					{#if openItems[8]}
-						<div class="px-6 pb-5 text-white/80">
-							<p class="mb-4">Cloud-stored crawls are:</p>
-							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
-								<li>Saved in Supabase</li>
-								<li>Protected by Row-Level Security</li>
-								<li>Accessible only to the project team</li>
-								<li>Supported by Cloud Run secrets for API keys</li>
-								<li>Fully isolated per project</li>
-							</ul>
-							<p>Your data stays private and accessible only to your team.</p>
-						</div>
-					{/if}
-				</div>
-
 				<!-- FAQ 9 -->
 				<div class="bg-[#2d2826] rounded-lg border border-white/10 overflow-hidden">
 					<button
