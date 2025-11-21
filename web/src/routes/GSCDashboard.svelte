@@ -84,11 +84,218 @@
     try {
       const result = await fetchProjectGSCDimensions(projectId, type, { limit: 1000 });
       if (!result.error && result.data?.rows) {
-        callback(result.data.rows);
+        let processedRows = result.data.rows;
+        
+        // Deduplicate and aggregate rows by dimension value
+        if (type === 'page') {
+          processedRows = deduplicatePages(result.data.rows);
+        } else if (type === 'query') {
+          processedRows = deduplicateQueries(result.data.rows);
+        } else if (type === 'date') {
+          processedRows = deduplicateDimension(result.data.rows);
+        } else if (type === 'device') {
+          processedRows = deduplicateDimension(result.data.rows);
+        } else if (type === 'country') {
+          processedRows = deduplicateDimension(result.data.rows);
+        } else if (type === 'appearance') {
+          processedRows = deduplicateDimension(result.data.rows);
+        }
+        
+        callback(processedRows);
       }
     } catch (err) {
       console.error(`Failed to load ${type} dimension:`, err);
     }
+  }
+
+  function deduplicatePages(rows) {
+    // Group pages by URL and aggregate metrics
+    const pageMap = new Map();
+    
+    for (const row of rows) {
+      const url = row.dimension_value;
+      if (!url) continue;
+      
+      const metrics = row.metrics || {};
+      const existing = pageMap.get(url);
+      
+      if (existing) {
+        // Aggregate metrics: sum clicks/impressions, weighted average for CTR/position
+        const existingMetrics = existing.metrics || {};
+        const existingClicks = existingMetrics.clicks || 0;
+        const existingImpressions = existingMetrics.impressions || 0;
+        const newClicks = metrics.clicks || 0;
+        const newImpressions = metrics.impressions || 0;
+        
+        // Sum clicks and impressions
+        existingMetrics.clicks = existingClicks + newClicks;
+        existingMetrics.impressions = existingImpressions + newImpressions;
+        
+        // Weighted average for CTR (clicks / impressions)
+        if (existingMetrics.impressions > 0) {
+          existingMetrics.ctr = existingMetrics.clicks / existingMetrics.impressions;
+        }
+        
+        // Weighted average for position
+        const totalImpressions = existingImpressions + newImpressions;
+        if (totalImpressions > 0) {
+          const existingPosition = existingMetrics.position || 0;
+          const newPosition = metrics.position || 0;
+          existingMetrics.position = (
+            (existingPosition * existingImpressions) + (newPosition * newImpressions)
+          ) / totalImpressions;
+        }
+        
+        // Merge top_queries if available (keep unique queries)
+        if (row.top_queries && Array.isArray(row.top_queries) && row.top_queries.length > 0) {
+          const existingQueries = existing.top_queries || [];
+          const queryMap = new Map();
+          
+          // Add existing queries
+          existingQueries.forEach(q => {
+            if (q.query) queryMap.set(q.query, q);
+          });
+          
+          // Add new queries
+          row.top_queries.forEach(q => {
+            if (q.query) queryMap.set(q.query, q);
+          });
+          
+          existing.top_queries = Array.from(queryMap.values());
+        }
+      } else {
+        // First occurrence of this URL
+        pageMap.set(url, {
+          ...row,
+          metrics: { ...metrics }
+        });
+      }
+    }
+    
+    // Convert map back to array and sort by impressions descending
+    const deduplicated = Array.from(pageMap.values());
+    deduplicated.sort((a, b) => {
+      const aImpressions = (a.metrics || {}).impressions || 0;
+      const bImpressions = (b.metrics || {}).impressions || 0;
+      return bImpressions - aImpressions;
+    });
+    
+    return deduplicated;
+  }
+
+  function deduplicateQueries(rows) {
+    // Group queries by query text and aggregate metrics
+    const queryMap = new Map();
+    
+    for (const row of rows) {
+      const query = row.dimension_value;
+      if (!query) continue;
+      
+      const metrics = row.metrics || {};
+      const existing = queryMap.get(query);
+      
+      if (existing) {
+        // Aggregate metrics: sum clicks/impressions, weighted average for CTR/position
+        const existingMetrics = existing.metrics || {};
+        const existingClicks = existingMetrics.clicks || 0;
+        const existingImpressions = existingMetrics.impressions || 0;
+        const newClicks = metrics.clicks || 0;
+        const newImpressions = metrics.impressions || 0;
+        
+        // Sum clicks and impressions
+        existingMetrics.clicks = existingClicks + newClicks;
+        existingMetrics.impressions = existingImpressions + newImpressions;
+        
+        // Weighted average for CTR (clicks / impressions)
+        if (existingMetrics.impressions > 0) {
+          existingMetrics.ctr = existingMetrics.clicks / existingMetrics.impressions;
+        }
+        
+        // Weighted average for position
+        const totalImpressions = existingImpressions + newImpressions;
+        if (totalImpressions > 0) {
+          const existingPosition = existingMetrics.position || 0;
+          const newPosition = metrics.position || 0;
+          existingMetrics.position = (
+            (existingPosition * existingImpressions) + (newPosition * newImpressions)
+          ) / totalImpressions;
+        }
+      } else {
+        // First occurrence of this query
+        queryMap.set(query, {
+          ...row,
+          metrics: { ...metrics }
+        });
+      }
+    }
+    
+    // Convert map back to array and sort by impressions descending
+    const deduplicated = Array.from(queryMap.values());
+    deduplicated.sort((a, b) => {
+      const aImpressions = (a.metrics || {}).impressions || 0;
+      const bImpressions = (b.metrics || {}).impressions || 0;
+      return bImpressions - aImpressions;
+    });
+    
+    return deduplicated;
+  }
+
+  function deduplicateDimension(rows) {
+    // Generic deduplication function for device, country, appearance, etc.
+    // Groups by dimension_value and aggregates metrics
+    const dimensionMap = new Map();
+    
+    for (const row of rows) {
+      const value = row.dimension_value;
+      if (!value) continue;
+      
+      const metrics = row.metrics || {};
+      const existing = dimensionMap.get(value);
+      
+      if (existing) {
+        // Aggregate metrics: sum clicks/impressions, weighted average for CTR/position
+        const existingMetrics = existing.metrics || {};
+        const existingClicks = existingMetrics.clicks || 0;
+        const existingImpressions = existingMetrics.impressions || 0;
+        const newClicks = metrics.clicks || 0;
+        const newImpressions = metrics.impressions || 0;
+        
+        // Sum clicks and impressions
+        existingMetrics.clicks = existingClicks + newClicks;
+        existingMetrics.impressions = existingImpressions + newImpressions;
+        
+        // Weighted average for CTR (clicks / impressions)
+        if (existingMetrics.impressions > 0) {
+          existingMetrics.ctr = existingMetrics.clicks / existingMetrics.impressions;
+        }
+        
+        // Weighted average for position
+        const totalImpressions = existingImpressions + newImpressions;
+        if (totalImpressions > 0) {
+          const existingPosition = existingMetrics.position || 0;
+          const newPosition = metrics.position || 0;
+          existingMetrics.position = (
+            (existingPosition * existingImpressions) + (newPosition * newImpressions)
+          ) / totalImpressions;
+        }
+      } else {
+        // First occurrence of this dimension value
+        dimensionMap.set(value, {
+          ...row,
+          metrics: { ...metrics }
+        });
+      }
+    }
+    
+    // Convert map back to array and sort by impressions descending
+    const deduplicated = Array.from(dimensionMap.values());
+    deduplicated.sort((a, b) => {
+      const aImpressions = (a.metrics || {}).impressions || 0;
+      const bImpressions = (b.metrics || {}).impressions || 0;
+      return bImpressions - aImpressions;
+    });
+    
+    return deduplicated;
   }
 
   function prepareDateChart() {
@@ -245,7 +452,43 @@
     return (num * 100).toFixed(2) + '%';
   }
 
-  $: totals = gscStatus?.summary?.totals || {};
+  // Calculate totals from aggregated date dimension data to ensure accuracy
+  $: totals = (() => {
+    if (!dateRows.length) {
+      // Fallback to snapshot totals if no date data available yet
+      return gscStatus?.summary?.totals || {};
+    }
+    
+    // Sum up clicks and impressions from all dates
+    let totalClicks = 0;
+    let totalImpressions = 0;
+    let weightedPositionSum = 0;
+    
+    for (const row of dateRows) {
+      const metrics = row.metrics || {};
+      const clicks = metrics.clicks || 0;
+      const impressions = metrics.impressions || 0;
+      const position = metrics.position || 0;
+      
+      totalClicks += clicks;
+      totalImpressions += impressions;
+      weightedPositionSum += position * impressions;
+    }
+    
+    // Calculate CTR from totals
+    const ctr = totalImpressions > 0 ? totalClicks / totalImpressions : 0;
+    
+    // Calculate weighted average position
+    const avgPosition = totalImpressions > 0 ? weightedPositionSum / totalImpressions : 0;
+    
+    return {
+      clicks: totalClicks,
+      impressions: totalImpressions,
+      ctr: ctr,
+      position: avgPosition
+    };
+  })();
+  
   $: hasData = gscStatus?.integration?.property_url && (dateRows.length > 0 || pageRows.length > 0);
 </script>
 
