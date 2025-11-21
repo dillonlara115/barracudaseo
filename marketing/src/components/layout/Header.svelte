@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import Logo from '../Logo.svelte';
+	import { ChevronDown } from 'lucide-svelte';
 
 	let mobileMenuOpen = $state(false);
+	let useCasesDropdownOpen = $state(false);
+	let mobileUseCasesOpen = $state(false);
 
 	function toggleMobileMenu() {
 		mobileMenuOpen = !mobileMenuOpen;
@@ -10,6 +13,15 @@
 
 	function closeMobileMenu() {
 		mobileMenuOpen = false;
+		mobileUseCasesOpen = false;
+	}
+
+	function toggleUseCasesDropdown() {
+		useCasesDropdownOpen = !useCasesDropdownOpen;
+	}
+
+	function toggleMobileUseCases() {
+		mobileUseCasesOpen = !mobileUseCasesOpen;
 	}
 </script>
 
@@ -34,6 +46,28 @@
 						<a href="/features" class={`hover:text-[#8ec07c] transition-colors ${$page.url.pathname === '/features' ? 'text-[#8ec07c]' : 'text-white'}`}>
 							Features
 						</a>
+					</li>
+					<li class="relative" onmouseenter={() => useCasesDropdownOpen = true} onmouseleave={() => useCasesDropdownOpen = false}>
+						<button 
+							class={`flex items-center gap-1 hover:text-[#8ec07c] transition-colors ${$page.url.pathname.startsWith('/use-cases') ? 'text-[#8ec07c]' : 'text-white'}`}
+							onclick={toggleUseCasesDropdown}
+						>
+							Use Cases
+							<ChevronDown class={`w-4 h-4 transition-transform ${useCasesDropdownOpen ? 'rotate-180' : ''}`} />
+						</button>
+						{#if useCasesDropdownOpen}
+							<div class="absolute top-full left-0 mt-2 w-48 bg-[#2d2826] border border-white/10 rounded-lg shadow-lg py-2 z-50">
+								<a href="/use-cases/local-seo" class="block px-4 py-2 text-white/70 hover:text-[#8ec07c] hover:bg-[#3c3836] transition-colors">
+									Local SEO
+								</a>
+								<a href="/use-cases/programmatic-seo" class="block px-4 py-2 text-white/70 hover:text-[#8ec07c] hover:bg-[#3c3836] transition-colors">
+									Programmatic SEO
+								</a>
+								<a href="/use-cases/e-commerce" class="block px-4 py-2 text-white/70 hover:text-[#8ec07c] hover:bg-[#3c3836] transition-colors">
+									E-commerce
+								</a>
+							</div>
+						{/if}
 					</li>
 					<li>
 						<a href="/pricing" class={`hover:text-[#8ec07c] transition-colors ${$page.url.pathname === '/pricing' ? 'text-[#8ec07c]' : 'text-white'}`}>
@@ -86,6 +120,46 @@
 					>
 						Features
 					</a>
+				</li>
+				<li>
+					<button 
+						class={`w-full flex items-center justify-between py-2 hover:text-[#8ec07c] transition-colors ${$page.url.pathname.startsWith('/use-cases') ? 'text-[#8ec07c]' : 'text-white'}`}
+						onclick={toggleMobileUseCases}
+					>
+						<span>Use Cases</span>
+						<ChevronDown class={`w-4 h-4 transition-transform ${mobileUseCasesOpen ? 'rotate-180' : ''}`} />
+					</button>
+					{#if mobileUseCasesOpen}
+						<ul class="pl-4 mt-2 space-y-2">
+							<li>
+								<a 
+									href="/use-cases/local-seo" 
+									class={`block py-2 hover:text-[#8ec07c] transition-colors ${$page.url.pathname === '/use-cases/local-seo' ? 'text-[#8ec07c]' : 'text-white/70'}`}
+									onclick={closeMobileMenu}
+								>
+									Local SEO
+								</a>
+							</li>
+							<li>
+								<a 
+									href="/use-cases/programmatic-seo" 
+									class={`block py-2 hover:text-[#8ec07c] transition-colors ${$page.url.pathname === '/use-cases/programmatic-seo' ? 'text-[#8ec07c]' : 'text-white/70'}`}
+									onclick={closeMobileMenu}
+								>
+									Programmatic SEO
+								</a>
+							</li>
+							<li>
+								<a 
+									href="/use-cases/e-commerce" 
+									class={`block py-2 hover:text-[#8ec07c] transition-colors ${$page.url.pathname === '/use-cases/e-commerce' ? 'text-[#8ec07c]' : 'text-white/70'}`}
+									onclick={closeMobileMenu}
+								>
+									E-commerce
+								</a>
+							</li>
+						</ul>
+					{/if}
 				</li>
 				<li>
 					<a 

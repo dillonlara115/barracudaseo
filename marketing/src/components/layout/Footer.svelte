@@ -17,6 +17,14 @@
 				</div>
 			</div>
 			<div>
+				<span class="block font-heading font-bold mb-4">Use Cases</span>
+				<div class="flex flex-col gap-2">
+					<a href="/use-cases/local-seo" class="text-white/70 hover:text-[#8ec07c] transition-colors">Local SEO</a>
+					<a href="/use-cases/programmatic-seo" class="text-white/70 hover:text-[#8ec07c] transition-colors">Programmatic SEO</a>
+					<a href="/use-cases/e-commerce" class="text-white/70 hover:text-[#8ec07c] transition-colors">E-commerce</a>
+				</div>
+			</div>
+			<div>
 				<span class="block font-heading font-bold mb-4">Company</span>
 				<div class="flex flex-col gap-2">
 					<a href="/about" class="text-white/70 hover:text-[#8ec07c] transition-colors">About</a>
@@ -26,8 +34,8 @@
 			<div>
 				<span class="block font-heading font-bold mb-4">Legal</span>
 				<div class="flex flex-col gap-2">
-					<a href="#" class="text-white/70 hover:text-[#8ec07c] transition-colors">Terms of use</a>
-					<a href="#" class="text-white/70 hover:text-[#8ec07c] transition-colors">Privacy policy</a>
+					<a href="/terms" class="text-white/70 hover:text-[#8ec07c] transition-colors">Terms of use</a>
+					<a href="/privacy" class="text-white/70 hover:text-[#8ec07c] transition-colors">Privacy policy</a>
 				</div>
 			</div>
 		</div>
