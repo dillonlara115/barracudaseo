@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { push, params } from 'svelte-spa-router';
-  import { fetchProjects, fetchCrawls } from '../lib/data.js';
+  import { fetchProjects, fetchCrawls, fetchCrawl } from '../lib/data.js';
   import ProjectsView from '../components/ProjectsView.svelte';
   import CrawlSelector from '../components/CrawlSelector.svelte';
   import TriggerCrawlButton from '../components/TriggerCrawlButton.svelte';
@@ -13,6 +13,8 @@
   let loading = true;
   let error = null;
   let currentProjectId = null;
+  let showActiveCrawlNotification = false;
+  let activeCrawl = null;
 
   $: projectId = $params?.id || null;
 
@@ -21,8 +23,38 @@
     await new Promise(resolve => setTimeout(resolve, 0));
     if ($params?.id) {
       await loadData();
+      await checkActiveCrawl();
     }
   });
+  
+  async function checkActiveCrawl() {
+    if (!projectId) return;
+    
+    // Check localStorage for active crawl
+    const activeCrawlId = localStorage.getItem(`activeCrawl_${projectId}`);
+    if (activeCrawlId) {
+      try {
+        const { data: crawl, error: crawlError } = await fetchCrawl(activeCrawlId);
+        
+        if (!crawlError && crawl) {
+          if (crawl.status === 'running' || crawl.status === 'pending') {
+            activeCrawl = crawl;
+            showActiveCrawlNotification = true;
+          } else {
+            // Clean up if crawl is done
+            localStorage.removeItem(`activeCrawl_${projectId}`);
+          }
+        } else {
+          // Crawl not found, clean up
+          localStorage.removeItem(`activeCrawl_${projectId}`);
+        }
+      } catch (err) {
+        console.error('Error checking active crawl:', err);
+        // Clean up on error
+        localStorage.removeItem(`activeCrawl_${projectId}`);
+      }
+    }
+  }
 
   $: if (projectId && projectId !== currentProjectId && $params?.id) {
     currentProjectId = projectId;
@@ -74,6 +106,10 @@
   }
 
   async function handleCrawlCreated(e) {
+    // Hide notification when new crawl is created
+    showActiveCrawlNotification = false;
+    activeCrawl = null;
+    
     // Reload crawls and redirect to the new crawl
     const { data: crawlsData, error: crawlsError } = await fetchCrawls(projectId);
     if (!crawlsError && crawlsData && crawlsData.length > 0) {
@@ -82,6 +118,17 @@
       const newCrawl = crawlsData.find(c => c.id === e.detail.crawl_id) || crawlsData[0];
       push(`/project/${projectId}/crawl/${newCrawl.id}`);
     }
+  }
+  
+  function handleViewActiveCrawl() {
+    if (activeCrawl?.id) {
+      showActiveCrawlNotification = false;
+      push(`/project/${projectId}/crawl/${activeCrawl.id}`);
+    }
+  }
+  
+  function handleDismissActiveCrawl() {
+    showActiveCrawlNotification = false;
   }
 
 </script>
@@ -100,6 +147,26 @@
   <ProjectsView {projects} {selectedProject} on:select={(e) => handleProjectSelect(e.detail)} />
   
   <div class="container mx-auto p-4">
+    {#if showActiveCrawlNotification && activeCrawl}
+      <div class="alert alert-info mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <div class="flex-1">
+          <h3 class="font-bold">Crawl in Progress</h3>
+          <div class="text-sm">A crawl is currently running for this project.</div>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn btn-sm btn-primary" on:click={handleViewActiveCrawl}>
+            View Progress
+          </button>
+          <button class="btn btn-sm btn-ghost" on:click={handleDismissActiveCrawl}>
+            Dismiss
+          </button>
+        </div>
+      </div>
+    {/if}
+    
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-2xl font-bold text-base-content">Crawls</h2>
       <TriggerCrawlButton {projectId} project={project} on:created={handleCrawlCreated} />

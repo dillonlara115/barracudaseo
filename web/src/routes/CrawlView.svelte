@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { params, querystring, push } from 'svelte-spa-router';
-  import { fetchProjects, fetchCrawls, fetchPages, fetchIssues } from '../lib/data.js';
+  import { fetchProjects, fetchCrawls, fetchPages, fetchIssues, fetchCrawl } from '../lib/data.js';
   import ProjectsView from '../components/ProjectsView.svelte';
   import Dashboard from '../components/Dashboard.svelte';
   import CrawlSelector from '../components/CrawlSelector.svelte';
@@ -26,6 +26,17 @@
   onMount(async () => {
     // Wait a tick for params to be available
     await new Promise(resolve => setTimeout(resolve, 0));
+    
+    // Check for active crawl in localStorage if crawlId not in URL (reconnection scenario)
+    if ($params?.projectId && !$params?.crawlId) {
+      const activeCrawlId = localStorage.getItem(`activeCrawl_${$params.projectId}`);
+      if (activeCrawlId) {
+        // Redirect to active crawl
+        push(`/project/${$params.projectId}/crawl/${activeCrawlId}`);
+        return;
+      }
+    }
+    
     if ($params?.projectId && $params?.crawlId) {
       await loadData();
     }

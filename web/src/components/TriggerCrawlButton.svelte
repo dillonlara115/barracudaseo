@@ -176,6 +176,12 @@
     console.log('Switching to progress view. activeCrawlId:', activeCrawlId, 'showProgress:', showProgress);
     console.log('Will fetch crawl at: /api/v1/crawls/' + crawlId);
     
+    // Store active crawl ID in localStorage for persistence across page reloads
+    if (projectId && crawlId) {
+      localStorage.setItem(`activeCrawl_${projectId}`, crawlId);
+      console.log('Stored active crawl in localStorage:', `activeCrawl_${projectId}`, crawlId);
+    }
+    
     // Don't dispatch 'created' event immediately - let the progress component handle completion
     // The parent will redirect when crawl completes via the 'completed' event
     
@@ -195,6 +201,8 @@
   function handleCancel() {
     showModal = false;
     showProgress = false;
+    // Don't clear localStorage on cancel - crawl might still be running
+    // Only clear if user explicitly cancels a running crawl (would need API call)
     activeCrawlId = null;
     error = null;
     // Reset form (but keep URL from project settings)
@@ -213,6 +221,10 @@
   function handleProgressComplete() {
     // When crawl completes, dispatch both events
     if (projectId && activeCrawlId) {
+      // Clear localStorage when crawl completes
+      localStorage.removeItem(`activeCrawl_${projectId}`);
+      console.log('Cleared active crawl from localStorage:', `activeCrawl_${projectId}`);
+      
       dispatch('created', { crawl_id: activeCrawlId });
       dispatch('completed', { crawlId: activeCrawlId });
       // Don't close modal yet - let parent handle navigation

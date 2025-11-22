@@ -13,6 +13,8 @@
   let loading = true;
   let error = null;
   let pollInterval = null;
+  let hiddenPollInterval = null; // Slower polling when tab is hidden
+  let isVisible = true;
   let retryCount = 0;
   const MAX_RETRIES = 10; // Retry for up to 20 seconds (10 retries * 2 seconds)
   
@@ -163,9 +165,12 @@
       
       // Stop polling if crawl is complete
       if (status === 'succeeded' || status === 'failed' || status === 'cancelled') {
-        if (pollInterval) {
-          clearInterval(pollInterval);
-          pollInterval = null;
+        stopPolling();
+        
+        // Clear localStorage when crawl completes
+        if (projectId && crawlId) {
+          localStorage.removeItem(`activeCrawl_${projectId}`);
+          console.log('CrawlProgress: Cleared active crawl from localStorage:', `activeCrawl_${projectId}`);
         }
       }
     } catch (err) {
@@ -175,8 +180,63 @@
     }
   }
   
+  function handleVisibilityChange() {
+    isVisible = !document.hidden;
+    
+    if (isVisible) {
+      // Tab visible - use normal polling
+      if (hiddenPollInterval) {
+        clearInterval(hiddenPollInterval);
+        hiddenPollInterval = null;
+      }
+      if (!pollInterval && (status === 'running' || status === 'pending')) {
+        startPolling();
+      }
+    } else {
+      // Tab hidden - use slower polling
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+      if (!hiddenPollInterval && (status === 'running' || status === 'pending')) {
+        hiddenPollInterval = setInterval(async () => {
+          await loadCrawl();
+        }, 5000); // Poll every 5 seconds when hidden
+      }
+    }
+  }
+  
+  function startPolling() {
+    if (pollInterval) return;
+    
+    pollInterval = setInterval(async () => {
+      await loadCrawl();
+    }, 1000); // Normal polling every 1 second
+  }
+  
+  function stopPolling() {
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+    if (hiddenPollInterval) {
+      clearInterval(hiddenPollInterval);
+      hiddenPollInterval = null;
+    }
+  }
+  
   onMount(async () => {
     console.log('CrawlProgress: onMount called with crawlId:', crawlId);
+    
+    // Check localStorage for active crawl if crawlId not provided (reconnection scenario)
+    if (!crawlId && projectId) {
+      const storedCrawlId = localStorage.getItem(`activeCrawl_${projectId}`);
+      if (storedCrawlId) {
+        console.log('CrawlProgress: Found active crawl in localStorage:', storedCrawlId);
+        crawlId = storedCrawlId;
+      }
+    }
+    
     if (!crawlId) {
       console.error('CrawlProgress: No crawlId provided in onMount');
       error = 'No crawl ID provided';
@@ -184,21 +244,28 @@
       return;
     }
     
+    // Set up Page Visibility API
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    isVisible = !document.hidden;
+    
     // Initial load with a small delay to ensure crawl is created
     await new Promise(resolve => setTimeout(resolve, 500));
     await loadCrawl();
     
-    // Always start polling - it will stop automatically when crawl completes
-    // Poll more frequently for better real-time updates
-    pollInterval = setInterval(async () => {
-      await loadCrawl();
-    }, 1000); // Poll every second instead of every 2 seconds
+    // Start polling based on visibility
+    if (isVisible) {
+      startPolling();
+    } else {
+      // If hidden, use slower polling
+      hiddenPollInterval = setInterval(async () => {
+        await loadCrawl();
+      }, 5000);
+    }
   });
   
   onDestroy(() => {
-    if (pollInterval) {
-      clearInterval(pollInterval);
-    }
+    stopPolling();
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
   });
   
   function handleViewResults() {
@@ -271,6 +338,10 @@
         </div>
         <div class="card-actions justify-end">
           <button class="btn btn-primary" on:click={() => {
+            // Clear localStorage before navigating
+            if (projectId && crawlId) {
+              localStorage.removeItem(`activeCrawl_${projectId}`);
+            }
             dispatch('completed', { crawlId });
             handleViewResults();
           }}>
