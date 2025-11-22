@@ -470,3 +470,41 @@ export async function disconnectProjectGSC(projectId) {
     method: 'POST'
   });
 }
+
+// AI-related API functions
+
+// Save OpenAI API key
+export async function saveOpenAIKey(openaiApiKey) {
+  return authorizedJSON('/api/v1/integrations/openai-key', {
+    method: 'POST',
+    body: { openai_api_key: openaiApiKey }
+  });
+}
+
+// Get OpenAI API key status (doesn't return the actual key)
+export async function getOpenAIKeyStatus() {
+  return authorizedJSON('/api/v1/integrations/openai-key', {
+    method: 'GET'
+  });
+}
+
+// Generate AI insight for an issue
+export async function generateIssueInsight(issueId, crawlId) {
+  return authorizedJSON('/api/v1/ai/issue-insight', {
+    method: 'POST',
+    body: {
+      issue_id: issueId,
+      crawl_id: crawlId
+    }
+  });
+}
+
+// Generate AI summary for a crawl
+export async function generateCrawlSummary(crawlId) {
+  return authorizedJSON('/api/v1/ai/crawl-summary', {
+    method: 'POST',
+    body: {
+      crawl_id: crawlId
+    }
+  });
+}

@@ -123,6 +123,11 @@ func (s *Server) Router() http.Handler {
 	v1.HandleFunc("/billing/", s.handleBilling)
 	v1.HandleFunc("/team/", s.handleTeam)
 	v1.HandleFunc("/team", s.handleTeam)
+	// AI routes
+	v1.HandleFunc("/ai/issue-insight", s.handleIssueInsight)
+	v1.HandleFunc("/ai/crawl-summary", s.handleCrawlSummary)
+	// Integrations routes
+	v1.HandleFunc("/integrations/openai-key", s.handleOpenAIKey)
 
 	// Wrap v1 routes with authentication middleware
 	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", s.authMiddleware(v1)))

@@ -1,8 +1,8 @@
 <script>
   import { onMount } from 'svelte';
   import { push } from 'svelte-spa-router';
-  import { Search, BarChart3, Zap, Globe, Slack } from 'lucide-svelte';
-  import { fetchProjects } from '../lib/data.js';
+  import { Search, BarChart3, Zap, Globe, Slack, Sparkles } from 'lucide-svelte';
+  import { fetchProjects, saveOpenAIKey, getOpenAIKeyStatus } from '../lib/data.js';
   import ProjectGSCSelector from '../components/ProjectGSCSelector.svelte';
   
   let summary = null; // Could be passed as prop or fetched if needed
@@ -11,6 +11,14 @@
   let selectedProject = null;
   let loadingProjects = false;
   let loadError = null;
+  
+  // OpenAI API Key state
+  let openaiApiKey = '';
+  let hasOpenAIKey = false;
+  let loadingOpenAIStatus = false;
+  let savingOpenAIKey = false;
+  let openaiError = null;
+  let openaiSuccess = false;
   
   // Integration statuses
   let integrations = {
@@ -34,7 +42,38 @@
       }
     }
     loadingProjects = false;
+    
+    // Load OpenAI key status
+    await loadOpenAIKeyStatus();
   });
+
+  async function loadOpenAIKeyStatus() {
+    loadingOpenAIStatus = true;
+    const { data, error } = await getOpenAIKeyStatus();
+    if (!error && data) {
+      hasOpenAIKey = data.has_key || false;
+    }
+    loadingOpenAIStatus = false;
+  }
+
+  async function handleSaveOpenAIKey() {
+    savingOpenAIKey = true;
+    openaiError = null;
+    openaiSuccess = false;
+    
+    const { data, error } = await saveOpenAIKey(openaiApiKey);
+    if (error) {
+      openaiError = error.message || 'Failed to save OpenAI API key';
+    } else {
+      openaiSuccess = true;
+      hasOpenAIKey = true;
+      openaiApiKey = ''; // Clear input after saving
+      setTimeout(() => {
+        openaiSuccess = false;
+      }, 3000);
+    }
+    savingOpenAIKey = false;
+  }
 
   $: if (selectedProjectId) {
     selectedProject = projects.find((p) => p.id === selectedProjectId) || selectedProject;
@@ -105,6 +144,83 @@
             </div>
           {/if}
           <ProjectGSCSelector summary={summary} project={selectedProject} projectId={selectedProjectId} />
+        {/if}
+      </div>
+    </div>
+
+    <!-- OpenAI API Key -->
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="card-title text-xl">
+              <Sparkles class="w-6 h-6 mr-2" />
+              OpenAI API Key
+            </h2>
+            <p class="text-sm text-base-content/70 mt-1">
+              Connect your own OpenAI API key to use AI features. If provided, Barracuda will use YOUR OpenAI key for AI features to reduce cost and increase privacy.
+            </p>
+          </div>
+          <div class="badge badge-lg" class:badge-success={hasOpenAIKey} class:badge-ghost={!hasOpenAIKey}>
+            {hasOpenAIKey ? 'Connected' : 'Not Connected'}
+          </div>
+        </div>
+        
+        {#if loadingOpenAIStatus}
+          <div class="alert alert-info">
+            <span class="loading loading-spinner loading-sm"></span>
+            <span>Loading status...</span>
+          </div>
+        {:else}
+          <div class="space-y-4">
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text">Your OpenAI API Key</span>
+              </label>
+              <input
+                type="password"
+                placeholder="sk-..."
+                class="input input-bordered"
+                bind:value={openaiApiKey}
+                disabled={savingOpenAIKey}
+              />
+              <label class="label">
+                <span class="label-text-alt">Your key is encrypted and stored securely. Leave empty to use the app-wide key.</span>
+              </label>
+            </div>
+            
+            {#if openaiError}
+              <div class="alert alert-error">
+                <span>{openaiError}</span>
+              </div>
+            {/if}
+            
+            {#if openaiSuccess}
+              <div class="alert alert-success">
+                <span>OpenAI API key saved successfully!</span>
+              </div>
+            {/if}
+            
+            <div class="alert alert-info">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>If provided, Barracuda will use YOUR OpenAI key for AI features to reduce cost and increase privacy. If not provided, the app-wide key will be used.</span>
+            </div>
+            
+            <button
+              class="btn btn-primary"
+              on:click={handleSaveOpenAIKey}
+              disabled={savingOpenAIKey || !openaiApiKey.trim()}
+            >
+              {#if savingOpenAIKey}
+                <span class="loading loading-spinner loading-sm"></span>
+                Saving...
+              {:else}
+                Save OpenAI API Key
+              {/if}
+            </button>
+          </div>
         {/if}
       </div>
     </div>

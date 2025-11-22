@@ -8,6 +8,7 @@
   import RecommendationsPanel from './RecommendationsPanel.svelte';
   import GSCDashboardPanel from './GSCDashboardPanel.svelte';
   import GSCKeywordsPanel from './GSCKeywordsPanel.svelte';
+  import CrawlSummary from './AI/CrawlSummary.svelte';
   import Logo from './Logo.svelte';
   import { fetchProjects, fetchProjectGSCStatus, fetchProjectGSCDimensions, triggerProjectGSCSync } from '../lib/data.js';
   import { buildEnrichedIssues } from '../lib/gsc.js';
@@ -297,6 +298,10 @@
         gscLoading={gscLoading}
         gscError={gscError}
       />
+
+      {#if crawlId}
+        <CrawlSummary {crawlId} />
+      {/if}
     </div>
   {:else if activeTab === 'results'}
     <ResultsTable 
@@ -313,6 +318,7 @@
       gscStatus={gscStatus}
       gscLoading={gscLoading}
       gscError={gscError}
+      {crawlId}
     />
   {:else if activeTab === 'recommendations'}
     <div class="space-y-4">

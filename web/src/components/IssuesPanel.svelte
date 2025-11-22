@@ -1,10 +1,17 @@
 <script>
+  import IssueInsight from './AI/IssueInsight.svelte';
+  import { Sparkles } from 'lucide-svelte';
+
   export let issues = [];
   export let filter = { severity: 'all', type: 'all', url: null };
   export let enrichedIssues = {}; // Map of enriched issue data: { "url|type": { issue, gsc_performance, enriched_priority, recommendation_reason } }
   export let gscStatus = null;
   export let gscLoading = false;
   export let gscError = null;
+  export let crawlId = null; // Required for AI insights
+
+  let selectedIssueForAI = null;
+  let showAIInsightModal = false;
 
   const formatNumber = (value) => {
     if (value === null || value === undefined) return '0';
@@ -625,11 +632,39 @@
                   <div>{issue.recommendation}</div>
                 </div>
               {/if}
+              
+              <!-- AI Insight Button -->
+              {#if crawlId}
+                <div class="mt-3">
+                  <button
+                    class="btn btn-sm btn-outline btn-primary"
+                    on:click={() => {
+                      selectedIssueForAI = issue;
+                      showAIInsightModal = true;
+                    }}
+                  >
+                    <Sparkles class="w-4 h-4" />
+                    Generate AI Insight
+                  </button>
+                </div>
+              {/if}
             </div>
           </div>
         {/each}
       {/each}
     </div>
+
+    <!-- AI Insight Modal -->
+    {#if showAIInsightModal && selectedIssueForAI && crawlId}
+      <IssueInsight
+        issue={selectedIssueForAI}
+        {crawlId}
+        on:close={() => {
+          showAIInsightModal = false;
+          selectedIssueForAI = null;
+        }}
+      />
+    {/if}
 
     {#if filteredIssues.length === 0}
       <div class="alert alert-success">
