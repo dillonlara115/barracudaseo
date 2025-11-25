@@ -355,17 +355,25 @@ func (s *Server) handleCrawlSummary(w http.ResponseWriter, r *http.Request) {
 	// Save to cache (using serviceRole since we've verified access)
 	// If force_refresh is true, delete old cached summaries first
 	if req.ForceRefresh {
-		_, _, err := s.serviceRole.From("ai_crawl_summaries").
-			Delete("", "").
-			Eq("crawl_id", req.CrawlID).
-			Eq("user_id", userID).
-			Execute()
-		if err != nil {
-			s.logger.Warn("Failed to delete old cached summary", zap.Error(err))
-			// Continue anyway
-		}
+		// Delete old cached summaries - wrap in recover to prevent panic
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					s.logger.Warn("Panic during delete of old cached summary", zap.Any("panic", r), zap.String("crawl_id", req.CrawlID), zap.String("user_id", userID))
+				}
+			}()
+			_, _, delErr := s.serviceRole.From("ai_crawl_summaries").
+				Delete("", "").
+				Eq("crawl_id", req.CrawlID).
+				Eq("user_id", userID).
+				Execute()
+			if delErr != nil {
+				s.logger.Debug("Failed to delete old cached summary (non-fatal)", zap.Error(delErr))
+			}
+		}()
 	}
 	
+	// Always insert new summary (table allows multiple summaries per crawl/user)
 	summaryRecord := map[string]interface{}{
 		"id":           uuid.New().String(),
 		"crawl_id":     req.CrawlID,
@@ -373,10 +381,12 @@ func (s *Server) handleCrawlSummary(w http.ResponseWriter, r *http.Request) {
 		"project_id":    projectID,
 		"summary_text": summary,
 	}
+	
+	// Insert new summary - if this fails, log but don't fail the request
 	_, _, err = s.serviceRole.From("ai_crawl_summaries").Insert(summaryRecord, false, "", "", "").Execute()
 	if err != nil {
 		s.logger.Warn("Failed to cache summary", zap.Error(err))
-		// Continue anyway
+		// Continue anyway - the summary was generated successfully
 	}
 
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{

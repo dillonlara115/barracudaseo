@@ -106,11 +106,12 @@ func runAPI(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create HTTP server
+	// Increased WriteTimeout to 60s to accommodate AI operations which can take longer
 	httpServer := &http.Server{
 		Addr:         fmt.Sprintf(":%d", apiPort),
 		Handler:      server.Router(),
 		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
+		WriteTimeout: 60 * time.Second, // Increased for AI operations
 		IdleTimeout:  60 * time.Second,
 	}
 
