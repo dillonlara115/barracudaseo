@@ -132,12 +132,15 @@
         total_issues: issues.length,
         issues_by_type: {},
         issues: issues.map(issue => ({
+          id: issue.id,
           type: issue.type,
           severity: issue.severity,
           url: issue.page_id ? results.find(p => p.id === issue.page_id)?.url || '' : '',
           message: issue.message,
           value: issue.value,
-          recommendation: issue.recommendation
+          recommendation: issue.recommendation,
+          crawl_id: issue.crawl_id,
+          page_id: issue.page_id
         })),
         average_response_time_ms: results.length > 0
           ? Math.round(results.reduce((sum, p) => sum + (p.response_time_ms || 0), 0) / results.length)

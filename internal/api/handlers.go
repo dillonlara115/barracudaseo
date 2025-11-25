@@ -530,16 +530,28 @@ func (s *Server) handleUpdateProject(w http.ResponseWriter, r *http.Request, pro
 	}
 
 	// Update project (RLS will enforce permissions)
-	var projects []map[string]interface{}
-	data, _, err := s.supabase.From("projects").
+	_, _, err = s.supabase.From("projects").
 		Update(updateData, "", "").
 		Eq("id", projectID).
-		Select("*", "", false).
 		Execute()
 
 	if err != nil {
 		s.logger.Error("Failed to update project", zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, "Failed to update project")
+		return
+	}
+
+	// Fetch the updated project
+	var projects []map[string]interface{}
+	var data []byte
+	data, _, err = s.supabase.From("projects").
+		Select("*", "", false).
+		Eq("id", projectID).
+		Execute()
+
+	if err != nil {
+		s.logger.Error("Failed to fetch updated project", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to fetch updated project")
 		return
 	}
 

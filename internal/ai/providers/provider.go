@@ -13,3 +13,5 @@ type AIProvider interface {
 	Completion(ctx context.Context, messages []Message) (string, error)
 }
 
+
+

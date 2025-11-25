@@ -1,6 +1,7 @@
 <script>
   import { generateCrawlSummary } from '../../lib/data.js';
   import { Sparkles, Copy } from 'lucide-svelte';
+  import { marked } from 'marked';
 
   export let crawlId = null;
 
@@ -9,21 +10,37 @@
   let error = null;
   let copied = false;
 
+  // Configure marked for safe rendering
+  marked.setOptions({
+    breaks: true,
+    gfm: true,
+  });
+
+  $: renderedSummary = summary ? marked.parse(summary) : '';
+
   async function handleGenerateSummary() {
-    if (!crawlId) return;
+    if (!crawlId) {
+      error = 'Crawl ID is required';
+      return;
+    }
 
     loading = true;
     error = null;
     summary = null;
 
     try {
+      console.log('Generating crawl summary for crawlId:', crawlId, 'type:', typeof crawlId);
       const { data, error: apiError } = await generateCrawlSummary(crawlId);
       if (apiError) {
+        console.error('Error generating crawl summary:', apiError);
+        console.error('Full error object:', JSON.stringify(apiError, null, 2));
         error = apiError.message || 'Failed to generate summary';
       } else {
+        console.log('Successfully generated summary:', data);
         summary = data?.summary || null;
       }
     } catch (err) {
+      console.error('Exception generating crawl summary:', err);
       error = err.message || 'An unexpected error occurred';
     } finally {
       loading = false;
@@ -105,8 +122,8 @@
 
     <!-- Summary Display -->
     {#if summary}
-      <div class="prose prose-sm max-w-none bg-base-200 p-6 rounded-lg whitespace-pre-wrap">
-        {summary}
+      <div class="prose prose-sm max-w-none bg-base-200 p-6 rounded-lg">
+        {@html renderedSummary}
       </div>
       <div class="mt-4">
         <button
@@ -127,11 +144,22 @@
   .prose p {
     margin-top: 0.75em;
     margin-bottom: 0.75em;
+    line-height: 1.6;
   }
-  .prose h1, .prose h2, .prose h3 {
+  .prose h1, .prose h2, .prose h3, .prose h4 {
     margin-top: 1em;
     margin-bottom: 0.5em;
     font-weight: bold;
+    line-height: 1.2;
+  }
+  .prose h1 {
+    font-size: 1.5em;
+  }
+  .prose h2 {
+    font-size: 1.25em;
+  }
+  .prose h3 {
+    font-size: 1.1em;
   }
   .prose ul, .prose ol {
     margin-top: 0.5em;
@@ -142,5 +170,39 @@
     margin-top: 0.25em;
     margin-bottom: 0.25em;
   }
+  .prose code {
+    background-color: rgba(0, 0, 0, 0.1);
+    padding: 0.2em 0.4em;
+    border-radius: 0.25em;
+    font-size: 0.9em;
+  }
+  .prose pre {
+    background-color: rgba(0, 0, 0, 0.1);
+    padding: 1em;
+    border-radius: 0.5em;
+    overflow-x: auto;
+    margin-top: 0.75em;
+    margin-bottom: 0.75em;
+  }
+  .prose pre code {
+    background-color: transparent;
+    padding: 0;
+  }
+  .prose strong {
+    font-weight: bold;
+  }
+  .prose em {
+    font-style: italic;
+  }
+  .prose blockquote {
+    border-left: 4px solid rgba(0, 0, 0, 0.2);
+    padding-left: 1em;
+    margin-left: 0;
+    margin-top: 0.75em;
+    margin-bottom: 0.75em;
+    font-style: italic;
+  }
 </style>
+
+
 

@@ -124,11 +124,35 @@ func (c *AIClient) GenerateIssueInsight(ctx context.Context, userID string, issu
 	promptBuilder.WriteString(fmt.Sprintf("Meta Description: %s\n", getString(page, "meta_description")))
 	promptBuilder.WriteString(fmt.Sprintf("Status Code: %v\n", getValue(page, "status_code")))
 	promptBuilder.WriteString(fmt.Sprintf("H1: %s\n", getString(page, "h1")))
+	
+	// Add word count if available
+	if wordCount := getValue(page, "word_count"); wordCount != nil {
+		promptBuilder.WriteString(fmt.Sprintf("Word Count: %v\n", wordCount))
+	}
 
-	// Count links if available
+	// Extract headings and content structure from data field
 	if data, ok := page["data"].(map[string]interface{}); ok {
+		if headings, ok := data["headings"].([]interface{}); ok && len(headings) > 0 {
+			promptBuilder.WriteString("\nPage Structure:\n")
+			// Include first few headings to understand page content
+			maxHeadings := 10
+			if len(headings) < maxHeadings {
+				maxHeadings = len(headings)
+			}
+			for i := 0; i < maxHeadings; i++ {
+				if heading, ok := headings[i].(map[string]interface{}); ok {
+					level := getValue(heading, "level")
+					text := getString(heading, "text")
+					if text != "" {
+						promptBuilder.WriteString(fmt.Sprintf("  H%v: %s\n", level, text))
+					}
+				}
+			}
+		}
+		
+		// Count links if available
 		if internalLinks, ok := data["internal_links"].([]interface{}); ok {
-			promptBuilder.WriteString(fmt.Sprintf("Internal Links: %d\n", len(internalLinks)))
+			promptBuilder.WriteString(fmt.Sprintf("\nInternal Links: %d\n", len(internalLinks)))
 		}
 		if externalLinks, ok := data["external_links"].([]interface{}); ok {
 			promptBuilder.WriteString(fmt.Sprintf("External Links: %d\n", len(externalLinks)))
@@ -142,15 +166,105 @@ func (c *AIClient) GenerateIssueInsight(ctx context.Context, userID string, issu
 		}
 	}
 
-	promptBuilder.WriteString("\nProvide:\n")
-	promptBuilder.WriteString("1. Why this issue matters\n")
-	promptBuilder.WriteString("2. How to fix it\n")
-	promptBuilder.WriteString("3. Impact on SEO (low/medium/high)\n")
-	promptBuilder.WriteString("4. Example fix or improved snippet\n")
-	promptBuilder.WriteString("5. Additional considerations\n")
+	// Determine issue type and generate focused solution
+	issueType := getString(issue, "type")
+	
+	// For content-generation issues, format response with recommendation first, then insight
+	switch issueType {
+	case "missing_meta_description":
+		promptBuilder.WriteString("\n**CRITICAL: You MUST format your response EXACTLY as shown below. Do not include any other sections or explanations.**\n\n")
+		promptBuilder.WriteString("Based on the page URL, title, H1, and content structure, create a compelling meta description that:\n")
+		promptBuilder.WriteString("- Is 150-160 characters long\n")
+		promptBuilder.WriteString("- Accurately describes the page content\n")
+		promptBuilder.WriteString("- Includes a call-to-action when appropriate\n")
+		promptBuilder.WriteString("- Is optimized for search results\n\n")
+		promptBuilder.WriteString("**Your response MUST start with RECOMMENDATION: followed by the meta description text (no HTML tags, no quotes, just the text). Then on a new line, write INSIGHT: followed by a brief 1-2 sentence explanation.**\n\n")
+		promptBuilder.WriteString("Example format:\n")
+		promptBuilder.WriteString("RECOMMENDATION: Discover the latest updates and features from TransferForge. Stay informed and enhance your experience with our ongoing improvements!\n\n")
+		promptBuilder.WriteString("INSIGHT: This meta description effectively summarizes the page content while including a clear call-to-action that encourages user engagement.\n")
+	case "missing_title":
+		promptBuilder.WriteString("\n**CRITICAL: You MUST format your response EXACTLY as shown below. Do not include any other sections or explanations.**\n\n")
+		promptBuilder.WriteString("Based on the page URL, H1, and content structure, create a descriptive title that:\n")
+		promptBuilder.WriteString("- Is 50-60 characters long\n")
+		promptBuilder.WriteString("- Is keyword-rich and descriptive\n")
+		promptBuilder.WriteString("- Accurately represents the page content\n\n")
+		promptBuilder.WriteString("**Your response MUST start with RECOMMENDATION: followed by the title text (no HTML tags, no quotes, just the text). Then on a new line, write INSIGHT: followed by a brief 1-2 sentence explanation.**\n\n")
+		promptBuilder.WriteString("Example format:\n")
+		promptBuilder.WriteString("RECOMMENDATION: Beta Launch - TransferForge: Features & Updates\n\n")
+		promptBuilder.WriteString("INSIGHT: This title effectively describes the page content while staying within optimal length limits for search engine display.\n")
+	case "missing_h1", "empty_h1":
+		promptBuilder.WriteString("\n**CRITICAL: You MUST format your response EXACTLY as shown below. Do not include any other sections or explanations.**\n\n")
+		promptBuilder.WriteString("Based on the page URL, title, and content structure, create an H1 that:\n")
+		promptBuilder.WriteString("- Accurately describes the page's primary topic\n")
+		promptBuilder.WriteString("- Is descriptive and keyword-rich\n")
+		promptBuilder.WriteString("- Matches the page content\n\n")
+		promptBuilder.WriteString("**Your response MUST start with RECOMMENDATION: followed by the H1 text (no HTML tags, no quotes, just the text). Then on a new line, write INSIGHT: followed by a brief 1-2 sentence explanation.**\n\n")
+		promptBuilder.WriteString("Example format:\n")
+		promptBuilder.WriteString("RECOMMENDATION: Beta Launch - TransferForge Features & Updates\n\n")
+		promptBuilder.WriteString("INSIGHT: This H1 clearly communicates the page's main topic and aligns with SEO best practices for heading structure.\n")
+	case "long_title", "short_title":
+		currentTitle := getString(page, "title")
+		promptBuilder.WriteString("\n**CRITICAL: You MUST format your response EXACTLY as shown below. Do not include any other sections or explanations.**\n\n")
+		promptBuilder.WriteString(fmt.Sprintf("Current title: \"%s\"\n", currentTitle))
+		promptBuilder.WriteString("Based on the current title, page URL, H1, and content, create an optimized title that:\n")
+		promptBuilder.WriteString("- Is exactly 50-60 characters long\n")
+		promptBuilder.WriteString("- Improves upon the current title\n")
+		promptBuilder.WriteString("- Is optimized for SEO and user experience\n\n")
+		promptBuilder.WriteString("**Your response MUST start with RECOMMENDATION: followed by the improved title text (no HTML tags, no quotes, just the text). Then on a new line, write INSIGHT: followed by a brief 1-2 sentence explanation.**\n\n")
+		promptBuilder.WriteString("Example format:\n")
+		promptBuilder.WriteString("RECOMMENDATION: Exciting Beta Launch - TransferForge: Features & Updates Revealed\n\n")
+		promptBuilder.WriteString("INSIGHT: This improved title expands the original to 55 characters, adding descriptive keywords that better convey the page content and improve search visibility.\n")
+	case "long_meta_description", "short_meta_description":
+		currentMetaDesc := getString(page, "meta_description")
+		promptBuilder.WriteString("\n**CRITICAL: You MUST format your response EXACTLY as shown below. Do not include any other sections or explanations.**\n\n")
+		promptBuilder.WriteString(fmt.Sprintf("Current meta description: \"%s\"\n", currentMetaDesc))
+		promptBuilder.WriteString("Based on the current meta description, page URL, title, H1, and content, create an optimized meta description that:\n")
+		promptBuilder.WriteString("- Is exactly 150-160 characters long\n")
+		promptBuilder.WriteString("- Improves upon the current meta description\n")
+		promptBuilder.WriteString("- Is compelling and includes a call-to-action when appropriate\n\n")
+		promptBuilder.WriteString("**Your response MUST start with RECOMMENDATION: followed by the improved meta description text (no HTML tags, no quotes, just the text). Then on a new line, write INSIGHT: followed by a brief 1-2 sentence explanation.**\n\n")
+		promptBuilder.WriteString("Example format:\n")
+		promptBuilder.WriteString("RECOMMENDATION: Discover the latest updates and features from TransferForge. Stay informed and enhance your experience!\n\n")
+		promptBuilder.WriteString("INSIGHT: This improved meta description optimizes length while maintaining clarity and adding a compelling call-to-action.\n")
+	case "missing_image_alt":
+		promptBuilder.WriteString("\n**CRITICAL: You MUST format your response EXACTLY as shown below. Do not include any other sections or explanations.**\n\n")
+		promptBuilder.WriteString("Based on the page content and context, provide descriptive alt text suggestions.\n")
+		promptBuilder.WriteString("If specific image context is not available, provide general guidelines for writing good alt text.\n\n")
+		promptBuilder.WriteString("**Your response MUST start with RECOMMENDATION: followed by the alt text or guidelines. Then on a new line, write INSIGHT: followed by a brief explanation if needed.**\n\n")
+		promptBuilder.WriteString("Example format:\n")
+		promptBuilder.WriteString("RECOMMENDATION: Descriptive alt text guidelines: Use concise, specific descriptions that convey the image's purpose and content.\n\n")
+		promptBuilder.WriteString("INSIGHT: Good alt text improves accessibility and helps search engines understand image content.\n")
+	default:
+		// For other issue types, provide a brief explanation with solution
+		promptBuilder.WriteString("\n**TASK: Provide a concise solution for this issue.**\n")
+		promptBuilder.WriteString("Focus on:\n")
+		promptBuilder.WriteString("1. Brief explanation of why it matters (1-2 sentences)\n")
+		promptBuilder.WriteString("2. Specific steps to fix it\n")
+		promptBuilder.WriteString("3. Example fix or code snippet if applicable\n\n")
+		promptBuilder.WriteString("**Be concise and actionable.**\n")
+	}
 
-	messages := []Message{
-		{Role: "user", Content: promptBuilder.String()},
+	// Add system message for content-generation issues to enforce format
+	var messages []Message
+	// issueType is already declared above, so we reuse it here
+	
+	// For content-generation issues, add a system message to enforce strict formatting
+	if issueType == "missing_meta_description" || issueType == "missing_title" || 
+	   issueType == "missing_h1" || issueType == "empty_h1" ||
+	   issueType == "long_title" || issueType == "short_title" ||
+	   issueType == "long_meta_description" || issueType == "short_meta_description" ||
+	   issueType == "missing_image_alt" {
+		messages = []Message{
+			{
+				Role: "system",
+				Content: "You are an SEO expert. When asked to generate recommendations, you MUST format your response EXACTLY as: RECOMMENDATION: [text]\n\nINSIGHT: [brief explanation]. Do NOT include numbered sections, headers, or any other formatting. Only output the RECOMMENDATION and INSIGHT sections.",
+			},
+			{Role: "user", Content: promptBuilder.String()},
+		}
+	} else {
+		messages = []Message{
+			{Role: "user", Content: promptBuilder.String()},
+		}
 	}
 
 	return c.CreateChatCompletion(ctx, userID, "", messages)

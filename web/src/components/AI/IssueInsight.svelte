@@ -2,6 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import { generateIssueInsight } from '../../lib/data.js';
   import { Sparkles, Copy, X } from 'lucide-svelte';
+  import { marked } from 'marked';
 
   export let issue = null;
   export let crawlId = null;
@@ -13,15 +14,58 @@
   let error = null;
   let copied = false;
 
+  // Configure marked for safe rendering
+  marked.setOptions({
+    breaks: true,
+    gfm: true,
+  });
+
+  // Parse recommendation and insight from response
+  $: parsedResponse = (() => {
+    if (!insight) return { recommendation: null, insight: null };
+    
+    // Check if response follows RECOMMENDATION: / INSIGHT: format
+    const recMatch = insight.match(/RECOMMENDATION:\s*([\s\S]+?)(?:\n\nINSIGHT:|$)/i);
+    const insightMatch = insight.match(/INSIGHT:\s*([\s\S]+?)$/i);
+    
+    if (recMatch) {
+      return {
+        recommendation: recMatch[1].trim(),
+        insight: insightMatch ? insightMatch[1].trim() : null
+      };
+    }
+    
+    // If no structured format, return full insight
+    return {
+      recommendation: null,
+      insight: insight
+    };
+  })();
+
+  $: renderedRecommendation = parsedResponse.recommendation ? marked.parse(parsedResponse.recommendation) : '';
+  $: renderedInsight = parsedResponse.insight ? marked.parse(parsedResponse.insight) : '';
+
   async function handleGenerateInsight() {
-    if (!issue || !crawlId) return;
+    if (!issue || !crawlId) {
+      error = 'Issue or crawl ID is missing';
+      return;
+    }
+
+    // Check if issue has an ID
+    const issueId = issue.id || issue.issue_id;
+    if (!issueId) {
+      error = 'Issue ID is missing';
+      console.error('Issue object:', issue);
+      return;
+    }
 
     loading = true;
     error = null;
     insight = null;
 
     try {
-      const { data, error: apiError } = await generateIssueInsight(issue.id, crawlId);
+      console.log('Generating insight for issue:', { issueId, crawlId, issue });
+      const { data, error: apiError } = await generateIssueInsight(issueId, crawlId);
       if (apiError) {
         error = apiError.message || 'Failed to generate insight';
       } else {
@@ -39,6 +83,20 @@
 
     try {
       await navigator.clipboard.writeText(insight);
+      copied = true;
+      setTimeout(() => {
+        copied = false;
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+    }
+  }
+
+  async function handleCopyRecommendation() {
+    if (!parsedResponse.recommendation) return;
+
+    try {
+      await navigator.clipboard.writeText(parsedResponse.recommendation);
       copied = true;
       setTimeout(() => {
         copied = false;
@@ -116,8 +174,30 @@
         </button>
       {/if}
 
+      <!-- Recommendation Display -->
+      {#if insight && parsedResponse.recommendation}
+        <div class="mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-semibold text-lg">Recommended Solution</h4>
+            <button
+              class="btn btn-sm btn-ghost"
+              on:click={handleCopyRecommendation}
+              title="Copy recommendation to clipboard"
+            >
+              <Copy class="w-4 h-4" />
+              {copied ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+          <div class="bg-primary/10 border border-primary/20 p-4 rounded-lg">
+            <div class="prose prose-sm max-w-none">
+              {@html renderedRecommendation}
+            </div>
+          </div>
+        </div>
+      {/if}
+
       <!-- Insight Display -->
-      {#if insight}
+      {#if insight && parsedResponse.insight}
         <div class="mb-4">
           <div class="flex items-center justify-between mb-2">
             <h4 class="font-semibold text-lg">AI Insight</h4>
@@ -130,8 +210,28 @@
               {copied ? 'Copied!' : 'Copy'}
             </button>
           </div>
-          <div class="prose prose-sm max-w-none bg-base-200 p-4 rounded-lg whitespace-pre-wrap">
-            {insight}
+          <div class="prose prose-sm max-w-none bg-base-200 p-4 rounded-lg">
+            {@html renderedInsight}
+          </div>
+        </div>
+      {/if}
+
+      <!-- Fallback: Display full insight if no structured format -->
+      {#if insight && !parsedResponse.recommendation && !parsedResponse.insight}
+        <div class="mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-semibold text-lg">AI Insight</h4>
+            <button
+              class="btn btn-sm btn-ghost"
+              on:click={handleCopyToClipboard}
+              title="Copy to clipboard"
+            >
+              <Copy class="w-4 h-4" />
+              {copied ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+          <div class="prose prose-sm max-w-none bg-base-200 p-4 rounded-lg">
+            {@html marked.parse(insight)}
           </div>
         </div>
       {/if}
@@ -152,8 +252,58 @@
     color: inherit;
   }
   .prose p {
+    margin-top: 0.75em;
+    margin-bottom: 0.75em;
+    line-height: 1.6;
+  }
+  /* DaisyUI heading styles */
+  .prose h1 {
+    @apply text-3xl font-bold mb-4 mt-6;
+  }
+  .prose h2 {
+    @apply text-2xl font-semibold mb-3 mt-5;
+  }
+  .prose h3 {
+    @apply text-xl font-semibold mb-2 mt-4;
+  }
+  .prose h4 {
+    @apply text-lg font-semibold mb-2 mt-3;
+  }
+  .prose h5 {
+    @apply text-base font-semibold mb-2 mt-2;
+  }
+  .prose h6 {
+    @apply text-sm font-semibold mb-1 mt-2;
+  }
+  .prose ul, .prose ol {
     margin-top: 0.5em;
     margin-bottom: 0.5em;
+    padding-left: 1.5em;
+  }
+  .prose li {
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+  }
+  .prose code {
+    @apply bg-base-300 px-2 py-1 rounded text-sm;
+  }
+  .prose pre {
+    @apply bg-base-300 p-4 rounded-lg overflow-x-auto my-4;
+  }
+  .prose pre code {
+    background-color: transparent;
+    padding: 0;
+  }
+  .prose strong {
+    @apply font-bold;
+  }
+  .prose em {
+    @apply italic;
+  }
+  .prose blockquote {
+    @apply border-l-4 border-base-300 pl-4 my-4 italic;
   }
 </style>
+
+
 

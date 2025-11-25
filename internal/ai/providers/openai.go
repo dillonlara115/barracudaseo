@@ -36,7 +36,7 @@ func (p *OpenAIProvider) Completion(ctx context.Context, messages []Message) (st
 
 	// Create completion request
 	req := openai.ChatCompletionRequest{
-		Model:    openai.GPT4oMini, // Default model
+		Model:    "gpt-4o-mini", // Default model
 		Messages: openaiMessages,
 	}
 
@@ -53,4 +53,6 @@ func (p *OpenAIProvider) Completion(ctx context.Context, messages []Message) (st
 
 	return resp.Choices[0].Message.Content, nil
 }
+
+
 

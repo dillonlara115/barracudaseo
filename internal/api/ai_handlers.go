@@ -53,10 +53,11 @@ func (s *Server) handleIssueInsight(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if insight already exists (caching)
+	// Use serviceRole and filter by user_id to check cache
 	var existingInsights []map[string]interface{}
 	issueIDInt, err := strconv.ParseInt(req.IssueID, 10, 64)
 	if err == nil {
-		data, _, err := s.supabase.From("ai_issue_insights").
+		data, _, err := s.serviceRole.From("ai_issue_insights").
 			Select("*", "", false).
 			Eq("issue_id", strconv.FormatInt(issueIDInt, 10)).
 			Eq("user_id", userID).
@@ -74,9 +75,9 @@ func (s *Server) handleIssueInsight(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Load issue data
+	// Load issue data using serviceRole (we'll verify access after)
 	var issues []map[string]interface{}
-	issueData, _, err := s.supabase.From("issues").
+	issueData, _, err := s.serviceRole.From("issues").
 		Select("*", "", false).
 		Eq("id", req.IssueID).
 		Execute()
@@ -98,16 +99,22 @@ func (s *Server) handleIssueInsight(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	hasAccess, err := s.verifyProjectAccess(userID, projectID)
-	if err != nil || !hasAccess {
+	if err != nil {
+		s.logger.Error("Failed to verify project access", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify access")
+		return
+	}
+	if !hasAccess {
+		s.logger.Warn("User does not have access to issue", zap.String("issue_id", req.IssueID), zap.String("user_id", userID), zap.String("project_id", projectID))
 		s.respondError(w, http.StatusForbidden, "You don't have access to this issue")
 		return
 	}
 
-	// Load page data if available
+	// Load page data if available (using serviceRole since we've verified access)
 	var page map[string]interface{}
 	if pageID, ok := issue["page_id"].(float64); ok && pageID > 0 {
 		var pages []map[string]interface{}
-		pageData, _, err := s.supabase.From("pages").
+		pageData, _, err := s.serviceRole.From("pages").
 			Select("*", "", false).
 			Eq("id", strconv.FormatInt(int64(pageID), 10)).
 			Execute()
@@ -154,7 +161,7 @@ func (s *Server) handleIssueInsight(w http.ResponseWriter, r *http.Request) {
 		"crawl_id":     crawlID,
 		"insight_text": insight,
 	}
-	_, _, err = s.supabase.From("ai_issue_insights").Insert(insightRecord, false, "", "", "").Execute()
+	_, _, err = s.serviceRole.From("ai_issue_insights").Insert(insightRecord, false, "", "", "").Execute()
 	if err != nil {
 		s.logger.Warn("Failed to cache insight", zap.Error(err))
 		// Continue anyway
@@ -191,8 +198,9 @@ func (s *Server) handleCrawlSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if summary already exists (caching)
+	// Use serviceRole and filter by user_id to check cache
 	var existingSummaries []map[string]interface{}
-	data, _, err := s.supabase.From("ai_crawl_summaries").
+	data, _, err := s.serviceRole.From("ai_crawl_summaries").
 		Select("*", "", false).
 		Eq("crawl_id", req.CrawlID).
 		Eq("user_id", userID).
@@ -209,18 +217,24 @@ func (s *Server) handleCrawlSummary(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Load crawl data
+	// Load crawl data using service role (bypasses RLS)
 	var crawls []map[string]interface{}
-	crawlData, _, err := s.supabase.From("crawls").
+	crawlData, _, err := s.serviceRole.From("crawls").
 		Select("*", "", false).
 		Eq("id", req.CrawlID).
 		Execute()
 	if err != nil {
-		s.logger.Error("Failed to load crawl", zap.Error(err))
+		s.logger.Error("Failed to load crawl", zap.String("crawl_id", req.CrawlID), zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, "Failed to load crawl")
 		return
 	}
-	if err := json.Unmarshal(crawlData, &crawls); err != nil || len(crawls) == 0 {
+	if err := json.Unmarshal(crawlData, &crawls); err != nil {
+		s.logger.Error("Failed to parse crawl data", zap.String("crawl_id", req.CrawlID), zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to parse crawl data")
+		return
+	}
+	if len(crawls) == 0 {
+		s.logger.Warn("Crawl not found", zap.String("crawl_id", req.CrawlID))
 		s.respondError(w, http.StatusNotFound, "Crawl not found")
 		return
 	}
@@ -233,14 +247,20 @@ func (s *Server) handleCrawlSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	hasAccess, err := s.verifyProjectAccess(userID, projectID)
-	if err != nil || !hasAccess {
+	if err != nil {
+		s.logger.Error("Failed to verify project access", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify access")
+		return
+	}
+	if !hasAccess {
+		s.logger.Warn("User does not have access to crawl", zap.String("crawl_id", req.CrawlID), zap.String("user_id", userID), zap.String("project_id", projectID))
 		s.respondError(w, http.StatusForbidden, "You don't have access to this crawl")
 		return
 	}
 
-	// Load issues for this crawl
+	// Load issues for this crawl (using serviceRole since we've verified access)
 	var issues []map[string]interface{}
-	issuesData, _, err := s.supabase.From("issues").
+	issuesData, _, err := s.serviceRole.From("issues").
 		Select("*", "", false).
 		Eq("crawl_id", req.CrawlID).
 		Execute()
@@ -248,9 +268,9 @@ func (s *Server) handleCrawlSummary(w http.ResponseWriter, r *http.Request) {
 		json.Unmarshal(issuesData, &issues)
 	}
 
-	// Load pages for this crawl
+	// Load pages for this crawl (using serviceRole since we've verified access)
 	var pages []map[string]interface{}
-	pagesData, _, err := s.supabase.From("pages").
+	pagesData, _, err := s.serviceRole.From("pages").
 		Select("*", "", false).
 		Eq("crawl_id", req.CrawlID).
 		Execute()
@@ -323,7 +343,7 @@ func (s *Server) handleCrawlSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Save to cache
+	// Save to cache (using serviceRole since we've verified access)
 	summaryRecord := map[string]interface{}{
 		"id":           uuid.New().String(),
 		"crawl_id":     req.CrawlID,
@@ -331,7 +351,7 @@ func (s *Server) handleCrawlSummary(w http.ResponseWriter, r *http.Request) {
 		"project_id":    projectID,
 		"summary_text": summary,
 	}
-	_, _, err = s.supabase.From("ai_crawl_summaries").Insert(summaryRecord, false, "", "", "").Execute()
+	_, _, err = s.serviceRole.From("ai_crawl_summaries").Insert(summaryRecord, false, "", "", "").Execute()
 	if err != nil {
 		s.logger.Warn("Failed to cache summary", zap.Error(err))
 		// Continue anyway
@@ -367,8 +387,8 @@ func (s *Server) handleOpenAIKey(w http.ResponseWriter, r *http.Request) {
 			"updated_at":     time.Now().UTC().Format(time.RFC3339),
 		}
 
-		// Try to update first
-		_, _, err := s.supabase.From("user_ai_settings").
+		// Try to update first (using serviceRole, filtering by user_id ensures security)
+		_, _, err := s.serviceRole.From("user_ai_settings").
 			Update(settings, "", "").
 			Eq("user_id", userID).
 			Execute()
@@ -376,7 +396,7 @@ func (s *Server) handleOpenAIKey(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			// If update fails, try insert
 			settings["created_at"] = time.Now().UTC().Format(time.RFC3339)
-			_, _, err = s.supabase.From("user_ai_settings").Insert(settings, false, "", "", "").Execute()
+			_, _, err = s.serviceRole.From("user_ai_settings").Insert(settings, false, "", "", "").Execute()
 			if err != nil {
 				s.logger.Error("Failed to save OpenAI key", zap.Error(err))
 				s.respondError(w, http.StatusInternalServerError, "Failed to save OpenAI key")
@@ -389,12 +409,13 @@ func (s *Server) handleOpenAIKey(w http.ResponseWriter, r *http.Request) {
 		})
 
 	case http.MethodGet:
-		// Get OpenAI key status (don't return the actual key)
-		var settings []map[string]interface{}
-		data, _, err := s.supabase.From("user_ai_settings").
-			Select("openai_api_key", "", false).
-			Eq("user_id", userID).
-			Execute()
+	// Get OpenAI key status (don't return the actual key)
+	// Use serviceRole since we're filtering by user_id (user can only access their own)
+	var settings []map[string]interface{}
+	data, _, err := s.serviceRole.From("user_ai_settings").
+		Select("openai_api_key", "", false).
+		Eq("user_id", userID).
+		Execute()
 		if err != nil {
 			s.logger.Error("Failed to load OpenAI key status", zap.Error(err))
 			s.respondJSON(w, http.StatusOK, map[string]interface{}{

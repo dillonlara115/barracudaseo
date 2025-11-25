@@ -493,8 +493,8 @@ export async function generateIssueInsight(issueId, crawlId) {
   return authorizedJSON('/api/v1/ai/issue-insight', {
     method: 'POST',
     body: {
-      issue_id: issueId,
-      crawl_id: crawlId
+      issue_id: String(issueId), // Convert to string as API expects string type
+      crawl_id: String(crawlId || '') // Ensure crawlId is also a string
     }
   });
 }
