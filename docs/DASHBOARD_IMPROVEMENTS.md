@@ -530,18 +530,56 @@ AI Priority = Base Priority × SEO Impact × UX Impact × Complexity Factor
 
 ---
 
-### [ ] Google Search Console Integration
+### [✅] Google Search Console Integration
 **Priority:** High  
 **Impact:** High  
 **Effort:** High
 
-- [ ] Connect to Google Search Console API
-- [ ] Pull performance data (impressions, clicks, CTR, position)
-- [ ] Pull query data per page
-- [ ] Pull indexing status
-- [ ] Enrich issues with GSC performance data
-- [ ] Prioritize fixes based on actual traffic
-- [ ] Identify CTR optimization opportunities
+- [✅] Connect to Google Search Console API
+- [✅] Pull performance data (impressions, clicks, CTR, position)
+- [✅] Pull query data per page
+- [✅] Pull indexing status
+- [✅] Enrich issues with GSC performance data
+- [✅] Prioritize fixes based on actual traffic
+- [✅] Identify CTR optimization opportunities
+
+**Files:**
+- `internal/gsc/client.go` - GSC API client
+- `internal/gsc/auth.go` - OAuth authentication
+- `internal/api/gsc_handlers.go` - API handlers
+- `web/src/components/ProjectGSCSelector.svelte` - UI component
+- `supabase/migrations/20240615_add_gsc_cache_tables.sql` - Database schema
+
+---
+
+### [✅] AI + GSC Integration (Enhanced AI Recommendations with Traffic Data)
+**Priority:** High  
+**Impact:** High  
+**Effort:** Medium
+
+- [✅] Load GSC performance data when generating AI issue insights
+- [✅] Include GSC metrics (impressions, clicks, CTR, position) in AI prompts
+- [✅] Generate traffic-aware AI recommendations (e.g., "This page has 15K impressions/month but missing meta description")
+- [✅] Enhance AI crawl summaries with GSC performance context
+- [✅] Use GSC data to prioritize recommendations in AI insights
+- [✅] Generate CTR optimization suggestions based on GSC data
+- [✅] Include top search queries in AI recommendations for keyword optimization
+
+**Files modified:**
+- `internal/api/ai_handlers.go` - Added `loadGSCDataForPage()` and `loadGSCSummaryData()` helper functions
+- `internal/ai/ai.go` - Enhanced prompts to use GSC data in recommendations
+- Updated content-generation prompts (meta description, title, H1) to reference traffic data
+
+**Example Enhanced AI Recommendations:**
+- "This page has 15K impressions/month but missing meta description. Adding one could improve CTR by 10-20%."
+- "This page has high visibility (25K impressions) but low CTR (2.1%). Optimize title for better click-through."
+- "This page ranks #12 for high-volume keywords. Fixing this issue could help it break into the top 10."
+
+**Implementation Details:**
+- Queries `gsc_performance_rows` table for page-level performance data
+- Normalizes URLs to match between crawl results and GSC data
+- Includes top 5 search queries in prompts for keyword optimization
+- Provides traffic context in AI recommendations (impressions, CTR, position)
 
 **Files to modify:**
 - New backend service: `internal/gsc/client.go`
@@ -614,6 +652,35 @@ type EnrichedIssue struct {
 
 ---
 
+### [✅] AI Issue Insights & Crawl Summaries
+**Priority:** High  
+**Impact:** High  
+**Effort:** Medium
+
+- [✅] AI-powered insight generation for individual issues
+- [✅] AI-powered summary for entire crawls
+- [✅] User-provided OpenAI API key support
+- [✅] Reusable AI service module with provider abstraction
+- [✅] Generate actionable recommendations (meta descriptions, titles, H1s)
+- [✅] Structured response format (RECOMMENDATION + INSIGHT)
+- [✅] Markdown rendering with DaisyUI styling
+
+**Files modified:**
+- `internal/ai/ai.go` - Core AI service module
+- `internal/ai/providers/openai.go` - OpenAI provider implementation
+- `internal/api/ai_handlers.go` - API handlers
+- `web/src/components/AI/IssueInsight.svelte` - Issue insight component
+- `web/src/components/AI/CrawlSummary.svelte` - Crawl summary component
+- `web/src/routes/Integrations.svelte` - OpenAI key management
+- `supabase/migrations/20251121181641_add_ai_tables.sql` - Database tables
+
+**Notes:**
+- Supports user-provided API keys or app-wide fallback
+- Caching implemented for insights and summaries
+- Provider abstraction allows future support for Anthropic, Gemini, etc.
+
+---
+
 ### [ ] AI Issue Explanations & Fix Guides
 **Priority:** Low  
 **Impact:** Low-Medium  
@@ -633,6 +700,8 @@ type EnrichedIssue struct {
 - Provide implementation guides based on tech stack
 - Generate troubleshooting steps
 - Context-aware based on issue type and page structure
+
+**Note:** Partially implemented via AI Issue Insights - can be extended for more detailed guides
 
 ---
 

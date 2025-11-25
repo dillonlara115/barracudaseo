@@ -500,11 +500,12 @@ export async function generateIssueInsight(issueId, crawlId) {
 }
 
 // Generate AI summary for a crawl
-export async function generateCrawlSummary(crawlId) {
+export async function generateCrawlSummary(crawlId, forceRefresh = false) {
   return authorizedJSON('/api/v1/ai/crawl-summary', {
     method: 'POST',
     body: {
-      crawl_id: crawlId
+      crawl_id: String(crawlId), // Ensure crawlId is a string
+      force_refresh: Boolean(forceRefresh) // Explicitly convert to boolean
     }
   });
 }

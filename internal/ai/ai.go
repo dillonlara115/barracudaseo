@@ -160,10 +160,31 @@ func (c *AIClient) GenerateIssueInsight(ctx context.Context, userID string, issu
 	}
 
 	if gscData != nil && len(gscData) > 0 {
-		promptBuilder.WriteString("\nGSC Metrics:\n")
-		for k, v := range gscData {
-			promptBuilder.WriteString(fmt.Sprintf("%s: %v\n", k, v))
+		promptBuilder.WriteString("\nGoogle Search Console Performance Data:\n")
+		if impressions, ok := gscData["impressions"].(float64); ok && impressions > 0 {
+			promptBuilder.WriteString(fmt.Sprintf("- Monthly Impressions: %.0f\n", impressions))
 		}
+		if clicks, ok := gscData["clicks"].(float64); ok && clicks > 0 {
+			promptBuilder.WriteString(fmt.Sprintf("- Monthly Clicks: %.0f\n", clicks))
+		}
+		if ctr, ok := gscData["ctr"].(float64); ok && ctr > 0 {
+			ctrPercent := ctr * 100
+			promptBuilder.WriteString(fmt.Sprintf("- Click-Through Rate (CTR): %.2f%%\n", ctrPercent))
+		}
+		if position, ok := gscData["position"].(float64); ok && position > 0 {
+			promptBuilder.WriteString(fmt.Sprintf("- Average Position: %.1f\n", position))
+		}
+		if topQueries, ok := gscData["top_queries"].([]string); ok && len(topQueries) > 0 {
+			promptBuilder.WriteString("- Top Search Queries: ")
+			for i, query := range topQueries {
+				if i > 0 {
+					promptBuilder.WriteString(", ")
+				}
+				promptBuilder.WriteString(query)
+			}
+			promptBuilder.WriteString("\n")
+		}
+		promptBuilder.WriteString("\n**IMPORTANT: Use this traffic data to inform your recommendation. If the page has high impressions but low CTR, mention optimization opportunities. If it ranks well (#1-10), emphasize the importance of fixing issues to maintain rankings. If it has high traffic, prioritize this fix.**\n")
 	}
 
 	// Determine issue type and generate focused solution
@@ -173,22 +194,45 @@ func (c *AIClient) GenerateIssueInsight(ctx context.Context, userID string, issu
 	switch issueType {
 	case "missing_meta_description":
 		promptBuilder.WriteString("\n**CRITICAL: You MUST format your response EXACTLY as shown below. Do not include any other sections or explanations.**\n\n")
+		if gscData != nil && len(gscData) > 0 {
+			if impressions, ok := gscData["impressions"].(float64); ok && impressions > 0 {
+				promptBuilder.WriteString(fmt.Sprintf("**IMPORTANT CONTEXT: This page receives %.0f monthly impressions in Google Search. Adding a meta description could significantly improve click-through rate.**\n\n", impressions))
+			}
+			if ctr, ok := gscData["ctr"].(float64); ok && ctr > 0 && ctr < 0.02 {
+				promptBuilder.WriteString(fmt.Sprintf("**OPTIMIZATION OPPORTUNITY: Current CTR is %.2f%%, which is below average. A compelling meta description could improve this.**\n\n", ctr*100))
+			}
+		}
 		promptBuilder.WriteString("Based on the page URL, title, H1, and content structure, create a compelling meta description that:\n")
 		promptBuilder.WriteString("- Is 150-160 characters long\n")
 		promptBuilder.WriteString("- Accurately describes the page content\n")
 		promptBuilder.WriteString("- Includes a call-to-action when appropriate\n")
-		promptBuilder.WriteString("- Is optimized for search results\n\n")
-		promptBuilder.WriteString("**Your response MUST start with RECOMMENDATION: followed by the meta description text (no HTML tags, no quotes, just the text). Then on a new line, write INSIGHT: followed by a brief 1-2 sentence explanation.**\n\n")
+		promptBuilder.WriteString("- Is optimized for search results\n")
+		if gscData != nil {
+			if topQueries, ok := gscData["top_queries"].([]string); ok && len(topQueries) > 0 {
+				promptBuilder.WriteString("- Incorporates relevant keywords from top search queries naturally\n")
+			}
+		}
+		promptBuilder.WriteString("\n**Your response MUST start with RECOMMENDATION: followed by the meta description text (no HTML tags, no quotes, just the text). Then on a new line, write INSIGHT: followed by a brief 1-2 sentence explanation that references traffic data if available.**\n\n")
 		promptBuilder.WriteString("Example format:\n")
 		promptBuilder.WriteString("RECOMMENDATION: Discover the latest updates and features from TransferForge. Stay informed and enhance your experience with our ongoing improvements!\n\n")
 		promptBuilder.WriteString("INSIGHT: This meta description effectively summarizes the page content while including a clear call-to-action that encourages user engagement.\n")
 	case "missing_title":
 		promptBuilder.WriteString("\n**CRITICAL: You MUST format your response EXACTLY as shown below. Do not include any other sections or explanations.**\n\n")
+		if gscData != nil && len(gscData) > 0 {
+			if impressions, ok := gscData["impressions"].(float64); ok && impressions > 0 {
+				promptBuilder.WriteString(fmt.Sprintf("**IMPORTANT CONTEXT: This page receives %.0f monthly impressions in Google Search. Adding a title tag is critical for search visibility.**\n\n", impressions))
+			}
+		}
 		promptBuilder.WriteString("Based on the page URL, H1, and content structure, create a descriptive title that:\n")
 		promptBuilder.WriteString("- Is 50-60 characters long\n")
 		promptBuilder.WriteString("- Is keyword-rich and descriptive\n")
-		promptBuilder.WriteString("- Accurately represents the page content\n\n")
-		promptBuilder.WriteString("**Your response MUST start with RECOMMENDATION: followed by the title text (no HTML tags, no quotes, just the text). Then on a new line, write INSIGHT: followed by a brief 1-2 sentence explanation.**\n\n")
+		promptBuilder.WriteString("- Accurately represents the page content\n")
+		if gscData != nil {
+			if topQueries, ok := gscData["top_queries"].([]string); ok && len(topQueries) > 0 {
+				promptBuilder.WriteString("- Incorporates relevant keywords from top search queries naturally\n")
+			}
+		}
+		promptBuilder.WriteString("\n**Your response MUST start with RECOMMENDATION: followed by the title text (no HTML tags, no quotes, just the text). Then on a new line, write INSIGHT: followed by a brief 1-2 sentence explanation that references traffic data if available.**\n\n")
 		promptBuilder.WriteString("Example format:\n")
 		promptBuilder.WriteString("RECOMMENDATION: Beta Launch - TransferForge: Features & Updates\n\n")
 		promptBuilder.WriteString("INSIGHT: This title effectively describes the page content while staying within optimal length limits for search engine display.\n")
@@ -206,11 +250,24 @@ func (c *AIClient) GenerateIssueInsight(ctx context.Context, userID string, issu
 		currentTitle := getString(page, "title")
 		promptBuilder.WriteString("\n**CRITICAL: You MUST format your response EXACTLY as shown below. Do not include any other sections or explanations.**\n\n")
 		promptBuilder.WriteString(fmt.Sprintf("Current title: \"%s\"\n", currentTitle))
+		if gscData != nil && len(gscData) > 0 {
+			if impressions, ok := gscData["impressions"].(float64); ok && impressions > 0 {
+				promptBuilder.WriteString(fmt.Sprintf("**IMPORTANT CONTEXT: This page receives %.0f monthly impressions. Optimizing the title could improve click-through rate.**\n\n", impressions))
+			}
+			if ctr, ok := gscData["ctr"].(float64); ok && ctr > 0 && ctr < 0.02 {
+				promptBuilder.WriteString(fmt.Sprintf("**OPTIMIZATION OPPORTUNITY: Current CTR is %.2f%%. An optimized title could improve this.**\n\n", ctr*100))
+			}
+		}
 		promptBuilder.WriteString("Based on the current title, page URL, H1, and content, create an optimized title that:\n")
 		promptBuilder.WriteString("- Is exactly 50-60 characters long\n")
 		promptBuilder.WriteString("- Improves upon the current title\n")
-		promptBuilder.WriteString("- Is optimized for SEO and user experience\n\n")
-		promptBuilder.WriteString("**Your response MUST start with RECOMMENDATION: followed by the improved title text (no HTML tags, no quotes, just the text). Then on a new line, write INSIGHT: followed by a brief 1-2 sentence explanation.**\n\n")
+		promptBuilder.WriteString("- Is optimized for SEO and user experience\n")
+		if gscData != nil {
+			if topQueries, ok := gscData["top_queries"].([]string); ok && len(topQueries) > 0 {
+				promptBuilder.WriteString("- Incorporates relevant keywords from top search queries naturally\n")
+			}
+		}
+		promptBuilder.WriteString("\n**Your response MUST start with RECOMMENDATION: followed by the improved title text (no HTML tags, no quotes, just the text). Then on a new line, write INSIGHT: followed by a brief 1-2 sentence explanation that references traffic data if available.**\n\n")
 		promptBuilder.WriteString("Example format:\n")
 		promptBuilder.WriteString("RECOMMENDATION: Exciting Beta Launch - TransferForge: Features & Updates Revealed\n\n")
 		promptBuilder.WriteString("INSIGHT: This improved title expands the original to 55 characters, adding descriptive keywords that better convey the page content and improve search visibility.\n")
@@ -218,11 +275,24 @@ func (c *AIClient) GenerateIssueInsight(ctx context.Context, userID string, issu
 		currentMetaDesc := getString(page, "meta_description")
 		promptBuilder.WriteString("\n**CRITICAL: You MUST format your response EXACTLY as shown below. Do not include any other sections or explanations.**\n\n")
 		promptBuilder.WriteString(fmt.Sprintf("Current meta description: \"%s\"\n", currentMetaDesc))
+		if gscData != nil && len(gscData) > 0 {
+			if impressions, ok := gscData["impressions"].(float64); ok && impressions > 0 {
+				promptBuilder.WriteString(fmt.Sprintf("**IMPORTANT CONTEXT: This page receives %.0f monthly impressions. Optimizing the meta description could improve CTR.**\n\n", impressions))
+			}
+			if ctr, ok := gscData["ctr"].(float64); ok && ctr > 0 && ctr < 0.02 {
+				promptBuilder.WriteString(fmt.Sprintf("**OPTIMIZATION OPPORTUNITY: Current CTR is %.2f%%. An optimized meta description could improve this.**\n\n", ctr*100))
+			}
+		}
 		promptBuilder.WriteString("Based on the current meta description, page URL, title, H1, and content, create an optimized meta description that:\n")
 		promptBuilder.WriteString("- Is exactly 150-160 characters long\n")
 		promptBuilder.WriteString("- Improves upon the current meta description\n")
-		promptBuilder.WriteString("- Is compelling and includes a call-to-action when appropriate\n\n")
-		promptBuilder.WriteString("**Your response MUST start with RECOMMENDATION: followed by the improved meta description text (no HTML tags, no quotes, just the text). Then on a new line, write INSIGHT: followed by a brief 1-2 sentence explanation.**\n\n")
+		promptBuilder.WriteString("- Is compelling and includes a call-to-action when appropriate\n")
+		if gscData != nil {
+			if topQueries, ok := gscData["top_queries"].([]string); ok && len(topQueries) > 0 {
+				promptBuilder.WriteString("- Incorporates relevant keywords from top search queries naturally\n")
+			}
+		}
+		promptBuilder.WriteString("\n**Your response MUST start with RECOMMENDATION: followed by the improved meta description text (no HTML tags, no quotes, just the text). Then on a new line, write INSIGHT: followed by a brief 1-2 sentence explanation that references traffic data if available.**\n\n")
 		promptBuilder.WriteString("Example format:\n")
 		promptBuilder.WriteString("RECOMMENDATION: Discover the latest updates and features from TransferForge. Stay informed and enhance your experience!\n\n")
 		promptBuilder.WriteString("INSIGHT: This improved meta description optimizes length while maintaining clarity and adding a compelling call-to-action.\n")
@@ -306,8 +376,25 @@ func (c *AIClient) GenerateCrawlSummary(ctx context.Context, userID string, craw
 		promptBuilder.WriteString(fmt.Sprintf("- Pages missing metadata: %d\n", metadataIssues))
 	}
 
-	if gscSummary, ok := crawlData["gsc_summary"].(string); ok && gscSummary != "" {
-		promptBuilder.WriteString(fmt.Sprintf("\nGSC metrics summary: %s\n", gscSummary))
+	if gscSummary, ok := crawlData["gsc_summary"].(map[string]interface{}); ok && len(gscSummary) > 0 {
+		promptBuilder.WriteString("\nGoogle Search Console Performance Summary:\n")
+		if impressions, ok := gscSummary["total_impressions"].(float64); ok && impressions > 0 {
+			promptBuilder.WriteString(fmt.Sprintf("- Total Monthly Impressions: %.0f\n", impressions))
+		}
+		if clicks, ok := gscSummary["total_clicks"].(float64); ok && clicks > 0 {
+			promptBuilder.WriteString(fmt.Sprintf("- Total Monthly Clicks: %.0f\n", clicks))
+		}
+		if ctr, ok := gscSummary["average_ctr"].(float64); ok && ctr > 0 {
+			ctrPercent := ctr * 100
+			promptBuilder.WriteString(fmt.Sprintf("- Average CTR: %.2f%%\n", ctrPercent))
+		}
+		if position, ok := gscSummary["average_position"].(float64); ok && position > 0 {
+			promptBuilder.WriteString(fmt.Sprintf("- Average Position: %.1f\n", position))
+		}
+		if capturedOn, ok := gscSummary["captured_on"].(string); ok {
+			promptBuilder.WriteString(fmt.Sprintf("- Data Period: %s\n", capturedOn))
+		}
+		promptBuilder.WriteString("\n**Use this search performance data to prioritize recommendations. Pages with high impressions but low CTR are prime candidates for optimization. Issues affecting high-traffic pages should be prioritized.**\n")
 	}
 
 	promptBuilder.WriteString("\nProvide:\n")

@@ -238,16 +238,18 @@
 			<div class="mb-12">
 				<h3 class="text-2xl md:text-3xl font-heading font-bold mb-6 text-[#8ec07c]">3.1 AI Integration</h3>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-[#8ec07c]/30">
 						<div class="flex items-start gap-3">
-							<Sparkles class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<Sparkles class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">AI recommendations for issues</span>
+							<span class="ml-auto text-xs text-[#8ec07c] font-semibold">✓ COMPLETE</span>
 						</div>
 					</div>
-					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-[#8ec07c]/30">
 						<div class="flex items-start gap-3">
-							<Sparkles class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<Sparkles class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">AI crawl summary reports</span>
+							<span class="ml-auto text-xs text-[#8ec07c] font-semibold">✓ COMPLETE</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">

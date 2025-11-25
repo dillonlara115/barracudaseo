@@ -191,7 +191,9 @@ Team collaboration is built into the platform.
 Our roadmap includes:
 
 - **Full CLI release** for local crawls  
-- **AI-powered issue explanations & fix recommendations**  
+- **AI-powered issue insights & crawl summaries** ✓ **NOW AVAILABLE**  
+- **Google Search Console integration** (traffic-based prioritization)  
+- **AI-enhanced priority scoring** (combining crawl + GSC data)  
 - **Slack + email audit summaries**  
 - **Google Drive auto-sync**  
 - **GA4/GSC blended insights**  

@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dillonlara115/barracuda/internal/ai"
@@ -20,7 +22,8 @@ type IssueInsightRequest struct {
 
 // CrawlSummaryRequest represents a request to generate a crawl summary
 type CrawlSummaryRequest struct {
-	CrawlID string `json:"crawl_id"`
+	CrawlID      string `json:"crawl_id"`
+	ForceRefresh bool   `json:"force_refresh,omitempty"` // If true, bypass cache and regenerate
 }
 
 // OpenAIKeyRequest represents a request to save OpenAI API key
@@ -134,8 +137,7 @@ func (s *Server) handleIssueInsight(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Load GSC data if available (optional)
-	var gscData map[string]interface{}
-	// TODO: Load GSC data if GSC integration is available
+	gscData := s.loadGSCDataForPage(projectID, getString(page, "url"))
 
 	// Initialize AI client
 	aiClient := ai.NewAIClient(s.supabase, s.serviceRole, s.logger)
@@ -197,23 +199,24 @@ func (s *Server) handleCrawlSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if summary already exists (caching)
-	// Use serviceRole and filter by user_id to check cache
-	var existingSummaries []map[string]interface{}
-	data, _, err := s.serviceRole.From("ai_crawl_summaries").
-		Select("*", "", false).
-		Eq("crawl_id", req.CrawlID).
-		Eq("user_id", userID).
-		Execute()
-	if err == nil {
-		json.Unmarshal(data, &existingSummaries)
-		if len(existingSummaries) > 0 {
-			// Return cached summary
-			s.respondJSON(w, http.StatusOK, map[string]interface{}{
-				"summary": existingSummaries[0]["summary_text"],
-				"cached":   true,
-			})
-			return
+	// Check if summary already exists (caching) - skip if force_refresh is true
+	if !req.ForceRefresh {
+		var existingSummaries []map[string]interface{}
+		data, _, err := s.serviceRole.From("ai_crawl_summaries").
+			Select("*", "", false).
+			Eq("crawl_id", req.CrawlID).
+			Eq("user_id", userID).
+			Execute()
+		if err == nil {
+			json.Unmarshal(data, &existingSummaries)
+			if len(existingSummaries) > 0 {
+				// Return cached summary
+				s.respondJSON(w, http.StatusOK, map[string]interface{}{
+					"summary": existingSummaries[0]["summary_text"],
+					"cached":   true,
+				})
+				return
+			}
 		}
 	}
 
@@ -332,6 +335,12 @@ func (s *Server) handleCrawlSummary(w http.ResponseWriter, r *http.Request) {
 	}
 	crawlSummaryData["metadata_issues"] = metadataCount
 
+	// Load GSC summary data if available (optional)
+	gscSummaryData := s.loadGSCSummaryData(projectID)
+	if gscSummaryData != nil {
+		crawlSummaryData["gsc_summary"] = gscSummaryData
+	}
+
 	// Initialize AI client
 	aiClient := ai.NewAIClient(s.supabase, s.serviceRole, s.logger)
 
@@ -344,6 +353,19 @@ func (s *Server) handleCrawlSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Save to cache (using serviceRole since we've verified access)
+	// If force_refresh is true, delete old cached summaries first
+	if req.ForceRefresh {
+		_, _, err := s.serviceRole.From("ai_crawl_summaries").
+			Delete("", "").
+			Eq("crawl_id", req.CrawlID).
+			Eq("user_id", userID).
+			Execute()
+		if err != nil {
+			s.logger.Warn("Failed to delete old cached summary", zap.Error(err))
+			// Continue anyway
+		}
+	}
+	
 	summaryRecord := map[string]interface{}{
 		"id":           uuid.New().String(),
 		"crawl_id":     req.CrawlID,
@@ -463,5 +485,218 @@ func getValue(m map[string]interface{}, key string) interface{} {
 		return val
 	}
 	return nil
+}
+
+// normalizeURLForGSC normalizes a URL to match GSC data format
+func normalizeURLForGSC(url string) string {
+	url = strings.TrimSuffix(url, "/")
+	url = strings.ToLower(url)
+	return url
+}
+
+// loadGSCDataForPage loads GSC performance data for a specific page URL
+func (s *Server) loadGSCDataForPage(projectID, pageURL string) map[string]interface{} {
+	if pageURL == "" || projectID == "" {
+		return nil
+	}
+
+	normalizedURL := normalizeURLForGSC(pageURL)
+
+	// Get the latest snapshot for this project
+	var snapshots []map[string]interface{}
+	snapshotData, _, err := s.serviceRole.From("gsc_performance_snapshots").
+		Select("id,captured_on", "", false).
+		Eq("project_id", projectID).
+		Execute()
+	if err != nil {
+		s.logger.Debug("No GSC snapshots found", zap.String("project_id", projectID), zap.Error(err))
+		return nil
+	}
+	if err := json.Unmarshal(snapshotData, &snapshots); err != nil || len(snapshots) == 0 {
+		return nil
+	}
+	
+	// Sort by captured_on descending and take the first one
+	// Convert captured_on to time for comparison
+	type snapshotWithTime struct {
+		snapshot map[string]interface{}
+		time     time.Time
+	}
+	var snapshotsWithTime []snapshotWithTime
+	for _, snap := range snapshots {
+		capturedOnStr, ok := snap["captured_on"].(string)
+		if !ok {
+			continue
+		}
+		capturedOn, err := time.Parse("2006-01-02", capturedOnStr)
+		if err != nil {
+			continue
+		}
+		snapshotsWithTime = append(snapshotsWithTime, snapshotWithTime{
+			snapshot: snap,
+			time:     capturedOn,
+		})
+	}
+	
+	if len(snapshotsWithTime) == 0 {
+		return nil
+	}
+	
+	// Sort descending by time
+	sort.Slice(snapshotsWithTime, func(i, j int) bool {
+		return snapshotsWithTime[i].time.After(snapshotsWithTime[j].time)
+	})
+	
+	snapshotID, ok := snapshotsWithTime[0].snapshot["id"].(string)
+	if !ok {
+		// Try converting to string
+		snapshotID = fmt.Sprintf("%v", snapshotsWithTime[0].snapshot["id"])
+		if snapshotID == "" || snapshotID == "<nil>" {
+			return nil
+		}
+	}
+
+	// Query GSC performance rows for this page
+	var rows []map[string]interface{}
+	rowData, _, err := s.serviceRole.From("gsc_performance_rows").
+		Select("*", "", false).
+		Eq("snapshot_id", snapshotID).
+		Eq("project_id", projectID).
+		Eq("row_type", "page").
+		Execute()
+	if err != nil {
+		s.logger.Debug("Failed to query GSC rows", zap.Error(err))
+		return nil
+	}
+	if err := json.Unmarshal(rowData, &rows); err != nil {
+		return nil
+	}
+
+	// Find matching row by normalized URL
+	for _, row := range rows {
+		dimensionValue, ok := row["dimension_value"].(string)
+		if !ok {
+			continue
+		}
+		if normalizeURLForGSC(dimensionValue) == normalizedURL {
+			metrics, _ := row["metrics"].(map[string]interface{})
+			topQueries, _ := row["top_queries"].([]interface{})
+
+			gscData := map[string]interface{}{
+				"impressions": getFloatValue(metrics, "impressions"),
+				"clicks":      getFloatValue(metrics, "clicks"),
+				"ctr":         getFloatValue(metrics, "ctr"),
+				"position":    getFloatValue(metrics, "position"),
+			}
+
+			// Add top queries if available
+			if len(topQueries) > 0 {
+				// Limit to top 5 queries for prompt
+				maxQueries := 5
+				if len(topQueries) < maxQueries {
+					maxQueries = len(topQueries)
+				}
+				queries := make([]string, 0, maxQueries)
+				for i := 0; i < maxQueries; i++ {
+					if query, ok := topQueries[i].(map[string]interface{}); ok {
+						if queryText, ok := query["query"].(string); ok {
+							queries = append(queries, queryText)
+						}
+					}
+				}
+				if len(queries) > 0 {
+					gscData["top_queries"] = queries
+				}
+			}
+
+			return gscData
+		}
+	}
+
+	return nil
+}
+
+// loadGSCSummaryData loads GSC summary data for a project
+func (s *Server) loadGSCSummaryData(projectID string) map[string]interface{} {
+	if projectID == "" {
+		return nil
+	}
+
+	// Get the latest snapshot
+	var snapshots []map[string]interface{}
+	snapshotData, _, err := s.serviceRole.From("gsc_performance_snapshots").
+		Select("*", "", false).
+		Eq("project_id", projectID).
+		Execute()
+	if err != nil {
+		return nil
+	}
+	if err := json.Unmarshal(snapshotData, &snapshots); err != nil || len(snapshots) == 0 {
+		return nil
+	}
+
+	// Sort by captured_on descending and take the first one
+	type snapshotWithTime struct {
+		snapshot map[string]interface{}
+		time     time.Time
+	}
+	var snapshotsWithTime []snapshotWithTime
+	for _, snap := range snapshots {
+		capturedOnStr, ok := snap["captured_on"].(string)
+		if !ok {
+			continue
+		}
+		capturedOn, err := time.Parse("2006-01-02", capturedOnStr)
+		if err != nil {
+			continue
+		}
+		snapshotsWithTime = append(snapshotsWithTime, snapshotWithTime{
+			snapshot: snap,
+			time:     capturedOn,
+		})
+	}
+	
+	if len(snapshotsWithTime) == 0 {
+		return nil
+	}
+	
+	// Sort descending by time
+	sort.Slice(snapshotsWithTime, func(i, j int) bool {
+		return snapshotsWithTime[i].time.After(snapshotsWithTime[j].time)
+	})
+
+	snapshot := snapshotsWithTime[0].snapshot
+	totals, _ := snapshot["totals"].(map[string]interface{})
+
+	if totals == nil || len(totals) == 0 {
+		return nil
+	}
+
+	return map[string]interface{}{
+		"total_impressions": getFloatValue(totals, "impressions"),
+		"total_clicks":      getFloatValue(totals, "clicks"),
+		"average_ctr":       getFloatValue(totals, "ctr"),
+		"average_position": getFloatValue(totals, "position"),
+		"captured_on":      snapshot["captured_on"],
+	}
+}
+
+// getFloatValue safely extracts a float value from a map
+func getFloatValue(m map[string]interface{}, key string) float64 {
+	if val, ok := m[key]; ok {
+		switch v := val.(type) {
+		case float64:
+			return v
+		case int:
+			return float64(v)
+		case int64:
+			return float64(v)
+		case string:
+			if f, err := strconv.ParseFloat(v, 64); err == nil {
+				return f
+			}
+		}
+	}
+	return 0
 }
 
