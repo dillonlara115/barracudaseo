@@ -194,6 +194,51 @@ This document tracks planned improvements for the Barracuda web dashboard to bet
 
 ---
 
+### [ ] Public-Facing Client Reports
+**Priority:** Medium  
+**Impact:** High  
+**Effort:** Medium-High
+
+- [ ] Generate shareable public URLs for client reports
+- [ ] No login required to view reports
+- [ ] Display issue listings with severity, type, affected pages
+- [ ] Include crawl summary and statistics
+- [ ] Optional password protection for reports
+- [ ] Expiring links (optional time-based access)
+- [ ] White-label branding options for agencies
+
+**Files to modify:**
+- New backend endpoint: `/api/reports/public/{reportId}` (GET, no auth required)
+- New component: `web/src/routes/reports/[reportId]/+page.svelte` (public route)
+- New backend table: `public_reports` (stores report metadata, access tokens, expiry)
+- Backend handler: `internal/api/report_handlers.go`
+- Frontend: Add "Generate Public Report" button in Dashboard
+
+**Implementation Notes:**
+- Generate unique, unguessable report IDs (UUIDs or secure tokens)
+- Store report data in database with access token
+- Public route bypasses authentication middleware
+- Optionally include password protection (simple hash)
+- Include expiry date for time-limited access
+- Display issues in clean, client-friendly format
+- Include agency branding if configured
+- Mobile-responsive design
+
+**Security Considerations:**
+- Use cryptographically secure random tokens
+- Rate limiting on public report endpoints
+- Optional IP whitelisting
+- Audit logging for report access
+- Consider GDPR/privacy implications for public data exposure
+
+**Example Use Cases:**
+- Agency shares SEO audit report with client via link
+- Client can view issues without creating account
+- Time-limited access for sensitive reports
+- Branded reports matching agency's visual identity
+
+---
+
 ### [ ] Enhanced Search & Filter
 **Priority:** Medium  
 **Impact:** Medium  

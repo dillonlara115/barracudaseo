@@ -415,6 +415,12 @@
 							<span class="text-white/90">Shareable links for client reporting</span>
 						</div>
 					</div>
+					<div class="bg-[#3c3836] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Public-facing client reports (no login required)</span>
+						</div>
+					</div>
 				</div>
 			</div>
 
@@ -438,6 +444,12 @@
 						<div class="flex items-start gap-3">
 							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Integrations with task managers (Jira, Asana, ClickUp)</span>
+						</div>
+					</div>
+					<div class="bg-[#3c3836] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Public client reports with issue listings</span>
 						</div>
 					</div>
 				</div>

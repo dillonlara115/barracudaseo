@@ -509,3 +509,67 @@ export async function generateCrawlSummary(crawlId, forceRefresh = false) {
     }
   });
 }
+
+// Create a public report for a crawl
+export async function createPublicReport(crawlId, options = {}) {
+  return authorizedJSON('/api/v1/reports/public', {
+    method: 'POST',
+    body: {
+      crawl_id: String(crawlId),
+      title: options.title || '',
+      description: options.description || '',
+      password: options.password || '',
+      expires_in_days: options.expiresInDays || null,
+      settings: options.settings || {}
+    }
+  });
+}
+
+// List all public reports for the current user
+export async function listPublicReports(projectId = null) {
+  const url = projectId 
+    ? `/api/v1/reports/public?project_id=${projectId}`
+    : '/api/v1/reports/public';
+  return authorizedJSON(url, {
+    method: 'GET'
+  });
+}
+
+// Delete a public report
+export async function deletePublicReport(reportId) {
+  return authorizedJSON(`/api/v1/reports/public/${reportId}`, {
+    method: 'DELETE'
+  });
+}
+
+// View a public report (no auth required)
+export async function viewPublicReport(accessToken, password = null) {
+  const apiUrl = getApiUrl();
+  const url = `${apiUrl}/api/public/reports/${accessToken}`;
+  
+  const options = {
+    method: password ? 'POST' : 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  };
+  
+  if (password) {
+    options.body = JSON.stringify({ password });
+  }
+  
+  try {
+    const response = await fetch(url, options);
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+      throw new Error(errorData.error || `Failed to fetch report: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error viewing public report:', error);
+    return { data: null, error };
+  }
+}

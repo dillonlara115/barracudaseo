@@ -16,6 +16,7 @@
   import GSCDashboard from './routes/GSCDashboard.svelte';
   import GSCKeywords from './routes/GSCKeywords.svelte';
   import TeamAccept from './routes/TeamAccept.svelte';
+  import PublicReportView from './routes/PublicReportView.svelte';
   import { loadSubscriptionData } from './lib/subscription.js';
 
   let loading = true;
@@ -23,7 +24,7 @@
   let currentHash = typeof window !== 'undefined' ? window.location.hash : '';
   
   $: isLegalPage = currentHash === '#/privacy' || currentHash === '#/terms';
-  $: isPublicPage = isLegalPage || currentHash.startsWith('#/team/accept');
+  $: isPublicPage = isLegalPage || currentHash.startsWith('#/team/accept') || currentHash.startsWith('#/reports/');
 
   // Route definitions
   const routes = {
@@ -39,6 +40,7 @@
     '/project/:projectId/gsc': GSCDashboard,
     '/project/:projectId/gsc/keywords': GSCKeywords,
     '/team/accept': TeamAccept,
+    '/reports/:token': PublicReportView,
     '/auth': Auth, // Auth route for when user is authenticated but needs to redirect
   };
 

@@ -9,6 +9,7 @@
   import GSCDashboardPanel from './GSCDashboardPanel.svelte';
   import GSCKeywordsPanel from './GSCKeywordsPanel.svelte';
   import CrawlSummary from './AI/CrawlSummary.svelte';
+  import PublicReportGenerator from './PublicReportGenerator.svelte';
   import Logo from './Logo.svelte';
   import { fetchProjects, fetchProjectGSCStatus, fetchProjectGSCDimensions, triggerProjectGSCSync } from '../lib/data.js';
   import { buildEnrichedIssues } from '../lib/gsc.js';
@@ -301,6 +302,7 @@
 
       {#if crawlId}
         <CrawlSummary {crawlId} />
+        <PublicReportGenerator {crawlId} {projectId} />
       {/if}
     </div>
   {:else if activeTab === 'results'}

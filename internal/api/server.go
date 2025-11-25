@@ -128,9 +128,15 @@ func (s *Server) Router() http.Handler {
 	v1.HandleFunc("/ai/crawl-summary", s.handleCrawlSummary)
 	// Integrations routes
 	v1.HandleFunc("/integrations/openai-key", s.handleOpenAIKey)
+	// Public report routes (authenticated)
+	v1.HandleFunc("/reports/public/", s.handlePublicReportByID) // Handles DELETE for specific report
+	v1.HandleFunc("/reports/public", s.handlePublicReports) // Handles GET (list) and POST (create)
 
 	// Wrap v1 routes with authentication middleware
 	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", s.authMiddleware(v1)))
+
+	// Public report viewing (no auth required)
+	mux.HandleFunc("/api/public/reports/", s.handleViewPublicReport)
 
 	return s.corsMiddleware(s.loggingMiddleware(mux))
 }
