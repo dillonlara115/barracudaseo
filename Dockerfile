@@ -11,8 +11,11 @@ RUN apk add --no-cache git make nodejs npm
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy source code
+# Copy source code (excluding node_modules to avoid Go import path issues)
 COPY . .
+
+# Remove node_modules before running go mod tidy (they cause import path errors)
+RUN rm -rf web/node_modules marketing/node_modules || true
 
 # Update go.sum to include all dependencies
 RUN go mod tidy

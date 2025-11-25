@@ -48,7 +48,9 @@ supabase/.temp
 
 # Node modules (will be built in container)
 web/node_modules/
+marketing/node_modules/
 
 # Frontend dist (will be built in container)
 web/dist/
+marketing/dist/
 
