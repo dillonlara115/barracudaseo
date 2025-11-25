@@ -171,6 +171,55 @@
 							<span class="text-white/90">GSC overlays inside UI</span>
 						</div>
 					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">AI insights with GSC data integration</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Public-facing client reports</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- 1.5 Marketing Site -->
+			<div class="mb-12">
+				<h3 class="text-2xl md:text-3xl font-heading font-bold mb-6 text-[#8ec07c]">1.5 Marketing Site</h3>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Updated feature descriptions</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">New visual direction to match the app</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">SEO-optimized landing pages</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Pricing, features, and signup funnels</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Product roadmap page</span>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -188,35 +237,9 @@
 				<h2 class="text-4xl md:text-5xl font-heading font-bold text-white">In Progress</h2>
 			</div>
 
-			<!-- 2.1 Marketing Site Enhancements -->
-			<div class="mb-12">
-				<h3 class="text-2xl md:text-3xl font-heading font-bold mb-6 text-[#8ec07c]">2.2 Marketing Site Enhancements</h3>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div class="bg-[#3c3836] rounded-lg p-6 border border-[#d79921]/30">
-						<div class="flex items-start gap-3">
-							<Clock class="w-5 h-5 text-[#d79921] flex-shrink-0 mt-0.5" />
-							<span class="text-white/90">Updated feature descriptions</span>
-						</div>
-					</div>
-					<div class="bg-[#3c3836] rounded-lg p-6 border border-[#d79921]/30">
-						<div class="flex items-start gap-3">
-							<Clock class="w-5 h-5 text-[#d79921] flex-shrink-0 mt-0.5" />
-							<span class="text-white/90">New visual direction to match the app</span>
-						</div>
-					</div>
-					<div class="bg-[#3c3836] rounded-lg p-6 border border-[#d79921]/30">
-						<div class="flex items-start gap-3">
-							<Clock class="w-5 h-5 text-[#d79921] flex-shrink-0 mt-0.5" />
-							<span class="text-white/90">SEO-optimized landing pages</span>
-						</div>
-					</div>
-					<div class="bg-[#3c3836] rounded-lg p-6 border border-[#d79921]/30">
-						<div class="flex items-start gap-3">
-							<Clock class="w-5 h-5 text-[#d79921] flex-shrink-0 mt-0.5" />
-							<span class="text-white/90">Pricing, features, and signup funnels</span>
-						</div>
-					</div>
-				</div>
+			<!-- Note: Marketing Site Enhancements moved to Completed -->
+			<div class="text-center py-8 text-white/60">
+				<p>More features coming soon...</p>
 			</div>
 		</div>
 	</div>
@@ -264,10 +287,11 @@
 							<span class="text-white/90">AI-powered priority scoring</span>
 						</div>
 					</div>
-					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-[#8ec07c]/30">
 						<div class="flex items-start gap-3">
-							<Sparkles class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<Sparkles class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">AI insights combining crawl + GSC</span>
+							<span class="ml-auto text-xs text-[#8ec07c] font-semibold">✓ COMPLETE</span>
 						</div>
 					</div>
 				</div>
@@ -413,12 +437,14 @@
 						<div class="flex items-start gap-3">
 							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Shareable links for client reporting</span>
+							<span class="ml-auto text-xs text-[#8ec07c] font-semibold">✓ COMPLETE</span>
 						</div>
 					</div>
 					<div class="bg-[#3c3836] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
 							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Public-facing client reports (no login required)</span>
+							<span class="ml-auto text-xs text-[#8ec07c] font-semibold">✓ COMPLETE</span>
 						</div>
 					</div>
 				</div>
@@ -444,12 +470,6 @@
 						<div class="flex items-start gap-3">
 							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Integrations with task managers (Jira, Asana, ClickUp)</span>
-						</div>
-					</div>
-					<div class="bg-[#3c3836] rounded-lg p-6 border border-white/10">
-						<div class="flex items-start gap-3">
-							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
-							<span class="text-white/90">Public client reports with issue listings</span>
 						</div>
 					</div>
 				</div>
