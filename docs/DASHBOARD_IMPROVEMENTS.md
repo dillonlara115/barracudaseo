@@ -194,17 +194,17 @@ This document tracks planned improvements for the Barracuda web dashboard to bet
 
 ---
 
-### [ ] Public-Facing Client Reports
+### [✅] Public-Facing Client Reports
 **Priority:** Medium  
 **Impact:** High  
 **Effort:** Medium-High
 
-- [ ] Generate shareable public URLs for client reports
-- [ ] No login required to view reports
-- [ ] Display issue listings with severity, type, affected pages
-- [ ] Include crawl summary and statistics
-- [ ] Optional password protection for reports
-- [ ] Expiring links (optional time-based access)
+- [✅] Generate shareable public URLs for client reports
+- [✅] No login required to view reports
+- [✅] Display issue listings with severity, type, affected pages
+- [✅] Include crawl summary and statistics
+- [✅] Optional password protection for reports
+- [✅] Expiring links (optional time-based access)
 - [ ] White-label branding options for agencies
 
 **Files to modify:**

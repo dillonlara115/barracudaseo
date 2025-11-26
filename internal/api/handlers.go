@@ -435,6 +435,27 @@ func (s *Server) handleProjectByID(w http.ResponseWriter, r *http.Request) {
 		case "gsc":
 			s.handleProjectGSC(w, r, projectID, userID, parts[2:])
 			return
+		case "keyword-metrics":
+			if r.Method == http.MethodGet {
+				s.handleProjectKeywordMetrics(w, r, projectID, userID)
+			} else {
+				s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			}
+			return
+		case "keyword-usage":
+			if r.Method == http.MethodGet {
+				s.handleKeywordUsage(w, r, projectID, userID)
+			} else {
+				s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			}
+			return
+		case "impact-first":
+			if r.Method == http.MethodGet {
+				s.handleImpactFirstView(w, r, projectID, userID)
+			} else {
+				s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			}
+			return
 		default:
 			s.logger.Debug("Unknown resource", zap.String("resource", resource), zap.String("path", r.URL.Path), zap.Strings("parts", parts))
 			s.respondError(w, http.StatusNotFound, fmt.Sprintf("Resource not found: %s", resource))

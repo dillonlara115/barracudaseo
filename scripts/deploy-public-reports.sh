@@ -127,3 +127,5 @@ echo "1. Test creating a public report in the app"
 echo "2. Verify the public URL works without login"
 echo "3. Check that project name/URL and issue URLs display correctly"
 
+
+

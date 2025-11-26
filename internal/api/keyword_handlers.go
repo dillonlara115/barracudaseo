@@ -1,0 +1,1101 @@
+package api
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/dillonlara115/barracuda/internal/dataforseo"
+	"github.com/google/uuid"
+	"go.uber.org/zap"
+)
+
+// CreateKeywordRequest represents a request to create a keyword
+type CreateKeywordRequest struct {
+	ProjectID     string   `json:"project_id"`
+	Keyword       string   `json:"keyword"`
+	TargetURL     string   `json:"target_url,omitempty"`
+	LocationName  string   `json:"location_name"`
+	LocationCode  *int     `json:"location_code,omitempty"`
+	LanguageName  string   `json:"language_name"`
+	Device        string   `json:"device"`
+	SearchEngine  string   `json:"search_engine"`
+	Tags          []string `json:"tags,omitempty"`
+	CheckFrequency string  `json:"check_frequency,omitempty"` // manual | daily | weekly
+}
+
+// KeywordResponse represents a keyword in API responses
+type KeywordResponse struct {
+	ID             string     `json:"id"`
+	ProjectID      string     `json:"project_id"`
+	Keyword        string     `json:"keyword"`
+	TargetURL      *string    `json:"target_url,omitempty"`
+	LocationName   string     `json:"location_name"`
+	LocationCode   *int       `json:"location_code,omitempty"`
+	LanguageName   string     `json:"language_name"`
+	Device         string     `json:"device"`
+	SearchEngine   string     `json:"search_engine"`
+	Tags           []string   `json:"tags"`
+	CheckFrequency string     `json:"check_frequency,omitempty"` // manual | daily | weekly
+	LastCheckedAt  *time.Time `json:"last_checked_at,omitempty"`
+	NextCheckAt    *time.Time `json:"next_check_at,omitempty"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
+	// Enriched fields
+	LatestPosition *int       `json:"latest_position,omitempty"`
+	BestPosition   *int       `json:"best_position,omitempty"`
+	LastChecked    *time.Time `json:"last_checked,omitempty"`
+	Trend          string     `json:"trend,omitempty"` // "up", "down", "same"
+}
+
+// RankSnapshotResponse represents a rank snapshot
+type RankSnapshotResponse struct {
+	ID             string    `json:"id"`
+	KeywordID      string    `json:"keyword_id"`
+	CheckedAt       time.Time `json:"checked_at"`
+	PositionAbsolute *int     `json:"position_absolute,omitempty"`
+	PositionOrganic *int      `json:"position_organic,omitempty"`
+	SERPURL         *string   `json:"serp_url,omitempty"`
+	SERPTitle       *string   `json:"serp_title,omitempty"`
+	SERPSnippet     *string   `json:"serp_snippet,omitempty"`
+	SERPFeatures    []string  `json:"serp_features,omitempty"`
+	RankType        string    `json:"rank_type"`
+}
+
+// handleKeywords handles keyword collection endpoints
+func (s *Server) handleKeywords(w http.ResponseWriter, r *http.Request) {
+	userID, ok := userIDFromContext(r.Context())
+	if !ok {
+		s.respondError(w, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+
+	switch r.Method {
+	case http.MethodPost:
+		s.handleCreateKeyword(w, r, userID)
+	case http.MethodGet:
+		s.handleListKeywords(w, r, userID)
+	default:
+		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+	}
+}
+
+// handleKeywordByID handles keyword-specific endpoints
+func (s *Server) handleKeywordByID(w http.ResponseWriter, r *http.Request) {
+	userID, ok := userIDFromContext(r.Context())
+	if !ok {
+		s.respondError(w, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+
+	// Extract keyword ID from path
+	path := strings.TrimPrefix(r.URL.Path, "/keywords/")
+	path = strings.Trim(path, "/")
+	parts := strings.Split(path, "/")
+	if len(parts) == 0 || parts[0] == "" {
+		s.respondError(w, http.StatusBadRequest, "Keyword ID is required")
+		return
+	}
+
+	keywordID := parts[0]
+
+	// Check if there's a sub-resource (e.g., /keywords/:id/check or /keywords/:id/snapshots)
+	if len(parts) > 1 {
+		subResource := parts[1]
+		switch subResource {
+		case "check":
+			if r.Method == http.MethodPost {
+				s.handleCheckKeyword(w, r, userID, keywordID)
+				return
+			}
+		case "snapshots":
+			if r.Method == http.MethodGet {
+				s.handleGetKeywordSnapshots(w, r, userID, keywordID)
+				return
+			}
+		}
+	}
+
+	// Handle standard CRUD operations
+	switch r.Method {
+	case http.MethodGet:
+		s.handleGetKeyword(w, r, userID, keywordID)
+	case http.MethodPut, http.MethodPatch:
+		s.handleUpdateKeyword(w, r, userID, keywordID)
+	case http.MethodDelete:
+		s.handleDeleteKeyword(w, r, userID, keywordID)
+	default:
+		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+	}
+}
+
+// handleCreateKeyword handles POST /api/v1/keywords
+func (s *Server) handleCreateKeyword(w http.ResponseWriter, r *http.Request, userID string) {
+	var req CreateKeywordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request body: %v", err))
+		return
+	}
+
+	// Validate required fields
+	if req.ProjectID == "" {
+		s.respondError(w, http.StatusBadRequest, "project_id is required")
+		return
+	}
+	if req.Keyword == "" {
+		s.respondError(w, http.StatusBadRequest, "keyword is required")
+		return
+	}
+	if req.LocationName == "" {
+		s.respondError(w, http.StatusBadRequest, "location_name is required")
+		return
+	}
+	if req.Device == "" {
+		req.Device = "desktop"
+	}
+	if req.LanguageName == "" {
+		req.LanguageName = "English"
+	}
+	if req.SearchEngine == "" {
+		req.SearchEngine = "google.com"
+	}
+	if req.CheckFrequency == "" {
+		req.CheckFrequency = "manual"
+	}
+	if req.CheckFrequency != "manual" && req.CheckFrequency != "daily" && req.CheckFrequency != "weekly" {
+		s.respondError(w, http.StatusBadRequest, "check_frequency must be 'manual', 'daily', or 'weekly'")
+		return
+	}
+
+	// Verify project access
+	hasAccess, err := s.verifyProjectAccess(userID, req.ProjectID)
+	if err != nil {
+		s.logger.Error("Failed to verify project access", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify project access")
+		return
+	}
+	if !hasAccess {
+		s.respondError(w, http.StatusForbidden, "You don't have access to this project")
+		return
+	}
+
+	// Check subscription tier limits
+	profile, err := s.fetchProfile(userID)
+	if err != nil {
+		s.logger.Error("Failed to fetch user profile", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify subscription")
+		return
+	}
+
+	// Check if user is a team member - if so, use account owner's subscription tier
+	teamInfo := s.getTeamInfo(userID, profile)
+	if teamInfo != nil && !teamInfo.IsOwner {
+		ownerProfile, err := s.fetchProfile(teamInfo.AccountOwnerID)
+		if err == nil && ownerProfile != nil {
+			profile = ownerProfile
+		}
+	}
+
+	subscriptionTier := "free"
+	if profile != nil {
+		if tier, ok := profile["subscription_tier"].(string); ok && tier != "" {
+			subscriptionTier = tier
+		}
+	}
+
+	// Get current keyword count for project
+	var keywords []map[string]interface{}
+	keywordData, _, err := s.serviceRole.From("keywords").Select("id", "", false).Eq("project_id", req.ProjectID).Execute()
+	if err == nil {
+		json.Unmarshal(keywordData, &keywords)
+	}
+	currentKeywordCount := len(keywords)
+
+	// Define limits based on subscription tier
+	var maxKeywords int
+	switch subscriptionTier {
+	case "pro":
+		maxKeywords = 500
+	case "team":
+		maxKeywords = 2000
+	default: // free
+		maxKeywords = 10
+	}
+
+	if currentKeywordCount >= maxKeywords {
+		s.respondError(w, http.StatusForbidden, fmt.Sprintf("Your %s plan allows a maximum of %d keywords. Please upgrade to add more keywords.", subscriptionTier, maxKeywords))
+		return
+	}
+
+	// Create keyword record
+	keywordID := uuid.New().String()
+	keywordDataMap := map[string]interface{}{
+		"id":             keywordID,
+		"project_id":    req.ProjectID,
+		"keyword":       req.Keyword,
+		"location_name": req.LocationName,
+		"language_name": req.LanguageName,
+		"device":        req.Device,
+		"search_engine":  req.SearchEngine,
+		"tags":          req.Tags,
+		"check_frequency": req.CheckFrequency,
+	}
+
+	if req.TargetURL != "" {
+		keywordDataMap["target_url"] = req.TargetURL
+	}
+	if req.LocationCode != nil {
+		keywordDataMap["location_code"] = *req.LocationCode
+	}
+
+	_, _, err = s.serviceRole.From("keywords").Insert(keywordDataMap, false, "", "", "").Execute()
+	if err != nil {
+		// Check for duplicate key violation (PostgreSQL error code 23505)
+		if strings.Contains(err.Error(), "23505") || strings.Contains(err.Error(), "duplicate key") {
+			s.respondError(w, http.StatusConflict, fmt.Sprintf(
+				"A keyword '%s' already exists for this project with location '%s' and device '%s'. Please use a different combination or update the existing keyword.",
+				req.Keyword, req.LocationName, req.Device,
+			))
+			return
+		}
+		s.logger.Error("Failed to insert keyword", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to create keyword")
+		return
+	}
+
+	// Fetch created keyword
+	keyword, err := s.fetchKeyword(keywordID)
+	if err != nil {
+		s.logger.Error("Failed to fetch created keyword", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to fetch created keyword")
+		return
+	}
+
+	s.respondJSON(w, http.StatusCreated, keyword)
+}
+
+// handleListKeywords handles GET /api/v1/keywords?project_id=...
+func (s *Server) handleListKeywords(w http.ResponseWriter, r *http.Request, userID string) {
+	projectID := r.URL.Query().Get("project_id")
+	if projectID == "" {
+		s.respondError(w, http.StatusBadRequest, "project_id query parameter is required")
+		return
+	}
+
+	// Verify project access
+	hasAccess, err := s.verifyProjectAccess(userID, projectID)
+	if err != nil {
+		s.logger.Error("Failed to verify project access", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify project access")
+		return
+	}
+	if !hasAccess {
+		s.respondError(w, http.StatusForbidden, "You don't have access to this project")
+		return
+	}
+
+	// Build query using serviceRole since we've already verified project access
+	query := s.serviceRole.From("keywords").Select("*", "", false).Eq("project_id", projectID)
+
+	// Apply filters
+	if device := r.URL.Query().Get("device"); device != "" {
+		query = query.Eq("device", device)
+	}
+	if location := r.URL.Query().Get("location"); location != "" {
+		query = query.Eq("location_name", location)
+	}
+	if tag := r.URL.Query().Get("tag"); tag != "" {
+		query = query.Contains("tags", []string{tag})
+	}
+
+	// Order by created_at desc
+	query = query.Order("created_at", nil)
+
+	data, _, err := query.Execute()
+	if err != nil {
+		// Check if error is because table doesn't exist yet (migration not run)
+		if strings.Contains(err.Error(), "Could not find the table") || 
+		   strings.Contains(err.Error(), "does not exist") ||
+		   strings.Contains(err.Error(), "PGRST205") ||
+		   strings.Contains(err.Error(), "relation") {
+			// Table doesn't exist yet - return empty array (graceful degradation)
+			s.logger.Info("keywords table not found, returning empty list", 
+				zap.String("project_id", projectID),
+				zap.String("user_id", userID))
+			s.respondJSON(w, http.StatusOK, map[string]interface{}{
+				"keywords": []KeywordResponse{},
+				"count":    0,
+			})
+			return
+		}
+		s.logger.Error("Failed to list keywords", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to list keywords")
+		return
+	}
+
+	var keywords []map[string]interface{}
+	if err := json.Unmarshal(data, &keywords); err != nil {
+		s.logger.Error("Failed to parse keywords data", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to parse keywords")
+		return
+	}
+	
+	// Handle empty result gracefully
+	if keywords == nil {
+		keywords = []map[string]interface{}{}
+	}
+
+	// Enrich keywords with latest snapshot data
+	enrichedKeywords := make([]KeywordResponse, 0, len(keywords))
+	for _, k := range keywords {
+		keyword := s.mapToKeywordResponse(k)
+		
+		// Fetch latest snapshot
+		snapshot, err := s.fetchLatestSnapshot(keyword.ID)
+		if err == nil && snapshot != nil {
+			if snapshot.PositionOrganic != nil {
+				keyword.LatestPosition = snapshot.PositionOrganic
+			}
+			keyword.LastChecked = &snapshot.CheckedAt
+			
+			// Calculate best position and trend
+			bestPos, trend := s.calculateBestPositionAndTrend(keyword.ID, snapshot.PositionOrganic)
+			keyword.BestPosition = bestPos
+			keyword.Trend = trend
+		}
+		
+		enrichedKeywords = append(enrichedKeywords, keyword)
+	}
+
+	s.respondJSON(w, http.StatusOK, map[string]interface{}{
+		"keywords": enrichedKeywords,
+		"count":    len(enrichedKeywords),
+	})
+}
+
+// handleGetKeyword handles GET /api/v1/keywords/:id
+func (s *Server) handleGetKeyword(w http.ResponseWriter, r *http.Request, userID string, keywordID string) {
+	keyword, err := s.fetchKeyword(keywordID)
+	if err != nil {
+		s.respondError(w, http.StatusNotFound, "Keyword not found")
+		return
+	}
+
+	// Verify project access
+	hasAccess, err := s.verifyProjectAccess(userID, keyword.ProjectID)
+	if err != nil {
+		s.logger.Error("Failed to verify project access", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify project access")
+		return
+	}
+	if !hasAccess {
+		s.respondError(w, http.StatusForbidden, "You don't have access to this keyword")
+		return
+	}
+
+	// Enrich with snapshot data
+	snapshot, err := s.fetchLatestSnapshot(keywordID)
+	if err == nil && snapshot != nil {
+		if snapshot.PositionOrganic != nil {
+			keyword.LatestPosition = snapshot.PositionOrganic
+		}
+		keyword.LastChecked = &snapshot.CheckedAt
+		bestPos, trend := s.calculateBestPositionAndTrend(keywordID, snapshot.PositionOrganic)
+		keyword.BestPosition = bestPos
+		keyword.Trend = trend
+	}
+
+	s.respondJSON(w, http.StatusOK, keyword)
+}
+
+// handleUpdateKeyword handles PUT/PATCH /api/v1/keywords/:id
+func (s *Server) handleUpdateKeyword(w http.ResponseWriter, r *http.Request, userID string, keywordID string) {
+	keyword, err := s.fetchKeyword(keywordID)
+	if err != nil {
+		s.respondError(w, http.StatusNotFound, "Keyword not found")
+		return
+	}
+
+	// Verify project access
+	hasAccess, err := s.verifyProjectAccess(userID, keyword.ProjectID)
+	if err != nil {
+		s.logger.Error("Failed to verify project access", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify project access")
+		return
+	}
+	if !hasAccess {
+		s.respondError(w, http.StatusForbidden, "You don't have access to this keyword")
+		return
+	}
+
+	var updates map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
+		s.respondError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request body: %v", err))
+		return
+	}
+
+	// Update keyword
+	_, _, err = s.serviceRole.From("keywords").Update(updates, "", "").Eq("id", keywordID).Execute()
+	if err != nil {
+		s.logger.Error("Failed to update keyword", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to update keyword")
+		return
+	}
+
+	// Fetch updated keyword
+	updatedKeyword, err := s.fetchKeyword(keywordID)
+	if err != nil {
+		s.logger.Error("Failed to fetch updated keyword", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to fetch updated keyword")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, updatedKeyword)
+}
+
+// handleDeleteKeyword handles DELETE /api/v1/keywords/:id
+func (s *Server) handleDeleteKeyword(w http.ResponseWriter, r *http.Request, userID string, keywordID string) {
+	keyword, err := s.fetchKeyword(keywordID)
+	if err != nil {
+		s.respondError(w, http.StatusNotFound, "Keyword not found")
+		return
+	}
+
+	// Verify project access
+	hasAccess, err := s.verifyProjectAccess(userID, keyword.ProjectID)
+	if err != nil {
+		s.logger.Error("Failed to verify project access", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify project access")
+		return
+	}
+	if !hasAccess {
+		s.respondError(w, http.StatusForbidden, "You don't have access to this keyword")
+		return
+	}
+
+	// Delete keyword (cascade will delete snapshots and tasks)
+	_, _, err = s.serviceRole.From("keywords").Delete("", "").Eq("id", keywordID).Execute()
+	if err != nil {
+		s.logger.Error("Failed to delete keyword", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to delete keyword")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// handleCheckKeyword handles POST /api/v1/keywords/:id/check
+func (s *Server) handleCheckKeyword(w http.ResponseWriter, r *http.Request, userID string, keywordID string) {
+	keyword, err := s.fetchKeyword(keywordID)
+	if err != nil {
+		s.respondError(w, http.StatusNotFound, "Keyword not found")
+		return
+	}
+
+	// Verify project access
+	hasAccess, err := s.verifyProjectAccess(userID, keyword.ProjectID)
+	if err != nil {
+		s.logger.Error("Failed to verify project access", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify project access")
+		return
+	}
+	if !hasAccess {
+		s.respondError(w, http.StatusForbidden, "You don't have access to this keyword")
+		return
+	}
+
+	// Get DataForSEO client
+	client, err := dataforseo.NewClient()
+	if err != nil {
+		s.logger.Error("Failed to create DataForSEO client", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "DataForSEO integration not configured")
+		return
+	}
+
+	// Create task
+	task := dataforseo.OrganicTaskPost{
+		LanguageName: keyword.LanguageName,
+		LocationName: keyword.LocationName,
+		Keyword:      keyword.Keyword,
+		Device:       keyword.Device,
+		SearchEngine: keyword.SearchEngine,
+	}
+
+	taskResp, err := client.CreateOrganicTask(r.Context(), task)
+	if err != nil {
+		s.logger.Error("Failed to create DataForSEO task", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to create rank check task: %v", err))
+		return
+	}
+
+	if len(taskResp.Tasks) == 0 {
+		s.logger.Error("No tasks returned from DataForSEO", zap.Any("response", taskResp))
+		s.respondError(w, http.StatusInternalServerError, "No task ID returned from DataForSEO")
+		return
+	}
+
+	taskID := taskResp.Tasks[0].ID
+	taskStatusCode := taskResp.Tasks[0].StatusCode
+	s.logger.Info("Created DataForSEO task", 
+		zap.String("task_id", taskID),
+		zap.String("keyword_id", keywordID),
+		zap.String("keyword", keyword.Keyword),
+		zap.Int("status_code", taskStatusCode),
+		zap.String("status_message", taskResp.Tasks[0].StatusMessage),
+		zap.Int("response_status_code", taskResp.StatusCode))
+
+	// Check if task creation was successful
+	// 20000 = success, 20100 = task created (also success)
+	if taskStatusCode != 20000 && taskStatusCode != 20100 {
+		s.logger.Warn("DataForSEO task creation returned non-success status", 
+			zap.Int("status_code", taskStatusCode),
+			zap.String("status_message", taskResp.Tasks[0].StatusMessage))
+		s.respondError(w, http.StatusBadRequest, fmt.Sprintf("DataForSEO task creation failed: %s (code: %d)", 
+			taskResp.Tasks[0].StatusMessage, taskStatusCode))
+		return
+	}
+
+	// Create task record
+	taskRecordID := uuid.New().String()
+	taskRecord := map[string]interface{}{
+		"id":                 taskRecordID,
+		"keyword_id":         keywordID,
+		"dataforseo_task_id": taskID,
+		"status":             "pending",
+		"raw_request":        map[string]interface{}{"task": task},
+	}
+
+	_, _, err = s.serviceRole.From("keyword_tasks").Insert(taskRecord, false, "", "", "").Execute()
+	if err != nil {
+		s.logger.Error("Failed to insert task record", zap.Error(err))
+		// Continue anyway - we'll try to poll
+	}
+
+	// Try to get result immediately (hybrid approach)
+	// Note: DataForSEO tasks usually take a few seconds to process
+	var snapshot *RankSnapshotResponse
+	getResp, err := client.GetOrganicTask(r.Context(), taskID)
+	if err != nil {
+		s.logger.Debug("Task not ready yet (will poll in background)", 
+			zap.String("task_id", taskID),
+			zap.Error(err))
+		// Mark as processing for background poller
+		_, _, _ = s.serviceRole.From("keyword_tasks").
+			Update(map[string]interface{}{"status": "processing"}, "", "").
+			Eq("id", taskRecordID).
+			Execute()
+	} else if dataforseo.IsTaskReady(getResp) {
+		// Task is ready, extract ranking
+		targetURL := ""
+		if keyword.TargetURL != nil {
+			targetURL = *keyword.TargetURL
+		}
+		ranking, err := dataforseo.ExtractRanking(getResp, targetURL)
+		if err == nil {
+			// Create snapshot
+			snapshot, err = s.createSnapshot(keywordID, taskID, ranking)
+			if err != nil {
+				s.logger.Error("Failed to create snapshot", zap.Error(err))
+			} else {
+				// Update task status
+				_, _, _ = s.serviceRole.From("keyword_tasks").
+					Update(map[string]interface{}{
+						"status":       "completed",
+						"completed_at": time.Now().UTC().Format(time.RFC3339),
+						"raw_response": getResp,
+					}, "", "").
+					Eq("id", taskRecordID).
+					Execute()
+
+				// Track usage
+				checkType := "manual"
+				if keyword.CheckFrequency != "manual" {
+					checkType = "scheduled"
+				}
+				if err := s.trackKeywordUsage(r.Context(), keyword.ProjectID, keywordID, userID, taskID, checkType, DefaultCheckCost); err != nil {
+					s.logger.Warn("Failed to track keyword usage", zap.Error(err))
+				}
+
+				// Update keyword's last_checked_at
+				now := time.Now().UTC().Format(time.RFC3339)
+				_, _, _ = s.serviceRole.From("keywords").
+					Update(map[string]interface{}{"last_checked_at": now}, "", "").
+					Eq("id", keywordID).
+					Execute()
+			}
+		} else {
+			// Task exists but not ready yet - mark as processing for background polling
+			s.logger.Debug("Task not ready yet, will poll in background", 
+				zap.String("task_id", taskID),
+				zap.Int("status_code", getResp.Tasks[0].StatusCode))
+			_, _, _ = s.serviceRole.From("keyword_tasks").
+				Update(map[string]interface{}{"status": "processing"}, "", "").
+				Eq("id", taskRecordID).
+				Execute()
+		}
+	} else {
+		// Task not ready yet - update status to processing for background polling
+		s.logger.Debug("Failed to get task immediately, will poll in background", 
+			zap.String("task_id", taskID),
+			zap.Error(err))
+		_, _, _ = s.serviceRole.From("keyword_tasks").
+			Update(map[string]interface{}{"status": "processing"}, "", "").
+			Eq("id", taskRecordID).
+			Execute()
+	}
+
+	if snapshot != nil {
+		s.respondJSON(w, http.StatusOK, snapshot)
+	} else {
+		// Return task info - frontend can poll
+		s.respondJSON(w, http.StatusAccepted, map[string]interface{}{
+			"task_id":  taskID,
+			"status":   "processing",
+			"message":  "Rank check initiated. Results will be available shortly.",
+		})
+	}
+}
+
+// handleGetKeywordSnapshots handles GET /api/v1/keywords/:id/snapshots
+func (s *Server) handleGetKeywordSnapshots(w http.ResponseWriter, r *http.Request, userID string, keywordID string) {
+	keyword, err := s.fetchKeyword(keywordID)
+	if err != nil {
+		s.respondError(w, http.StatusNotFound, "Keyword not found")
+		return
+	}
+
+	// Verify project access
+	hasAccess, err := s.verifyProjectAccess(userID, keyword.ProjectID)
+	if err != nil {
+		s.logger.Error("Failed to verify project access", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify project access")
+		return
+	}
+	if !hasAccess {
+		s.respondError(w, http.StatusForbidden, "You don't have access to this keyword")
+		return
+	}
+
+	// Get limit from query params
+	limit := 30
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 {
+			limit = parsedLimit
+		}
+	}
+
+	// Fetch snapshots
+	query := s.supabase.From("keyword_rank_snapshots").
+		Select("*", "", false).
+		Eq("keyword_id", keywordID).
+		Order("checked_at", nil).
+		Limit(limit, "")
+
+	data, _, err := query.Execute()
+	if err != nil {
+		s.logger.Error("Failed to fetch snapshots", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to fetch snapshots")
+		return
+	}
+
+	var snapshots []map[string]interface{}
+	if err := json.Unmarshal(data, &snapshots); err != nil {
+		s.logger.Error("Failed to parse snapshots data", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to parse snapshots")
+		return
+	}
+
+	// Convert to response format
+	responseSnapshots := make([]RankSnapshotResponse, 0, len(snapshots))
+	for _, snap := range snapshots {
+		snapshot := s.mapToSnapshotResponse(snap)
+		responseSnapshots = append(responseSnapshots, snapshot)
+	}
+
+	s.respondJSON(w, http.StatusOK, map[string]interface{}{
+		"snapshots": responseSnapshots,
+		"count":     len(responseSnapshots),
+	})
+}
+
+// Helper functions
+
+func (s *Server) fetchKeyword(keywordID string) (*KeywordResponse, error) {
+	data, _, err := s.serviceRole.From("keywords").Select("*", "", false).Eq("id", keywordID).Execute()
+	if err != nil {
+		return nil, err
+	}
+
+	var keywords []map[string]interface{}
+	if err := json.Unmarshal(data, &keywords); err != nil || len(keywords) == 0 {
+		return nil, fmt.Errorf("keyword not found")
+	}
+
+	keyword := s.mapToKeywordResponse(keywords[0])
+	return &keyword, nil
+}
+
+func (s *Server) mapToKeywordResponse(m map[string]interface{}) KeywordResponse {
+	keyword := KeywordResponse{
+		ID:             getKeywordString(m, "id"),
+		ProjectID:      getKeywordString(m, "project_id"),
+		Keyword:        getKeywordString(m, "keyword"),
+		LocationName:   getKeywordString(m, "location_name"),
+		LanguageName:   getKeywordString(m, "language_name"),
+		Device:         getKeywordString(m, "device"),
+		SearchEngine:   getKeywordString(m, "search_engine"),
+		CheckFrequency: getKeywordString(m, "check_frequency"),
+	}
+
+	if targetURL, ok := m["target_url"].(string); ok && targetURL != "" {
+		keyword.TargetURL = &targetURL
+	}
+	if locationCode, ok := m["location_code"].(float64); ok {
+		code := int(locationCode)
+		keyword.LocationCode = &code
+	}
+	if lastCheckedAt, ok := m["last_checked_at"].(string); ok && lastCheckedAt != "" {
+		if t, err := time.Parse(time.RFC3339, lastCheckedAt); err == nil {
+			keyword.LastCheckedAt = &t
+			keyword.LastChecked = &t
+		}
+	}
+	if nextCheckAt, ok := m["next_check_at"].(string); ok && nextCheckAt != "" {
+		if t, err := time.Parse(time.RFC3339, nextCheckAt); err == nil {
+			keyword.NextCheckAt = &t
+		}
+	}
+	if tags, ok := m["tags"].([]interface{}); ok {
+		keyword.Tags = make([]string, 0, len(tags))
+		for _, tag := range tags {
+			if tagStr, ok := tag.(string); ok {
+				keyword.Tags = append(keyword.Tags, tagStr)
+			}
+		}
+	}
+	if createdAt, ok := m["created_at"].(string); ok {
+		if t, err := time.Parse(time.RFC3339, createdAt); err == nil {
+			keyword.CreatedAt = t
+		}
+	}
+	if updatedAt, ok := m["updated_at"].(string); ok {
+		if t, err := time.Parse(time.RFC3339, updatedAt); err == nil {
+			keyword.UpdatedAt = t
+		}
+	}
+
+	return keyword
+}
+
+// handleKeywordUsage handles GET /api/v1/projects/:id/keyword-usage
+func (s *Server) handleKeywordUsage(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	hasAccess, err := s.verifyProjectAccess(userID, projectID)
+	if err != nil {
+		s.logger.Error("Failed to verify project access", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify project access")
+		return
+	}
+	if !hasAccess {
+		s.respondError(w, http.StatusForbidden, "You don't have access to this project")
+		return
+	}
+
+	// Get usage stats
+	stats, err := s.getKeywordUsageStats(r.Context(), projectID, "", nil, nil)
+	if err != nil {
+		s.logger.Error("Failed to get keyword usage stats", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to get usage stats")
+		return
+	}
+
+	// Get keyword limits
+	canAdd, currentCount, maxKeywords, err := s.checkKeywordLimit(r.Context(), projectID, userID)
+	if err != nil {
+		s.logger.Error("Failed to check keyword limit", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to check keyword limit")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, map[string]interface{}{
+		"usage": map[string]interface{}{
+			"total_checks":     stats["total_checks"],
+			"total_cost_usd":   stats["total_cost_usd"],
+			"manual_checks":    stats["manual_checks"],
+			"scheduled_checks": stats["scheduled_checks"],
+		},
+		"limits": map[string]interface{}{
+			"current_keywords": currentCount,
+			"max_keywords":     maxKeywords,
+			"can_add_more":     canAdd,
+		},
+	})
+}
+
+func (s *Server) fetchLatestSnapshot(keywordID string) (*RankSnapshotResponse, error) {
+	data, _, err := s.serviceRole.From("keyword_rank_snapshots").
+		Select("*", "", false).
+		Eq("keyword_id", keywordID).
+		Order("checked_at", nil).
+		Limit(1, "").
+		Execute()
+	if err != nil {
+		return nil, err
+	}
+
+	var snapshots []map[string]interface{}
+	if err := json.Unmarshal(data, &snapshots); err != nil || len(snapshots) == 0 {
+		return nil, fmt.Errorf("no snapshots found")
+	}
+
+	snapshot := s.mapToSnapshotResponse(snapshots[0])
+	return &snapshot, nil
+}
+
+func (s *Server) mapToSnapshotResponse(m map[string]interface{}) RankSnapshotResponse {
+	snapshot := RankSnapshotResponse{
+		ID:      getKeywordString(m, "id"),
+		KeywordID: getKeywordString(m, "keyword_id"),
+		RankType: getKeywordString(m, "rank_type"),
+	}
+
+	if checkedAt, ok := m["checked_at"].(string); ok {
+		if t, err := time.Parse(time.RFC3339, checkedAt); err == nil {
+			snapshot.CheckedAt = t
+		}
+	}
+	if posAbs, ok := m["position_absolute"].(float64); ok {
+		p := int(posAbs)
+		snapshot.PositionAbsolute = &p
+	}
+	if posOrg, ok := m["position_organic"].(float64); ok {
+		p := int(posOrg)
+		snapshot.PositionOrganic = &p
+	}
+	if url, ok := m["serp_url"].(string); ok && url != "" {
+		snapshot.SERPURL = &url
+	}
+	if title, ok := m["serp_title"].(string); ok && title != "" {
+		snapshot.SERPTitle = &title
+	}
+	if snippet, ok := m["serp_snippet"].(string); ok && snippet != "" {
+		snapshot.SERPSnippet = &snippet
+	}
+	if features, ok := m["serp_features"].([]interface{}); ok {
+		snapshot.SERPFeatures = make([]string, 0, len(features))
+		for _, f := range features {
+			if fStr, ok := f.(string); ok {
+				snapshot.SERPFeatures = append(snapshot.SERPFeatures, fStr)
+			}
+		}
+	}
+
+	return snapshot
+}
+
+func (s *Server) createSnapshot(keywordID, taskID string, ranking *dataforseo.RankingData) (*RankSnapshotResponse, error) {
+	// Try to find matching crawl page by URL
+	var crawlPageID *int64
+	if ranking.URL != "" {
+		// Normalize URL for matching (remove trailing slashes, etc.)
+		normalizedURL := strings.TrimSuffix(ranking.URL, "/")
+		
+		// Find pages matching this URL (get the most recent one)
+		var pages []map[string]interface{}
+		pageData, _, err := s.serviceRole.From("pages").
+			Select("id", "", false).
+			Eq("url", normalizedURL).
+			Order("created_at", nil).
+			Limit(1, "").
+			Execute()
+		if err == nil {
+			if err := json.Unmarshal(pageData, &pages); err == nil && len(pages) > 0 {
+				// pages.id is bigint (bigserial), so it comes as float64 from JSON
+				if pageIDFloat, ok := pages[0]["id"].(float64); ok {
+					pageID := int64(pageIDFloat)
+					crawlPageID = &pageID
+				}
+			}
+		}
+	}
+
+	snapshotID := uuid.New().String()
+	snapshotData := map[string]interface{}{
+		"id":                 snapshotID,
+		"keyword_id":          keywordID,
+		"dataforseo_task_id": taskID,
+		"position_absolute":   ranking.PositionAbsolute,
+		"position_organic":    ranking.PositionOrganic,
+		"serp_url":           ranking.URL,
+		"serp_title":         ranking.Title,
+		"serp_snippet":       ranking.Snippet,
+		"serp_features":      ranking.SERPFeatures,
+		"rank_type":          "organic",
+	}
+
+	if crawlPageID != nil {
+		snapshotData["crawl_page_id"] = *crawlPageID
+	}
+
+	_, _, err := s.serviceRole.From("keyword_rank_snapshots").Insert(snapshotData, false, "", "", "").Execute()
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch created snapshot
+	data, _, err := s.serviceRole.From("keyword_rank_snapshots").Select("*", "", false).Eq("id", snapshotID).Execute()
+	if err != nil {
+		return nil, err
+	}
+
+	var snapshots []map[string]interface{}
+	if err := json.Unmarshal(data, &snapshots); err != nil || len(snapshots) == 0 {
+		return nil, fmt.Errorf("failed to fetch created snapshot")
+	}
+
+	snapshot := s.mapToSnapshotResponse(snapshots[0])
+	return &snapshot, nil
+}
+
+func (s *Server) calculateBestPositionAndTrend(keywordID string, currentPos *int) (*int, string) {
+	if currentPos == nil {
+		return nil, ""
+	}
+
+	// Fetch all snapshots to calculate best position
+	data, _, err := s.serviceRole.From("keyword_rank_snapshots").
+		Select("position_organic", "", false).
+		Eq("keyword_id", keywordID).
+		Order("checked_at", nil).
+		Limit(10, "").
+		Execute()
+	if err != nil {
+		return currentPos, ""
+	}
+
+	var snapshots []map[string]interface{}
+	if err := json.Unmarshal(data, &snapshots); err != nil {
+		return currentPos, ""
+	}
+
+	bestPos := *currentPos
+	for _, s := range snapshots {
+		if pos, ok := s["position_organic"].(float64); ok {
+			posInt := int(pos)
+			if posInt > 0 && (bestPos == 0 || posInt < bestPos) {
+				bestPos = posInt
+			}
+		}
+	}
+
+	// Calculate trend (compare with previous snapshot)
+	trend := ""
+	if len(snapshots) > 1 {
+		if prevPos, ok := snapshots[1]["position_organic"].(float64); ok {
+			prevPosInt := int(prevPos)
+			if *currentPos < prevPosInt {
+				trend = "up"
+			} else if *currentPos > prevPosInt {
+				trend = "down"
+			} else {
+				trend = "same"
+			}
+		}
+	}
+
+	return &bestPos, trend
+}
+
+// handleProjectKeywordMetrics handles GET /api/v1/projects/:id/keyword-metrics
+func (s *Server) handleProjectKeywordMetrics(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	// Verify project access
+	hasAccess, err := s.verifyProjectAccess(userID, projectID)
+	if err != nil {
+		s.logger.Error("Failed to verify project access", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify project access")
+		return
+	}
+	if !hasAccess {
+		s.respondError(w, http.StatusForbidden, "You don't have access to this project")
+		return
+	}
+
+	// Fetch all keywords for project
+	keywordsData, _, err := s.serviceRole.From("keywords").
+		Select("id", "", false).
+		Eq("project_id", projectID).
+		Execute()
+	if err != nil {
+		s.logger.Error("Failed to fetch keywords", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to fetch keywords")
+		return
+	}
+
+	var keywords []map[string]interface{}
+	if err := json.Unmarshal(keywordsData, &keywords); err != nil {
+		s.logger.Error("Failed to parse keywords", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to parse keywords")
+		return
+	}
+
+	// Aggregate metrics
+	totalKeywords := len(keywords)
+	trackedKeywords := 0
+	avgPosition := 0.0
+	improvedCount := 0
+	declinedCount := 0
+	noChangeCount := 0
+
+	keywordIDs := make([]string, 0, len(keywords))
+	for _, k := range keywords {
+		if id, ok := k["id"].(string); ok {
+			keywordIDs = append(keywordIDs, id)
+		}
+	}
+
+	if len(keywordIDs) > 0 {
+		// Fetch latest snapshots for all keywords
+		// Note: This is simplified - in production, you might want a more efficient query
+		for _, keywordID := range keywordIDs {
+			snapshot, err := s.fetchLatestSnapshot(keywordID)
+			if err == nil && snapshot != nil {
+				trackedKeywords++
+				if snapshot.PositionOrganic != nil {
+					avgPosition += float64(*snapshot.PositionOrganic)
+					_, trend := s.calculateBestPositionAndTrend(keywordID, snapshot.PositionOrganic)
+					switch trend {
+					case "up":
+						improvedCount++
+					case "down":
+						declinedCount++
+					case "same":
+						noChangeCount++
+					}
+				}
+			}
+		}
+
+		if trackedKeywords > 0 {
+			avgPosition = avgPosition / float64(trackedKeywords)
+		}
+	}
+
+	s.respondJSON(w, http.StatusOK, map[string]interface{}{
+		"total_keywords":    totalKeywords,
+		"tracked_keywords":  trackedKeywords,
+		"average_position":  avgPosition,
+		"improved_count":    improvedCount,
+		"declined_count":    declinedCount,
+		"no_change_count":   noChangeCount,
+	})
+}
+
+func getKeywordString(m map[string]interface{}, key string) string {
+	if val, ok := m[key].(string); ok {
+		return val
+	}
+	return ""
+}
+

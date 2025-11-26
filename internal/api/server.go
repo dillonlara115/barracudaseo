@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dillonlara115/barracuda/internal/dataforseo"
 	"github.com/dillonlara115/barracuda/internal/gsc"
 	"github.com/supabase-community/supabase-go"
 	"go.uber.org/zap"
@@ -102,6 +104,14 @@ func (s *Server) Router() http.Handler {
 		s.logger.Warn("Stripe integration disabled - set STRIPE_SECRET_KEY to enable")
 	}
 
+	// Initialize DataForSEO (non-blocking - will fail gracefully if credentials not set)
+	if _, err := dataforseo.NewClient(); err != nil {
+		s.logger.Warn("DataForSEO integration disabled", zap.Error(err))
+		s.logger.Info("Set DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD to enable")
+	} else {
+		s.logger.Info("DataForSEO integration initialized")
+	}
+
 	// GSC OAuth callback (OAuth handles its own security)
 	mux.HandleFunc("/api/gsc/callback", s.handleGSCCallback)
 	// Internal cron endpoint for background sync (protected via shared secret)
@@ -109,6 +119,11 @@ func (s *Server) Router() http.Handler {
 
 	// Stripe webhook (no auth required - verified by signature)
 	mux.HandleFunc("/api/stripe/webhook", s.handleStripeWebhook)
+
+	// Internal cron endpoint for keyword task polling (protected via shared secret)
+	mux.HandleFunc("/api/internal/keywords/poll", s.handleKeywordTaskPoll)
+	// Internal cron endpoint for scheduled keyword checks (protected via shared secret)
+	mux.HandleFunc("/api/internal/keywords/check-scheduled", s.handleScheduledKeywordChecks)
 
 	// API v1 routes
 	v1 := http.NewServeMux()
@@ -131,12 +146,22 @@ func (s *Server) Router() http.Handler {
 	// Public report routes (authenticated)
 	v1.HandleFunc("/reports/public/", s.handlePublicReportByID) // Handles DELETE for specific report
 	v1.HandleFunc("/reports/public", s.handlePublicReports) // Handles GET (list) and POST (create)
+	// Keyword routes
+	v1.HandleFunc("/keywords/", s.handleKeywordByID) // Handles GET, PUT, DELETE, and sub-resources
+	v1.HandleFunc("/keywords", s.handleKeywords)     // Handles GET (list) and POST (create)
 
 	// Wrap v1 routes with authentication middleware
 	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", s.authMiddleware(v1)))
 
 	// Public report viewing (no auth required)
 	mux.HandleFunc("/api/public/reports/", s.handleViewPublicReport)
+
+	// Start background keyword task poller if DataForSEO is configured
+	if _, err := dataforseo.NewClient(); err == nil {
+		ctx := context.Background()
+		s.StartKeywordTaskPoller(ctx, 1*time.Minute) // Poll every minute
+		s.logger.Info("Started background keyword task poller")
+	}
 
 	return s.corsMiddleware(s.loggingMiddleware(mux))
 }

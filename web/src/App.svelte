@@ -17,6 +17,8 @@
   import GSCKeywords from './routes/GSCKeywords.svelte';
   import TeamAccept from './routes/TeamAccept.svelte';
   import PublicReportView from './routes/PublicReportView.svelte';
+  import RankTracker from './routes/RankTracker.svelte';
+import ImpactFirstView from './routes/ImpactFirstView.svelte';
   import { loadSubscriptionData } from './lib/subscription.js';
 
   let loading = true;
@@ -38,7 +40,9 @@
     '/privacy': PrivacyPolicy,
     '/terms': TermsOfService,
     '/project/:projectId/gsc': GSCDashboard,
-    '/project/:projectId/gsc/keywords': GSCKeywords,
+      '/project/:projectId/gsc/keywords': GSCKeywords,
+      '/project/:projectId/rank-tracker': RankTracker,
+      '/project/:projectId/impact-first': ImpactFirstView,
     '/team/accept': TeamAccept,
     '/reports/:token': PublicReportView,
     '/auth': Auth, // Auth route for when user is authenticated but needs to redirect

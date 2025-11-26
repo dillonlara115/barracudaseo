@@ -573,3 +573,134 @@ export async function viewPublicReport(accessToken, password = null) {
     return { data: null, error };
   }
 }
+
+// Keyword management functions
+
+// Create a keyword
+export async function createKeyword(keywordData) {
+  try {
+    const { data, error } = await authorizedJSON('/api/v1/keywords', {
+      method: 'POST',
+      body: keywordData
+    });
+    return { data, error };
+  } catch (error) {
+    console.error('Error creating keyword:', error);
+    return { data: null, error };
+  }
+}
+
+// List keywords for a project
+export async function listKeywords(projectId, filters = {}) {
+  try {
+    const params = new URLSearchParams({ project_id: projectId });
+    if (filters.device) params.append('device', filters.device);
+    if (filters.location) params.append('location', filters.location);
+    if (filters.tag) params.append('tag', filters.tag);
+    
+    const { data, error } = await authorizedJSON(`/api/v1/keywords?${params.toString()}`);
+    return { data, error };
+  } catch (error) {
+    console.error('Error listing keywords:', error);
+    return { data: null, error };
+  }
+}
+
+// Get a single keyword
+export async function getKeyword(keywordId) {
+  try {
+    const { data, error } = await authorizedJSON(`/api/v1/keywords/${keywordId}`);
+    return { data, error };
+  } catch (error) {
+    console.error('Error fetching keyword:', error);
+    return { data: null, error };
+  }
+}
+
+// Update a keyword
+export async function updateKeyword(keywordId, updates) {
+  try {
+    const { data, error } = await authorizedJSON(`/api/v1/keywords/${keywordId}`, {
+      method: 'PUT',
+      body: updates
+    });
+    return { data, error };
+  } catch (error) {
+    console.error('Error updating keyword:', error);
+    return { data: null, error };
+  }
+}
+
+// Delete a keyword
+export async function deleteKeyword(keywordId) {
+  try {
+    const response = await authorizedRequest(`/api/v1/keywords/${keywordId}`, {
+      method: 'DELETE'
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+      throw new Error(errorData.error || `Failed to delete keyword: ${response.status}`);
+    }
+    
+    return { data: null, error: null };
+  } catch (error) {
+    console.error('Error deleting keyword:', error);
+    return { data: null, error };
+  }
+}
+
+// Check keyword ranking (trigger rank check)
+export async function checkKeyword(keywordId) {
+  try {
+    const { data, error } = await authorizedJSON(`/api/v1/keywords/${keywordId}/check`, {
+      method: 'POST'
+    });
+    return { data, error };
+  } catch (error) {
+    console.error('Error checking keyword:', error);
+    return { data: null, error };
+  }
+}
+
+// Get keyword snapshots (historical rank data)
+export async function getKeywordSnapshots(keywordId, limit = 30) {
+  try {
+    const { data, error } = await authorizedJSON(`/api/v1/keywords/${keywordId}/snapshots?limit=${limit}`);
+    return { data, error };
+  } catch (error) {
+    console.error('Error fetching keyword snapshots:', error);
+    return { data: null, error };
+  }
+}
+
+// Get project keyword metrics
+export async function getProjectKeywordMetrics(projectId) {
+  try {
+    const { data, error } = await authorizedJSON(`/api/v1/projects/${projectId}/keyword-metrics`);
+    return { data, error };
+  } catch (error) {
+    console.error('Error fetching project keyword metrics:', error);
+    return { data: null, error };
+  }
+}
+
+export async function fetchProjectKeywordUsage(projectId) {
+  try {
+    const { data, error } = await authorizedJSON(`/api/v1/projects/${projectId}/keyword-usage`);
+    return { data, error };
+  } catch (error) {
+    console.error('Error fetching project keyword usage:', error);
+    return { data: null, error };
+  }
+}
+
+export async function fetchProjectImpactFirst(projectId) {
+  try {
+    const { data, error } = await authorizedJSON(`/api/v1/projects/${projectId}/impact-first`);
+    return { data, error };
+  } catch (error) {
+    console.error('Error fetching impact-first view:', error);
+    return { data: null, error };
+  }
+}
