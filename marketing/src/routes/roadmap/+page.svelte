@@ -183,6 +183,61 @@
 							<span class="text-white/90">Public-facing client reports</span>
 						</div>
 					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Dedicated Crawls & Audits management page</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Improved navigation and UX with page descriptions</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- 1.6 Rank Tracking -->
+			<div class="mb-12">
+				<h3 class="text-2xl md:text-3xl font-heading font-bold mb-6 text-[#8ec07c]">1.6 Rank Tracking</h3>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">DataForSEO integration for rank tracking</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Keyword rank tracking with historical snapshots</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Ranked keywords discovery (reverse lookup)</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Impact-First View (pages ranking with issues)</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Scheduled keyword checks</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Position trend tracking and visualization</span>
+						</div>
+					</div>
 				</div>
 			</div>
 
@@ -490,9 +545,9 @@
 				<span class="text-lg text-white/70">(6–12+ months)</span>
 			</div>
 
-			<!-- 5.1 Rank Tracking -->
+			<!-- 5.1 Rank Tracking Enhancements -->
 			<div class="mb-12">
-				<h3 class="text-2xl md:text-3xl font-heading font-bold mb-6 text-[#8ec07c]">5.1 Rank Tracking</h3>
+				<h3 class="text-2xl md:text-3xl font-heading font-bold mb-6 text-[#8ec07c]">5.1 Rank Tracking Enhancements</h3>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">

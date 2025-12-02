@@ -168,6 +168,29 @@ if [ -n "$GSC_REDIRECT_URL" ]; then
     fi
 fi
 
+# DataForSEO variables
+if [ -n "$DATAFORSEO_LOGIN" ]; then
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,DATAFORSEO_LOGIN=$DATAFORSEO_LOGIN"
+    else
+        ENV_VARS="DATAFORSEO_LOGIN=$DATAFORSEO_LOGIN"
+    fi
+fi
+if [ -n "$DATAFORSEO_PASSWORD" ]; then
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,DATAFORSEO_PASSWORD=$DATAFORSEO_PASSWORD"
+    else
+        ENV_VARS="DATAFORSEO_PASSWORD=$DATAFORSEO_PASSWORD"
+    fi
+fi
+if [ -n "$DATAFORSEO_BASE_URL" ]; then
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,DATAFORSEO_BASE_URL=$DATAFORSEO_BASE_URL"
+    else
+        ENV_VARS="DATAFORSEO_BASE_URL=$DATAFORSEO_BASE_URL"
+    fi
+fi
+
 if [ -z "$ENV_VARS" ]; then
     echo "Error: No environment variables to update."
     echo "Set variables in your .env file or export them."
