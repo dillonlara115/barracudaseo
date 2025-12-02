@@ -704,3 +704,17 @@ export async function fetchProjectImpactFirst(projectId) {
     return { data: null, error };
   }
 }
+
+// Discover keywords for a domain/URL
+export async function discoverKeywords(projectId, discoveryData) {
+  try {
+    const { data, error } = await authorizedJSON(`/api/v1/projects/${projectId}/discover-keywords`, {
+      method: 'POST',
+      body: discoveryData
+    });
+    return { data, error };
+  } catch (error) {
+    console.error('Error discovering keywords:', error);
+    return { data: null, error };
+  }
+}

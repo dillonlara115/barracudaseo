@@ -9,6 +9,7 @@ A fast, lightweight SEO website crawler CLI tool inspired by Screaming Frog.
 - **Cloud-Ready Workflow**: Push crawl results to the hosted API (Supabase + Cloud Run) for multi-user projects
 - **Projects Workspace**: Authenticate with Supabase, manage projects, and view historical crawls inside the dashboard
 - **Insightful Dashboard**: Priority scoring, page-level modals, recommendations, and quick filters surface the most critical fixes
+- **Rank Tracking**: Track keyword rankings over time with DataForSEO integration, scheduled checks, and historical snapshots
 - **Flexible Exports**: One-click CSV/JSON exports for filtered issues, link graphs, and crawl data
 - **Fast & Concurrent**: Worker pool, robots.txt controls, and domain filtering keep crawls respectful and performant
 
@@ -343,7 +344,6 @@ Issues are displayed in the terminal summary and can be viewed in detail in the 
 ## Limitations
 
 - No database storage (all data in-memory)
-- No keyword/rank tracking (planned for future versions)
 - No JavaScript rendering (static HTML only)
 - Binary size: ~15-20 MB (includes embedded frontend)
 

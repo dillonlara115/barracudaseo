@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { params, link } from 'svelte-spa-router';
   import { fetchProjects, fetchProjectGSCStatus, fetchProjectGSCDimensions } from '../lib/data.js';
+  import ProjectPageLayout from '../components/ProjectPageLayout.svelte';
 
   let projectId = null;
   let project = null;
@@ -184,14 +185,19 @@
   <title>Keywords Per Page - {project?.name || 'Barracuda SEO'}</title>
 </svelte:head>
 
-<div class="container mx-auto p-6">
+<ProjectPageLayout {projectId} {gscStatus} showCrawlSection={false}>
+<div class="max-w-7xl mx-auto">
   <!-- Header -->
   <div class="mb-6">
     <div class="flex items-center justify-between mb-4">
       <div>
         <h1 class="text-3xl font-bold mb-2">Keywords Per Page</h1>
+        <p class="text-base-content/70 mb-1">
+          See which keywords each page ranks for in Google Search Console. 
+          Identify pages with high keyword counts and discover opportunities to optimize content.
+        </p>
         {#if project}
-          <p class="text-base-content/70">Project: {project.name}</p>
+          <p class="text-sm text-base-content/60">Project: {project.name}</p>
         {/if}
         {#if gscStatus?.integration?.property_url}
           <p class="text-sm text-base-content/60">Property: {gscStatus.integration.property_url}</p>
@@ -447,4 +453,5 @@
     {/if}
   {/if}
 </div>
+</ProjectPageLayout>
 

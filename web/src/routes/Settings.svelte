@@ -1,9 +1,10 @@
 <script>
   import { onMount } from 'svelte';
-  import { params, push } from 'svelte-spa-router';
-  import { fetchProjects, updateProject, deleteProject } from '../lib/data.js';
+  import { params, push, link } from 'svelte-spa-router';
+  import { fetchProjects, updateProject, deleteProject, fetchCrawls } from '../lib/data.js';
   import ProjectGSCSelector from '../components/ProjectGSCSelector.svelte';
   import CrawlManagement from '../components/CrawlManagement.svelte';
+  import ProjectPageLayout from '../components/ProjectPageLayout.svelte';
   import { Loader, X, Trash2, Edit2, Check, AlertTriangle } from 'lucide-svelte';
   
   let project = null;
@@ -145,19 +146,40 @@
     // Crawl was deleted, could reload or show notification
     // The CrawlManagement component handles its own reload
   }
+
+  async function navigateBackToProject() {
+    if (!projectId) return;
+    
+    // Check if there are crawls - if so, navigate to the latest crawl
+    // Otherwise navigate to project view
+    try {
+      const { data: crawlsData } = await fetchCrawls(projectId);
+      if (crawlsData && crawlsData.length > 0) {
+        // Navigate to latest crawl
+        push(`/project/${projectId}/crawl/${crawlsData[0].id}`);
+      } else {
+        // Navigate to project view (no crawls)
+        push(`/project/${projectId}`);
+      }
+    } catch (err) {
+      // On error, just navigate to project view
+      push(`/project/${projectId}`);
+    }
+  }
 </script>
 
+<ProjectPageLayout {projectId} showCrawlSection={false}>
 <div class="container mx-auto p-6 max-w-4xl">
   <div class="mb-6">
     <button 
       class="btn btn-ghost btn-sm mb-4"
-      on:click={() => push(`/project/${projectId}`)}
+      on:click={navigateBackToProject}
     >
       ← Back to Project
     </button>
     <h1 class="text-3xl font-bold mb-2">Project Settings</h1>
     <p class="text-base-content/70">
-      Configure integration settings and preferences for this project.
+      Configure project information, Google Search Console integration, crawl management, and other settings for this project.
     </p>
   </div>
 
@@ -392,4 +414,5 @@
     </div>
   </div>
 {/if}
+</ProjectPageLayout>
 

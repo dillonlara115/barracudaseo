@@ -71,9 +71,10 @@ func (s *Server) pollKeywordTasks(ctx context.Context) {
 		return // No tasks to process
 	}
 
-	// Filter tasks that are at least 5 seconds old
+	// Filter tasks that are at least 3 seconds old
 	// This gives DataForSEO time to process the task before we check
-	fiveSecondsAgo := time.Now().UTC().Add(-5 * time.Second)
+	// Reduced from 5 seconds since we're polling more frequently now
+	threeSecondsAgo := time.Now().UTC().Add(-3 * time.Second)
 	var filteredTasks []map[string]interface{}
 	for _, task := range tasks {
 		runAtStr, ok := task["run_at"].(string)
@@ -84,7 +85,7 @@ func (s *Server) pollKeywordTasks(ctx context.Context) {
 		if err != nil {
 			continue
 		}
-		if runAt.Before(fiveSecondsAgo) || runAt.Equal(fiveSecondsAgo) {
+		if runAt.Before(threeSecondsAgo) || runAt.Equal(threeSecondsAgo) {
 			filteredTasks = append(filteredTasks, task)
 		}
 	}
@@ -96,28 +97,85 @@ func (s *Server) pollKeywordTasks(ctx context.Context) {
 
 	s.logger.Info("Polling keyword tasks", zap.Int("count", len(tasks)))
 
+	// Log stored task IDs for debugging
+	storedTaskIDs := make([]string, 0, len(tasks))
+	for _, task := range tasks {
+		if dataforseoTaskID, ok := task["dataforseo_task_id"].(string); ok {
+			storedTaskIDs = append(storedTaskIDs, dataforseoTaskID)
+		}
+	}
+	s.logger.Debug("Stored task IDs in database", zap.Strings("task_ids", storedTaskIDs))
+
+	// Store original tasks list for fallback
+	originalTasks := tasks
+
+	// Build a map of our stored task IDs for quick lookup
+	ourTaskIDs := make(map[string]bool)
+	for _, task := range originalTasks {
+		if dataforseoTaskID, ok := task["dataforseo_task_id"].(string); ok {
+			ourTaskIDs[dataforseoTaskID] = true
+		}
+	}
+
 	// First, check which tasks are actually ready in DataForSEO
+	// Note: tasks_ready returns ALL ready tasks across all accounts/keywords,
+	// so we need to filter to only our tasks
 	readyResp, err := client.GetOrganicTasksReady(ctx)
 	if err != nil {
 		s.logger.Warn("Failed to get ready tasks list from DataForSEO", zap.Error(err))
 		// Continue with individual task checks as fallback
-	} else if readyResp != nil && len(readyResp.Tasks) > 0 {
-		readyTaskIDs := make(map[string]bool)
-		for _, readyTask := range readyResp.Tasks {
-			readyTaskIDs[readyTask.ID] = true
-		}
-		s.logger.Debug("Found ready tasks in DataForSEO", zap.Int("ready_count", len(readyTaskIDs)))
+	} else if readyResp != nil {
+		readyTaskIDList := make([]string, 0, len(readyResp.Tasks))
+		ourReadyTaskIDs := make([]string, 0)
 		
-		// Filter our tasks to only those that are ready
-		var readyTasks []map[string]interface{}
-		for _, task := range tasks {
-			dataforseoTaskID, ok := task["dataforseo_task_id"].(string)
-			if ok && readyTaskIDs[dataforseoTaskID] {
-				readyTasks = append(readyTasks, task)
+		// Filter ready tasks to only those that belong to us
+		for _, readyTask := range readyResp.Tasks {
+			readyTaskIDList = append(readyTaskIDList, readyTask.ID)
+			if ourTaskIDs[readyTask.ID] {
+				ourReadyTaskIDs = append(ourReadyTaskIDs, readyTask.ID)
 			}
 		}
-		tasks = readyTasks
-		s.logger.Info("Filtered to ready tasks", zap.Int("ready_count", len(tasks)))
+		
+		s.logger.Info("Found ready tasks in DataForSEO", 
+			zap.Int("total_ready_count", len(readyTaskIDList)),
+			zap.Int("our_ready_count", len(ourReadyTaskIDs)),
+			zap.Strings("our_ready_task_ids", ourReadyTaskIDs),
+			zap.Strings("all_ready_task_ids", readyTaskIDList))
+		
+		// Filter our tasks to only those that are ready
+		if len(ourReadyTaskIDs) > 0 {
+			readyTaskIDsMap := make(map[string]bool)
+			for _, id := range ourReadyTaskIDs {
+				readyTaskIDsMap[id] = true
+			}
+			
+			var readyTasks []map[string]interface{}
+			for _, task := range originalTasks {
+				dataforseoTaskID, ok := task["dataforseo_task_id"].(string)
+				if ok && readyTaskIDsMap[dataforseoTaskID] {
+					readyTasks = append(readyTasks, task)
+					s.logger.Debug("Task matches ready list", zap.String("task_id", dataforseoTaskID))
+				}
+			}
+			
+			if len(readyTasks) > 0 {
+				tasks = readyTasks
+				s.logger.Info("Filtered to our ready tasks", zap.Int("ready_count", len(tasks)))
+			} else {
+				s.logger.Info("No tasks matched ready list, falling back to individual checks", 
+					zap.Int("stored_count", len(storedTaskIDs)),
+					zap.Int("our_ready_count", len(ourReadyTaskIDs)))
+				tasks = originalTasks
+			}
+		} else {
+			s.logger.Info("No tasks matched ready list, falling back to individual checks", 
+				zap.Int("stored_count", len(storedTaskIDs)),
+				zap.Int("total_ready_from_api", len(readyTaskIDList)))
+			// Use original tasks list for fallback
+			tasks = originalTasks
+		}
+	} else {
+		s.logger.Debug("No ready tasks response from DataForSEO, will check tasks individually")
 	}
 
 	processed := 0
@@ -147,8 +205,26 @@ func (s *Server) pollKeywordTasks(ctx context.Context) {
 		// Get task result from DataForSEO
 		getResp, err := client.GetOrganicTask(ctx, dataforseoTaskID)
 		if err != nil {
-			// Check if it's a "Not Found" error (40400) - task may have expired or never existed
+			// Check if it's a "Not Found" error (40400)
+			// This could mean: task expired, task doesn't exist, or task not ready yet
+			// For recently created tasks (< 2 minutes), assume it's not ready yet and retry
 			if strings.Contains(err.Error(), "40400") || strings.Contains(err.Error(), "Not Found") {
+				// Check how old the task is
+				runAtStr, _ := task["run_at"].(string)
+				runAt, parseErr := time.Parse(time.RFC3339, runAtStr)
+				if parseErr == nil {
+					age := time.Since(runAt)
+					if age < 2*time.Minute {
+						// Task is less than 2 minutes old - probably not ready yet, keep trying
+						s.logger.Debug("Task not found but recently created, will retry", 
+							zap.String("task_id", dataforseoTaskID),
+							zap.String("keyword_id", keywordID),
+							zap.Duration("age", age))
+						continue
+					}
+				}
+				
+				// Task is older than 2 minutes and still not found - likely expired or invalid
 				s.logger.Warn("Task not found in DataForSEO (may have expired)", 
 					zap.String("task_id", dataforseoTaskID),
 					zap.String("keyword_id", keywordID))

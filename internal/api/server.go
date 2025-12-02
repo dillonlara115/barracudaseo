@@ -159,8 +159,8 @@ func (s *Server) Router() http.Handler {
 	// Start background keyword task poller if DataForSEO is configured
 	if _, err := dataforseo.NewClient(); err == nil {
 		ctx := context.Background()
-		s.StartKeywordTaskPoller(ctx, 1*time.Minute) // Poll every minute
-		s.logger.Info("Started background keyword task poller")
+		s.StartKeywordTaskPoller(ctx, 15*time.Second) // Poll every 15 seconds for faster processing
+		s.logger.Info("Started background keyword task poller", zap.Duration("interval", 15*time.Second))
 	}
 
 	return s.corsMiddleware(s.loggingMiddleware(mux))

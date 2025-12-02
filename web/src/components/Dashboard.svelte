@@ -11,9 +11,24 @@
   import CrawlSummary from './AI/CrawlSummary.svelte';
   import PublicReportGenerator from './PublicReportGenerator.svelte';
   import Logo from './Logo.svelte';
-  import { fetchProjects, fetchProjectGSCStatus, fetchProjectGSCDimensions, triggerProjectGSCSync } from '../lib/data.js';
+  import { fetchProjects, fetchProjectGSCStatus, fetchProjectGSCDimensions, triggerProjectGSCSync, fetchCrawls } from '../lib/data.js';
   import { buildEnrichedIssues } from '../lib/gsc.js';
   import { userProfile, isProOrTeam } from '../lib/subscription.js';
+  import { 
+    LayoutDashboard, 
+    FileText, 
+    AlertTriangle, 
+    Lightbulb, 
+    Network, 
+    TrendingUp, 
+    Binoculars, 
+    Target,
+    Search,
+    Settings,
+    BarChart,
+    FileSearch,
+    ArrowRight
+  } from 'lucide-svelte';
 
   export let summary = null;
   export let results = [];
@@ -33,7 +48,44 @@
         project = projects.find(p => p.id === projectId);
       }
     }
+    // Load recent crawls for dashboard
+    if (projectId) {
+      await loadRecentCrawls();
+    }
   });
+
+  async function loadRecentCrawls() {
+    if (!projectId) return;
+    crawlsLoading = true;
+    try {
+      const { data, error } = await fetchCrawls(projectId);
+      if (!error && data) {
+        // Get most recent 5 crawls
+        recentCrawls = data.slice(0, 5);
+      }
+    } catch (err) {
+      console.error('Failed to load recent crawls:', err);
+    } finally {
+      crawlsLoading = false;
+    }
+  }
+
+  function formatDate(dateString) {
+    if (!dateString) return 'Unknown';
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function getStatusBadge(status) {
+    const badges = {
+      'pending': 'badge-warning',
+      'running': 'badge-info',
+      'succeeded': 'badge-success',
+      'failed': 'badge-error',
+      'cancelled': 'badge-ghost'
+    };
+    return badges[status] || 'badge-ghost';
+  }
 
   $: activeTab = $querystring 
     ? new URLSearchParams($querystring).get('tab') || initialTab 
@@ -49,6 +101,8 @@
   let gscError = null;
   let gscPageRows = [];
   let gscInitializedProjectId = null;
+  let recentCrawls = [];
+  let crawlsLoading = false;
 
   const navigateToTab = (tab, nextFilters = {}) => {
     const { severity, type, url, status, performance } = nextFilters;
@@ -236,18 +290,64 @@
           Link Graph
         </button>
       </li>
+      {#if projectId}
+        <li>
+          <a
+            href="/project/{projectId}/crawls"
+            use:link
+            class:active={false}
+          >
+            <FileSearch class="w-5 h-5" />
+            Crawls
+          </a>
+        </li>
+      {/if}
       
+      <!-- Rank Tracking Section -->
+      {#if projectId}
+        <li class="hidden lg:block border-b border-base-200 my-2 pointer-events-none"></li>
+        <li>
+          <a
+            href="/project/{projectId}/rank-tracker"
+            use:link
+            class:active={false}
+          >
+            <TrendingUp class="w-5 h-5" />
+            Rank Tracker
+          </a>
+        </li>
+        <li>
+          <a
+            href="/project/{projectId}/discover-keywords"
+            use:link
+            class:active={false}
+          >
+            <Binoculars class="w-5 h-5" />
+            Discover Keywords
+          </a>
+        </li>
+        <li>
+          <a
+            href="/project/{projectId}/impact-first"
+            use:link
+            class:active={false}
+          >
+            <Target class="w-5 h-5" />
+            Impact-First View
+          </a>
+        </li>
+      {/if}
+      
+      <!-- Google Search Console Section (only if connected) -->
       {#if projectId && gscStatus?.integration?.property_url}
-        <li class="hidden lg:block border-b border-base-200 my-1 pointer-events-none"></li>
+        <li class="hidden lg:block border-b border-base-200 my-2 pointer-events-none"></li>
         <li>
           <button 
             type="button" 
             class:active={activeTab === 'gsc-dashboard'}
             on:click={() => navigateToTab('gsc-dashboard')}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-            </svg>
+            <BarChart class="w-5 h-5" />
             GSC Dashboard
           </button>
         </li>
@@ -257,39 +357,22 @@
             class:active={activeTab === 'gsc-keywords'}
             on:click={() => navigateToTab('gsc-keywords')}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
+            <Search class="w-5 h-5" />
             GSC Keywords
           </button>
         </li>
       {/if}
       
+      <!-- Project Settings -->
       {#if projectId}
-        <li class="hidden lg:block border-b border-base-200 my-1 pointer-events-none"></li>
-        <li>
-          <a
-            href="/project/{projectId}/rank-tracker"
-            use:link
-            class="btn btn-ghost btn-sm"
-            type="button"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-            </svg>
-            Rank Tracker
-          </a>
-        </li>
+        <li class="hidden lg:block border-b border-base-200 my-2 pointer-events-none"></li>
         <li>
           <a 
             href="/project/{projectId}/settings" 
             use:link
             class:active={isSettingsPage}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            <Settings class="w-5 h-5" />
             Settings
           </a>
         </li>
@@ -316,6 +399,80 @@
       {#if crawlId}
         <CrawlSummary {crawlId} />
         <PublicReportGenerator {crawlId} {projectId} />
+      {/if}
+
+      <!-- Recent Crawls Section -->
+      {#if projectId}
+        <div class="card bg-base-100 shadow">
+          <div class="card-body">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="card-title text-xl">
+                <FileSearch class="w-5 h-5" />
+                Recent Crawls
+              </h2>
+              <a href="/project/{projectId}/crawls" use:link class="btn btn-sm btn-ghost">
+                View All
+                <ArrowRight class="w-4 h-4 ml-1" />
+              </a>
+            </div>
+            
+            {#if crawlsLoading}
+              <div class="flex justify-center py-4">
+                <span class="loading loading-spinner loading-sm"></span>
+              </div>
+            {:else if recentCrawls.length === 0}
+              <div class="text-center py-4 text-base-content/70">
+                <p class="mb-2">No crawls yet</p>
+                <a href="/project/{projectId}/crawls" use:link class="btn btn-sm btn-primary">
+                  Start Your First Crawl
+                </a>
+              </div>
+            {:else}
+              <div class="overflow-x-auto">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Status</th>
+                      <th>Pages</th>
+                      <th>Issues</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {#each recentCrawls as crawl}
+                      <tr class="hover">
+                        <td class="text-sm">{formatDate(crawl.started_at)}</td>
+                        <td>
+                          <span class="badge {getStatusBadge(crawl.status)} badge-xs capitalize">
+                            {crawl.status}
+                          </span>
+                        </td>
+                        <td>{crawl.total_pages || 0}</td>
+                        <td>
+                          {#if crawl.total_issues > 0}
+                            <span class="text-error font-semibold">{crawl.total_issues}</span>
+                          {:else}
+                            <span class="text-base-content/60">0</span>
+                          {/if}
+                        </td>
+                        <td>
+                          <a 
+                            href="/project/{projectId}/crawl/{crawl.id}" 
+                            use:link
+                            class="btn btn-ghost btn-xs"
+                          >
+                            View
+                          </a>
+                        </td>
+                      </tr>
+                    {/each}
+                  </tbody>
+                </table>
+              </div>
+            {/if}
+          </div>
+        </div>
       {/if}
     </div>
   {:else if activeTab === 'results'}

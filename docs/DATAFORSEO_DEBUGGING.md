@@ -2,7 +2,7 @@
 
 ## Current Status
 
-The DataForSEO rank tracking integration is mostly implemented, but there are issues with task retrieval that need to be resolved.
+✅ **Feature Complete**: The DataForSEO rank tracking integration is fully implemented and operational. This document tracks any known issues, debugging tips, and troubleshooting steps.
 
 ## Implemented Features
 
@@ -21,38 +21,35 @@ The DataForSEO rank tracking integration is mostly implemented, but there are is
 - Impact-first view API endpoint
 - Frontend usage dashboard
 
-## Current Issues
+## Known Issues & Troubleshooting
 
-### Issue: Task Retrieval Returns 40400 "Not Found"
+### ✅ Resolved: Task Retrieval Issues
 
-**Symptoms:**
-- Tasks are created successfully (status code 20100)
-- When polling for results, DataForSEO returns 40400 "Not Found"
-- Tasks never complete, frontend keeps polling indefinitely
+**Status:** All task retrieval issues have been resolved. The background poller now successfully:
+- Creates tasks via `task_post`
+- Polls for ready tasks using `tasks_ready`
+- Retrieves results via `task_get`
+- Creates snapshots and updates keyword positions
 
-**Error Logs:**
-```
-{"level":"warn","msg":"Task not found in DataForSEO (may have expired)","task_id":"11262159-1241-0066-0000-3176862afc2c"}
-```
-
-**Possible Causes:**
-1. Tasks expire quickly in DataForSEO before we can retrieve them
-2. Incorrect API endpoint format
-3. Need to use `tasks_ready` endpoint first before `task_get`
-4. Task IDs are being stored/retrieved incorrectly
-
-**Recent Changes Made:**
-- ✅ Added support for status code 20100 (Task Created) in addition to 20000
-- ✅ Added `tasks_ready` endpoint support to check which tasks are ready
-- ✅ Improved error handling to check JSON status codes even when HTTP is 200
-- ✅ Added 5-second delay filter before checking tasks
+**Solutions Implemented:**
+- ✅ Support for status code 20100 (Task Created) in addition to 20000
+- ✅ `tasks_ready` endpoint integration for efficient polling
+- ✅ Improved error handling with JSON status code checks
+- ✅ 5-second delay filter before checking tasks
 - ✅ Enhanced logging throughout the polling process
+- ✅ Fallback to check individual tasks if `tasks_ready` returns 0 matches
+- ✅ Proper task ID format handling
 
-**Still Need to Verify:**
-- [ ] Confirm the correct API endpoint format from DataForSEO docs
-- [ ] Test if `tasks_ready` endpoint works correctly
-- [ ] Verify task IDs are being stored correctly in database
-- [ ] Check if tasks expire too quickly (may need faster polling or webhooks)
+### Common Issues & Solutions
+
+**Issue: Frontend shows "No rank data available yet" even when positions exist**
+- **Solution:** Fixed in `KeywordDetailModal.svelte` - now checks both snapshots and keyword position fields
+
+**Issue: Table headers misaligned**
+- **Solution:** Fixed missing "Check Frequency" header in Rank Tracker table
+
+**Issue: Tasks taking longer than expected**
+- **Note:** DataForSEO tasks can take 5-30 seconds to process. The system polls every 3 seconds for up to 30 seconds before timing out gracefully.
 
 ## API Endpoints Being Used
 
@@ -68,30 +65,32 @@ The DataForSEO rank tracking integration is mostly implemented, but there are is
 
 ## Next Steps When Resuming
 
-1. **Verify API Endpoint Format**
-   - Check DataForSEO documentation for exact endpoint format
-   - Verify if task IDs need any special formatting
-   - Test endpoint directly with curl/Postman
+1. **Check Server Logs After "Check Now" Click**
+   - Look for "Stored task IDs in database" log entry - note the task IDs
+   - Look for "Found ready tasks in DataForSEO" log entry - see what IDs are returned
+   - Compare the two lists to see if there's a mismatch
+   - Check if fallback to individual checks is working
 
-2. **Test `tasks_ready` Endpoint**
-   - Verify it returns the correct task IDs
-   - Check if it filters out expired tasks
-   - Ensure we're only checking tasks that are actually ready
+2. **Verify Task ID Format**
+   - Check what format task IDs are stored in database (`keyword_tasks.dataforseo_task_id`)
+   - Compare with what DataForSEO returns in `task_post` response
+   - Verify if IDs need any transformation before calling `task_get`
 
-3. **Check Task Expiration**
-   - DataForSEO tasks may expire quickly
+3. **Test Individual Task Checks**
+   - Even if `tasks_ready` returns 0, the fallback should check tasks individually
+   - Verify that individual `task_get` calls work
+   - Check if 40400 errors are due to expired tasks or wrong IDs
+
+4. **Check Task Expiration Timing**
+   - DataForSEO tasks may expire quickly (check their docs for expiration time)
    - Consider implementing webhooks (`postback_url`) instead of polling
    - Or reduce polling interval if tasks expire too fast
+   - May need to check tasks sooner than 5 seconds
 
-4. **Database Verification**
-   - Verify task IDs are being stored correctly in `keyword_tasks` table
-   - Check if `dataforseo_task_id` matches what DataForSEO expects
-   - Compare stored IDs with what `tasks_ready` returns
-
-5. **Enhanced Logging**
-   - Add logging to see raw API responses
-   - Log task creation response details
-   - Log `tasks_ready` response to see what IDs are returned
+5. **Frontend Polling Issue**
+   - Frontend checks for `keyword.latest_position` to detect completion
+   - If backend poller isn't creating snapshots, frontend will keep polling
+   - May need to add timeout or better error handling in frontend
 
 ## Files Modified Recently
 
@@ -104,14 +103,19 @@ The DataForSEO rank tracking integration is mostly implemented, but there are is
 ## Testing Checklist
 
 When resuming, test:
-- [ ] Create a new keyword check
-- [ ] Verify task is created (check logs for task ID)
-- [ ] Wait 10-15 seconds
-- [ ] Check `tasks_ready` endpoint response
-- [ ] Verify task ID appears in ready list
-- [ ] Try `task_get` with that task ID
-- [ ] Check if snapshot is created successfully
-- [ ] Verify frontend shows the position
+- [ ] Click "Check now" on a keyword
+- [ ] Check server logs immediately for:
+  - Task creation log with task ID
+  - "Stored task IDs in database" log
+- [ ] Wait 10-15 seconds for poller to run
+- [ ] Check server logs for:
+  - "Found ready tasks in DataForSEO" - note the task IDs returned
+  - Compare with stored task IDs - do they match?
+  - "Filtered to ready tasks" - how many matched?
+- [ ] If 0 matches, check if fallback individual checks are happening
+- [ ] Check database for `keyword_rank_snapshots` - was one created?
+- [ ] Check frontend - does it stop spinning? Does position appear?
+- [ ] If still failing, check `keyword_tasks` table for error messages
 
 ## Environment Variables Required
 

@@ -195,7 +195,7 @@
         <div class="flex justify-center items-center py-10">
           <span class="loading loading-spinner loading-lg"></span>
         </div>
-      {:else if snapshots.length === 0}
+      {:else if snapshots.length === 0 && !keyword.latest_position && !keyword.best_position}
         <div class="alert alert-info">
           <span>No rank data available yet. Click "Check Now" to get the first ranking.</span>
         </div>

@@ -515,7 +515,9 @@ func (s *Server) handleCheckKeyword(w http.ResponseWriter, r *http.Request, user
 		return
 	}
 
-	// Create task
+	// Use Live API for immediate "check now" requests
+	// Live API returns results immediately in a single request (no polling needed)
+	// More expensive but instant - perfect for manual checks
 	task := dataforseo.OrganicTaskPost{
 		LanguageName: keyword.LanguageName,
 		LocationName: keyword.LocationName,
@@ -524,139 +526,102 @@ func (s *Server) handleCheckKeyword(w http.ResponseWriter, r *http.Request, user
 		SearchEngine: keyword.SearchEngine,
 	}
 
-	taskResp, err := client.CreateOrganicTask(r.Context(), task)
+	s.logger.Info("Using Live API for immediate rank check", 
+		zap.String("keyword_id", keywordID),
+		zap.String("keyword", keyword.Keyword))
+
+	// Call Live API - returns results immediately
+	liveResp, err := client.CreateOrganicTaskLive(r.Context(), task)
 	if err != nil {
-		s.logger.Error("Failed to create DataForSEO task", zap.Error(err))
+		s.logger.Error("Failed to create DataForSEO Live task", zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to create rank check task: %v", err))
 		return
 	}
 
-	if len(taskResp.Tasks) == 0 {
-		s.logger.Error("No tasks returned from DataForSEO", zap.Any("response", taskResp))
-		s.respondError(w, http.StatusInternalServerError, "No task ID returned from DataForSEO")
+	if len(liveResp.Tasks) == 0 {
+		s.logger.Error("No tasks returned from DataForSEO Live API", zap.Any("response", liveResp))
+		s.respondError(w, http.StatusInternalServerError, "No results returned from DataForSEO")
 		return
 	}
 
-	taskID := taskResp.Tasks[0].ID
-	taskStatusCode := taskResp.Tasks[0].StatusCode
-	s.logger.Info("Created DataForSEO task", 
+	taskResult := liveResp.Tasks[0]
+	taskID := taskResult.ID
+	taskStatusCode := taskResult.StatusCode
+
+	s.logger.Info("Received Live API response", 
 		zap.String("task_id", taskID),
 		zap.String("keyword_id", keywordID),
 		zap.String("keyword", keyword.Keyword),
 		zap.Int("status_code", taskStatusCode),
-		zap.String("status_message", taskResp.Tasks[0].StatusMessage),
-		zap.Int("response_status_code", taskResp.StatusCode))
+		zap.String("status_message", taskResult.StatusMessage))
 
-	// Check if task creation was successful
-	// 20000 = success, 20100 = task created (also success)
-	if taskStatusCode != 20000 && taskStatusCode != 20100 {
-		s.logger.Warn("DataForSEO task creation returned non-success status", 
+	// Check if task was successful
+	if taskStatusCode != 20000 {
+		s.logger.Warn("DataForSEO Live API returned non-success status", 
 			zap.Int("status_code", taskStatusCode),
-			zap.String("status_message", taskResp.Tasks[0].StatusMessage))
-		s.respondError(w, http.StatusBadRequest, fmt.Sprintf("DataForSEO task creation failed: %s (code: %d)", 
-			taskResp.Tasks[0].StatusMessage, taskStatusCode))
+			zap.String("status_message", taskResult.StatusMessage))
+		s.respondError(w, http.StatusBadRequest, fmt.Sprintf("DataForSEO task failed: %s (code: %d)", 
+			taskResult.StatusMessage, taskStatusCode))
 		return
 	}
 
-	// Create task record
+	// Create task record for tracking
 	taskRecordID := uuid.New().String()
+	now := time.Now().UTC()
 	taskRecord := map[string]interface{}{
 		"id":                 taskRecordID,
 		"keyword_id":         keywordID,
 		"dataforseo_task_id": taskID,
-		"status":             "pending",
+		"status":             "completed", // Live API completes immediately
+		"run_at":             now.Format(time.RFC3339),
+		"completed_at":       now.Format(time.RFC3339),
 		"raw_request":        map[string]interface{}{"task": task},
+		"raw_response":       liveResp,
 	}
 
 	_, _, err = s.serviceRole.From("keyword_tasks").Insert(taskRecord, false, "", "", "").Execute()
 	if err != nil {
-		s.logger.Error("Failed to insert task record", zap.Error(err))
-		// Continue anyway - we'll try to poll
+		s.logger.Warn("Failed to insert task record", zap.Error(err))
+		// Continue anyway - we'll still create the snapshot
 	}
 
-	// Try to get result immediately (hybrid approach)
-	// Note: DataForSEO tasks usually take a few seconds to process
-	var snapshot *RankSnapshotResponse
-	getResp, err := client.GetOrganicTask(r.Context(), taskID)
+	// Extract ranking from Live API response
+	targetURL := ""
+	if keyword.TargetURL != nil {
+		targetURL = *keyword.TargetURL
+	}
+	ranking, err := dataforseo.ExtractRanking(liveResp, targetURL)
 	if err != nil {
-		s.logger.Debug("Task not ready yet (will poll in background)", 
-			zap.String("task_id", taskID),
-			zap.Error(err))
-		// Mark as processing for background poller
-		_, _, _ = s.serviceRole.From("keyword_tasks").
-			Update(map[string]interface{}{"status": "processing"}, "", "").
-			Eq("id", taskRecordID).
-			Execute()
-	} else if dataforseo.IsTaskReady(getResp) {
-		// Task is ready, extract ranking
-		targetURL := ""
-		if keyword.TargetURL != nil {
-			targetURL = *keyword.TargetURL
-		}
-		ranking, err := dataforseo.ExtractRanking(getResp, targetURL)
-		if err == nil {
-			// Create snapshot
-			snapshot, err = s.createSnapshot(keywordID, taskID, ranking)
-			if err != nil {
-				s.logger.Error("Failed to create snapshot", zap.Error(err))
-			} else {
-				// Update task status
-				_, _, _ = s.serviceRole.From("keyword_tasks").
-					Update(map[string]interface{}{
-						"status":       "completed",
-						"completed_at": time.Now().UTC().Format(time.RFC3339),
-						"raw_response": getResp,
-					}, "", "").
-					Eq("id", taskRecordID).
-					Execute()
-
-				// Track usage
-				checkType := "manual"
-				if keyword.CheckFrequency != "manual" {
-					checkType = "scheduled"
-				}
-				if err := s.trackKeywordUsage(r.Context(), keyword.ProjectID, keywordID, userID, taskID, checkType, DefaultCheckCost); err != nil {
-					s.logger.Warn("Failed to track keyword usage", zap.Error(err))
-				}
-
-				// Update keyword's last_checked_at
-				now := time.Now().UTC().Format(time.RFC3339)
-				_, _, _ = s.serviceRole.From("keywords").
-					Update(map[string]interface{}{"last_checked_at": now}, "", "").
-					Eq("id", keywordID).
-					Execute()
-			}
-		} else {
-			// Task exists but not ready yet - mark as processing for background polling
-			s.logger.Debug("Task not ready yet, will poll in background", 
-				zap.String("task_id", taskID),
-				zap.Int("status_code", getResp.Tasks[0].StatusCode))
-			_, _, _ = s.serviceRole.From("keyword_tasks").
-				Update(map[string]interface{}{"status": "processing"}, "", "").
-				Eq("id", taskRecordID).
-				Execute()
-		}
-	} else {
-		// Task not ready yet - update status to processing for background polling
-		s.logger.Debug("Failed to get task immediately, will poll in background", 
-			zap.String("task_id", taskID),
-			zap.Error(err))
-		_, _, _ = s.serviceRole.From("keyword_tasks").
-			Update(map[string]interface{}{"status": "processing"}, "", "").
-			Eq("id", taskRecordID).
-			Execute()
+		s.logger.Error("Failed to extract ranking from Live API response", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to extract ranking: %v", err))
+		return
 	}
 
-	if snapshot != nil {
-		s.respondJSON(w, http.StatusOK, snapshot)
-	} else {
-		// Return task info - frontend can poll
-		s.respondJSON(w, http.StatusAccepted, map[string]interface{}{
-			"task_id":  taskID,
-			"status":   "processing",
-			"message":  "Rank check initiated. Results will be available shortly.",
-		})
+	// Create snapshot
+	snapshot, err := s.createSnapshot(keywordID, taskID, ranking)
+	if err != nil {
+		s.logger.Error("Failed to create snapshot", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to create snapshot: %v", err))
+		return
 	}
+
+	// Track usage
+	checkType := "manual"
+	if keyword.CheckFrequency != "manual" {
+		checkType = "scheduled"
+	}
+	if err := s.trackKeywordUsage(r.Context(), keyword.ProjectID, keywordID, userID, taskID, checkType, DefaultCheckCost); err != nil {
+		s.logger.Warn("Failed to track keyword usage", zap.Error(err))
+	}
+
+	// Update keyword's last_checked_at
+	_, _, _ = s.serviceRole.From("keywords").
+		Update(map[string]interface{}{"last_checked_at": now.Format(time.RFC3339)}, "", "").
+		Eq("id", keywordID).
+		Execute()
+
+	// Return snapshot immediately - no polling needed!
+	s.respondJSON(w, http.StatusOK, snapshot)
 }
 
 // handleGetKeywordSnapshots handles GET /api/v1/keywords/:id/snapshots
@@ -1089,6 +1054,275 @@ func (s *Server) handleProjectKeywordMetrics(w http.ResponseWriter, r *http.Requ
 		"improved_count":    improvedCount,
 		"declined_count":    declinedCount,
 		"no_change_count":   noChangeCount,
+	})
+}
+
+// DiscoverKeywordsRequest represents a request to discover keywords for a domain/URL
+type DiscoverKeywordsRequest struct {
+	Target      string `json:"target"`       // Domain (e.g., "example.com") or URL
+	LocationName string `json:"location_name"` // e.g., "United States"
+	LanguageName string `json:"language_name"` // e.g., "English"
+	Limit       int    `json:"limit,omitempty"` // Max results (default 1000)
+	MinPosition int    `json:"min_position,omitempty"` // Minimum position to include
+	MaxPosition int    `json:"max_position,omitempty"` // Maximum position to include
+}
+
+// DiscoveredKeywordResponse represents a discovered keyword
+type DiscoveredKeywordResponse struct {
+	Keyword       string  `json:"keyword"`
+	Position      int     `json:"position"`
+	URL           string  `json:"url"`
+	Title         string  `json:"title"`
+	SearchVolume  int     `json:"search_volume"`
+	Competition   string  `json:"competition"`
+	CPC           float64 `json:"cpc"`
+	KeywordDifficulty int `json:"keyword_difficulty"`
+	MatchedPageID *int64  `json:"matched_page_id,omitempty"` // ID of crawled page if matched
+	MatchedPageURL *string `json:"matched_page_url,omitempty"` // URL of matched page
+}
+
+// handleDiscoverKeywords handles POST /api/v1/projects/:id/discover-keywords
+func (s *Server) handleDiscoverKeywords(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	// Verify project access
+	hasAccess, err := s.verifyProjectAccess(userID, projectID)
+	if err != nil {
+		s.logger.Error("Failed to verify project access", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify project access")
+		return
+	}
+	if !hasAccess {
+		s.respondError(w, http.StatusForbidden, "Access denied")
+		return
+	}
+
+	// Parse request body
+	var req DiscoverKeywordsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request body: %v", err))
+		return
+	}
+
+	// Validate required fields
+	if req.Target == "" {
+		s.respondError(w, http.StatusBadRequest, "target is required")
+		return
+	}
+	if req.LocationName == "" {
+		req.LocationName = "United States" // Default
+	}
+	if req.LanguageName == "" {
+		req.LanguageName = "English" // Default
+	}
+	if req.Limit == 0 {
+		req.Limit = 1000 // Default limit
+	}
+	if req.Limit > 10000 {
+		req.Limit = 10000 // Max limit
+	}
+
+	// Initialize DataForSEO client
+	client, err := dataforseo.NewClient()
+	if err != nil {
+		s.logger.Error("Failed to create DataForSEO client", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "DataForSEO integration not configured")
+		return
+	}
+
+	// Call DataForSEO Ranked Keywords API
+	// Note: Based on API example, only these fields are supported:
+	// target, language_name, location_name, load_rank_absolute, load_keyword_info, limit
+	// Filters, SortBy, OrderBy are NOT supported in the live endpoint
+	task := dataforseo.RankedKeywordsTask{
+		Target:           req.Target,
+		LocationName:     req.LocationName,
+		LanguageName:     req.LanguageName,
+		LoadRankAbsolute: true,  // Load absolute rank as shown in API example
+		LoadKeywordInfo:  true,  // Load keyword metrics (search volume, competition, CPC)
+		Limit:            req.Limit,
+	}
+
+	resp, err := client.GetRankedKeywordsLive(r.Context(), task)
+	if err != nil {
+		s.logger.Error("Failed to discover keywords",
+			zap.Error(err),
+			zap.String("target", req.Target),
+			zap.String("location", req.LocationName),
+			zap.String("language", req.LanguageName))
+		
+		// Check if it's a 40400 error (endpoint not found)
+		errorMsg := err.Error()
+		if strings.Contains(errorMsg, "40400") || strings.Contains(errorMsg, "Not Found") {
+			s.respondError(w, http.StatusBadRequest, 
+				"Ranked Keywords API endpoint not available. This feature may require a DataForSEO Labs subscription or the endpoint may not be available in your account tier.")
+			return
+		}
+		
+		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to discover keywords: %v", err))
+		return
+	}
+
+	// Log response structure for debugging
+	s.logger.Info("Ranked Keywords API response",
+		zap.Int("status_code", resp.StatusCode),
+		zap.String("status_message", resp.StatusMessage),
+		zap.Int("tasks_count", len(resp.Tasks)))
+
+	// Check response status code
+	if resp.StatusCode != 20000 && resp.StatusCode != 0 {
+		s.logger.Warn("Ranked Keywords API returned non-success status",
+			zap.Int("status_code", resp.StatusCode),
+			zap.String("status_message", resp.StatusMessage))
+		s.respondError(w, http.StatusBadRequest, 
+			fmt.Sprintf("DataForSEO API error: %d - %s", resp.StatusCode, resp.StatusMessage))
+		return
+	}
+
+	// Check if we got results
+	if len(resp.Tasks) == 0 {
+		s.logger.Info("No tasks in response", zap.String("target", req.Target))
+		s.respondJSON(w, http.StatusOK, map[string]interface{}{
+			"keywords": []DiscoveredKeywordResponse{},
+			"count":    0,
+			"message":  "No keywords found for this domain",
+		})
+		return
+	}
+
+	taskResult := resp.Tasks[0]
+	s.logger.Info("Task result",
+		zap.Int("task_status_code", taskResult.StatusCode),
+		zap.String("task_status_message", taskResult.StatusMessage),
+		zap.Int("result_count", len(taskResult.Result)),
+		zap.String("target", req.Target))
+
+	if len(taskResult.Result) == 0 {
+		s.logger.Info("No results in task", zap.String("target", req.Target))
+		s.respondJSON(w, http.StatusOK, map[string]interface{}{
+			"keywords": []DiscoveredKeywordResponse{},
+			"count":    0,
+			"message":  "No keywords found for this domain",
+		})
+		return
+	}
+
+	if len(taskResult.Result[0].Items) == 0 {
+		s.logger.Info("No items in result", 
+			zap.String("target", req.Target),
+			zap.Int("task_status_code", taskResult.StatusCode))
+		s.respondJSON(w, http.StatusOK, map[string]interface{}{
+			"keywords": []DiscoveredKeywordResponse{},
+			"count":    0,
+			"message":  "No keywords found for this domain",
+		})
+		return
+	}
+
+	s.logger.Info("Found keywords",
+		zap.Int("count", len(taskResult.Result[0].Items)),
+		zap.String("target", req.Target))
+
+	// Debug: Log first item structure to see what fields are available
+	if len(taskResult.Result[0].Items) > 0 {
+		firstItem := taskResult.Result[0].Items[0]
+		// Log raw JSON of first item to see actual structure
+		itemJSON, _ := json.Marshal(firstItem)
+		var cpc float64
+		if firstItem.KeywordData.KeywordInfo.CPC != nil {
+			cpc = *firstItem.KeywordData.KeywordInfo.CPC
+		}
+		s.logger.Info("Sample keyword item structure",
+			zap.String("keyword", firstItem.KeywordData.Keyword),
+			zap.Int("search_volume", firstItem.KeywordData.KeywordInfo.SearchVolume),
+			zap.String("competition", firstItem.KeywordData.KeywordInfo.CompetitionLevel),
+			zap.Float64("cpc", cpc),
+			zap.String("url", firstItem.RankedSERPElement.SERPItem.URL),
+			zap.String("title", firstItem.RankedSERPElement.SERPItem.Title),
+			zap.String("raw_json", string(itemJSON)))
+	}
+
+	// Get all crawled pages for this project to match URLs
+	pageData, _, err := s.serviceRole.From("pages").
+		Select("id,url", "", false).
+		Eq("project_id", projectID).
+		Execute()
+	
+	pageMap := make(map[string]int64) // URL -> page ID
+	if err == nil {
+		var pages []map[string]interface{}
+		if err := json.Unmarshal(pageData, &pages); err == nil {
+			for _, page := range pages {
+				url := getKeywordString(page, "url")
+				if url != "" {
+					// Normalize URL for matching (remove trailing slash, lowercase)
+					normalizedURL := strings.TrimSuffix(strings.ToLower(url), "/")
+					if pageIDFloat, ok := page["id"].(float64); ok {
+						pageMap[normalizedURL] = int64(pageIDFloat)
+					}
+				}
+			}
+		}
+	}
+
+	// Convert to response format
+	resultItems := taskResult.Result[0].Items
+	s.logger.Debug("Processing items",
+		zap.Int("items_count", len(resultItems)))
+	
+	discovered := make([]DiscoveredKeywordResponse, 0, len(resultItems))
+	for _, item := range resultItems {
+		// Get position (prefer rank_group, fallback to rank_absolute)
+		position := item.RankedSERPElement.SERPItem.RankGroup
+		if position == 0 {
+			position = item.RankedSERPElement.SERPItem.RankAbsolute
+		}
+		
+		// Apply position filters client-side if specified
+		if req.MinPosition > 0 && position < req.MinPosition {
+			continue
+		}
+		if req.MaxPosition > 0 && position > req.MaxPosition {
+			continue
+		}
+
+		// Try to match URL to crawled page
+		itemURL := strings.TrimSuffix(strings.ToLower(item.RankedSERPElement.SERPItem.URL), "/")
+		var matchedPageID *int64
+		var matchedPageURL *string
+		if pageID, found := pageMap[itemURL]; found {
+			matchedPageID = &pageID
+			originalURL := item.RankedSERPElement.SERPItem.URL
+			matchedPageURL = &originalURL
+		}
+
+		// Extract keyword from nested keyword_data structure
+		keyword := item.KeywordData.Keyword
+		
+		// Extract keyword info from nested structure
+		searchVolume := item.KeywordData.KeywordInfo.SearchVolume
+		competition := item.KeywordData.KeywordInfo.CompetitionLevel
+		var cpc float64
+		if item.KeywordData.KeywordInfo.CPC != nil {
+			cpc = *item.KeywordData.KeywordInfo.CPC
+		}
+		
+		discovered = append(discovered, DiscoveredKeywordResponse{
+			Keyword:            keyword,
+			Position:           position,
+			URL:                item.RankedSERPElement.SERPItem.URL,
+			Title:              item.RankedSERPElement.SERPItem.Title,
+			SearchVolume:       searchVolume,
+			Competition:        competition,
+			CPC:                cpc,
+			KeywordDifficulty: item.RankedSERPElement.KeywordDifficulty,
+			MatchedPageID:      matchedPageID,
+			MatchedPageURL:     matchedPageURL,
+		})
+	}
+
+	s.respondJSON(w, http.StatusOK, map[string]interface{}{
+		"keywords": discovered,
+		"count":    len(discovered),
+		"target":   req.Target,
 	})
 }
 

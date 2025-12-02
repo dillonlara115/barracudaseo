@@ -449,6 +449,13 @@ func (s *Server) handleProjectByID(w http.ResponseWriter, r *http.Request) {
 				s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			}
 			return
+		case "discover-keywords":
+			if r.Method == http.MethodPost {
+				s.handleDiscoverKeywords(w, r, projectID, userID)
+			} else {
+				s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			}
+			return
 		case "impact-first":
 			if r.Method == http.MethodGet {
 				s.handleImpactFirstView(w, r, projectID, userID)

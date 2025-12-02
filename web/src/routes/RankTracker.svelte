@@ -1,10 +1,12 @@
 <script>
   import { onMount } from 'svelte';
   import { params, link } from 'svelte-spa-router';
-  import { fetchProjects, listKeywords, checkKeyword, getKeywordSnapshots, deleteKeyword, fetchProjectKeywordUsage } from '../lib/data.js';
+  import { fetchProjects, listKeywords, checkKeyword, getKeywordSnapshots, deleteKeyword, fetchProjectKeywordUsage, fetchProjectGSCStatus } from '../lib/data.js';
   import KeywordForm from '../components/KeywordForm.svelte';
   import KeywordDetailModal from '../components/KeywordDetailModal.svelte';
-  import { ArrowUp, ArrowDown, Minus, Search, Filter, Plus } from 'lucide-svelte';
+  import KeywordDiscovery from '../components/KeywordDiscovery.svelte';
+  import ProjectPageLayout from '../components/ProjectPageLayout.svelte';
+  import { ArrowUp, ArrowDown, Minus, Search, Filter, Plus, Sparkles, Binoculars } from 'lucide-svelte';
 
   let projectId = null;
   let project = null;
@@ -13,11 +15,13 @@
   let error = null;
   let successMessage = null;
   let showKeywordForm = false;
+  let showKeywordDiscovery = false;
   let selectedKeyword = null;
   let showDetailModal = false;
   let checkingKeywords = new Set();
   let usageStats = null;
   let usageLoading = false;
+  let gscStatus = null;
   
   // Filters
   let searchQuery = '';
@@ -236,22 +240,24 @@
   <title>Rank Tracker - {project?.name || 'Barracuda SEO'}</title>
 </svelte:head>
 
-<div class="container mx-auto p-6">
+<ProjectPageLayout {projectId} {gscStatus} showCrawlSection={false}>
+<div class="max-w-7xl mx-auto">
   <!-- Header -->
   <div class="mb-6">
     <div class="flex items-center justify-between mb-4">
       <div>
         <h1 class="text-3xl font-bold mb-2">Rank Tracker</h1>
+        <p class="text-base-content/70 mb-1">
+          Track keyword rankings over time using DataForSEO. Monitor position changes, view historical data, and identify opportunities for improvement.
+        </p>
         {#if project}
-          <p class="text-base-content/70">Project: {project.name}</p>
+          <p class="text-sm text-base-content/60">Project: {project.name}</p>
         {/if}
       </div>
       <div class="flex gap-2">
-        <a href="/project/{projectId}" use:link class="btn btn-ghost">
-          ← Back to Project
-        </a>
-        <a href="/project/{projectId}/impact-first" use:link class="btn btn-outline">
-          Impact-First View
+        <a href="/project/{projectId}/discover-keywords" use:link class="btn btn-outline">
+          <Binoculars class="w-4 h-4 mr-1" />
+          Discover Keywords
         </a>
         <button class="btn btn-primary" on:click={() => showKeywordForm = true}>
           <Plus class="w-4 h-4 mr-1" />
@@ -364,6 +370,7 @@
                   <th>Latest Position</th>
                   <th>Best Position</th>
                   <th>Trend</th>
+                  <th>Check Frequency</th>
                   <th>Last Checked</th>
                   <th>Actions</th>
                 </tr>
@@ -442,12 +449,23 @@
     {/if}
   {/if}
 </div>
+</ProjectPageLayout>
 
 {#if showKeywordForm}
   <KeywordForm
     projectId={projectId}
     on:close={() => showKeywordForm = false}
     on:created={handleKeywordCreated}
+  />
+{/if}
+
+{#if showKeywordDiscovery}
+  <KeywordDiscovery
+    projectId={projectId}
+    showAsModal={true}
+    on:close={() => showKeywordDiscovery = false}
+    on:keyword-added={() => loadData()}
+    on:keywords-added={(e) => { loadData(); successMessage = `Added ${e.detail.count} keywords to tracking!`; setTimeout(() => successMessage = null, 3000); }}
   />
 {/if}
 

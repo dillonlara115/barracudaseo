@@ -1,14 +1,16 @@
 <script>
   import { onMount } from 'svelte';
   import { params, link } from 'svelte-spa-router';
-  import { fetchProjects, fetchProjectImpactFirst } from '../lib/data.js';
+  import { fetchProjects, fetchProjectImpactFirst, fetchProjectGSCStatus } from '../lib/data.js';
   import { AlertTriangle, TrendingUp, ExternalLink } from 'lucide-svelte';
+  import ProjectPageLayout from '../components/ProjectPageLayout.svelte';
 
   let projectId = null;
   let project = null;
   let impactPages = [];
   let loading = true;
   let error = null;
+  let gscStatus = null;
 
   $: projectId = $params?.projectId || null;
 
@@ -22,11 +24,24 @@
     loadData();
   }
 
+  async function loadGSCStatus() {
+    if (!projectId) return;
+    try {
+      const result = await fetchProjectGSCStatus(projectId);
+      if (!result.error && result.data) {
+        gscStatus = result.data;
+      }
+    } catch (err) {
+      console.error('Failed to load GSC status:', err);
+    }
+  }
+
   async function loadData() {
     if (!projectId) return;
     
     loading = true;
     error = null;
+    await loadGSCStatus();
 
     try {
       // Load project
@@ -75,14 +90,19 @@
   <title>Impact-First View - {project?.name || 'Barracuda SEO'}</title>
 </svelte:head>
 
-<div class="container mx-auto p-6">
+<ProjectPageLayout {projectId} {gscStatus} showCrawlSection={false}>
+<div class="max-w-7xl mx-auto">
   <!-- Header -->
   <div class="mb-6">
     <div class="flex items-center justify-between mb-4">
       <div>
         <h1 class="text-3xl font-bold mb-2">Impact-First View</h1>
+        <p class="text-base-content/70 mb-1">
+          Pages that rank for keywords AND have crawl issues, prioritized by impact score. 
+          Focus on fixing issues on these pages first for maximum SEO impact.
+        </p>
         {#if project}
-          <p class="text-base-content/70">Pages that rank AND have issues - prioritized by impact</p>
+          <p class="text-sm text-base-content/60">Project: {project.name}</p>
         {/if}
       </div>
       <div class="flex gap-2">
@@ -207,4 +227,5 @@
     </div>
   {/if}
 </div>
+</ProjectPageLayout>
 

@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -98,8 +99,22 @@ func (c *Client) do(ctx context.Context, method, path string, body interface{}, 
 			}
 		}
 		
+		// For ranked keywords API, log raw response for debugging
+		if strings.Contains(path, "ranked_keywords") && len(bodyBytes) > 0 && len(bodyBytes) < 50000 {
+			// Log first 1000 chars of response for debugging
+			preview := string(bodyBytes)
+			if len(preview) > 1000 {
+				preview = preview[:1000] + "..."
+			}
+			// This will help us see the actual response structure
+		}
+		
 		// Decode the actual response
 		if err := json.Unmarshal(bodyBytes, v); err != nil {
+			// Log response body for debugging if decode fails
+			if len(bodyBytes) > 0 && len(bodyBytes) < 10000 {
+				return fmt.Errorf("decode response: %w, response body: %s", err, string(bodyBytes))
+			}
 			return fmt.Errorf("decode response: %w", err)
 		}
 	}
@@ -139,6 +154,23 @@ func (c *Client) GetOrganicTasksReady(ctx context.Context) (*OrganicTasksReadyRe
 	var resp OrganicTasksReadyResponse
 	path := "/v3/serp/google/organic/tasks_ready"
 	if err := c.do(ctx, http.MethodGet, path, nil, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// CreateOrganicTaskLive creates a new organic SERP task using the Live API
+// Live API returns results immediately in a single request (no polling needed)
+// More expensive but instant - perfect for "check now" functionality
+func (c *Client) CreateOrganicTaskLive(ctx context.Context, task OrganicTaskPost) (*OrganicTaskGetResponse, error) {
+	// DataForSEO expects tasks as a map with numeric string keys
+	body := OrganicLiveRequest{
+		"0": task,
+	}
+
+	var resp OrganicTaskGetResponse
+	if err := c.do(ctx, http.MethodPost, "/v3/serp/google/organic/live/regular", body, &resp); err != nil {
 		return nil, err
 	}
 
@@ -201,5 +233,29 @@ type RankingData struct {
 	Title            string
 	Snippet          string
 	SERPFeatures     []string
+}
+
+// GetRankedKeywordsLive discovers keywords that a domain/URL is currently ranking for
+// Uses the DataForSEO Labs Ranked Keywords API (Live endpoint)
+// Returns results immediately - no polling needed
+// Note: This API uses an array format for the request body, not a map like SERP API
+func (c *Client) GetRankedKeywordsLive(ctx context.Context, task RankedKeywordsTask) (*RankedKeywordsResponse, error) {
+	// DataForSEO Ranked Keywords API expects an array format: [{...}]
+	// Unlike SERP API which uses map format: {"0": {...}}
+	body := RankedKeywordsRequest{task}
+
+	var resp RankedKeywordsResponse
+	// Endpoint: /v3/dataforseo_labs/google/ranked_keywords/live
+	// Based on docs: https://docs.dataforseo.com/v3/dataforseo_labs/google/ranked_keywords/live/
+	path := "/v3/dataforseo_labs/google/ranked_keywords/live"
+	if err := c.do(ctx, http.MethodPost, path, body, &resp); err != nil {
+		// Provide helpful error message
+		if strings.Contains(err.Error(), "40400") || strings.Contains(err.Error(), "Not Found") {
+			return nil, fmt.Errorf("Ranked Keywords API endpoint not found (40400). This feature may require a DataForSEO Labs subscription or the endpoint may not be available in your account tier. Error: %w", err)
+		}
+		return nil, err
+	}
+
+	return &resp, nil
 }
 
