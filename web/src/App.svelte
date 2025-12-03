@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import Router, { link, push } from 'svelte-spa-router';
-  import { initAuth, user, authEvent } from './lib/auth.js';
+  import { initAuth, user, authEvent, session } from './lib/auth.js';
   import { supabase } from './lib/supabase.js';
   import Auth from './components/Auth.svelte';
   import ConfigError from './components/ConfigError.svelte';
@@ -66,8 +66,14 @@
 
   // Track redirect timeout to prevent multiple redirects
   let redirectTimeout = null;
+  let isHandlingRedirect = false;
+  let lastAuthEvent = null;
 
   onMount(async () => {
+    // Track auth events to differentiate real sign-outs from refresh failures
+    authEvent.subscribe((event) => {
+      lastAuthEvent = event;
+    });
     // Watch hash changes for legal pages
     if (typeof window !== 'undefined') {
       currentHash = window.location.hash;
@@ -118,17 +124,51 @@
       }
 
       if (!currentUser) {
+        // Don't redirect if we're already handling one
+        if (isHandlingRedirect) {
+          return;
+        }
+
         // Check if this is a real sign-out or just a token refresh failure
-        // Use a small delay to allow token refresh to complete
+        // Only redirect on explicit SIGNED_OUT events, not on TOKEN_REFRESHED failures
+        const eventType = lastAuthEvent;
+        
+        // If the event is SIGNED_OUT, it's a real sign-out
+        // If it's TOKEN_REFRESHED or null, it might be a temporary failure
+        if (eventType === 'SIGNED_OUT') {
+          // Real sign-out - redirect immediately (but still check for public pages)
+          if (!isPublicPage) {
+            isHandlingRedirect = true;
+            push('/');
+            isHandlingRedirect = false;
+          }
+          return;
+        }
+
+        // For other cases (TOKEN_REFRESHED failure, null event, etc.), use a delay
+        // and verify there's truly no session before redirecting
         redirectTimeout = setTimeout(async () => {
+          // Double-check session still doesn't exist
           const { data: { session: storedSession } } = await supabase.auth.getSession();
+          
+          // Also check the session store
+          const currentSession = $session;
           
           // Only redirect if there's truly no session (real sign-out)
           // Don't redirect if on public pages (legal pages or invite acceptance)
-          if (!isPublicPage && !storedSession) {
+          // Don't redirect if session was restored
+          if (!isPublicPage && !storedSession && !currentSession && !isHandlingRedirect) {
+            isHandlingRedirect = true;
             push('/');
+            // Reset flag after a delay to allow navigation
+            setTimeout(() => {
+              isHandlingRedirect = false;
+            }, 2000);
+          } else {
+            // Session was restored or we're on a public page - don't redirect
+            redirectTimeout = null;
           }
-        }, 1000); // 1 second delay to allow token refresh to complete
+        }, 2000); // Increased delay to 2 seconds to allow token refresh to complete
       } else {
         // Load subscription data when user is authenticated
         await loadSubscriptionData();

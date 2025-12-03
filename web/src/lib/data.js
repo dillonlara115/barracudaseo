@@ -2,17 +2,61 @@ import { supabase } from './supabase.js';
 
 export const getApiUrl = () => import.meta.env.VITE_CLOUD_RUN_API_URL || 'http://localhost:8080';
 
+// Track ongoing refresh to prevent concurrent refresh attempts
+let refreshPromise = null;
+let lastRefreshTime = 0;
+const REFRESH_COOLDOWN = 5000; // 5 seconds cooldown between refresh attempts
+
+let isRefreshing = false;
+let pendingRequests = [];
+
+async function onTokenRefreshed(token) {
+  const requests = [...pendingRequests];
+  pendingRequests = [];
+  requests.forEach(({ resolve }) => resolve(token));
+}
+
+async function onTokenRefreshFailed(error) {
+  const requests = [...pendingRequests];
+  pendingRequests = [];
+  requests.forEach(({ reject }) => reject(error));
+}
+
 async function getValidAccessToken() {
   // Get current session
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   
   // If there's an error or no session, try to refresh
   if (sessionError || !session) {
-    const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
-    if (refreshError || !refreshed.session) {
-      throw new Error('Not authenticated. Please sign in again.');
+    // If refresh is already in progress, wait for it
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        pendingRequests.push({ resolve, reject });
+      });
     }
-    return refreshed.session.access_token;
+
+    isRefreshing = true;
+    
+    try {
+      // Start new refresh
+      refreshPromise = supabase.auth.refreshSession();
+      lastRefreshTime = Date.now();
+      const { data: refreshed, error: refreshError } = await refreshPromise;
+      refreshPromise = null;
+      
+      if (refreshError || !refreshed.session) {
+        throw new Error('Not authenticated. Please sign in again.');
+      }
+      
+      const token = refreshed.session.access_token;
+      onTokenRefreshed(token);
+      return token;
+    } catch (err) {
+      onTokenRefreshFailed(err);
+      throw err;
+    } finally {
+      isRefreshing = false;
+    }
   }
 
   // Check if token is expired or about to expire (within 60 seconds)
@@ -22,77 +66,117 @@ async function getValidAccessToken() {
   
   // Refresh if expired or expiring within 60 seconds
   if (!expiresAt || expiresAtMs < now + 60000) {
-    const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
-    if (refreshError || !refreshed.session) {
-      // If refresh fails but we have a token, try using it anyway
-      // The 401 retry logic will handle it if it's truly expired
-      if (session.access_token) {
-        return session.access_token;
-      }
-      throw new Error('Session expired. Please sign in again.');
+    // If refresh is already in progress, wait for it
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        pendingRequests.push({ resolve, reject });
+      });
     }
-    return refreshed.session.access_token;
+
+    isRefreshing = true;
+
+    try {
+      // Start new refresh
+      refreshPromise = supabase.auth.refreshSession();
+      lastRefreshTime = Date.now();
+      const { data: refreshed, error: refreshError } = await refreshPromise;
+      refreshPromise = null;
+      
+      if (refreshError || !refreshed.session) {
+        // If refresh fails but we have a token, try using it anyway
+        if (session.access_token) {
+          const token = session.access_token;
+          onTokenRefreshed(token);
+          return token;
+        }
+        throw new Error('Session expired. Please sign in again.');
+      }
+      
+      const token = refreshed.session.access_token;
+      onTokenRefreshed(token);
+      return token;
+    } catch (err) {
+      onTokenRefreshFailed(err);
+      throw err;
+    } finally {
+      isRefreshing = false;
+    }
   }
 
   return session.access_token;
 }
 
 async function authorizedRequest(path, { method = 'GET', body, headers = {}, retryOn401 = true } = {}) {
-  let token = await getValidAccessToken();
+  try {
+    let token = await getValidAccessToken();
 
-  const requestHeaders = new Headers(headers);
-  requestHeaders.set('Authorization', `Bearer ${token}`);
+    const requestHeaders = new Headers(headers);
+    requestHeaders.set('Authorization', `Bearer ${token}`);
 
-  let requestBody = body;
-  if (body && !(body instanceof FormData) && typeof body === 'object' && !(body instanceof Blob)) {
-    requestHeaders.set('Content-Type', 'application/json');
-    requestBody = JSON.stringify(body);
-  }
+    let requestBody = body;
+    if (body && !(body instanceof FormData) && typeof body === 'object' && !(body instanceof Blob)) {
+      requestHeaders.set('Content-Type', 'application/json');
+      requestBody = JSON.stringify(body);
+    }
 
-  const response = await fetch(`${getApiUrl()}${path}`, {
-    method,
-    headers: requestHeaders,
-    body: requestBody,
-  });
+    const response = await fetch(`${getApiUrl()}${path}`, {
+      method,
+      headers: requestHeaders,
+      body: requestBody,
+    });
 
-  // Handle 401 errors by refreshing token and retrying once
-  if (response.status === 401 && retryOn401) {
-    try {
-      // Always try to refresh on 401, even if we just checked
-      const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
-      if (!refreshError && refreshed.session && refreshed.session.access_token) {
-        // Retry with refreshed token (only once)
-        const retryHeaders = new Headers(headers);
-        retryHeaders.set('Authorization', `Bearer ${refreshed.session.access_token}`);
-        if (body && !(body instanceof FormData) && typeof body === 'object' && !(body instanceof Blob)) {
-          retryHeaders.set('Content-Type', 'application/json');
-        }
-
-        const retryResponse = await fetch(`${getApiUrl()}${path}`, {
-          method,
-          headers: retryHeaders,
-          body: requestBody,
-        });
-        return retryResponse;
-      } else {
-        // Refresh failed - log for debugging but don't throw
-        // This prevents Supabase from firing SIGNED_OUT events unnecessarily
-        console.warn('Token refresh failed on 401:', refreshError || 'No session returned');
-        // Check if there's still a session stored - if so, it's just a temporary failure
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        if (!currentSession) {
-          // No session at all - this is a real auth failure
-          console.warn('No session available after refresh failure');
+    // Handle 401 errors by refreshing token and retrying once
+    if (response.status === 401 && retryOn401) {
+      // If a refresh is already in progress, wait for it then retry
+      if (isRefreshing) {
+        try {
+          const newToken = await new Promise((resolve, reject) => {
+            pendingRequests.push({ resolve, reject });
+          });
+          requestHeaders.set('Authorization', `Bearer ${newToken}`);
+          return fetch(`${getApiUrl()}${path}`, {
+            method,
+            headers: requestHeaders,
+            body: requestBody,
+          });
+        } catch (err) {
+          console.warn('Waiting for refresh failed on 401 retry:', err);
+          return response;
         }
       }
-    } catch (refreshErr) {
-      // If refresh fails, return original 401 response
-      // Don't let this error propagate to avoid triggering auth state changes
-      console.error('Failed to refresh token on 401:', refreshErr);
-    }
-  }
 
-  return response;
+      isRefreshing = true;
+      try {
+        // Force refresh
+        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+        if (!refreshError && refreshed.session && refreshed.session.access_token) {
+          const newToken = refreshed.session.access_token;
+          onTokenRefreshed(newToken);
+          
+          // Retry request
+          requestHeaders.set('Authorization', `Bearer ${newToken}`);
+          return fetch(`${getApiUrl()}${path}`, {
+            method,
+            headers: requestHeaders,
+            body: requestBody,
+          });
+        } else {
+          onTokenRefreshFailed(new Error('Refresh failed'));
+          console.warn('Token refresh failed on 401:', refreshError || 'No session returned');
+        }
+      } catch (refreshErr) {
+        onTokenRefreshFailed(refreshErr);
+        console.error('Failed to refresh token on 401:', refreshErr);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return response;
+  } catch (err) {
+    console.error('Request failed:', err);
+    throw err;
+  }
 }
 
 async function authorizedJSON(path, options = {}) {

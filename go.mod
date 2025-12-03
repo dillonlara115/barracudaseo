@@ -3,7 +3,9 @@ module github.com/dillonlara115/barracuda
 go 1.21.1
 
 require (
+	github.com/MicahParks/keyfunc v1.9.0
 	github.com/PuerkitoBio/goquery v1.8.1
+	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/sashabaranov/go-openai v1.20.4
