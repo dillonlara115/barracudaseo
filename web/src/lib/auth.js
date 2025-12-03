@@ -5,6 +5,7 @@ import { supabase } from './supabase.js';
 export const user = writable(null);
 export const session = writable(null);
 export const loading = writable(true);
+export const authEvent = writable(null); // Track the last auth event type
 
 // Initialize auth state
 export async function initAuth() {
@@ -15,7 +16,8 @@ export async function initAuth() {
     user.set(initialSession?.user ?? null);
 
     // Listen for auth changes
-    supabase.auth.onAuthStateChange((_event, newSession) => {
+    supabase.auth.onAuthStateChange((event, newSession) => {
+      authEvent.set(event); // Track the event type
       session.set(newSession);
       user.set(newSession?.user ?? null);
       loading.set(false);

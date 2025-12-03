@@ -116,8 +116,7 @@
     <!-- Summary Display -->
     {#if summary}
       <div class="mb-4">
-        <div class="flex items-center justify-between mb-2">
-          <h4 class="font-semibold text-lg">AI Crawl Summary</h4>
+        <div class="flex items-center justify-end mb-3">
           <button
             class="btn btn-sm btn-ghost"
             on:click={handleCopyToClipboard}
@@ -127,7 +126,7 @@
             {copied ? 'Copied!' : 'Copy'}
           </button>
         </div>
-        <div class="prose prose-sm max-w-none bg-base-200 p-4 rounded-lg">
+        <div class="ai-summary-content">
           {@html renderedSummary}
         </div>
       </div>
@@ -145,90 +144,184 @@
 </div>
 
 <style>
-  .prose {
+  :global(.ai-summary-content) {
     color: inherit;
+    max-width: none;
+    background-color: hsl(var(--b2));
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    line-height: 1.7;
   }
-  .prose p {
-    margin-top: 0.75em;
-    margin-bottom: 0.75em;
-    line-height: 1.6;
+
+  /* Paragraphs */
+  :global(.ai-summary-content p) {
+    margin-top: 1em !important;
+    margin-bottom: 1em !important;
+    line-height: 1.7 !important;
+    color: hsl(var(--bc) / 0.9) !important;
+    font-size: 0.9375rem !important; /* 15px */
   }
-  /* DaisyUI heading styles */
-  .prose h1 {
-    font-size: 1.875rem; /* text-3xl */
-    font-weight: 700; /* font-bold */
-    margin-bottom: 1rem; /* mb-4 */
-    margin-top: 1.5rem; /* mt-6 */
+
+  /* Headings - Clear visual hierarchy */
+  /* H1 - Largest, most prominent */
+  :global(.ai-summary-content h1) {
+    font-size: 2rem !important; /* 32px */
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    margin-top: 2.5rem !important;
+    margin-bottom: 1.25rem !important;
+    color: hsl(var(--bc)) !important;
+    border-bottom: 3px solid hsl(var(--p) / 0.3) !important;
+    padding-bottom: 0.75rem !important;
   }
-  .prose h2 {
-    font-size: 1.5rem; /* text-2xl */
-    font-weight: 600; /* font-semibold */
-    margin-bottom: 0.75rem; /* mb-3 */
-    margin-top: 1.25rem; /* mt-5 */
+
+  :global(.ai-summary-content h1:first-child) {
+    margin-top: 0 !important;
   }
-  .prose h3 {
-    font-size: 1.25rem; /* text-xl */
-    font-weight: 600; /* font-semibold */
-    margin-bottom: 0.5rem; /* mb-2 */
-    margin-top: 1rem; /* mt-4 */
+
+  /* H2 - Second level */
+  :global(.ai-summary-content h2) {
+    font-size: 1.625rem !important; /* 26px */
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    margin-top: 2rem !important;
+    margin-bottom: 1rem !important;
+    color: hsl(var(--bc)) !important;
+    border-bottom: 2px solid hsl(var(--bc) / 0.2) !important;
+    padding-bottom: 0.5rem !important;
   }
-  .prose h4 {
-    font-size: 1.125rem; /* text-lg */
-    font-weight: 600; /* font-semibold */
-    margin-bottom: 0.5rem; /* mb-2 */
-    margin-top: 0.75rem; /* mt-3 */
+
+  /* H3 - Main section headings (most common in AI summaries) */
+  :global(.ai-summary-content h3) {
+    font-size: 1.625rem !important; /* 26px - significantly larger than paragraphs */
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    margin-top: 2.5rem !important;
+    margin-bottom: 1.25rem !important;
+    color: hsl(var(--bc)) !important;
+    border-bottom: 2px solid hsl(var(--p) / 0.3) !important;
+    padding-bottom: 0.625rem !important;
+    letter-spacing: -0.01em !important;
   }
-  .prose h5 {
-    font-size: 1rem; /* text-base */
-    font-weight: 600; /* font-semibold */
-    margin-bottom: 0.5rem; /* mb-2 */
-    margin-top: 0.5rem; /* mt-2 */
+
+  :global(.ai-summary-content h3:first-child) {
+    margin-top: 0 !important;
   }
-  .prose h6 {
-    font-size: 0.875rem; /* text-sm */
-    font-weight: 600; /* font-semibold */
-    margin-bottom: 0.25rem; /* mb-1 */
-    margin-top: 0.5rem; /* mt-2 */
+
+  /* H4 */
+  :global(.ai-summary-content h4) {
+    font-size: 1.125rem !important; /* 18px */
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    margin-top: 1.5rem !important;
+    margin-bottom: 0.75rem !important;
+    color: hsl(var(--bc)) !important;
   }
-  .prose ul, .prose ol {
-    margin-top: 0.5em;
-    margin-bottom: 0.5em;
-    padding-left: 1.5em;
+
+  /* H5 */
+  :global(.ai-summary-content h5) {
+    font-size: 1rem !important; /* 16px */
+    font-weight: 600 !important;
+    line-height: 1.5 !important;
+    margin-top: 1.25rem !important;
+    margin-bottom: 0.625rem !important;
+    color: hsl(var(--bc)) !important;
   }
-  .prose li {
-    margin-top: 0.25em;
-    margin-bottom: 0.25em;
+
+  /* H6 */
+  :global(.ai-summary-content h6) {
+    font-size: 0.875rem !important; /* 14px */
+    font-weight: 600 !important;
+    line-height: 1.5 !important;
+    margin-top: 1rem !important;
+    margin-bottom: 0.5rem !important;
+    color: hsl(var(--bc)) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
-  .prose code {
-    background-color: rgba(0, 0, 0, 0.2); /* bg-base-300 equivalent */
-    padding: 0.25rem 0.5rem; /* px-2 py-1 */
-    border-radius: 0.25rem; /* rounded */
-    font-size: 0.875rem; /* text-sm */
+
+  /* Lists */
+  :global(.ai-summary-content ul),
+  :global(.ai-summary-content ol) {
+    margin-top: 0.75em !important;
+    margin-bottom: 0.75em !important;
+    padding-left: 1.75em !important;
+    color: hsl(var(--bc) / 0.9) !important;
   }
-  .prose pre {
-    background-color: rgba(0, 0, 0, 0.2); /* bg-base-300 equivalent */
-    padding: 1rem; /* p-4 */
-    border-radius: 0.5rem; /* rounded-lg */
-    overflow-x: auto;
-    margin-top: 1rem; /* my-4 */
-    margin-bottom: 1rem; /* my-4 */
+
+  :global(.ai-summary-content li) {
+    margin-top: 0.5em !important;
+    margin-bottom: 0.5em !important;
+    line-height: 1.6 !important;
   }
-  .prose pre code {
-    background-color: transparent;
-    padding: 0;
+
+  :global(.ai-summary-content li > p) {
+    margin-top: 0.5em !important;
+    margin-bottom: 0.5em !important;
   }
-  .prose strong {
-    font-weight: 700; /* font-bold */
+
+  /* Strong and emphasis */
+  :global(.ai-summary-content strong) {
+    font-weight: 700 !important;
+    color: hsl(var(--bc)) !important;
   }
-  .prose em {
+
+  :global(.ai-summary-content em) {
     font-style: italic;
   }
-  .prose blockquote {
-    border-left: 4px solid rgba(0, 0, 0, 0.2); /* border-l-4 border-base-300 */
-    padding-left: 1rem; /* pl-4 */
-    margin-top: 1rem; /* my-4 */
-    margin-bottom: 1rem; /* my-4 */
+
+  /* Code blocks */
+  :global(.ai-summary-content code) {
+    background-color: hsl(var(--b3)) !important;
+    padding: 0.125rem 0.375rem !important;
+    border-radius: 0.25rem !important;
+    font-size: 0.875rem !important;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace !important;
+    color: hsl(var(--bc)) !important;
+  }
+
+  :global(.ai-summary-content pre) {
+    background-color: hsl(var(--b3)) !important;
+    padding: 1rem !important;
+    border-radius: 0.5rem !important;
+    overflow-x: auto !important;
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+    border: 1px solid hsl(var(--bc) / 0.1) !important;
+  }
+
+  :global(.ai-summary-content pre code) {
+    background-color: transparent !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* Blockquotes */
+  :global(.ai-summary-content blockquote) {
+    border-left: 3px solid hsl(var(--p)) !important;
+    padding-left: 1rem !important;
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
     font-style: italic;
+    color: hsl(var(--bc) / 0.8) !important;
+  }
+
+  /* Links */
+  :global(.ai-summary-content a) {
+    color: hsl(var(--p)) !important;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  :global(.ai-summary-content a:hover) {
+    color: hsl(var(--pf)) !important;
+  }
+
+  /* Horizontal rules */
+  :global(.ai-summary-content hr) {
+    border: none !important;
+    border-top: 1px solid hsl(var(--bc) / 0.2) !important;
+    margin: 2rem 0 !important;
   }
 </style>
 

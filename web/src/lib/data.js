@@ -75,11 +75,19 @@ async function authorizedRequest(path, { method = 'GET', body, headers = {}, ret
         });
         return retryResponse;
       } else {
-        // Refresh failed - log for debugging
+        // Refresh failed - log for debugging but don't throw
+        // This prevents Supabase from firing SIGNED_OUT events unnecessarily
         console.warn('Token refresh failed on 401:', refreshError || 'No session returned');
+        // Check if there's still a session stored - if so, it's just a temporary failure
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (!currentSession) {
+          // No session at all - this is a real auth failure
+          console.warn('No session available after refresh failure');
+        }
       }
     } catch (refreshErr) {
       // If refresh fails, return original 401 response
+      // Don't let this error propagate to avoid triggering auth state changes
       console.error('Failed to refresh token on 401:', refreshErr);
     }
   }
@@ -565,6 +573,13 @@ export async function saveOpenAIKey(openaiApiKey) {
 export async function getOpenAIKeyStatus() {
   return authorizedJSON('/api/v1/integrations/openai-key', {
     method: 'GET'
+  });
+}
+
+// Disconnect/remove OpenAI API key
+export async function disconnectOpenAIKey() {
+  return authorizedJSON('/api/v1/integrations/openai-key', {
+    method: 'DELETE'
   });
 }
 

@@ -408,9 +408,19 @@ func (s *Server) handleOpenAIKey(w http.ResponseWriter, r *http.Request) {
 		// Save OpenAI API key
 		var req OpenAIKeyRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			s.logger.Error("Failed to decode OpenAI key request", zap.Error(err))
 			s.respondError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request body: %v", err))
 			return
 		}
+
+		// Validate that key is not empty
+		if req.OpenAIAPIKey == "" {
+			s.logger.Warn("Attempted to save empty OpenAI key", zap.String("user_id", userID))
+			s.respondError(w, http.StatusBadRequest, "OpenAI API key cannot be empty")
+			return
+		}
+
+		s.logger.Info("Saving OpenAI API key", zap.String("user_id", userID), zap.Bool("has_key", req.OpenAIAPIKey != ""), zap.Int("key_length", len(req.OpenAIAPIKey)))
 
 		// Upsert user AI settings
 		settings := map[string]interface{}{
@@ -419,37 +429,134 @@ func (s *Server) handleOpenAIKey(w http.ResponseWriter, r *http.Request) {
 			"updated_at":     time.Now().UTC().Format(time.RFC3339),
 		}
 
-		// Try to update first (using serviceRole, filtering by user_id ensures security)
-		_, _, err := s.serviceRole.From("user_ai_settings").
-			Update(settings, "", "").
+		// Check if record exists first
+		var existing []map[string]interface{}
+		selectData, _, selectErr := s.serviceRole.From("user_ai_settings").
+			Select("user_id", "", false).
 			Eq("user_id", userID).
 			Execute()
 
-		if err != nil {
-			// If update fails, try insert
+		s.logger.Info("Checked for existing OpenAI key record", 
+			zap.String("user_id", userID),
+			zap.Error(selectErr),
+			zap.Bool("has_data", selectData != nil && len(selectData) > 0))
+
+		if selectErr == nil && selectData != nil {
+			if err := json.Unmarshal(selectData, &existing); err == nil && len(existing) > 0 {
+				// Record exists, update it
+				s.logger.Info("Updating existing OpenAI key record", zap.String("user_id", userID))
+				updateData, _, err := s.serviceRole.From("user_ai_settings").
+					Update(settings, "", "").
+					Eq("user_id", userID).
+					Execute()
+				if err != nil {
+					s.logger.Error("Failed to update OpenAI key", zap.Error(err), zap.String("user_id", userID))
+					s.respondError(w, http.StatusInternalServerError, "Failed to save OpenAI key")
+					return
+				}
+				s.logger.Info("Successfully updated OpenAI key", 
+					zap.String("user_id", userID),
+					zap.Bool("has_update_data", updateData != nil && len(updateData) > 0))
+			} else {
+				// Record doesn't exist, insert it
+				s.logger.Info("Inserting new OpenAI key record", zap.String("user_id", userID))
+				settings["created_at"] = time.Now().UTC().Format(time.RFC3339)
+				insertData, _, err := s.serviceRole.From("user_ai_settings").Insert(settings, false, "", "", "").Execute()
+				if err != nil {
+					s.logger.Error("Failed to insert OpenAI key", zap.Error(err), zap.String("user_id", userID))
+					s.respondError(w, http.StatusInternalServerError, "Failed to save OpenAI key")
+					return
+				}
+				s.logger.Info("Successfully inserted OpenAI key", 
+					zap.String("user_id", userID),
+					zap.Bool("has_insert_data", insertData != nil && len(insertData) > 0))
+			}
+		} else {
+			// Select failed or no data, try insert first
+			s.logger.Info("Select returned no data, attempting insert", zap.String("user_id", userID), zap.Error(selectErr))
 			settings["created_at"] = time.Now().UTC().Format(time.RFC3339)
-			_, _, err = s.serviceRole.From("user_ai_settings").Insert(settings, false, "", "", "").Execute()
+			insertData, _, err := s.serviceRole.From("user_ai_settings").Insert(settings, false, "", "", "").Execute()
 			if err != nil {
-				s.logger.Error("Failed to save OpenAI key", zap.Error(err))
-				s.respondError(w, http.StatusInternalServerError, "Failed to save OpenAI key")
-				return
+				// Insert failed - might be due to existing record, try update
+				s.logger.Warn("Insert failed, trying update", zap.Error(err), zap.String("user_id", userID))
+				updateData, _, updateErr := s.serviceRole.From("user_ai_settings").
+					Update(settings, "", "").
+					Eq("user_id", userID).
+					Execute()
+				if updateErr != nil {
+					s.logger.Error("Failed to save OpenAI key (both insert and update failed)", 
+						zap.Error(err), 
+						zap.Error(updateErr),
+						zap.String("user_id", userID))
+					s.respondError(w, http.StatusInternalServerError, "Failed to save OpenAI key")
+					return
+				}
+				s.logger.Info("Successfully updated OpenAI key after insert failed", 
+					zap.String("user_id", userID),
+					zap.Bool("has_update_data", updateData != nil && len(updateData) > 0))
+			} else {
+				s.logger.Info("Successfully inserted OpenAI key", 
+					zap.String("user_id", userID),
+					zap.Bool("has_insert_data", insertData != nil && len(insertData) > 0))
 			}
 		}
 
+		// Verify the save worked by querying immediately
+		var verifySettings []map[string]interface{}
+		verifyData, _, verifyErr := s.serviceRole.From("user_ai_settings").
+			Select("openai_api_key", "", false).
+			Eq("user_id", userID).
+			Execute()
+		
+		verificationStatus := "unknown"
+		savedKeyLength := 0
+		
+		if verifyErr == nil && verifyData != nil {
+			if err := json.Unmarshal(verifyData, &verifySettings); err == nil && len(verifySettings) > 0 {
+				if key, ok := verifySettings[0]["openai_api_key"].(string); ok && key != "" {
+					verificationStatus = "verified_saved"
+					savedKeyLength = len(key)
+					s.logger.Info("OpenAI key save verified successfully", 
+						zap.String("user_id", userID),
+						zap.Int("key_length", len(key)))
+				} else {
+					verificationStatus = "verified_empty"
+					s.logger.Warn("OpenAI key save completed but verification shows empty key", 
+						zap.String("user_id", userID))
+				}
+			} else {
+				verificationStatus = "record_not_found"
+				s.logger.Warn("OpenAI key save completed but verification found no record", 
+					zap.String("user_id", userID))
+			}
+		} else {
+			verificationStatus = "verification_failed"
+			s.logger.Warn("Failed to verify OpenAI key save", 
+				zap.String("user_id", userID),
+				zap.Error(verifyErr))
+		}
+
+		s.logger.Info("OpenAI key save completed successfully", zap.String("user_id", userID))
 		s.respondJSON(w, http.StatusOK, map[string]interface{}{
 			"success": true,
+			"debug": map[string]interface{}{
+				"verification_status": verificationStatus,
+				"saved_key_length":    savedKeyLength,
+				"user_id_prefix":      userID[:8], // Safe to log prefix
+			},
 		})
 
 	case http.MethodGet:
-	// Get OpenAI key status (don't return the actual key)
-	// Use serviceRole since we're filtering by user_id (user can only access their own)
-	var settings []map[string]interface{}
-	data, _, err := s.serviceRole.From("user_ai_settings").
-		Select("openai_api_key", "", false).
-		Eq("user_id", userID).
-		Execute()
+		// Get OpenAI key status (don't return the actual key)
+		// Use serviceRole since we're filtering by user_id (user can only access their own)
+		s.logger.Info("Loading OpenAI key status", zap.String("user_id", userID))
+		var settings []map[string]interface{}
+		data, _, err := s.serviceRole.From("user_ai_settings").
+			Select("openai_api_key", "", false).
+			Eq("user_id", userID).
+			Execute()
 		if err != nil {
-			s.logger.Error("Failed to load OpenAI key status", zap.Error(err))
+			s.logger.Error("Failed to load OpenAI key status", zap.Error(err), zap.String("user_id", userID))
 			s.respondJSON(w, http.StatusOK, map[string]interface{}{
 				"has_key": false,
 			})
@@ -457,6 +564,7 @@ func (s *Server) handleOpenAIKey(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := json.Unmarshal(data, &settings); err != nil {
+			s.logger.Error("Failed to unmarshal OpenAI key status", zap.Error(err), zap.String("user_id", userID))
 			s.respondJSON(w, http.StatusOK, map[string]interface{}{
 				"has_key": false,
 			})
@@ -467,11 +575,40 @@ func (s *Server) handleOpenAIKey(w http.ResponseWriter, r *http.Request) {
 		if len(settings) > 0 {
 			if key, ok := settings[0]["openai_api_key"].(string); ok && key != "" {
 				hasKey = true
+				s.logger.Info("OpenAI key found", zap.String("user_id", userID), zap.Int("key_length", len(key)))
+			} else {
+				s.logger.Info("OpenAI key field exists but is empty", zap.String("user_id", userID))
 			}
+		} else {
+			s.logger.Info("No OpenAI key record found", zap.String("user_id", userID))
+		}
+
+		s.logger.Info("Returning OpenAI key status", zap.String("user_id", userID), zap.Bool("has_key", hasKey))
+		s.respondJSON(w, http.StatusOK, map[string]interface{}{
+			"has_key": hasKey,
+		})
+
+	case http.MethodDelete:
+		// Delete OpenAI API key (set to empty string)
+		settings := map[string]interface{}{
+			"user_id":        userID,
+			"openai_api_key": "",
+			"updated_at":     time.Now().UTC().Format(time.RFC3339),
+		}
+
+		// Try to update first
+		_, _, err := s.serviceRole.From("user_ai_settings").
+			Update(settings, "", "").
+			Eq("user_id", userID).
+			Execute()
+
+		if err != nil {
+			// If update fails, it might mean no record exists, which is fine
+			s.logger.Debug("Failed to delete OpenAI key (may not exist)", zap.Error(err))
 		}
 
 		s.respondJSON(w, http.StatusOK, map[string]interface{}{
-			"has_key": hasKey,
+			"success": true,
 		})
 
 	default:

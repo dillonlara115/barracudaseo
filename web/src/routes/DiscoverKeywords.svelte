@@ -37,7 +37,7 @@
     <div class="mb-6">
       <h1 class="text-3xl font-bold mb-2">Discover Keywords</h1>
       <p class="text-base-content/70">
-        Find keywords that your domain or specific URLs are currently ranking for using DataForSEO's reverse lookup API. 
+        Find keywords that your domain or specific URLs are currently ranking for using our keyword discovery tools. 
         Discover new opportunities and add them to your tracking list.
       </p>
     </div>

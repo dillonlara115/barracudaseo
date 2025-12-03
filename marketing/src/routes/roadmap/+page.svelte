@@ -205,7 +205,7 @@
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
 							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
-							<span class="text-white/90">DataForSEO integration for rank tracking</span>
+							<span class="text-white/90">SERP data integration for rank tracking</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">

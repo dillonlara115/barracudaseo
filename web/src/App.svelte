@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import Router, { link, push } from 'svelte-spa-router';
-  import { initAuth, user } from './lib/auth.js';
+  import { initAuth, user, authEvent } from './lib/auth.js';
   import { supabase } from './lib/supabase.js';
   import Auth from './components/Auth.svelte';
   import ConfigError from './components/ConfigError.svelte';
@@ -64,6 +64,9 @@
     }
   }
 
+  // Track redirect timeout to prevent multiple redirects
+  let redirectTimeout = null;
+
   onMount(async () => {
     // Watch hash changes for legal pages
     if (typeof window !== 'undefined') {
@@ -108,11 +111,24 @@
 
     // React to auth state changes
     user.subscribe(async (currentUser) => {
+      // Clear any pending redirect
+      if (redirectTimeout) {
+        clearTimeout(redirectTimeout);
+        redirectTimeout = null;
+      }
+
       if (!currentUser) {
-        // Don't redirect if on public pages (legal pages or invite acceptance)
-        if (!isPublicPage) {
-          push('/');
-        }
+        // Check if this is a real sign-out or just a token refresh failure
+        // Use a small delay to allow token refresh to complete
+        redirectTimeout = setTimeout(async () => {
+          const { data: { session: storedSession } } = await supabase.auth.getSession();
+          
+          // Only redirect if there's truly no session (real sign-out)
+          // Don't redirect if on public pages (legal pages or invite acceptance)
+          if (!isPublicPage && !storedSession) {
+            push('/');
+          }
+        }, 1000); // 1 second delay to allow token refresh to complete
       } else {
         // Load subscription data when user is authenticated
         await loadSubscriptionData();

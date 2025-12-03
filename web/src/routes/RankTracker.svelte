@@ -122,7 +122,7 @@
         
         // Show user-friendly message for common errors
         if (errorMsg.includes('DataForSEO') || errorMsg.includes('not configured')) {
-          error = 'DataForSEO integration is not configured. Please set DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD environment variables.';
+          error = 'Rank tracking integration is not configured. Please contact support or check your settings.';
         }
         checkingKeywords.delete(keywordId);
         return;
@@ -248,7 +248,7 @@
       <div>
         <h1 class="text-3xl font-bold mb-2">Rank Tracker</h1>
         <p class="text-base-content/70 mb-1">
-          Track keyword rankings over time using DataForSEO. Monitor position changes, view historical data, and identify opportunities for improvement.
+          Track keyword rankings over time using our SERP integration. Monitor position changes, view historical data, and identify opportunities for improvement.
         </p>
         {#if project}
           <p class="text-sm text-base-content/60">Project: {project.name}</p>

@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { push } from 'svelte-spa-router';
   import { Search, BarChart3, Zap, Globe, Slack, Sparkles } from 'lucide-svelte';
-  import { fetchProjects, saveOpenAIKey, getOpenAIKeyStatus } from '../lib/data.js';
+  import { fetchProjects, saveOpenAIKey, getOpenAIKeyStatus, disconnectOpenAIKey } from '../lib/data.js';
   import ProjectGSCSelector from '../components/ProjectGSCSelector.svelte';
   
   let summary = null; // Could be passed as prop or fetched if needed
@@ -17,6 +17,7 @@
   let hasOpenAIKey = false;
   let loadingOpenAIStatus = false;
   let savingOpenAIKey = false;
+  let disconnectingOpenAIKey = false;
   let openaiError = null;
   let openaiSuccess = false;
   
@@ -49,9 +50,15 @@
 
   async function loadOpenAIKeyStatus() {
     loadingOpenAIStatus = true;
+    console.log('Loading OpenAI key status...');
     const { data, error } = await getOpenAIKeyStatus();
+    console.log('OpenAI key status response:', { data, error });
+    console.log('Full data object:', JSON.stringify(data, null, 2));
     if (!error && data) {
       hasOpenAIKey = data.has_key || false;
+      console.log('OpenAI key status loaded:', { hasOpenAIKey, has_key: data.has_key, dataKeys: Object.keys(data) });
+    } else if (error) {
+      console.error('Failed to load OpenAI key status:', error);
     }
     loadingOpenAIStatus = false;
   }
@@ -61,18 +68,53 @@
     openaiError = null;
     openaiSuccess = false;
     
+    console.log('Saving OpenAI API key...', { hasKey: !!openaiApiKey, keyLength: openaiApiKey.length });
+    
     const { data, error } = await saveOpenAIKey(openaiApiKey);
+    console.log('Save OpenAI key response:', { data, error });
+    console.log('Save response data:', JSON.stringify(data, null, 2));
+    
     if (error) {
+      console.error('Failed to save OpenAI key:', error);
       openaiError = error.message || 'Failed to save OpenAI API key';
     } else {
+      console.log('OpenAI key saved successfully, waiting 500ms before reloading status...');
       openaiSuccess = true;
-      hasOpenAIKey = true;
       openaiApiKey = ''; // Clear input after saving
+      // Small delay to ensure database write is complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+      // Reload status from server to ensure it's persisted
+      await loadOpenAIKeyStatus();
+      console.log('Status reloaded, hasOpenAIKey:', hasOpenAIKey);
       setTimeout(() => {
         openaiSuccess = false;
       }, 3000);
     }
     savingOpenAIKey = false;
+  }
+
+  async function handleDisconnectOpenAIKey() {
+    if (!confirm('Are you sure you want to disconnect your OpenAI API key? You can reconnect it later.')) {
+      return;
+    }
+    
+    disconnectingOpenAIKey = true;
+    openaiError = null;
+    openaiSuccess = false;
+    
+    const { data, error } = await disconnectOpenAIKey();
+    if (error) {
+      openaiError = error.message || 'Failed to disconnect OpenAI API key';
+    } else {
+      openaiSuccess = true;
+      openaiApiKey = ''; // Clear input
+      // Reload status from server to ensure it's updated
+      await loadOpenAIKeyStatus();
+      setTimeout(() => {
+        openaiSuccess = false;
+      }, 3000);
+    }
+    disconnectingOpenAIKey = false;
   }
 
   $: if (selectedProjectId) {
@@ -161,7 +203,7 @@
               Connect your own OpenAI API key to use AI features. If provided, Barracuda will use YOUR OpenAI key for AI features to reduce cost and increase privacy.
             </p>
           </div>
-          <div class="badge badge-lg" class:badge-success={hasOpenAIKey} class:badge-ghost={!hasOpenAIKey}>
+          <div class="badge badge-lg whitespace-nowrap" class:badge-success={hasOpenAIKey} class:badge-ghost={!hasOpenAIKey}>
             {hasOpenAIKey ? 'Connected' : 'Not Connected'}
           </div>
         </div>
@@ -208,18 +250,35 @@
               <span>If provided, Barracuda will use YOUR OpenAI key for AI features to reduce cost and increase privacy. If not provided, the app-wide key will be used.</span>
             </div>
             
-            <button
-              class="btn btn-primary"
-              on:click={handleSaveOpenAIKey}
-              disabled={savingOpenAIKey || !openaiApiKey.trim()}
-            >
-              {#if savingOpenAIKey}
-                <span class="loading loading-spinner loading-sm"></span>
-                Saving...
-              {:else}
-                Save OpenAI API Key
+            <div class="flex gap-2">
+              {#if hasOpenAIKey}
+                <button
+                  class="btn btn-error"
+                  on:click={handleDisconnectOpenAIKey}
+                  disabled={disconnectingOpenAIKey}
+                >
+                  {#if disconnectingOpenAIKey}
+                    <span class="loading loading-spinner loading-sm"></span>
+                    Disconnecting...
+                  {:else}
+                    Disconnect OpenAI API Key
+                  {/if}
+                </button>
               {/if}
-            </button>
+              
+              <button
+                class="btn btn-primary"
+                on:click={handleSaveOpenAIKey}
+                disabled={savingOpenAIKey || !openaiApiKey.trim()}
+              >
+                {#if savingOpenAIKey}
+                  <span class="loading loading-spinner loading-sm"></span>
+                  Saving...
+                {:else}
+                  {hasOpenAIKey ? 'Update OpenAI API Key' : 'Save OpenAI API Key'}
+                {/if}
+              </button>
+            </div>
           </div>
         {/if}
       </div>
