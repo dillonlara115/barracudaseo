@@ -16,8 +16,8 @@ import (
 
 // IssueInsightRequest represents a request to generate an issue insight
 type IssueInsightRequest struct {
-	IssueID  string `json:"issue_id"`
-	CrawlID  string `json:"crawl_id"`
+	IssueID string `json:"issue_id"`
+	CrawlID string `json:"crawl_id"`
 }
 
 // CrawlSummaryRequest represents a request to generate a crawl summary
@@ -159,7 +159,7 @@ func (s *Server) handleIssueInsight(w http.ResponseWriter, r *http.Request) {
 		"id":           uuid.New().String(),
 		"issue_id":     issueIDInt, // Use numeric value for bigint column
 		"user_id":      userID,
-		"project_id":    projectID,
+		"project_id":   projectID,
 		"crawl_id":     crawlID,
 		"insight_text": insight,
 	}
@@ -175,224 +175,312 @@ func (s *Server) handleIssueInsight(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// handleCrawlSummary handles POST /api/v1/ai/crawl-summary
+// handleCrawlSummary handles GET/POST/DELETE /api/v1/ai/crawl-summary
 func (s *Server) handleCrawlSummary(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
+	switch r.Method {
+	case http.MethodGet:
+		// Get existing summary for a crawl
+		userID, ok := userIDFromContext(r.Context())
+		if !ok {
+			s.respondError(w, http.StatusUnauthorized, "User not authenticated")
+			return
+		}
 
-	userID, ok := userIDFromContext(r.Context())
-	if !ok {
-		s.respondError(w, http.StatusUnauthorized, "User not authenticated")
-		return
-	}
+		crawlID := r.URL.Query().Get("crawl_id")
+		if crawlID == "" {
+			s.respondError(w, http.StatusBadRequest, "crawl_id query parameter is required")
+			return
+		}
 
-	var req CrawlSummaryRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request body: %v", err))
-		return
-	}
-
-	if req.CrawlID == "" {
-		s.respondError(w, http.StatusBadRequest, "crawl_id is required")
-		return
-	}
-
-	// Check if summary already exists (caching) - skip if force_refresh is true
-	if !req.ForceRefresh {
-		var existingSummaries []map[string]interface{}
+		// Get the most recent summary for this crawl and user
+		var summaries []map[string]interface{}
 		data, _, err := s.serviceRole.From("ai_crawl_summaries").
 			Select("*", "", false).
-			Eq("crawl_id", req.CrawlID).
+			Eq("crawl_id", crawlID).
+			Eq("user_id", userID).
+			Order("created_at", nil). // Most recent first
+			Limit(1, "").
+			Execute()
+		if err != nil {
+			s.logger.Error("Failed to load crawl summary", zap.String("crawl_id", crawlID), zap.Error(err))
+			s.respondJSON(w, http.StatusOK, map[string]interface{}{
+				"summary": nil,
+				"cached":  false,
+			})
+			return
+		}
+
+		if err := json.Unmarshal(data, &summaries); err != nil {
+			s.logger.Error("Failed to parse crawl summary data", zap.String("crawl_id", crawlID), zap.Error(err))
+			s.respondJSON(w, http.StatusOK, map[string]interface{}{
+				"summary": nil,
+				"cached":  false,
+			})
+			return
+		}
+
+		if len(summaries) > 0 {
+			s.respondJSON(w, http.StatusOK, map[string]interface{}{
+				"summary":    summaries[0]["summary_text"],
+				"cached":     true,
+				"created_at": summaries[0]["created_at"],
+			})
+		} else {
+			s.respondJSON(w, http.StatusOK, map[string]interface{}{
+				"summary": nil,
+				"cached":  false,
+			})
+		}
+		return
+
+	case http.MethodDelete:
+		// Delete summary for a crawl
+		userID, ok := userIDFromContext(r.Context())
+		if !ok {
+			s.respondError(w, http.StatusUnauthorized, "User not authenticated")
+			return
+		}
+
+		crawlID := r.URL.Query().Get("crawl_id")
+		if crawlID == "" {
+			s.respondError(w, http.StatusBadRequest, "crawl_id query parameter is required")
+			return
+		}
+
+		// Delete all summaries for this crawl and user
+		_, _, err := s.serviceRole.From("ai_crawl_summaries").
+			Delete("", "").
+			Eq("crawl_id", crawlID).
 			Eq("user_id", userID).
 			Execute()
-		if err == nil {
-			json.Unmarshal(data, &existingSummaries)
-			if len(existingSummaries) > 0 {
-				// Return cached summary
-				s.respondJSON(w, http.StatusOK, map[string]interface{}{
-					"summary": existingSummaries[0]["summary_text"],
-					"cached":   true,
-				})
-				return
-			}
+		if err != nil {
+			s.logger.Error("Failed to delete crawl summary", zap.String("crawl_id", crawlID), zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, "Failed to delete summary")
+			return
 		}
-	}
 
-	// Load crawl data using service role (bypasses RLS)
-	var crawls []map[string]interface{}
-	crawlData, _, err := s.serviceRole.From("crawls").
-		Select("*", "", false).
-		Eq("id", req.CrawlID).
-		Execute()
-	if err != nil {
-		s.logger.Error("Failed to load crawl", zap.String("crawl_id", req.CrawlID), zap.Error(err))
-		s.respondError(w, http.StatusInternalServerError, "Failed to load crawl")
+		s.respondJSON(w, http.StatusOK, map[string]interface{}{
+			"success": true,
+		})
 		return
-	}
-	if err := json.Unmarshal(crawlData, &crawls); err != nil {
-		s.logger.Error("Failed to parse crawl data", zap.String("crawl_id", req.CrawlID), zap.Error(err))
-		s.respondError(w, http.StatusInternalServerError, "Failed to parse crawl data")
-		return
-	}
-	if len(crawls) == 0 {
-		s.logger.Warn("Crawl not found", zap.String("crawl_id", req.CrawlID))
-		s.respondError(w, http.StatusNotFound, "Crawl not found")
-		return
-	}
-	crawl := crawls[0]
 
-	// Verify user has access to the project
-	projectID, ok := crawl["project_id"].(string)
-	if !ok {
-		s.respondError(w, http.StatusInternalServerError, "Invalid crawl data")
-		return
-	}
-	hasAccess, err := s.verifyProjectAccess(userID, projectID)
-	if err != nil {
-		s.logger.Error("Failed to verify project access", zap.Error(err))
-		s.respondError(w, http.StatusInternalServerError, "Failed to verify access")
-		return
-	}
-	if !hasAccess {
-		s.logger.Warn("User does not have access to crawl", zap.String("crawl_id", req.CrawlID), zap.String("user_id", userID), zap.String("project_id", projectID))
-		s.respondError(w, http.StatusForbidden, "You don't have access to this crawl")
-		return
-	}
-
-	// Load issues for this crawl (using serviceRole since we've verified access)
-	var issues []map[string]interface{}
-	issuesData, _, err := s.serviceRole.From("issues").
-		Select("*", "", false).
-		Eq("crawl_id", req.CrawlID).
-		Execute()
-	if err == nil {
-		json.Unmarshal(issuesData, &issues)
-	}
-
-	// Load pages for this crawl (using serviceRole since we've verified access)
-	var pages []map[string]interface{}
-	pagesData, _, err := s.serviceRole.From("pages").
-		Select("*", "", false).
-		Eq("crawl_id", req.CrawlID).
-		Execute()
-	if err == nil {
-		json.Unmarshal(pagesData, &pages)
-	}
-
-	// Build crawl data summary
-	crawlSummaryData := map[string]interface{}{
-		"total_pages": getValue(crawl, "total_pages"),
-		"total_issues": getValue(crawl, "total_issues"),
-		"issues_by_type": make(map[string]int),
-		"issues_by_severity": make(map[string]int),
-		"slow_pages": []interface{}{},
-		"redirect_chains": 0,
-		"metadata_issues": 0,
-	}
-
-	// Count issues by type and severity
-	issuesByType := make(map[string]int)
-	issuesBySeverity := make(map[string]int)
-	for _, issue := range issues {
-		if issueType, ok := issue["type"].(string); ok {
-			issuesByType[issueType]++
+	case http.MethodPost:
+		// Generate or regenerate summary (existing logic)
+		userID, ok := userIDFromContext(r.Context())
+		if !ok {
+			s.respondError(w, http.StatusUnauthorized, "User not authenticated")
+			return
 		}
-		if severity, ok := issue["severity"].(string); ok {
-			issuesBySeverity[severity]++
+
+		var req CrawlSummaryRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			s.respondError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request body: %v", err))
+			return
 		}
-	}
-	crawlSummaryData["issues_by_type"] = issuesByType
-	crawlSummaryData["issues_by_severity"] = issuesBySeverity
 
-	// Count slow pages (>3000ms)
-	var slowPages []interface{}
-	for _, page := range pages {
-		if rt, ok := page["response_time_ms"].(float64); ok && rt > 3000 {
-			slowPages = append(slowPages, page)
+		if req.CrawlID == "" {
+			s.respondError(w, http.StatusBadRequest, "crawl_id is required")
+			return
 		}
-	}
-	crawlSummaryData["slow_pages"] = slowPages
 
-	// Count redirect chains
-	redirectCount := 0
-	for _, page := range pages {
-		if data, ok := page["data"].(map[string]interface{}); ok {
-			if redirectChain, ok := data["redirect_chain"].([]interface{}); ok && len(redirectChain) > 0 {
-				redirectCount++
-			}
-		}
-	}
-	crawlSummaryData["redirect_chains"] = redirectCount
-
-	// Count metadata issues
-	metadataCount := 0
-	for _, page := range pages {
-		if getString(page, "title") == "" || getString(page, "meta_description") == "" {
-			metadataCount++
-		}
-	}
-	crawlSummaryData["metadata_issues"] = metadataCount
-
-	// Load GSC summary data if available (optional)
-	gscSummaryData := s.loadGSCSummaryData(projectID)
-	if gscSummaryData != nil {
-		crawlSummaryData["gsc_summary"] = gscSummaryData
-	}
-
-	// Initialize AI client
-	aiClient := ai.NewAIClient(s.supabase, s.serviceRole, s.logger)
-
-	// Generate summary
-	summary, err := aiClient.GenerateCrawlSummary(r.Context(), userID, crawlSummaryData)
-	if err != nil {
-		s.logger.Error("Failed to generate crawl summary", zap.Error(err))
-		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to generate summary: %v", err))
-		return
-	}
-
-	// Save to cache (using serviceRole since we've verified access)
-	// If force_refresh is true, delete old cached summaries first
-	if req.ForceRefresh {
-		// Delete old cached summaries - wrap in recover to prevent panic
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					s.logger.Warn("Panic during delete of old cached summary", zap.Any("panic", r), zap.String("crawl_id", req.CrawlID), zap.String("user_id", userID))
-				}
-			}()
-			_, _, delErr := s.serviceRole.From("ai_crawl_summaries").
-				Delete("", "").
+		// Check if summary already exists (caching) - skip if force_refresh is true
+		if !req.ForceRefresh {
+			var existingSummaries []map[string]interface{}
+			data, _, err := s.serviceRole.From("ai_crawl_summaries").
+				Select("*", "", false).
 				Eq("crawl_id", req.CrawlID).
 				Eq("user_id", userID).
 				Execute()
-			if delErr != nil {
-				s.logger.Debug("Failed to delete old cached summary (non-fatal)", zap.Error(delErr))
+			if err == nil {
+				json.Unmarshal(data, &existingSummaries)
+				if len(existingSummaries) > 0 {
+					// Return cached summary
+					s.respondJSON(w, http.StatusOK, map[string]interface{}{
+						"summary": existingSummaries[0]["summary_text"],
+						"cached":  true,
+					})
+					return
+				}
 			}
-		}()
-	}
-	
-	// Always insert new summary (table allows multiple summaries per crawl/user)
-	summaryRecord := map[string]interface{}{
-		"id":           uuid.New().String(),
-		"crawl_id":     req.CrawlID,
-		"user_id":      userID,
-		"project_id":    projectID,
-		"summary_text": summary,
-	}
-	
-	// Insert new summary - if this fails, log but don't fail the request
-	_, _, err = s.serviceRole.From("ai_crawl_summaries").Insert(summaryRecord, false, "", "", "").Execute()
-	if err != nil {
-		s.logger.Warn("Failed to cache summary", zap.Error(err))
-		// Continue anyway - the summary was generated successfully
-	}
+		}
 
-	s.respondJSON(w, http.StatusOK, map[string]interface{}{
-		"summary": summary,
-		"cached":   false,
-	})
+		// Load crawl data using service role (bypasses RLS)
+		var crawls []map[string]interface{}
+		crawlData, _, err := s.serviceRole.From("crawls").
+			Select("*", "", false).
+			Eq("id", req.CrawlID).
+			Execute()
+		if err != nil {
+			s.logger.Error("Failed to load crawl", zap.String("crawl_id", req.CrawlID), zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, "Failed to load crawl")
+			return
+		}
+		if err := json.Unmarshal(crawlData, &crawls); err != nil {
+			s.logger.Error("Failed to parse crawl data", zap.String("crawl_id", req.CrawlID), zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, "Failed to parse crawl data")
+			return
+		}
+		if len(crawls) == 0 {
+			s.logger.Warn("Crawl not found", zap.String("crawl_id", req.CrawlID))
+			s.respondError(w, http.StatusNotFound, "Crawl not found")
+			return
+		}
+		crawl := crawls[0]
+
+		// Verify user has access to the project
+		projectID, ok := crawl["project_id"].(string)
+		if !ok {
+			s.respondError(w, http.StatusInternalServerError, "Invalid crawl data")
+			return
+		}
+		hasAccess, err := s.verifyProjectAccess(userID, projectID)
+		if err != nil {
+			s.logger.Error("Failed to verify project access", zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, "Failed to verify access")
+			return
+		}
+		if !hasAccess {
+			s.logger.Warn("User does not have access to crawl", zap.String("crawl_id", req.CrawlID), zap.String("user_id", userID), zap.String("project_id", projectID))
+			s.respondError(w, http.StatusForbidden, "You don't have access to this crawl")
+			return
+		}
+
+		// Load issues for this crawl (using serviceRole since we've verified access)
+		var issues []map[string]interface{}
+		issuesData, _, err := s.serviceRole.From("issues").
+			Select("*", "", false).
+			Eq("crawl_id", req.CrawlID).
+			Execute()
+		if err == nil {
+			json.Unmarshal(issuesData, &issues)
+		}
+
+		// Load pages for this crawl (using serviceRole since we've verified access)
+		var pages []map[string]interface{}
+		pagesData, _, err := s.serviceRole.From("pages").
+			Select("*", "", false).
+			Eq("crawl_id", req.CrawlID).
+			Execute()
+		if err == nil {
+			json.Unmarshal(pagesData, &pages)
+		}
+
+		// Build crawl data summary
+		crawlSummaryData := map[string]interface{}{
+			"total_pages":        getValue(crawl, "total_pages"),
+			"total_issues":       getValue(crawl, "total_issues"),
+			"issues_by_type":     make(map[string]int),
+			"issues_by_severity": make(map[string]int),
+			"slow_pages":         []interface{}{},
+			"redirect_chains":    0,
+			"metadata_issues":    0,
+		}
+
+		// Count issues by type and severity
+		issuesByType := make(map[string]int)
+		issuesBySeverity := make(map[string]int)
+		for _, issue := range issues {
+			if issueType, ok := issue["type"].(string); ok {
+				issuesByType[issueType]++
+			}
+			if severity, ok := issue["severity"].(string); ok {
+				issuesBySeverity[severity]++
+			}
+		}
+		crawlSummaryData["issues_by_type"] = issuesByType
+		crawlSummaryData["issues_by_severity"] = issuesBySeverity
+
+		// Count slow pages (>3000ms)
+		var slowPages []interface{}
+		for _, page := range pages {
+			if rt, ok := page["response_time_ms"].(float64); ok && rt > 3000 {
+				slowPages = append(slowPages, page)
+			}
+		}
+		crawlSummaryData["slow_pages"] = slowPages
+
+		// Count redirect chains
+		redirectCount := 0
+		for _, page := range pages {
+			if data, ok := page["data"].(map[string]interface{}); ok {
+				if redirectChain, ok := data["redirect_chain"].([]interface{}); ok && len(redirectChain) > 0 {
+					redirectCount++
+				}
+			}
+		}
+		crawlSummaryData["redirect_chains"] = redirectCount
+
+		// Count metadata issues
+		metadataCount := 0
+		for _, page := range pages {
+			if getString(page, "title") == "" || getString(page, "meta_description") == "" {
+				metadataCount++
+			}
+		}
+		crawlSummaryData["metadata_issues"] = metadataCount
+
+		// Load GSC summary data if available (optional)
+		gscSummaryData := s.loadGSCSummaryData(projectID)
+		if gscSummaryData != nil {
+			crawlSummaryData["gsc_summary"] = gscSummaryData
+		}
+
+		// Initialize AI client
+		aiClient := ai.NewAIClient(s.supabase, s.serviceRole, s.logger)
+
+		// Generate summary
+		summary, err := aiClient.GenerateCrawlSummary(r.Context(), userID, crawlSummaryData)
+		if err != nil {
+			s.logger.Error("Failed to generate crawl summary", zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to generate summary: %v", err))
+			return
+		}
+
+		// Save to cache (using serviceRole since we've verified access)
+		// If force_refresh is true, delete old cached summaries first
+		if req.ForceRefresh {
+			// Delete old cached summaries - wrap in recover to prevent panic
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						s.logger.Warn("Panic during delete of old cached summary", zap.Any("panic", r), zap.String("crawl_id", req.CrawlID), zap.String("user_id", userID))
+					}
+				}()
+				_, _, delErr := s.serviceRole.From("ai_crawl_summaries").
+					Delete("", "").
+					Eq("crawl_id", req.CrawlID).
+					Eq("user_id", userID).
+					Execute()
+				if delErr != nil {
+					s.logger.Debug("Failed to delete old cached summary (non-fatal)", zap.Error(delErr))
+				}
+			}()
+		}
+
+		// Always insert new summary (table allows multiple summaries per crawl/user)
+		summaryRecord := map[string]interface{}{
+			"id":           uuid.New().String(),
+			"crawl_id":     req.CrawlID,
+			"user_id":      userID,
+			"project_id":   projectID,
+			"summary_text": summary,
+		}
+
+		// Insert new summary - if this fails, log but don't fail the request
+		_, _, err = s.serviceRole.From("ai_crawl_summaries").Insert(summaryRecord, false, "", "", "").Execute()
+		if err != nil {
+			s.logger.Warn("Failed to cache summary", zap.Error(err))
+			// Continue anyway - the summary was generated successfully
+		}
+
+		s.respondJSON(w, http.StatusOK, map[string]interface{}{
+			"summary": summary,
+			"cached":  false,
+		})
+
+	default:
+		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+	}
 }
 
 // handleOpenAIKey handles POST/GET /api/v1/integrations/openai-key
@@ -436,14 +524,41 @@ func (s *Server) handleOpenAIKey(w http.ResponseWriter, r *http.Request) {
 			Eq("user_id", userID).
 			Execute()
 
-		s.logger.Info("Checked for existing OpenAI key record", 
+		s.logger.Info("Checked for existing OpenAI key record",
 			zap.String("user_id", userID),
 			zap.Error(selectErr),
 			zap.Bool("has_data", selectData != nil && len(selectData) > 0))
 
 		if selectErr == nil && selectData != nil {
-			if err := json.Unmarshal(selectData, &existing); err == nil && len(existing) > 0 {
-				// Record exists, update it
+			// SELECT succeeded and returned data - a record exists
+			// Try to unmarshal the data
+			unmarshalErr := json.Unmarshal(selectData, &existing)
+			if unmarshalErr != nil {
+				// Unmarshal failed - this is an error, not "record doesn't exist"
+				// Since SELECT returned data, a record exists, so we should update, not insert
+				previewLen := len(selectData)
+				if previewLen > 100 {
+					previewLen = 100
+				}
+				s.logger.Error("Failed to unmarshal existing OpenAI key record",
+					zap.Error(unmarshalErr),
+					zap.String("user_id", userID),
+					zap.String("select_data_preview", string(selectData[:previewLen])))
+				// Attempt update anyway since we know a record exists
+				updateData, _, err := s.serviceRole.From("user_ai_settings").
+					Update(settings, "", "").
+					Eq("user_id", userID).
+					Execute()
+				if err != nil {
+					s.logger.Error("Failed to update OpenAI key after unmarshal failure", zap.Error(err), zap.String("user_id", userID))
+					s.respondError(w, http.StatusInternalServerError, "Failed to save OpenAI key")
+					return
+				}
+				s.logger.Info("Successfully updated OpenAI key after unmarshal failure",
+					zap.String("user_id", userID),
+					zap.Bool("has_update_data", updateData != nil && len(updateData) > 0))
+			} else if len(existing) > 0 {
+				// Record exists and unmarshaled successfully, update it
 				s.logger.Info("Updating existing OpenAI key record", zap.String("user_id", userID))
 				updateData, _, err := s.serviceRole.From("user_ai_settings").
 					Update(settings, "", "").
@@ -454,22 +569,25 @@ func (s *Server) handleOpenAIKey(w http.ResponseWriter, r *http.Request) {
 					s.respondError(w, http.StatusInternalServerError, "Failed to save OpenAI key")
 					return
 				}
-				s.logger.Info("Successfully updated OpenAI key", 
+				s.logger.Info("Successfully updated OpenAI key",
 					zap.String("user_id", userID),
 					zap.Bool("has_update_data", updateData != nil && len(updateData) > 0))
 			} else {
-				// Record doesn't exist, insert it
-				s.logger.Info("Inserting new OpenAI key record", zap.String("user_id", userID))
-				settings["created_at"] = time.Now().UTC().Format(time.RFC3339)
-				insertData, _, err := s.serviceRole.From("user_ai_settings").Insert(settings, false, "", "", "").Execute()
+				// SELECT returned data but unmarshaled to empty array - this shouldn't happen
+				// but treat it as record exists and try update
+				s.logger.Warn("SELECT returned data but unmarshaled to empty array, attempting update", zap.String("user_id", userID))
+				updateData, _, err := s.serviceRole.From("user_ai_settings").
+					Update(settings, "", "").
+					Eq("user_id", userID).
+					Execute()
 				if err != nil {
-					s.logger.Error("Failed to insert OpenAI key", zap.Error(err), zap.String("user_id", userID))
+					s.logger.Error("Failed to update OpenAI key", zap.Error(err), zap.String("user_id", userID))
 					s.respondError(w, http.StatusInternalServerError, "Failed to save OpenAI key")
 					return
 				}
-				s.logger.Info("Successfully inserted OpenAI key", 
+				s.logger.Info("Successfully updated OpenAI key",
 					zap.String("user_id", userID),
-					zap.Bool("has_insert_data", insertData != nil && len(insertData) > 0))
+					zap.Bool("has_update_data", updateData != nil && len(updateData) > 0))
 			}
 		} else {
 			// Select failed or no data, try insert first
@@ -484,18 +602,18 @@ func (s *Server) handleOpenAIKey(w http.ResponseWriter, r *http.Request) {
 					Eq("user_id", userID).
 					Execute()
 				if updateErr != nil {
-					s.logger.Error("Failed to save OpenAI key (both insert and update failed)", 
-						zap.Error(err), 
+					s.logger.Error("Failed to save OpenAI key (both insert and update failed)",
+						zap.Error(err),
 						zap.Error(updateErr),
 						zap.String("user_id", userID))
 					s.respondError(w, http.StatusInternalServerError, "Failed to save OpenAI key")
 					return
 				}
-				s.logger.Info("Successfully updated OpenAI key after insert failed", 
+				s.logger.Info("Successfully updated OpenAI key after insert failed",
 					zap.String("user_id", userID),
 					zap.Bool("has_update_data", updateData != nil && len(updateData) > 0))
 			} else {
-				s.logger.Info("Successfully inserted OpenAI key", 
+				s.logger.Info("Successfully inserted OpenAI key",
 					zap.String("user_id", userID),
 					zap.Bool("has_insert_data", insertData != nil && len(insertData) > 0))
 			}
@@ -507,31 +625,31 @@ func (s *Server) handleOpenAIKey(w http.ResponseWriter, r *http.Request) {
 			Select("openai_api_key", "", false).
 			Eq("user_id", userID).
 			Execute()
-		
+
 		verificationStatus := "unknown"
 		savedKeyLength := 0
-		
+
 		if verifyErr == nil && verifyData != nil {
 			if err := json.Unmarshal(verifyData, &verifySettings); err == nil && len(verifySettings) > 0 {
 				if key, ok := verifySettings[0]["openai_api_key"].(string); ok && key != "" {
 					verificationStatus = "verified_saved"
 					savedKeyLength = len(key)
-					s.logger.Info("OpenAI key save verified successfully", 
+					s.logger.Info("OpenAI key save verified successfully",
 						zap.String("user_id", userID),
 						zap.Int("key_length", len(key)))
 				} else {
 					verificationStatus = "verified_empty"
-					s.logger.Warn("OpenAI key save completed but verification shows empty key", 
+					s.logger.Warn("OpenAI key save completed but verification shows empty key",
 						zap.String("user_id", userID))
 				}
 			} else {
 				verificationStatus = "record_not_found"
-				s.logger.Warn("OpenAI key save completed but verification found no record", 
+				s.logger.Warn("OpenAI key save completed but verification found no record",
 					zap.String("user_id", userID))
 			}
 		} else {
 			verificationStatus = "verification_failed"
-			s.logger.Warn("Failed to verify OpenAI key save", 
+			s.logger.Warn("Failed to verify OpenAI key save",
 				zap.String("user_id", userID),
 				zap.Error(verifyErr))
 		}
@@ -662,7 +780,7 @@ func (s *Server) loadGSCDataForPage(projectID, pageURL string) map[string]interf
 	if err := json.Unmarshal(snapshotData, &snapshots); err != nil || len(snapshots) == 0 {
 		return nil
 	}
-	
+
 	// Sort by captured_on descending and take the first one
 	// Convert captured_on to time for comparison
 	type snapshotWithTime struct {
@@ -684,16 +802,16 @@ func (s *Server) loadGSCDataForPage(projectID, pageURL string) map[string]interf
 			time:     capturedOn,
 		})
 	}
-	
+
 	if len(snapshotsWithTime) == 0 {
 		return nil
 	}
-	
+
 	// Sort descending by time
 	sort.Slice(snapshotsWithTime, func(i, j int) bool {
 		return snapshotsWithTime[i].time.After(snapshotsWithTime[j].time)
 	})
-	
+
 	snapshotID, ok := snapshotsWithTime[0].snapshot["id"].(string)
 	if !ok {
 		// Try converting to string
@@ -802,11 +920,11 @@ func (s *Server) loadGSCSummaryData(projectID string) map[string]interface{} {
 			time:     capturedOn,
 		})
 	}
-	
+
 	if len(snapshotsWithTime) == 0 {
 		return nil
 	}
-	
+
 	// Sort descending by time
 	sort.Slice(snapshotsWithTime, func(i, j int) bool {
 		return snapshotsWithTime[i].time.After(snapshotsWithTime[j].time)
@@ -823,8 +941,8 @@ func (s *Server) loadGSCSummaryData(projectID string) map[string]interface{} {
 		"total_impressions": getFloatValue(totals, "impressions"),
 		"total_clicks":      getFloatValue(totals, "clicks"),
 		"average_ctr":       getFloatValue(totals, "ctr"),
-		"average_position": getFloatValue(totals, "position"),
-		"captured_on":      snapshot["captured_on"],
+		"average_position":  getFloatValue(totals, "position"),
+		"captured_on":       snapshot["captured_on"],
 	}
 }
 
@@ -846,4 +964,3 @@ func getFloatValue(m map[string]interface{}, key string) float64 {
 	}
 	return 0
 }
-

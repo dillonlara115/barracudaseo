@@ -1,14 +1,18 @@
 <script>
-  import { generateCrawlSummary } from '../../lib/data.js';
-  import { Sparkles, Copy } from 'lucide-svelte';
+  import { onMount } from 'svelte';
+  import { generateCrawlSummary, getCrawlSummary, deleteCrawlSummary } from '../../lib/data.js';
+  import { Sparkles, Copy, Trash2 } from 'lucide-svelte';
   import { marked } from 'marked';
 
   export let crawlId = null;
 
   let loading = false;
+  let loadingExisting = false;
   let summary = null;
   let error = null;
   let copied = false;
+  let isCached = false;
+  let deleting = false;
 
   // Configure marked for safe rendering
   marked.setOptions({
@@ -17,6 +21,45 @@
   });
 
   $: renderedSummary = summary ? marked.parse(summary) : '';
+
+  let previousCrawlId = null;
+
+  // Load existing summary on mount and when crawlId changes
+  onMount(async () => {
+    if (crawlId) {
+      await loadExistingSummary();
+      previousCrawlId = crawlId;
+    }
+  });
+
+  // Reload summary when crawlId changes
+  $: if (crawlId && crawlId !== previousCrawlId) {
+    loadExistingSummary();
+    previousCrawlId = crawlId;
+  }
+
+  async function loadExistingSummary() {
+    if (!crawlId) return;
+    
+    loadingExisting = true;
+    error = null;
+    try {
+      const { data, error: apiError } = await getCrawlSummary(crawlId);
+      if (apiError) {
+        // Don't show error if no summary exists - that's expected
+        if (apiError.message && !apiError.message.includes('not found')) {
+          console.error('Error loading crawl summary:', apiError);
+        }
+      } else if (data && data.summary) {
+        summary = data.summary;
+        isCached = data.cached || false;
+      }
+    } catch (err) {
+      console.error('Exception loading crawl summary:', err);
+    } finally {
+      loadingExisting = false;
+    }
+  }
 
   async function handleGenerateSummary(forceRefresh = false) {
     if (!crawlId) {
@@ -41,12 +84,38 @@
       } else {
         console.log('Successfully generated summary:', data);
         summary = data?.summary || null;
+        isCached = data?.cached || false;
       }
     } catch (err) {
       console.error('Exception generating crawl summary:', err);
       error = err.message || 'An unexpected error occurred';
     } finally {
       loading = false;
+    }
+  }
+
+  async function handleDeleteSummary() {
+    if (!crawlId || !summary) return;
+    
+    if (!confirm('Are you sure you want to delete this summary? You can regenerate it later.')) {
+      return;
+    }
+
+    deleting = true;
+    error = null;
+    try {
+      const { error: apiError } = await deleteCrawlSummary(crawlId);
+      if (apiError) {
+        error = apiError.message || 'Failed to delete summary';
+      } else {
+        summary = null;
+        isCached = false;
+      }
+    } catch (err) {
+      console.error('Exception deleting crawl summary:', err);
+      error = err.message || 'An unexpected error occurred';
+    } finally {
+      deleting = false;
     }
   }
 
@@ -74,8 +143,16 @@
       </h2>
     </div>
 
+    <!-- Loading Existing Summary -->
+    {#if loadingExisting}
+      <div class="flex items-center justify-center py-4">
+        <span class="loading loading-spinner loading-sm mr-2"></span>
+        <span class="text-sm text-base-content/70">Loading summary...</span>
+      </div>
+    {/if}
+
     <!-- Generate Button -->
-    {#if !summary && !loading}
+    {#if !summary && !loading && !loadingExisting}
       <div class="mb-4">
         <button
           class="btn btn-primary w-full"
@@ -116,27 +193,59 @@
     <!-- Summary Display -->
     {#if summary}
       <div class="mb-4">
-        <div class="flex items-center justify-end mb-3">
-          <button
-            class="btn btn-sm btn-ghost"
-            on:click={handleCopyToClipboard}
-            title="Copy to clipboard"
-          >
-            <Copy class="w-4 h-4" />
-            {copied ? 'Copied!' : 'Copy'}
-          </button>
+        <div class="flex items-center justify-between mb-3">
+          {#if isCached}
+            <span class="badge badge-sm badge-info">Saved Summary</span>
+          {:else}
+            <span class="badge badge-sm badge-success">New Summary</span>
+          {/if}
+          <div class="flex gap-2">
+            <button
+              class="btn btn-sm btn-ghost"
+              on:click={handleCopyToClipboard}
+              title="Copy to clipboard"
+            >
+              <Copy class="w-4 h-4" />
+              {copied ? 'Copied!' : 'Copy'}
+            </button>
+            <button
+              class="btn btn-sm btn-ghost text-error"
+              on:click={handleDeleteSummary}
+              disabled={deleting}
+              title="Delete summary"
+            >
+              {#if deleting}
+                <span class="loading loading-spinner loading-xs"></span>
+              {:else}
+                <Trash2 class="w-4 h-4" />
+              {/if}
+            </button>
+          </div>
         </div>
         <div class="ai-summary-content">
           {@html renderedSummary}
         </div>
       </div>
-      <div class="mt-4">
+      <div class="mt-4 flex gap-2">
         <button
-          class="btn btn-outline w-full"
+          class="btn btn-outline flex-1"
           on:click={() => handleGenerateSummary(true)}
           disabled={loading}
         >
           {loading ? 'Regenerating...' : 'Regenerate Summary'}
+        </button>
+        <button
+          class="btn btn-error"
+          on:click={handleDeleteSummary}
+          disabled={deleting || loading}
+        >
+          {#if deleting}
+            <span class="loading loading-spinner loading-sm"></span>
+            Deleting...
+          {:else}
+            <Trash2 class="w-4 h-4" />
+            Delete
+          {/if}
         </button>
       </div>
     {/if}

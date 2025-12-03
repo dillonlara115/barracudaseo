@@ -595,6 +595,14 @@ export async function generateIssueInsight(issueId, crawlId) {
 }
 
 // Generate AI summary for a crawl
+// Get existing crawl summary
+export async function getCrawlSummary(crawlId) {
+  return authorizedJSON(`/api/v1/ai/crawl-summary?crawl_id=${encodeURIComponent(String(crawlId))}`, {
+    method: 'GET'
+  });
+}
+
+// Generate or regenerate crawl summary
 export async function generateCrawlSummary(crawlId, forceRefresh = false) {
   return authorizedJSON('/api/v1/ai/crawl-summary', {
     method: 'POST',
@@ -602,6 +610,13 @@ export async function generateCrawlSummary(crawlId, forceRefresh = false) {
       crawl_id: String(crawlId), // Ensure crawlId is a string
       force_refresh: Boolean(forceRefresh) // Explicitly convert to boolean
     }
+  });
+}
+
+// Delete crawl summary
+export async function deleteCrawlSummary(crawlId) {
+  return authorizedJSON(`/api/v1/ai/crawl-summary?crawl_id=${encodeURIComponent(String(crawlId))}`, {
+    method: 'DELETE'
   });
 }
 
