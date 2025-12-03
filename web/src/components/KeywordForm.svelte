@@ -61,7 +61,6 @@
     error = null;
 
     const keywordData = {
-      project_id: projectId,
       keyword: formData.keyword.trim(),
       location_name: formData.location_name,
       language_name: formData.language_name,
@@ -78,7 +77,7 @@
       keywordData.tags = formData.tags;
     }
 
-    const result = await createKeyword(keywordData);
+    const result = await createKeyword(projectId, keywordData);
     
     loading = false;
 

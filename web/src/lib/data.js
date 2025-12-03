@@ -2,14 +2,46 @@ import { supabase } from './supabase.js';
 
 export const getApiUrl = () => import.meta.env.VITE_CLOUD_RUN_API_URL || 'http://localhost:8080';
 
-async function authorizedRequest(path, { method = 'GET', body, headers = {} } = {}) {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    throw new Error('Not authenticated');
+async function getValidAccessToken() {
+  // Get current session
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  
+  // If there's an error or no session, try to refresh
+  if (sessionError || !session) {
+    const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError || !refreshed.session) {
+      throw new Error('Not authenticated. Please sign in again.');
+    }
+    return refreshed.session.access_token;
   }
 
+  // Check if token is expired or about to expire (within 60 seconds)
+  const expiresAt = session.expires_at;
+  const now = Date.now();
+  const expiresAtMs = expiresAt ? expiresAt * 1000 : 0;
+  
+  // Refresh if expired or expiring within 60 seconds
+  if (!expiresAt || expiresAtMs < now + 60000) {
+    const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError || !refreshed.session) {
+      // If refresh fails but we have a token, try using it anyway
+      // The 401 retry logic will handle it if it's truly expired
+      if (session.access_token) {
+        return session.access_token;
+      }
+      throw new Error('Session expired. Please sign in again.');
+    }
+    return refreshed.session.access_token;
+  }
+
+  return session.access_token;
+}
+
+async function authorizedRequest(path, { method = 'GET', body, headers = {}, retryOn401 = true } = {}) {
+  let token = await getValidAccessToken();
+
   const requestHeaders = new Headers(headers);
-  requestHeaders.set('Authorization', `Bearer ${session.access_token}`);
+  requestHeaders.set('Authorization', `Bearer ${token}`);
 
   let requestBody = body;
   if (body && !(body instanceof FormData) && typeof body === 'object' && !(body instanceof Blob)) {
@@ -22,6 +54,35 @@ async function authorizedRequest(path, { method = 'GET', body, headers = {} } = 
     headers: requestHeaders,
     body: requestBody,
   });
+
+  // Handle 401 errors by refreshing token and retrying once
+  if (response.status === 401 && retryOn401) {
+    try {
+      // Always try to refresh on 401, even if we just checked
+      const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+      if (!refreshError && refreshed.session && refreshed.session.access_token) {
+        // Retry with refreshed token (only once)
+        const retryHeaders = new Headers(headers);
+        retryHeaders.set('Authorization', `Bearer ${refreshed.session.access_token}`);
+        if (body && !(body instanceof FormData) && typeof body === 'object' && !(body instanceof Blob)) {
+          retryHeaders.set('Content-Type', 'application/json');
+        }
+
+        const retryResponse = await fetch(`${getApiUrl()}${path}`, {
+          method,
+          headers: retryHeaders,
+          body: requestBody,
+        });
+        return retryResponse;
+      } else {
+        // Refresh failed - log for debugging
+        console.warn('Token refresh failed on 401:', refreshError || 'No session returned');
+      }
+    } catch (refreshErr) {
+      // If refresh fails, return original 401 response
+      console.error('Failed to refresh token on 401:', refreshErr);
+    }
+  }
 
   return response;
 }
@@ -284,20 +345,39 @@ export async function deleteProject(projectId) {
 // Trigger a new crawl for a project
 export async function triggerCrawl(projectId, crawlConfig) {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error('Not authenticated');
-
-    // Use local API server (http://localhost:8080) or Cloud Run URL if set
-    const apiUrl = import.meta.env.VITE_CLOUD_RUN_API_URL || 'http://localhost:8080';
+    const token = await getValidAccessToken();
+    const apiUrl = getApiUrl();
     
     const response = await fetch(`${apiUrl}/api/v1/projects/${projectId}/crawl`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(crawlConfig)
     });
+
+    // Handle 401 by refreshing and retrying once
+    if (response.status === 401) {
+      const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+      if (!refreshError && refreshed.session) {
+        const retryResponse = await fetch(`${apiUrl}/api/v1/projects/${projectId}/crawl`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${refreshed.session.access_token}`
+          },
+          body: JSON.stringify(crawlConfig)
+        });
+        
+        if (!retryResponse.ok) {
+          const error = await retryResponse.json();
+          throw new Error(error.error || 'Failed to trigger crawl');
+        }
+        const data = await retryResponse.json();
+        return { data, error: null };
+      }
+    }
 
     if (!response.ok) {
       const error = await response.json();
@@ -577,11 +657,21 @@ export async function viewPublicReport(accessToken, password = null) {
 // Keyword management functions
 
 // Create a keyword
-export async function createKeyword(keywordData) {
+export async function createKeyword(projectId, keywordData) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  if (!keywordData) return { data: null, error: new Error('keywordData is required') };
+  
   try {
+    // Create body with project_id from parameter, and spread keywordData (which may or may not have project_id)
+    const { project_id, ...restData } = keywordData;
+    const body = {
+      project_id: projectId,
+      ...restData
+    };
+    
     const { data, error } = await authorizedJSON('/api/v1/keywords', {
       method: 'POST',
-      body: keywordData
+      body
     });
     return { data, error };
   } catch (error) {
@@ -718,3 +808,5 @@ export async function discoverKeywords(projectId, discoveryData) {
     return { data: null, error };
   }
 }
+
+

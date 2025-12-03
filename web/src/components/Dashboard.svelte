@@ -21,7 +21,7 @@
     Lightbulb, 
     Network, 
     TrendingUp, 
-    Binoculars, 
+    ScanSearch, 
     Target,
     Search,
     Settings,
@@ -322,7 +322,7 @@
             use:link
             class:active={false}
           >
-            <Binoculars class="w-5 h-5" />
+            <ScanSearch class="w-5 h-5" />
             Discover Keywords
           </a>
         </li>

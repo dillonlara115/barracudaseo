@@ -7,7 +7,7 @@
     Lightbulb, 
     Network, 
     TrendingUp, 
-    Binoculars, 
+    ScanSearch, 
     Target,
     Search,
     Settings,
@@ -125,7 +125,7 @@
             use:link
             class:active={isDiscoverKeywords}
           >
-            <Binoculars class="w-5 h-5" />
+            <ScanSearch class="w-5 h-5" />
             Discover Keywords
           </a>
         </li>

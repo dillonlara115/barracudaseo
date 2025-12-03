@@ -1,6 +1,6 @@
 <script>
   import { discoverKeywords, createKeyword } from '../lib/data.js';
-  import { Search, Plus } from 'lucide-svelte';
+  import { Search, Plus, Check } from 'lucide-svelte';
   import { createEventDispatcher } from 'svelte';
 
   export let projectId = null;
@@ -21,6 +21,7 @@
   let discoveredKeywords = [];
   let selectedKeywords = new Set();
   let addingKeywords = new Set();
+  let addedKeywords = new Set(); // Track successfully added keywords
 
   const commonLocations = [
     'United States',
@@ -55,9 +56,11 @@
     error = null;
     discoveredKeywords = [];
     selectedKeywords.clear();
+    addedKeywords.clear(); // Clear added keywords when discovering new ones
 
     try {
-      const result = await discoverKeywords(projectId, formData.target, {
+      const result = await discoverKeywords(projectId, {
+        target: formData.target,
         location_name: formData.location_name,
         language_name: formData.language_name,
         limit: formData.limit
@@ -106,7 +109,7 @@
   }
 
   async function addKeywordToTracking(keyword) {
-    if (addingKeywords.has(keyword.keyword)) return;
+    if (addingKeywords.has(keyword.keyword) || addedKeywords.has(keyword.keyword)) return;
     
     addingKeywords.add(keyword.keyword);
     addingKeywords = addingKeywords;
@@ -122,6 +125,8 @@
       if (result.error) {
         error = result.error.message || 'Failed to add keyword';
       } else {
+        addedKeywords.add(keyword.keyword);
+        addedKeywords = addedKeywords;
         dispatch('keyword-added', { keyword: keyword.keyword, data: result.data });
       }
     } catch (err) {
@@ -139,6 +144,9 @@
     let successCount = 0;
 
     for (const keyword of keywordsToAdd) {
+      // Skip if already added
+      if (addedKeywords.has(keyword.keyword)) continue;
+      
       try {
         const result = await createKeyword(projectId, {
           keyword: keyword.keyword,
@@ -148,6 +156,7 @@
         });
 
         if (!result.error) {
+          addedKeywords.add(keyword.keyword);
           successCount++;
         }
       } catch (err) {
@@ -156,6 +165,7 @@
     }
 
     if (successCount > 0) {
+      addedKeywords = addedKeywords; // Trigger reactivity
       dispatch('keywords-added', { count: successCount });
       selectedKeywords.clear();
       selectedKeywords = selectedKeywords;
@@ -364,6 +374,7 @@
               {#each discoveredKeywords as keyword}
                 {@const isSelected = selectedKeywords.has(keyword.keyword)}
                 {@const isAdding = addingKeywords.has(keyword.keyword)}
+                {@const isAdded = addedKeywords.has(keyword.keyword)}
                 <tr>
                   <td>
                     <input
@@ -400,12 +411,14 @@
                   </td>
                   <td>
                     <button
-                      class="btn btn-xs btn-primary"
+                      class="btn btn-xs {isAdded ? 'btn-success' : 'btn-primary'}"
                       on:click={() => addKeywordToTracking(keyword)}
-                      disabled={isAdding}
+                      disabled={isAdding || isAdded}
                     >
                       {#if isAdding}
                         <span class="loading loading-spinner loading-xs"></span>
+                      {:else if isAdded}
+                        <Check class="w-3 h-3" />
                       {:else}
                         <Plus class="w-3 h-3" />
                       {/if}

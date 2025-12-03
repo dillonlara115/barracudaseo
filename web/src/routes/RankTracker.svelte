@@ -6,7 +6,7 @@
   import KeywordDetailModal from '../components/KeywordDetailModal.svelte';
   import KeywordDiscovery from '../components/KeywordDiscovery.svelte';
   import ProjectPageLayout from '../components/ProjectPageLayout.svelte';
-  import { ArrowUp, ArrowDown, Minus, Search, Filter, Plus, Sparkles, Binoculars } from 'lucide-svelte';
+  import { ArrowUp, ArrowDown, Minus, Search, Filter, Plus, Sparkles, ScanSearch } from 'lucide-svelte';
 
   let projectId = null;
   let project = null;
@@ -256,7 +256,7 @@
       </div>
       <div class="flex gap-2">
         <a href="/project/{projectId}/discover-keywords" use:link class="btn btn-outline">
-          <Binoculars class="w-4 h-4 mr-1" />
+          <ScanSearch class="w-4 h-4 mr-1" />
           Discover Keywords
         </a>
         <button class="btn btn-primary" on:click={() => showKeywordForm = true}>
