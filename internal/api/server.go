@@ -248,10 +248,17 @@ func (s *Server) validateTokenViaAPI(token string) (*User, error) {
 	if resp.StatusCode != http.StatusOK {
 		// Read response body for error details
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		s.logger.Debug("Token validation failed", 
+		// Mask anon key to avoid leaking secrets in logs
+		keyPrefix := ""
+		if len(s.config.SupabaseAnonKey) >= 6 {
+			keyPrefix = s.config.SupabaseAnonKey[:6] + "..."
+		}
+		s.logger.Warn("Token validation failed",
 			zap.String("url", authURL),
 			zap.Int("status", resp.StatusCode),
-			zap.String("response", string(bodyBytes)))
+			zap.String("response", string(bodyBytes)),
+			zap.String("supabase_url", s.config.SupabaseURL),
+			zap.String("anon_key_prefix", keyPrefix))
 		return nil, fmt.Errorf("token validation failed: status %d, response: %s", resp.StatusCode, string(bodyBytes))
 	}
 

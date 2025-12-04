@@ -28,11 +28,14 @@ Thumbs.db
 # Frontend build output
 web/dist/
 node_modules/
+marketing/node_modules/
 
 # Environment variables - NEVER commit these!
 .env
 .env.local
 .env.*.local
+web/.env
+web/.env.local
 
 # Project specific
 results.*
@@ -41,5 +44,4 @@ results.*
 link-graph.json
 graph.json
 crawls/
-
 

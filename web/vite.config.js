@@ -2,9 +2,27 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
-  // Load env file based on `mode` in the current working directory.
-  // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
-  const env = loadEnv(mode, process.cwd(), '');
+  // Load env files for local dev, but always let actual process env win (Vercel/Cloud Run)
+  const fileEnv = loadEnv(mode, process.cwd(), '');
+
+  const env = {
+    PUBLIC_SUPABASE_URL:
+      process.env.PUBLIC_SUPABASE_URL ||
+      process.env.VITE_PUBLIC_SUPABASE_URL ||
+      fileEnv.PUBLIC_SUPABASE_URL ||
+      fileEnv.VITE_PUBLIC_SUPABASE_URL ||
+      '',
+    PUBLIC_SUPABASE_ANON_KEY:
+      process.env.PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.VITE_PUBLIC_SUPABASE_ANON_KEY ||
+      fileEnv.PUBLIC_SUPABASE_ANON_KEY ||
+      fileEnv.VITE_PUBLIC_SUPABASE_ANON_KEY ||
+      '',
+    VITE_CLOUD_RUN_API_URL:
+      process.env.VITE_CLOUD_RUN_API_URL ||
+      fileEnv.VITE_CLOUD_RUN_API_URL ||
+      '',
+  };
   
   return {
     plugins: [svelte()],
@@ -19,15 +37,12 @@ export default defineConfig(({ mode }) => {
       }
     },
     // Explicitly define environment variables for client-side access
-    // This ensures they're available at build time (Vercel) and dev time (local)
-    // Vite automatically exposes PUBLIC_ and VITE_ prefixed vars, but we define
-    // them explicitly here to ensure they work in both environments
     define: {
-      'import.meta.env.PUBLIC_SUPABASE_URL': JSON.stringify(env.PUBLIC_SUPABASE_URL || ''),
-      'import.meta.env.PUBLIC_SUPABASE_ANON_KEY': JSON.stringify(env.PUBLIC_SUPABASE_ANON_KEY || ''),
-      'import.meta.env.VITE_PUBLIC_SUPABASE_URL': JSON.stringify(env.VITE_PUBLIC_SUPABASE_URL || env.PUBLIC_SUPABASE_URL || ''),
-      'import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_PUBLIC_SUPABASE_ANON_KEY || env.PUBLIC_SUPABASE_ANON_KEY || ''),
+      'import.meta.env.PUBLIC_SUPABASE_URL': JSON.stringify(env.PUBLIC_SUPABASE_URL),
+      'import.meta.env.PUBLIC_SUPABASE_ANON_KEY': JSON.stringify(env.PUBLIC_SUPABASE_ANON_KEY),
+      'import.meta.env.VITE_PUBLIC_SUPABASE_URL': JSON.stringify(env.PUBLIC_SUPABASE_URL),
+      'import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY': JSON.stringify(env.PUBLIC_SUPABASE_ANON_KEY),
+      'import.meta.env.VITE_CLOUD_RUN_API_URL': JSON.stringify(env.VITE_CLOUD_RUN_API_URL),
     }
   };
 });
-
