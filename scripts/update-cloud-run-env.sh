@@ -191,6 +191,15 @@ if [ -n "$DATAFORSEO_BASE_URL" ]; then
     fi
 fi
 
+# OpenAI (app-wide key for AI features)
+if [ -n "$OPENAI_API_KEY" ]; then
+    if [ -n "$ENV_VARS" ]; then
+        ENV_VARS="$ENV_VARS,OPENAI_API_KEY=$OPENAI_API_KEY"
+    else
+        ENV_VARS="OPENAI_API_KEY=$OPENAI_API_KEY"
+    fi
+fi
+
 if [ -z "$ENV_VARS" ]; then
     echo "Error: No environment variables to update."
     echo "Set variables in your .env file or export them."
@@ -215,4 +224,3 @@ gcloud run services describe $SERVICE_NAME \
     --platform managed \
     --region $GCP_REGION \
     --format="value(status.url)"
-

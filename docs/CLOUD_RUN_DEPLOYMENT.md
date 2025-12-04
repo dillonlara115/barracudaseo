@@ -88,7 +88,7 @@ gcloud run deploy barracuda-api \
   --platform managed \
   --region $GCP_REGION \
   --allow-unauthenticated \
-  --set-env-vars="PUBLIC_SUPABASE_URL=https://your-project.supabase.co,PUBLIC_SUPABASE_ANON_KEY=your-anon-key,STRIPE_SECRET_KEY=sk_live_...,STRIPE_WEBHOOK_SECRET=whsec_...,STRIPE_PRICE_ID_PRO=price_...,STRIPE_PRICE_ID_PRO_ANNUAL=price_...,STRIPE_SUCCESS_URL=https://app.barracudaseo.com/billing?success=true,STRIPE_CANCEL_URL=https://app.barracudaseo.com/billing?canceled=true" \
+  --set-env-vars="APP_ENV=production,PUBLIC_SUPABASE_URL=https://your-project.supabase.co,PUBLIC_SUPABASE_ANON_KEY=your-anon-key,OPENAI_API_KEY=sk-...,STRIPE_SECRET_KEY=sk_live_...,STRIPE_WEBHOOK_SECRET=whsec_...,STRIPE_PRICE_ID_PRO=price_...,STRIPE_PRICE_ID_PRO_ANNUAL=price_...,STRIPE_SUCCESS_URL=https://app.barracudaseo.com/billing?success=true,STRIPE_CANCEL_URL=https://app.barracudaseo.com/billing?canceled=true" \
   --set-secrets="SUPABASE_SERVICE_ROLE_KEY=supabase-service-role-key:latest" \
   --memory=512Mi \
   --cpu=1 \
@@ -129,6 +129,8 @@ curl $API_URL/health
 - `PUBLIC_SUPABASE_URL` - Your Supabase project URL
 - `PUBLIC_SUPABASE_ANON_KEY` - Supabase anon key (safe to expose)
 - `SUPABASE_SERVICE_ROLE_KEY` - Service role key (from Secret Manager)
+- `OPENAI_API_KEY` - App-wide OpenAI key for AI features (users can still supply their own)
+- `APP_ENV` - Set to `production` in Cloud Run so `.env.local` is never loaded
 - `PORT` - Automatically set by Cloud Run (default: 8080)
 
 ### Stripe Variables (Required for Billing Features)
@@ -202,4 +204,3 @@ Cloud Run pricing:
 - **After free tier**: Pay per use (requests, memory, CPU time)
 
 For a small to medium application, Cloud Run is very cost-effective.
-
