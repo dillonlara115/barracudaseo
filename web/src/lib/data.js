@@ -23,22 +23,49 @@ async function onTokenRefreshFailed(error) {
 }
 
 async function getValidAccessToken() {
+  // If refresh is already in progress, wait for it (check this FIRST to prevent race conditions)
+  if (isRefreshing && refreshPromise) {
+    try {
+      const { data: refreshed, error: refreshError } = await refreshPromise;
+      if (!refreshError && refreshed.session && refreshed.session.access_token) {
+        // Verify the refreshed token is not expired
+        const expiresAt = refreshed.session.expires_at;
+        const expiresAtMs = expiresAt ? expiresAt * 1000 : 0;
+        if (expiresAt && expiresAtMs > Date.now()) {
+          return refreshed.session.access_token;
+        }
+        // Token is still expired, fall through to refresh again
+      }
+      // Refresh failed, fall through to try again
+    } catch (err) {
+      // Refresh promise failed, fall through to try again
+    }
+  }
+  
   // Get current session
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   
   // If there's an error or no session, try to refresh
   if (sessionError || !session) {
     // If refresh is already in progress, wait for it
-    if (isRefreshing) {
+    if (isRefreshing && refreshPromise) {
       return new Promise((resolve, reject) => {
         pendingRequests.push({ resolve, reject });
       });
     }
 
+    // Atomic check-and-set: set flag BEFORE creating promise to prevent race conditions
+    if (isRefreshing) {
+      // Another request beat us, wait for it
+      return new Promise((resolve, reject) => {
+        pendingRequests.push({ resolve, reject });
+      });
+    }
+    
     isRefreshing = true;
     
     try {
-      // Start new refresh
+      // Start new refresh - create promise BEFORE any await to prevent race conditions
       refreshPromise = supabase.auth.refreshSession();
       lastRefreshTime = Date.now();
       const { data: refreshed, error: refreshError } = await refreshPromise;
@@ -64,10 +91,22 @@ async function getValidAccessToken() {
   const now = Date.now();
   const expiresAtMs = expiresAt ? expiresAt * 1000 : 0;
   
+  // Check if token is already expired (more aggressive check)
+  const isExpired = !expiresAt || expiresAtMs < now;
+  
   // Refresh if expired or expiring within 60 seconds
-  if (!expiresAt || expiresAtMs < now + 60000) {
+  // If already expired, refresh immediately (don't use expired token)
+  if (isExpired || expiresAtMs < now + 60000) {
     // If refresh is already in progress, wait for it
+    if (isRefreshing && refreshPromise) {
+      return new Promise((resolve, reject) => {
+        pendingRequests.push({ resolve, reject });
+      });
+    }
+
+    // Atomic check-and-set: set flag BEFORE creating promise to prevent race conditions
     if (isRefreshing) {
+      // Another request beat us, wait for it
       return new Promise((resolve, reject) => {
         pendingRequests.push({ resolve, reject });
       });
@@ -76,19 +115,35 @@ async function getValidAccessToken() {
     isRefreshing = true;
 
     try {
-      // Start new refresh
+      // Start new refresh - create promise BEFORE any await to prevent race conditions
       refreshPromise = supabase.auth.refreshSession();
       lastRefreshTime = Date.now();
       const { data: refreshed, error: refreshError } = await refreshPromise;
       refreshPromise = null;
       
       if (refreshError || !refreshed.session) {
-        // If refresh fails but we have a token, try using it anyway
-        if (session.access_token) {
-          const token = session.access_token;
+        // Don't use expired token - refresh failed means session is invalid
+        // Check if token is actually expired before throwing
+        const expiresAt = session.expires_at;
+        const expiresAtMs = expiresAt ? expiresAt * 1000 : 0;
+        const isExpired = !expiresAt || expiresAtMs < Date.now();
+        
+        if (isExpired) {
+          // Token is expired and refresh failed - user needs to sign in again
+          onTokenRefreshFailed(new Error('Session expired. Please sign in again.'));
+          throw new Error('Session expired. Please sign in again.');
+        }
+        
+        // Token not expired yet but refresh failed - try using current token
+        // This handles transient refresh failures
+        const token = session.access_token;
+        if (token) {
+          // Still notify pending requests about the token (even if refresh failed)
           onTokenRefreshed(token);
           return token;
         }
+        
+        onTokenRefreshFailed(new Error('Session expired. Please sign in again.'));
         throw new Error('Session expired. Please sign in again.');
       }
       
@@ -102,13 +157,21 @@ async function getValidAccessToken() {
       isRefreshing = false;
     }
   }
-
+  
+  // Token is valid - return it
   return session.access_token;
 }
 
 async function authorizedRequest(path, { method = 'GET', body, headers = {}, retryOn401 = true } = {}) {
   try {
+    // Ensure we have a valid token before making request
+    // This will refresh if needed and wait for any in-progress refresh
     let token = await getValidAccessToken();
+    
+    // Double-check token is still valid (race condition protection)
+    if (!token) {
+      throw new Error('No valid access token available');
+    }
 
     const requestHeaders = new Headers(headers);
     requestHeaders.set('Authorization', `Bearer ${token}`);
@@ -127,48 +190,52 @@ async function authorizedRequest(path, { method = 'GET', body, headers = {}, ret
 
     // Handle 401 errors by refreshing token and retrying once
     if (response.status === 401 && retryOn401) {
-      // If a refresh is already in progress, wait for it then retry
-      if (isRefreshing) {
-        try {
-          const newToken = await new Promise((resolve, reject) => {
-            pendingRequests.push({ resolve, reject });
-          });
-          requestHeaders.set('Authorization', `Bearer ${newToken}`);
-          return fetch(`${getApiUrl()}${path}`, {
-            method,
-            headers: requestHeaders,
-            body: requestBody,
-          });
-        } catch (err) {
-          console.warn('Waiting for refresh failed on 401 retry:', err);
-          return response;
-        }
-      }
-
-      isRefreshing = true;
+      // Use centralized refresh function to coordinate with other requests
       try {
-        // Force refresh
-        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
-        if (!refreshError && refreshed.session && refreshed.session.access_token) {
-          const newToken = refreshed.session.access_token;
-          onTokenRefreshed(newToken);
-          
-          // Retry request
+        const newToken = await getValidAccessToken();
+        
+        if (newToken) {
+          // Retry request with new token
           requestHeaders.set('Authorization', `Bearer ${newToken}`);
-          return fetch(`${getApiUrl()}${path}`, {
+          const retryResponse = await fetch(`${getApiUrl()}${path}`, {
             method,
             headers: requestHeaders,
             body: requestBody,
           });
+          
+          // If retry still fails with 401, the refresh token itself may be expired
+          if (retryResponse.status === 401) {
+            console.warn('Retry with refreshed token still returned 401 - refresh token may be expired');
+            // Sign out user to force re-authentication
+            try {
+              await supabase.auth.signOut();
+            } catch (signOutErr) {
+              console.error('Failed to sign out after token refresh failure:', signOutErr);
+            }
+          }
+          
+          return retryResponse;
         } else {
-          onTokenRefreshFailed(new Error('Refresh failed'));
-          console.warn('Token refresh failed on 401:', refreshError || 'No session returned');
+          // No token available - refresh must have failed
+          console.warn('Token refresh failed on 401 - no token returned');
+          // Sign out user to force re-authentication
+          try {
+            await supabase.auth.signOut();
+          } catch (signOutErr) {
+            console.error('Failed to sign out after refresh failure:', signOutErr);
+          }
         }
       } catch (refreshErr) {
-        onTokenRefreshFailed(refreshErr);
         console.error('Failed to refresh token on 401:', refreshErr);
-      } finally {
-        isRefreshing = false;
+        
+        // If error indicates expired refresh token, sign out
+        if (refreshErr?.message?.includes('refresh_token') || refreshErr?.message?.includes('expired') || refreshErr?.message?.includes('Session expired') || refreshErr?.message?.includes('Not authenticated')) {
+          try {
+            await supabase.auth.signOut();
+          } catch (signOutErr) {
+            console.error('Failed to sign out after refresh token expiration:', signOutErr);
+          }
+        }
       }
     }
 
@@ -191,6 +258,18 @@ async function authorizedJSON(path, options = {}) {
       } catch (_) {
         // Ignore JSON parse errors
       }
+      
+      // If it's a 401 and we've already retried, the session is likely expired
+      if (response.status === 401) {
+        message = 'Session expired. Please sign in again.';
+        // Sign out to clear invalid session
+        try {
+          await supabase.auth.signOut();
+        } catch (signOutErr) {
+          console.error('Failed to sign out after 401:', signOutErr);
+        }
+      }
+      
       throw new Error(message);
     }
 
@@ -201,6 +280,15 @@ async function authorizedJSON(path, options = {}) {
     const data = await response.json();
     return { data, error: null };
   } catch (error) {
+    // If error indicates session expired, sign out
+    if (error.message?.includes('expired') || error.message?.includes('Not authenticated') || error.message?.includes('Session expired')) {
+      try {
+        await supabase.auth.signOut();
+      } catch (signOutErr) {
+        console.error('Failed to sign out after auth error:', signOutErr);
+      }
+    }
+    
     console.error('API request failed:', error);
     return { data: null, error };
   }
@@ -220,8 +308,7 @@ export async function fetchProjects() {
       throw error;
     }
     
-    console.log('Fetched projects:', data?.length || 0, 'projects');
-    console.log('Projects data:', data);
+    // Removed verbose logging to reduce console noise
     
     return { data, error: null };
   } catch (error) {
@@ -911,16 +998,83 @@ export async function fetchProjectImpactFirst(projectId) {
 
 // Discover keywords for a domain/URL
 export async function discoverKeywords(projectId, discoveryData) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  if (!discoveryData) return { data: null, error: new Error('discoveryData is required') };
+  
   try {
-    const { data, error } = await authorizedJSON(`/api/v1/projects/${projectId}/discover-keywords`, {
+    const { data, error } = await authorizedJSON(`/keywords/discover`, {
       method: 'POST',
-      body: discoveryData
+      body: {
+        project_id: projectId,
+        ...discoveryData
+      }
     });
+    
     return { data, error };
-  } catch (error) {
-    console.error('Error discovering keywords:', error);
-    return { data: null, error };
+  } catch (err) {
+    return { data: null, error: err };
   }
 }
 
+// Billing functions - use authorizedRequest wrapper for coordinated auth
+
+/**
+ * Fetch billing summary (profile, subscription, team info)
+ */
+export async function fetchBillingSummary() {
+  try {
+    const { data, error } = await authorizedJSON(`/api/v1/billing/summary`);
+    return { data, error };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+}
+
+/**
+ * Create Stripe checkout session
+ */
+export async function createBillingCheckout(priceId) {
+  if (!priceId) return { data: null, error: new Error('priceId is required') };
+  
+  try {
+    const { data, error } = await authorizedJSON(`/api/v1/billing/checkout`, {
+      method: 'POST',
+      body: { price_id: priceId }
+    });
+    return { data, error };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+}
+
+/**
+ * Create Stripe customer portal session
+ */
+export async function createBillingPortal() {
+  try {
+    const { data, error } = await authorizedJSON(`/api/v1/billing/portal`, {
+      method: 'POST'
+    });
+    return { data, error };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+}
+
+/**
+ * Redeem a promo code
+ */
+export async function redeemPromoCode(code, teamSize = 1) {
+  if (!code) return { data: null, error: new Error('code is required') };
+  
+  try {
+    const { data, error } = await authorizedJSON(`/api/v1/billing/redeem`, {
+      method: 'POST',
+      body: { code, team_size: teamSize }
+    });
+    return { data, error };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+}
 

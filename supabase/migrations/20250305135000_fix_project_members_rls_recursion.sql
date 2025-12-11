@@ -56,3 +56,4 @@ create policy "Project owners can remove members"
     )
     or project_members.user_id = (select auth.uid())
   );
+

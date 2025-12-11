@@ -9,6 +9,7 @@
   import Logo from './Logo.svelte';
   import Auth from './Auth.svelte';
   import TeamManagement from './TeamManagement.svelte';
+  import { fetchBillingSummary, createBillingCheckout, createBillingPortal, redeemPromoCode } from '../lib/data.js';
 
   let loading = true;
   let profile = null;
@@ -88,37 +89,7 @@
     return unsubscribe;
   });
 
-  async function getValidAccessToken() {
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) {
-      throw new Error('Not authenticated. Please sign in again.');
-    }
-
-    let currentSession = sessionData.session;
-    if (!currentSession) {
-      const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError || !refreshed.session) {
-        throw new Error('Session expired. Please sign in again.');
-      }
-      currentSession = refreshed.session;
-    }
-
-    const expiresAt = currentSession?.expires_at;
-    if (expiresAt && expiresAt * 1000 < Date.now() + 60000) {
-      const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError || !refreshed.session) {
-        throw new Error('Session expired. Please sign in again.');
-      }
-      currentSession = refreshed.session;
-    }
-
-    const token = currentSession?.access_token;
-    if (!token) {
-      throw new Error('Not authenticated');
-    }
-
-    return token;
-  }
+  // Removed local getValidAccessToken - now using centralized auth wrapper from data.js
 
   async function loadBillingData() {
     if (!$user) {
@@ -130,21 +101,12 @@
     error = null;
     
     try {
-      const token = await getValidAccessToken();
-      const response = await fetch(`${API_URL}/api/v1/billing/summary`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        const errorMessage = errorData?.error || `Failed to fetch billing summary (${response.status})`;
-        throw new Error(errorMessage);
+      const { data, error: fetchError } = await fetchBillingSummary();
+      
+      if (fetchError) {
+        throw fetchError;
       }
 
-      const data = await response.json();
-      
       // Backend should always return a profile (it creates one if missing)
       // But handle the case where it might be null/undefined
       if (data?.profile) {
@@ -189,106 +151,79 @@
     error = null;
     
     try {
-      const token = await getValidAccessToken();
-
-      const response = await fetch(`${API_URL}/api/v1/billing/checkout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          price_id: priceId,
-          quantity: 1,
-          team_seats_quantity: teamSeatsQuantity || 0,
-        }),
-      });
-
-      if (!response.ok) {
-        let errorMessage = `Failed to create checkout session (${response.status})`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch (parseError) {
-          // If response isn't JSON, try to get text
-          try {
-            const text = await response.text();
-            if (text) {
-              errorMessage = `Server error: ${text.substring(0, 200)}`;
-            }
-          } catch (_) {
-            // Ignore text parsing errors
-          }
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
+      const { data, error: fetchError } = await createBillingCheckout(priceId);
       
-      if (!data || !data.url) {
-        throw new Error('Invalid response from server: missing checkout URL');
+      if (fetchError) {
+        throw fetchError;
       }
       
-      // Redirect to Stripe checkout
-      window.location.href = data.url;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
     } catch (err) {
-      error = err.message || 'An unexpected error occurred. Please try again.';
+      error = err.message || 'Failed to create checkout session';
       console.error('Failed to create checkout session:', err);
     } finally {
       creatingCheckout = false;
     }
   }
 
-  async function openBillingPortal() {
+  async function openCustomerPortal() {
     if (!$user) return;
     
     creatingPortal = true;
     error = null;
     
     try {
-      const token = await getValidAccessToken();
-
-      const response = await fetch(`${API_URL}/api/v1/billing/portal`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        let errorMessage = `Failed to create billing portal session (${response.status})`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch (parseError) {
-          // If response isn't JSON, try to get text
-          try {
-            const text = await response.text();
-            if (text) {
-              errorMessage = `Server error: ${text.substring(0, 200)}`;
-            }
-          } catch (_) {
-            // Ignore text parsing errors
-          }
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
+      const { data, error: fetchError } = await createBillingPortal();
       
-      if (!data || !data.url) {
-        throw new Error('Invalid response from server: missing portal URL');
+      if (fetchError) {
+        throw fetchError;
       }
       
-      // Open billing portal in new window
-      window.location.href = data.url;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No portal URL returned');
+      }
     } catch (err) {
-      error = err.message || 'An unexpected error occurred. Please try again.';
-      console.error('Failed to open billing portal:', err);
+      error = err.message || 'Failed to create portal session';
+      console.error('Failed to create portal session:', err);
     } finally {
       creatingPortal = false;
     }
   }
+
+  async function handleRedeemCode() {
+    if (!$user || !redeemCode.trim()) return;
+    
+    redeeming = true;
+    redeemError = null;
+    
+    try {
+      const { data, error: fetchError } = await redeemPromoCode(redeemCode.trim(), redeemTeamSize);
+      
+      if (fetchError) {
+        throw fetchError;
+      }
+      
+      // Success - reload billing data and clear form
+      redeemCode = '';
+      redeemTeamSize = 1;
+      await loadBillingData();
+      
+      // Show success message (you could add a toast here)
+      console.log('Promo code redeemed successfully');
+    } catch (err) {
+      redeemError = err.message || 'Failed to redeem code';
+      console.error('Failed to redeem code:', err);
+    } finally {
+      redeeming = false;
+    }
+  }
+
 
   function getPlanFeatures(tier) {
     switch (tier) {
@@ -336,54 +271,27 @@
     redeemError = null;
     
     try {
-      const token = await getValidAccessToken();
-      const response = await fetch(`${API_URL}/api/v1/billing/redeem`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ 
-          code: redeemCode,
-          team_size: redeemTeamSize || 1
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to redeem code');
-      }
-
-      const result = await response.json();
+      const { data, error: fetchError } = await redeemPromoCode(redeemCode.trim(), redeemTeamSize);
       
-      // Success! Reload data
+      if (fetchError) {
+        throw fetchError;
+      }
+      
+      // Success - reload billing data and clear form
       redeemCode = '';
-      
-      // Close modal if it was open
-      const modalCheckbox = document.getElementById('beta-team-modal');
-      if (modalCheckbox) {
-        modalCheckbox.checked = false;
-      }
-      
-      // Show success message
-      const successMsg = document.createElement('div');
-      successMsg.className = 'alert alert-success fixed bottom-4 right-4 w-auto z-50';
-      successMsg.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>Success! Plan updated with ${result.team_size || redeemTeamSize} seats.</span>`;
-      document.body.appendChild(successMsg);
-      setTimeout(() => successMsg.remove(), 3000);
-      
-      // Force reload billing data with a small delay to ensure DB update is committed
-      await new Promise(resolve => setTimeout(resolve, 100));
+      redeemTeamSize = 1;
       await loadBillingData();
       
-      // Also log the updated profile for debugging
-      console.log('Profile after update:', profile);
+      // Show success message (you could add a toast here)
+      console.log('Promo code redeemed successfully');
     } catch (err) {
-      redeemError = err.message;
+      redeemError = err.message || 'Failed to redeem code';
+      console.error('Failed to redeem code:', err);
     } finally {
       redeeming = false;
     }
   }
+
 
   async function handleEmailChange() {
     if (!newEmail.trim()) {

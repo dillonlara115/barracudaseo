@@ -9,18 +9,25 @@
   let projects = [];
   let loading = true;
   let error = null;
+  let isLoadingProjects = false; // Prevent concurrent loads
 
-  onMount(async () => {
-    await initAuth();
-    
-    user.subscribe(async (currentUser) => {
-      if (currentUser) {
+  onMount(() => {
+    // Don't call initAuth() here - App.svelte already does it
+    // Subscribe to user changes, but prevent duplicate loads
+    const unsubscribe = user.subscribe(async (currentUser) => {
+      if (currentUser && !isLoadingProjects && projects.length === 0) {
+        isLoadingProjects = true;
         await loadProjects();
-      } else {
+        isLoadingProjects = false;
+      } else if (!currentUser) {
         projects = [];
         loading = false;
+        isLoadingProjects = false;
       }
     });
+    
+    // Cleanup subscription on unmount
+    return unsubscribe;
   });
 
   async function loadProjects() {

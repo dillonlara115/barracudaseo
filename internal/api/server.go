@@ -311,6 +311,8 @@ func (s *Server) validateToken(token string) (*User, error) {
 	}
 
 	// 4. Cache successful validation for 1 minute
+	// Note: JWT expiration is already validated by jwt.ParseWithClaims via RegisteredClaims
+	// If we got here, the token is valid and not expired
 	s.tokenCacheMu.Lock()
 	s.tokenCache[token] = TokenCacheEntry{
 		User:      user,

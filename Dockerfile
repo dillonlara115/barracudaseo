@@ -1,31 +1,23 @@
 # Multi-stage build for Cloud Run deployment
-# Build stage
+# Frontend is hosted separately on Vercel, so we only build the API server
 FROM golang:1.21-alpine AS builder
 
 WORKDIR /app
 
-# Install build dependencies (including Node.js and npm for frontend build)
-RUN apk add --no-cache git make nodejs npm
+# Install build dependencies
+RUN apk add --no-cache git make
 
 # Copy go mod files
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy source code (excluding node_modules to avoid Go import path issues)
+# Copy source code (web/ and marketing/ excluded via .dockerignore)
 COPY . .
-
-# Remove node_modules before running go mod tidy (they cause import path errors)
-RUN rm -rf web/node_modules marketing/node_modules || true
 
 # Update go.sum to include all dependencies
 RUN go mod tidy
 
-# Build frontend first (required for embedded files)
-WORKDIR /app/web
-RUN npm ci && npm run build
-
-# Build Go binary
-WORKDIR /app
+# Build Go binary (API server only)
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o barracuda-api .
 
 # Runtime stage

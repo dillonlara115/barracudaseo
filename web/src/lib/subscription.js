@@ -1,6 +1,5 @@
 import { writable } from 'svelte/store';
-import { getApiUrl } from './data.js';
-import { supabase } from './supabase.js';
+import { fetchBillingSummary } from './data.js';
 
 // Store for user subscription/profile data
 export const userProfile = writable(null);
@@ -30,77 +29,26 @@ export async function loadSubscriptionData() {
   lastLoadTime = now;
   
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    // Use centralized billing API function that handles auth coordination
+    // This will automatically handle session checks and token refresh
+    const { data, error } = await fetchBillingSummary();
     
-    if (sessionError) {
-      console.error('Session error:', sessionError);
-      userProfile.set(null);
-      userSubscription.set(null);
-      return;
-    }
-    
-    if (!session) {
-      // No session - user not authenticated, set defaults
-      userProfile.set(null);
-      userSubscription.set(null);
-      return;
-    }
-
-    // Refresh session if needed
-    let currentSession = session;
-    const expiresAt = session.expires_at;
-    if (expiresAt && expiresAt * 1000 < Date.now() + 60000) {
-      const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError) {
-        console.error('Failed to refresh session:', refreshError);
-        userProfile.set(null);
-        userSubscription.set(null);
-        return;
-      }
-      if (refreshed.session) {
-        currentSession = refreshed.session;
-      }
-    }
-
-    const apiUrl = getApiUrl();
-    const response = await fetch(`${apiUrl}/api/v1/billing/summary`, {
-      headers: {
-        'Authorization': `Bearer ${currentSession.access_token}`,
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        // 401 means unauthorized - try refreshing once, then give up
-        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
-        if (!refreshError && refreshed.session) {
-          // Retry with refreshed token (only once)
-          const retryResponse = await fetch(`${apiUrl}/api/v1/billing/summary`, {
-            headers: {
-              'Authorization': `Bearer ${refreshed.session.access_token}`,
-            },
-          });
-          if (retryResponse.ok) {
-            const data = await retryResponse.json();
-            userProfile.set(data.profile || null);
-            userSubscription.set(data.subscription || null);
-            return;
-          }
-        }
-        // If refresh failed or retry failed, user is not authenticated
-        // Set defaults and don't retry again
+    if (error) {
+      // If 401, user is not authenticated - set defaults
+      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
         userProfile.set(null);
         userSubscription.set(null);
         return;
       }
       // For other errors, log but don't retry
-      console.error('Failed to load subscription data:', response.status);
+      console.error('Failed to load subscription data:', error);
       return;
     }
 
-    const data = await response.json();
-    userProfile.set(data.profile || null);
-    userSubscription.set(data.subscription || null);
+    if (data) {
+      userProfile.set(data.profile || null);
+      userSubscription.set(data.subscription || null);
+    }
   } catch (error) {
     console.error('Error loading subscription data:', error);
   } finally {
