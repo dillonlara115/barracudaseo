@@ -124,28 +124,6 @@ This document tracks planned improvements for the Barracuda web dashboard to bet
 
 ## Phase 2: Medium Priority
 
-### [ ] Issue Status Tracking
-**Priority:** Medium  
-**Impact:** High  
-**Effort:** Medium
-
-- [ ] Add status field to issues: "New", "In Progress", "Fixed", "Ignored"
-- [ ] Status change buttons in issue cards
-- [ ] Filter by status
-- [ ] Bulk status actions (select multiple → mark as fixed)
-- [ ] Persist status in browser localStorage or backend
-
-**Files to modify:**
-- `web/src/components/IssuesPanel.svelte`
-- May need backend support: `cmd/serve.go` (localStorage initially)
-
-**Notes:**
-- Start with localStorage for MVP
-- Consider backend storage for multi-user scenarios
-- Add visual indicators (colors/icons) for status
-
----
-
 ### [✅] Actionable Recommendations Panel
 **Priority:** Medium  
 **Impact:** Medium  

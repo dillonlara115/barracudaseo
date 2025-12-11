@@ -527,7 +527,7 @@ func (s *Server) handleOpenAIKey(w http.ResponseWriter, r *http.Request) {
 		s.logger.Info("Checked for existing OpenAI key record",
 			zap.String("user_id", userID),
 			zap.Error(selectErr),
-			zap.Bool("has_data", selectData != nil && len(selectData) > 0))
+			zap.Bool("has_data", len(selectData) > 0))
 
 		if selectErr == nil && selectData != nil {
 			// SELECT succeeded and returned data - a record exists
@@ -556,7 +556,7 @@ func (s *Server) handleOpenAIKey(w http.ResponseWriter, r *http.Request) {
 				}
 				s.logger.Info("Successfully updated OpenAI key after unmarshal failure",
 					zap.String("user_id", userID),
-					zap.Bool("has_update_data", updateData != nil && len(updateData) > 0))
+					zap.Bool("has_update_data", len(updateData) > 0))
 			} else if len(existing) > 0 {
 				// Record exists and unmarshaled successfully, update it
 				s.logger.Info("Updating existing OpenAI key record", zap.String("user_id", userID))
@@ -571,7 +571,7 @@ func (s *Server) handleOpenAIKey(w http.ResponseWriter, r *http.Request) {
 				}
 				s.logger.Info("Successfully updated OpenAI key",
 					zap.String("user_id", userID),
-					zap.Bool("has_update_data", updateData != nil && len(updateData) > 0))
+					zap.Bool("has_update_data", len(updateData) > 0))
 			} else {
 				// SELECT returned data but unmarshaled to empty array - this shouldn't happen
 				// but treat it as record exists and try update
@@ -587,7 +587,7 @@ func (s *Server) handleOpenAIKey(w http.ResponseWriter, r *http.Request) {
 				}
 				s.logger.Info("Successfully updated OpenAI key",
 					zap.String("user_id", userID),
-					zap.Bool("has_update_data", updateData != nil && len(updateData) > 0))
+					zap.Bool("has_update_data", len(updateData) > 0))
 			}
 		} else {
 			// Select failed or no data, try insert first
@@ -611,11 +611,11 @@ func (s *Server) handleOpenAIKey(w http.ResponseWriter, r *http.Request) {
 				}
 				s.logger.Info("Successfully updated OpenAI key after insert failed",
 					zap.String("user_id", userID),
-					zap.Bool("has_update_data", updateData != nil && len(updateData) > 0))
+					zap.Bool("has_update_data", len(updateData) > 0))
 			} else {
 				s.logger.Info("Successfully inserted OpenAI key",
 					zap.String("user_id", userID),
-					zap.Bool("has_insert_data", insertData != nil && len(insertData) > 0))
+					zap.Bool("has_insert_data", len(insertData) > 0))
 			}
 		}
 
@@ -933,7 +933,7 @@ func (s *Server) loadGSCSummaryData(projectID string) map[string]interface{} {
 	snapshot := snapshotsWithTime[0].snapshot
 	totals, _ := snapshot["totals"].(map[string]interface{})
 
-	if totals == nil || len(totals) == 0 {
+	if len(totals) == 0 {
 		return nil
 	}
 

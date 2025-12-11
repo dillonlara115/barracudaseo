@@ -1,16 +1,13 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 
-	"github.com/dillonlara115/barracuda/internal/api"
 	"github.com/stripe/stripe-go/v78"
 	"github.com/stripe/stripe-go/v78/subscription"
-	"go.uber.org/zap"
 )
 
 func main() {
@@ -39,20 +36,6 @@ func main() {
 	fmt.Printf("Customer: %s\n", sub.Customer.ID)
 	fmt.Printf("Status: %s\n", sub.Status)
 
-	// Initialize API server (minimal config for testing)
-	logger, _ := zap.NewDevelopment()
-	cfg := api.Config{
-		SupabaseURL:        os.Getenv("PUBLIC_SUPABASE_URL"),
-		SupabaseServiceKey: os.Getenv("SUPABASE_SERVICE_ROLE_KEY"),
-		SupabaseAnonKey:    os.Getenv("PUBLIC_SUPABASE_ANON_KEY"),
-		Logger:             logger,
-	}
-
-	server, err := api.NewServer(cfg)
-	if err != nil {
-		log.Fatalf("Failed to create API server: %v", err)
-	}
-
 	// Manually call handleSubscriptionUpdate
 	// We need to access the private method, so we'll need to make it public or use reflection
 	// For now, let's create a test HTTP request to the webhook endpoint
@@ -65,4 +48,3 @@ func main() {
 	fmt.Printf("   stripe trigger customer.subscription.updated\n")
 	fmt.Println("\nThe subscription will be processed when the webhook is received.")
 }
-

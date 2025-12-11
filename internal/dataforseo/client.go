@@ -98,7 +98,7 @@ func (c *Client) do(ctx context.Context, method, path string, body interface{}, 
 				return fmt.Errorf("dataforseo API error: status %d, message: %s", checkResp.StatusCode, checkResp.StatusMessage)
 			}
 		}
-		
+
 		// For ranked keywords API, log raw response for debugging
 		if strings.Contains(path, "ranked_keywords") && len(bodyBytes) > 0 && len(bodyBytes) < 50000 {
 			// Log first 1000 chars of response for debugging
@@ -108,7 +108,7 @@ func (c *Client) do(ctx context.Context, method, path string, body interface{}, 
 			}
 			// This will help us see the actual response structure
 		}
-		
+
 		// Decode the actual response
 		if err := json.Unmarshal(bodyBytes, v); err != nil {
 			// Log response body for debugging if decode fails
@@ -195,11 +195,27 @@ func ExtractRanking(result *OrganicTaskGetResponse, targetURL string) (*RankingD
 	items := result.Tasks[0].Result[0].Items
 
 	// Find the item matching target URL (if provided)
+	normalize := func(u string) string {
+		u = strings.TrimSpace(strings.ToLower(u))
+		u = strings.TrimSuffix(u, "/")
+		return u
+	}
+
 	var matchedItem *OrganicResultItem
 	if targetURL != "" {
+		targetNorm := normalize(targetURL)
 		for i := range items {
-			// Simple URL matching - could be enhanced with normalization
-			if items[i].URL == targetURL {
+			if normalize(items[i].URL) == targetNorm {
+				matchedItem = &items[i]
+				break
+			}
+		}
+	}
+
+	// If no exact URL match, prefer first organic result
+	if matchedItem == nil {
+		for i := range items {
+			if strings.ToLower(items[i].Type) == "organic" {
 				matchedItem = &items[i]
 				break
 			}
@@ -258,4 +274,3 @@ func (c *Client) GetRankedKeywordsLive(ctx context.Context, task RankedKeywordsT
 
 	return &resp, nil
 }
-

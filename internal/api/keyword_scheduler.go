@@ -113,6 +113,7 @@ func (s *Server) handleScheduledKeywordChecks(w http.ResponseWriter, r *http.Req
 		taskRecordID := uuid.New().String()
 		taskRecord := map[string]interface{}{
 			"id":                 taskRecordID,
+			"project_id":         projectID,
 			"keyword_id":         keywordID,
 			"dataforseo_task_id": taskID,
 			"status":             "pending",
@@ -132,7 +133,7 @@ func (s *Server) handleScheduledKeywordChecks(w http.ResponseWriter, r *http.Req
 			ranking, err := dataforseo.ExtractRanking(getResp, targetURL)
 			if err == nil {
 				// Create snapshot
-				_, err := s.createSnapshot(keywordID, taskID, ranking)
+				_, err := s.createSnapshot(projectID, keywordID, taskID, ranking)
 				if err == nil {
 					// Update task status
 					_, _, _ = s.serviceRole.From("keyword_tasks").
@@ -177,10 +178,9 @@ func (s *Server) handleScheduledKeywordChecks(w http.ResponseWriter, r *http.Req
 	}
 
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{
-		"message":      "Scheduled keyword checks completed",
-		"checked":      checkedCount,
-		"errors":       errorCount,
-		"total_found":  len(keywords),
+		"message":     "Scheduled keyword checks completed",
+		"checked":     checkedCount,
+		"errors":      errorCount,
+		"total_found": len(keywords),
 	})
 }
-

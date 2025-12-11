@@ -42,7 +42,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 // handleCrawls handles crawl-related endpoints
 func (s *Server) handleCrawls(w http.ResponseWriter, r *http.Request) {
 	s.logger.Info("handleCrawls called", zap.String("method", r.Method), zap.String("path", r.URL.Path), zap.String("raw_path", r.URL.RawPath))
-	
+
 	// Check if this is actually a request for a specific crawl ID
 	// The path will be /crawls/:id after StripPrefix removes /api/v1
 	path := r.URL.Path
@@ -59,7 +59,7 @@ func (s *Server) handleCrawls(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	
+
 	switch r.Method {
 	case http.MethodPost:
 		s.handleCreateCrawl(w, r)
@@ -182,17 +182,6 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 	// Insert issues
 	issues := make([]map[string]interface{}, 0, len(summary.Issues))
 	for _, issue := range summary.Issues {
-		// Find page ID for this issue
-		var pageID *int64
-		for i, page := range req.Pages {
-			if page.URL == issue.URL {
-				// We'd need to fetch the page ID from the database
-				// For now, we'll insert without page_id and update later if needed
-				_ = i
-				break
-			}
-		}
-
 		issueData := map[string]interface{}{
 			"crawl_id":       crawlID,
 			"project_id":     req.ProjectID,
@@ -202,9 +191,6 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 			"recommendation": issue.Recommendation,
 			"value":          issue.Value,
 			"status":         "new",
-		}
-		if pageID != nil {
-			issueData["page_id"] = *pageID
 		}
 		issues = append(issues, issueData)
 	}
@@ -485,6 +471,8 @@ func (s *Server) handleProjectByID(w http.ResponseWriter, r *http.Request) {
 
 // handleGetProject handles GET /api/v1/projects/:id
 func (s *Server) handleGetProject(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	_ = r
+
 	// Verify access
 	hasAccess, err := s.verifyProjectAccess(userID, projectID)
 	if err != nil {
@@ -600,6 +588,8 @@ func (s *Server) handleUpdateProject(w http.ResponseWriter, r *http.Request, pro
 
 // handleDeleteProject handles DELETE /api/v1/projects/:id
 func (s *Server) handleDeleteProject(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	_ = r
+
 	// Verify access
 	hasAccess, err := s.verifyProjectAccess(userID, projectID)
 	if err != nil {
@@ -632,6 +622,8 @@ func (s *Server) handleDeleteProject(w http.ResponseWriter, r *http.Request, pro
 
 // handleListProjectCrawls handles GET /api/v1/projects/:id/crawls
 func (s *Server) handleListProjectCrawls(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	_ = r
+
 	// Verify access
 	hasAccess, err := s.verifyProjectAccess(userID, projectID)
 	if err != nil {
@@ -947,17 +939,17 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 				"images":         images,
 			},
 		}
-		
+
 		// Log page data being stored for debugging (first few pages only)
 		if len(pages) < 3 {
-			s.logger.Info("Storing page data", 
+			s.logger.Info("Storing page data",
 				zap.String("url", page.URL),
 				zap.Int("h1_count", len(page.H1)),
 				zap.Strings("h1_values", page.H1),
 				zap.Int("internal_links_count", len(internalLinks)),
 				zap.Int("external_links_count", len(externalLinks)))
 		}
-		
+
 		pages = append(pages, pageData)
 
 		// Increment total pages processed (for each page)
@@ -1047,7 +1039,7 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 	for _, result := range results {
 		if utils.IsImageURL(result.URL) {
 			imageCount++
-			s.logger.Info("Filtering out image URL before analysis", 
+			s.logger.Info("Filtering out image URL before analysis",
 				zap.String("url", result.URL),
 				zap.Int("status_code", result.StatusCode),
 				zap.String("error", result.Error))
@@ -1056,7 +1048,7 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 		}
 	}
 	if imageCount > 0 {
-		s.logger.Info("Filtered out image URLs before analysis", 
+		s.logger.Info("Filtered out image URLs before analysis",
 			zap.Int("total_results", len(results)),
 			zap.Int("image_urls_filtered", imageCount),
 			zap.Int("remaining_results", len(filteredResults)))
@@ -1246,10 +1238,10 @@ func (s *Server) areUsersOnSameTeam(userID1, userID2 string) (bool, error) {
 func (s *Server) getAccountOwnerID(userID string, profile map[string]interface{}) string {
 	tier, _ := profile["subscription_tier"].(string)
 	stripeSubscriptionID, _ := profile["stripe_subscription_id"].(string)
-	
+
 	// Determine account owner
 	var accountOwnerID string
-	
+
 	if stripeSubscriptionID != "" {
 		// User is a paid account owner
 		accountOwnerID = userID
@@ -1264,7 +1256,7 @@ func (s *Server) getAccountOwnerID(userID string, profile map[string]interface{}
 			Eq("user_id", userID).
 			Eq("status", "active").
 			Execute()
-		
+
 		if err == nil && data != nil {
 			if err := json.Unmarshal(data, &teamMembers); err == nil && len(teamMembers) > 0 {
 				ownerID, ok := teamMembers[0]["account_owner_id"].(string)
@@ -1274,7 +1266,7 @@ func (s *Server) getAccountOwnerID(userID string, profile map[string]interface{}
 			}
 		}
 	}
-	
+
 	return accountOwnerID
 }
 
@@ -1409,11 +1401,11 @@ func (s *Server) handleGSCCallback(w http.ResponseWriter, r *http.Request) {
 
 // handleCrawlByID handles crawl-specific endpoints like /crawls/:id/graph
 func (s *Server) handleCrawlByID(w http.ResponseWriter, r *http.Request) {
-	s.logger.Info("handleCrawlByID called", 
+	s.logger.Info("handleCrawlByID called",
 		zap.String("method", r.Method),
 		zap.String("path", r.URL.Path),
 		zap.String("raw_path", r.URL.RawPath))
-	
+
 	userID, ok := userIDFromContext(r.Context())
 	if !ok {
 		s.respondError(w, http.StatusUnauthorized, "User not authenticated")
@@ -1426,7 +1418,7 @@ func (s *Server) handleCrawlByID(w http.ResponseWriter, r *http.Request) {
 	path = strings.Trim(path, "/")
 	parts := strings.Split(path, "/")
 
-	s.logger.Info("handleCrawlByID path parsing", 
+	s.logger.Info("handleCrawlByID path parsing",
 		zap.String("method", r.Method),
 		zap.String("path", r.URL.Path),
 		zap.String("trimmed_path", path),
@@ -1491,6 +1483,8 @@ func (s *Server) handleCrawlByID(w http.ResponseWriter, r *http.Request) {
 
 // handleGetCrawl handles GET /api/v1/crawls/:id - returns crawl with real-time page count
 func (s *Server) handleGetCrawl(w http.ResponseWriter, r *http.Request, crawlID string) {
+	_ = r
+
 	s.logger.Info("Fetching crawl", zap.String("crawl_id", crawlID))
 
 	// Get crawl data using service role to ensure we get the latest updates
@@ -1590,8 +1584,10 @@ func (s *Server) handleGetCrawl(w http.ResponseWriter, r *http.Request, crawlID 
 
 // handleCrawlGraph handles GET /api/v1/crawls/:id/graph - returns link graph data
 func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlID string) {
+	_ = r
+
 	s.logger.Info("Fetching link graph", zap.String("crawl_id", crawlID))
-	
+
 	// Fetch all pages for this crawl using service role to ensure access
 	// Select all fields to ensure we get the data field properly
 	var pages []map[string]interface{}
@@ -1609,7 +1605,7 @@ func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlI
 	}
 
 	s.logger.Info("Fetched pages for graph", zap.String("crawl_id", crawlID), zap.Int("page_count", len(pages)))
-	
+
 	// Log raw data structure for first few pages if available
 	if len(pages) > 0 {
 		for i := 0; i < min(3, len(pages)); i++ {
@@ -1618,15 +1614,15 @@ func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlI
 			if url, ok := pages[i]["url"].(string); ok {
 				pageURL = url
 			}
-			s.logger.Info("Page raw data", 
-				zap.String("crawl_id", crawlID), 
+			s.logger.Info("Page raw data",
+				zap.String("crawl_id", crawlID),
 				zap.Int("page_index", i),
 				zap.String("url", pageURL),
 				zap.String("page_json", string(firstPageRaw)))
-			
+
 			// Check data field specifically
 			if dataVal, exists := pages[i]["data"]; exists {
-				s.logger.Info("Page data field", 
+				s.logger.Info("Page data field",
 					zap.String("crawl_id", crawlID),
 					zap.Int("page_index", i),
 					zap.String("url", pageURL),
@@ -1634,7 +1630,7 @@ func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlI
 					zap.Any("data_is_nil", dataVal == nil),
 					zap.Any("data_value", dataVal))
 			} else {
-				s.logger.Warn("Page missing data field", 
+				s.logger.Warn("Page missing data field",
 					zap.String("crawl_id", crawlID),
 					zap.Int("page_index", i),
 					zap.String("url", pageURL))
@@ -1657,7 +1653,7 @@ func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlI
 
 		// Log first page's data structure for debugging
 		if i == 0 {
-			s.logger.Info("Sample page data structure", 
+			s.logger.Info("Sample page data structure",
 				zap.String("url", url),
 				zap.Any("data_type", fmt.Sprintf("%T", page["data"])),
 				zap.Any("data_value", page["data"]))
@@ -1698,7 +1694,7 @@ func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlI
 
 		// Log first page's parsed data structure
 		if i == 0 {
-			s.logger.Info("Sample parsed data field", 
+			s.logger.Info("Sample parsed data field",
 				zap.String("url", url),
 				zap.Any("data_field_keys", getMapKeys(dataField)),
 				zap.Any("internal_links", dataField["internal_links"]),
@@ -1713,9 +1709,9 @@ func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlI
 			if linksVal == nil {
 				return nil
 			}
-			
+
 			var links []string
-			
+
 			// Try []interface{} (most common from JSON unmarshal)
 			if linkSlice, ok := linksVal.([]interface{}); ok {
 				for _, link := range linkSlice {
@@ -1725,7 +1721,7 @@ func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlI
 				}
 				return links
 			}
-			
+
 			// Try []string (direct string array)
 			if linkSlice, ok := linksVal.([]string); ok {
 				for _, link := range linkSlice {
@@ -1735,7 +1731,7 @@ func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlI
 				}
 				return links
 			}
-			
+
 			// Try json.RawMessage or string that needs unmarshaling
 			var linkSlice []string
 			if jsonBytes, err := json.Marshal(linksVal); err == nil {
@@ -1753,7 +1749,7 @@ func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlI
 					return links
 				}
 			}
-			
+
 			return nil
 		}
 
@@ -1764,7 +1760,7 @@ func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlI
 				allLinks = append(allLinks, links...)
 			} else if i < 3 {
 				// Log when links exist but extraction returns empty
-				s.logger.Debug("Internal links extraction returned empty", 
+				s.logger.Debug("Internal links extraction returned empty",
 					zap.String("url", url),
 					zap.Any("internal_links_raw", internalLinksVal),
 					zap.Any("internal_links_type", fmt.Sprintf("%T", internalLinksVal)))
@@ -1780,7 +1776,7 @@ func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlI
 				allLinks = append(allLinks, links...)
 			} else if i < 3 {
 				// Log when links exist but extraction returns empty
-				s.logger.Debug("External links extraction returned empty", 
+				s.logger.Debug("External links extraction returned empty",
 					zap.String("url", url),
 					zap.Any("external_links_raw", externalLinksVal),
 					zap.Any("external_links_type", fmt.Sprintf("%T", externalLinksVal)))
@@ -1797,7 +1793,7 @@ func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlI
 			// Log first few pages with no links for debugging
 			internalLinksVal := dataField["internal_links"]
 			externalLinksVal := dataField["external_links"]
-			s.logger.Debug("Page has no links", 
+			s.logger.Debug("Page has no links",
 				zap.String("url", url),
 				zap.Any("has_internal_links", internalLinksVal != nil),
 				zap.Any("internal_links_type", fmt.Sprintf("%T", internalLinksVal)),
@@ -1808,8 +1804,8 @@ func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlI
 		}
 	}
 
-	s.logger.Info("Built link graph", 
-		zap.String("crawl_id", crawlID), 
+	s.logger.Info("Built link graph",
+		zap.String("crawl_id", crawlID),
 		zap.Int("pages_with_links", pagesWithLinks),
 		zap.Int("total_links", totalLinks),
 		zap.Int("graph_size", len(graph)),
@@ -1823,7 +1819,7 @@ func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlI
 				firstPageURL = url
 			}
 		}
-		s.logger.Warn("No links found in pages", 
+		s.logger.Warn("No links found in pages",
 			zap.String("crawl_id", crawlID),
 			zap.Int("total_pages", len(pages)),
 			zap.String("first_page_url", firstPageURL))
@@ -1843,6 +1839,8 @@ func getMapKeys(m map[string]interface{}) []string {
 
 // handleDeleteCrawl handles DELETE /api/v1/crawls/:id - deletes a crawl and all associated data
 func (s *Server) handleDeleteCrawl(w http.ResponseWriter, r *http.Request, crawlID string, userID string) {
+	_ = r
+
 	s.logger.Info("Deleting crawl", zap.String("crawl_id", crawlID), zap.String("user_id", userID))
 
 	// Verify user has access to this crawl (via project membership)
@@ -1905,7 +1903,7 @@ func (s *Server) handleDeleteCrawl(w http.ResponseWriter, r *http.Request, crawl
 
 	s.logger.Info("Successfully deleted crawl", zap.String("crawl_id", crawlID), zap.String("user_id", userID))
 	s.respondJSON(w, http.StatusOK, map[string]string{
-		"message": "Crawl deleted successfully",
+		"message":  "Crawl deleted successfully",
 		"crawl_id": crawlID,
 	})
 }

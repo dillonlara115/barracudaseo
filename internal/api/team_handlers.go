@@ -16,15 +16,15 @@ import (
 
 // TeamMember represents a team member
 type TeamMember struct {
-	ID           string    `json:"id"`
-	AccountOwnerID string  `json:"account_owner_id"`
-	UserID       *string   `json:"user_id,omitempty"`
-	Email        string    `json:"email"`
-	Role         string    `json:"role"`
-	Status       string    `json:"status"`
-	InvitedBy    *string   `json:"invited_by,omitempty"`
-	InvitedAt    time.Time `json:"invited_at"`
-	JoinedAt     *time.Time `json:"joined_at,omitempty"`
+	ID             string     `json:"id"`
+	AccountOwnerID string     `json:"account_owner_id"`
+	UserID         *string    `json:"user_id,omitempty"`
+	Email          string     `json:"email"`
+	Role           string     `json:"role"`
+	Status         string     `json:"status"`
+	InvitedBy      *string    `json:"invited_by,omitempty"`
+	InvitedAt      time.Time  `json:"invited_at"`
+	JoinedAt       *time.Time `json:"joined_at,omitempty"`
 }
 
 // InviteTeamMemberRequest represents a request to invite a team member
@@ -36,11 +36,11 @@ type InviteTeamMemberRequest struct {
 // handleTeam routes team management endpoints
 func (s *Server) handleTeam(w http.ResponseWriter, r *http.Request) {
 	// Log the incoming path for debugging (use Info level so it shows up)
-	s.logger.Info("handleTeam called", 
+	s.logger.Info("handleTeam called",
 		zap.String("method", r.Method),
 		zap.String("path", r.URL.Path),
 		zap.String("raw_path", r.URL.RawPath))
-	
+
 	// Handle both /team and /team/ paths
 	path := r.URL.Path
 	if strings.HasPrefix(path, "/team/") {
@@ -49,26 +49,28 @@ func (s *Server) handleTeam(w http.ResponseWriter, r *http.Request) {
 		path = strings.TrimPrefix(path, "/team")
 	}
 	path = strings.Trim(path, "/")
-	
+
 	s.logger.Info("handleTeam path after trim", zap.String("trimmed_path", path))
 
 	// Handle empty path (just /team/)
 	if path == "" {
-		if r.Method == http.MethodGet {
+		switch r.Method {
+		case http.MethodGet:
 			s.handleListTeamMembers(w, r)
-			return
+		default:
+			s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		}
-		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
 	switch path {
 	case "members":
-		if r.Method == http.MethodGet {
+		switch r.Method {
+		case http.MethodGet:
 			s.handleListTeamMembers(w, r)
-		} else if r.Method == http.MethodPost {
+		case http.MethodPost:
 			s.handleInviteTeamMember(w, r)
-		} else {
+		default:
 			s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		}
 	case "invite":
@@ -81,14 +83,14 @@ func (s *Server) handleTeam(w http.ResponseWriter, r *http.Request) {
 		// Handle /team/:id for specific member operations
 		if strings.Contains(path, "/") {
 			parts := strings.Split(path, "/")
-			s.logger.Info("Parsing team member action", 
+			s.logger.Info("Parsing team member action",
 				zap.String("path", path),
 				zap.Strings("parts", parts),
 				zap.Int("parts_count", len(parts)))
 			if len(parts) >= 2 {
 				memberID := parts[0]
 				action := parts[1]
-				s.logger.Info("Team member action", 
+				s.logger.Info("Team member action",
 					zap.String("member_id", memberID),
 					zap.String("action", action),
 					zap.String("method", r.Method))
@@ -163,7 +165,7 @@ func (s *Server) handleListTeamMembers(w http.ResponseWriter, r *http.Request) {
 	// 3. Otherwise, check if they're a team member
 	var accountOwnerID string
 	stripeSubscriptionID, _ := profile["stripe_subscription_id"].(string)
-	
+
 	if stripeSubscriptionID != "" {
 		// User is a paid account owner
 		accountOwnerID = userID
@@ -178,7 +180,7 @@ func (s *Server) handleListTeamMembers(w http.ResponseWriter, r *http.Request) {
 			Eq("user_id", userID).
 			Eq("status", "active").
 			Execute()
-		
+
 		if err == nil && data != nil {
 			if err := json.Unmarshal(data, &teamMembers); err == nil && len(teamMembers) > 0 {
 				ownerID, ok := teamMembers[0]["account_owner_id"].(string)
@@ -206,11 +208,11 @@ func (s *Server) handleListTeamMembers(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		// Check if error is because table doesn't exist
-		if strings.Contains(err.Error(), "Could not find the table") || 
-		   strings.Contains(err.Error(), "does not exist") ||
-		   strings.Contains(err.Error(), "PGRST205") {
+		if strings.Contains(err.Error(), "Could not find the table") ||
+			strings.Contains(err.Error(), "does not exist") ||
+			strings.Contains(err.Error(), "PGRST205") {
 			// Table doesn't exist yet - return empty array (graceful degradation)
-			s.logger.Info("team_members table not found, returning empty list", 
+			s.logger.Info("team_members table not found, returning empty list",
 				zap.String("user_id", userID),
 				zap.String("account_owner_id", accountOwnerID))
 			members = []map[string]interface{}{}
@@ -258,12 +260,12 @@ func (s *Server) handleListTeamMembers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]interface{}{
-		"members":        members,
+		"members":         members,
 		"team_size_limit": teamSizeLimit,
-		"active_count":   activeCount,
-		"is_owner":       accountOwnerID == userID,
+		"active_count":    activeCount,
+		"is_owner":        accountOwnerID == userID,
 	}
-	
+
 	s.logger.Info("Returning team members",
 		zap.String("account_owner_id", accountOwnerID),
 		zap.Int("team_size_limit", teamSizeLimit),
@@ -344,9 +346,9 @@ func (s *Server) handleInviteTeamMember(w http.ResponseWriter, r *http.Request) 
 
 	if err != nil {
 		// Check if error is because table doesn't exist
-		if strings.Contains(err.Error(), "Could not find the table") || 
-		   strings.Contains(err.Error(), "does not exist") ||
-		   strings.Contains(err.Error(), "PGRST205") {
+		if strings.Contains(err.Error(), "Could not find the table") ||
+			strings.Contains(err.Error(), "does not exist") ||
+			strings.Contains(err.Error(), "PGRST205") {
 			s.logger.Error("team_members table does not exist - migration required", zap.Error(err))
 			s.respondError(w, http.StatusServiceUnavailable, "Team management is not yet available. Please run the database migration: supabase db push")
 			return
@@ -375,9 +377,9 @@ func (s *Server) handleInviteTeamMember(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		// If table doesn't exist, we already handled it above, so this shouldn't happen
 		// But handle gracefully anyway
-		if strings.Contains(err.Error(), "Could not find the table") || 
-		   strings.Contains(err.Error(), "does not exist") ||
-		   strings.Contains(err.Error(), "PGRST205") {
+		if strings.Contains(err.Error(), "Could not find the table") ||
+			strings.Contains(err.Error(), "does not exist") ||
+			strings.Contains(err.Error(), "PGRST205") {
 			// Already handled above, but just in case
 			return
 		}
@@ -423,9 +425,9 @@ func (s *Server) handleInviteTeamMember(w http.ResponseWriter, r *http.Request) 
 
 	if err != nil {
 		// Check if error is because table doesn't exist
-		if strings.Contains(err.Error(), "Could not find the table") || 
-		   strings.Contains(err.Error(), "does not exist") ||
-		   strings.Contains(err.Error(), "PGRST205") {
+		if strings.Contains(err.Error(), "Could not find the table") ||
+			strings.Contains(err.Error(), "does not exist") ||
+			strings.Contains(err.Error(), "PGRST205") {
 			s.logger.Error("team_members table does not exist - migration required", zap.Error(err))
 			s.respondError(w, http.StatusServiceUnavailable, "Team management is not yet available. Please run the database migration: supabase db push")
 			return
@@ -469,8 +471,8 @@ func (s *Server) handleInviteTeamMember(w http.ResponseWriter, r *http.Request) 
 		zap.Bool("user_created", userCreated))
 
 	s.respondJSON(w, http.StatusCreated, map[string]interface{}{
-		"message":    "Invite sent successfully",
-		"invite_url": inviteURL,
+		"message":      "Invite sent successfully",
+		"invite_url":   inviteURL,
 		"user_created": userCreated, // For debugging
 	})
 }
@@ -736,8 +738,8 @@ func (s *Server) handleAcceptInvite(w http.ResponseWriter, r *http.Request, toke
 	memberID, _ := member["id"].(string)
 	_, _, err = s.serviceRole.From("team_members").
 		Update(map[string]interface{}{
-			"user_id":  userID,
-			"status":   "active",
+			"user_id":   userID,
+			"status":    "active",
 			"joined_at": time.Now().Format(time.RFC3339),
 		}, "", "").
 		Eq("id", memberID).
@@ -763,6 +765,8 @@ func (s *Server) handleGetInviteDetailsPublic(w http.ResponseWriter, r *http.Req
 
 // handleGetInviteDetails returns invite details by token (no auth required)
 func (s *Server) handleGetInviteDetails(w http.ResponseWriter, r *http.Request, tokenOrID string) {
+	_ = r
+
 	// Find invite by token
 	var members []map[string]interface{}
 	data, _, err := s.serviceRole.From("team_members").
@@ -842,7 +846,7 @@ func (s *Server) ensureUserExists(email string) (string, bool, error) {
 	// User doesn't exist - create one
 	createURL := fmt.Sprintf("%s/auth/v1/admin/users", supabaseURL)
 	createPayload := map[string]interface{}{
-		"email": email,
+		"email":         email,
 		"email_confirm": true, // Auto-confirm email for team invites
 		"user_metadata": map[string]interface{}{
 			"invited_to_team": true,
@@ -889,118 +893,3 @@ func (s *Server) ensureUserExists(email string) (string, bool, error) {
 	s.logger.Info("Created new user for team invite", zap.String("email", email), zap.String("user_id", createdUser.ID))
 	return createdUser.ID, true, nil
 }
-
-// sendSupabaseMagicLink sends a magic link for new users via Supabase
-// This is called when using Supabase email provider for new users
-func (s *Server) sendSupabaseMagicLink(userID, email, inviteURL string) error {
-	supabaseURL := s.config.SupabaseURL
-	serviceKey := s.config.SupabaseServiceKey
-
-	// Update user metadata with invite URL
-	updateURL := fmt.Sprintf("%s/auth/v1/admin/users/%s", supabaseURL, userID)
-	updatePayload := map[string]interface{}{
-		"user_metadata": map[string]interface{}{
-			"team_invite_url": inviteURL,
-			"invited_to_team": true,
-		},
-	}
-
-	jsonData, err := json.Marshal(updatePayload)
-	if err != nil {
-		return fmt.Errorf("failed to marshal update payload: %w", err)
-	}
-
-	req, err := http.NewRequest("PUT", updateURL, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return fmt.Errorf("failed to create update request: %w", err)
-	}
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", serviceKey))
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		s.logger.Warn("Failed to update user metadata with invite URL", zap.Error(err))
-		// Continue - invite URL is still valid
-	} else {
-		resp.Body.Close()
-	}
-
-	// Send magic link to new user (Supabase will handle email sending)
-	magicLinkURL := fmt.Sprintf("%s/auth/v1/admin/users/%s/generate_link", supabaseURL, userID)
-	magicLinkPayload := map[string]interface{}{
-		"type":         "magiclink",
-		"redirect_to":  inviteURL, // Redirect to invite acceptance after signup
-	}
-
-	jsonData, err = json.Marshal(magicLinkPayload)
-	if err != nil {
-		return fmt.Errorf("failed to marshal magic link payload: %w", err)
-	}
-
-	req, err = http.NewRequest("POST", magicLinkURL, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return fmt.Errorf("failed to create magic link request: %w", err)
-	}
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", serviceKey))
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err = client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to generate magic link: %w", err)
-	}
-	defer resp.Body.Close()
-
-	s.logger.Info("Magic link generated for new user", zap.String("email", email))
-	return nil
-}
-
-// sendSupabaseInvite sends an invite email for existing users via Supabase Admin API
-func (s *Server) sendSupabaseInvite(userID, email, inviteURL string) error {
-	supabaseURL := s.config.SupabaseURL
-	serviceKey := s.config.SupabaseServiceKey
-
-	inviteURLAPI := fmt.Sprintf("%s/auth/v1/admin/users/%s/invite", supabaseURL, userID)
-	
-	invitePayload := map[string]interface{}{
-		"data": map[string]interface{}{
-			"invite_url": inviteURL,
-			"team_invite": true,
-		},
-		"redirect_to": inviteURL,
-	}
-
-	jsonData, err := json.Marshal(invitePayload)
-	if err != nil {
-		return fmt.Errorf("failed to marshal invite payload: %w", err)
-	}
-
-	req, err := http.NewRequest("POST", inviteURLAPI, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return fmt.Errorf("failed to create invite request: %w", err)
-	}
-	req.Header.Set("apikey", serviceKey)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", serviceKey))
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send invite: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read response: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return fmt.Errorf("invite endpoint returned error: status %d, body: %s", resp.StatusCode, string(body))
-	}
-
-	return nil
-}
-

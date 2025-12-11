@@ -127,7 +127,7 @@ func (s *Server) pollKeywordTasks(ctx context.Context) {
 	} else if readyResp != nil {
 		readyTaskIDList := make([]string, 0, len(readyResp.Tasks))
 		ourReadyTaskIDs := make([]string, 0)
-		
+
 		// Filter ready tasks to only those that belong to us
 		for _, readyTask := range readyResp.Tasks {
 			readyTaskIDList = append(readyTaskIDList, readyTask.ID)
@@ -135,20 +135,20 @@ func (s *Server) pollKeywordTasks(ctx context.Context) {
 				ourReadyTaskIDs = append(ourReadyTaskIDs, readyTask.ID)
 			}
 		}
-		
-		s.logger.Info("Found ready tasks in DataForSEO", 
+
+		s.logger.Info("Found ready tasks in DataForSEO",
 			zap.Int("total_ready_count", len(readyTaskIDList)),
 			zap.Int("our_ready_count", len(ourReadyTaskIDs)),
 			zap.Strings("our_ready_task_ids", ourReadyTaskIDs),
 			zap.Strings("all_ready_task_ids", readyTaskIDList))
-		
+
 		// Filter our tasks to only those that are ready
 		if len(ourReadyTaskIDs) > 0 {
 			readyTaskIDsMap := make(map[string]bool)
 			for _, id := range ourReadyTaskIDs {
 				readyTaskIDsMap[id] = true
 			}
-			
+
 			var readyTasks []map[string]interface{}
 			for _, task := range originalTasks {
 				dataforseoTaskID, ok := task["dataforseo_task_id"].(string)
@@ -157,18 +157,18 @@ func (s *Server) pollKeywordTasks(ctx context.Context) {
 					s.logger.Debug("Task matches ready list", zap.String("task_id", dataforseoTaskID))
 				}
 			}
-			
+
 			if len(readyTasks) > 0 {
 				tasks = readyTasks
 				s.logger.Info("Filtered to our ready tasks", zap.Int("ready_count", len(tasks)))
 			} else {
-				s.logger.Info("No tasks matched ready list, falling back to individual checks", 
+				s.logger.Info("No tasks matched ready list, falling back to individual checks",
 					zap.Int("stored_count", len(storedTaskIDs)),
 					zap.Int("our_ready_count", len(ourReadyTaskIDs)))
 				tasks = originalTasks
 			}
 		} else {
-			s.logger.Info("No tasks matched ready list, falling back to individual checks", 
+			s.logger.Info("No tasks matched ready list, falling back to individual checks",
 				zap.Int("stored_count", len(storedTaskIDs)),
 				zap.Int("total_ready_from_api", len(readyTaskIDList)))
 			// Use original tasks list for fallback
@@ -197,7 +197,7 @@ func (s *Server) pollKeywordTasks(ctx context.Context) {
 			continue
 		}
 
-		s.logger.Debug("Checking task status", 
+		s.logger.Debug("Checking task status",
 			zap.String("task_id", taskID),
 			zap.String("dataforseo_task_id", dataforseoTaskID),
 			zap.String("keyword_id", keywordID))
@@ -216,16 +216,16 @@ func (s *Server) pollKeywordTasks(ctx context.Context) {
 					age := time.Since(runAt)
 					if age < 2*time.Minute {
 						// Task is less than 2 minutes old - probably not ready yet, keep trying
-						s.logger.Debug("Task not found but recently created, will retry", 
+						s.logger.Debug("Task not found but recently created, will retry",
 							zap.String("task_id", dataforseoTaskID),
 							zap.String("keyword_id", keywordID),
 							zap.Duration("age", age))
 						continue
 					}
 				}
-				
+
 				// Task is older than 2 minutes and still not found - likely expired or invalid
-				s.logger.Warn("Task not found in DataForSEO (may have expired)", 
+				s.logger.Warn("Task not found in DataForSEO (may have expired)",
 					zap.String("task_id", dataforseoTaskID),
 					zap.String("keyword_id", keywordID))
 				// Mark as failed - task expired or invalid
@@ -308,7 +308,7 @@ func (s *Server) pollKeywordTasks(ctx context.Context) {
 			zap.String("url", ranking.URL))
 
 		// Create snapshot
-		snapshot, err := s.createSnapshot(keywordID, dataforseoTaskID, ranking)
+		snapshot, err := s.createSnapshot(keyword.ProjectID, keywordID, dataforseoTaskID, ranking)
 		if err != nil {
 			s.logger.Error("Failed to create snapshot", zap.String("keyword_id", keywordID), zap.Error(err))
 			_, _, _ = s.serviceRole.From("keyword_tasks").
@@ -434,7 +434,7 @@ func (s *Server) handleKeywordTaskPoll(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			// Check if it's a "Not Found" error (40400) - task may have expired or never existed
 			if strings.Contains(err.Error(), "40400") || strings.Contains(err.Error(), "Not Found") {
-				s.logger.Warn("Task not found in DataForSEO (may have expired)", 
+				s.logger.Warn("Task not found in DataForSEO (may have expired)",
 					zap.String("task_id", dataforseoTaskID),
 					zap.String("keyword_id", keywordID))
 				// Mark as failed - task expired or invalid
@@ -500,7 +500,7 @@ func (s *Server) handleKeywordTaskPoll(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Create snapshot
-		_, err = s.createSnapshot(keywordID, dataforseoTaskID, ranking)
+		_, err = s.createSnapshot(keyword.ProjectID, keywordID, dataforseoTaskID, ranking)
 		if err != nil {
 			s.logger.Error("Failed to create snapshot", zap.String("keyword_id", keywordID), zap.Error(err))
 			_, _, _ = s.serviceRole.From("keyword_tasks").
@@ -536,4 +536,3 @@ func (s *Server) handleKeywordTaskPoll(w http.ResponseWriter, r *http.Request) {
 		"total":     len(tasks),
 	})
 }
-

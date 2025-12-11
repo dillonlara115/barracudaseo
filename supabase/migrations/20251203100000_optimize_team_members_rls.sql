@@ -46,3 +46,6 @@ create policy "Account owners can delete team members"
     account_owner_id = auth.uid()
   );
 
+
+
+

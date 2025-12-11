@@ -389,8 +389,7 @@ func (s *Server) validateTokenViaAPI(token string) (*User, error) {
 			zap.String("url", authURL),
 			zap.Int("status", resp.StatusCode),
 			zap.String("response", string(bodyBytes)),
-			zap.String("supabase_url", s.config.SupabaseURL),
-			zap.String("anon_key_prefix", keyPrefix))
+			zap.String("supabase_url", s.config.SupabaseURL))
 		return nil, fmt.Errorf("token validation failed: status %d, response: %s", resp.StatusCode, string(bodyBytes))
 	}
 

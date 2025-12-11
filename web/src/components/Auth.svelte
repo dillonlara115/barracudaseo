@@ -5,6 +5,7 @@
   import { Plug, CreditCard } from 'lucide-svelte';
   import Logo from './Logo.svelte';
   import { userProfile, isProOrTeam } from '../lib/subscription.js';
+  import { supabase } from '../lib/supabase.js';
 
   let email = '';
   let password = '';
@@ -14,6 +15,11 @@
   let loading = false;
   let error = null;
   let success = null;
+  let resetEmail = '';
+  let resetSuccess = null;
+  let resetLoading = false;
+  let showReset = false;
+  $: isResetMode = showReset && !isSignUp;
 
   $: isAuthenticated = $user !== null;
   
@@ -42,6 +48,7 @@
     loading = true;
     error = null;
     success = null;
+    resetSuccess = null;
     shouldRedirect = false; // Reset redirect flag
 
     try {
@@ -99,6 +106,34 @@
       loading = false;
     }
   }
+
+  async function handleResetRequest() {
+    resetLoading = true;
+    error = null;
+    resetSuccess = null;
+
+    const targetEmail = (resetEmail || email || '').trim();
+    if (!targetEmail) {
+      error = 'Please enter your email to reset your password.';
+      resetLoading = false;
+      return;
+    }
+
+    try {
+      const redirectTo = typeof window !== 'undefined'
+        ? `${window.location.origin}/#/reset`
+        : undefined;
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(targetEmail, {
+        redirectTo
+      });
+      if (resetError) throw resetError;
+      resetSuccess = 'Reset email sent. Check your inbox for the link.';
+    } catch (err) {
+      error = err.message || 'Failed to send reset email.';
+    } finally {
+      resetLoading = false;
+    }
+  }
 </script>
 
 {#if isAuthenticated}
@@ -145,10 +180,16 @@
       <!-- Form Container -->
       <div class="w-full max-w-md mx-auto">
         <h1 class="text-4xl font-bold text-white mb-2">
-          {isSignUp ? 'Create Account' : 'Log in to Barracuda'}
+          {#if isSignUp}
+            Create Account
+          {:else if isResetMode}
+            Reset your password
+          {:else}
+            Log in to Barracuda
+          {/if}
         </h1>
         
-        {#if !isSignUp}
+        {#if !isSignUp && !isResetMode}
           <p class="text-gray-400 mb-8">
             Don't have an account yet? 
             <button 
@@ -158,7 +199,7 @@
               Sign up for free
             </button>
           </p>
-        {:else}
+        {:else if isSignUp}
           <p class="text-gray-400 mb-8">
             Already have an account? 
             <button 
@@ -167,6 +208,10 @@
             >
               Log in
             </button>
+          </p>
+        {:else}
+          <p class="text-gray-400 mb-8">
+            Enter your account email and we'll send a reset link.
           </p>
         {/if}
 
@@ -196,7 +241,7 @@
           </div>
         {/if}
 
-        <form on:submit|preventDefault={handleSubmit} class="space-y-4">
+        <form on:submit|preventDefault={isResetMode ? handleResetRequest : handleSubmit} class="space-y-4">
           {#if isSignUp}
             <!-- First Name and Last Name side by side -->
             <div class="grid grid-cols-2 gap-4">
@@ -222,73 +267,113 @@
           {/if}
 
           <!-- Email -->
-          <div>
-            <input
-              type="email"
-              placeholder={isSignUp ? "Email address" : "name@work-email.com"}
-              class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
-              bind:value={email}
-              required
-            />
-          </div>
-
-          <!-- Password -->
-          <div class="relative">
-            {#if showPassword}
+          {#if !isResetMode}
+            <div>
               <input
-                type="text"
-                placeholder="Password"
-                class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
-                bind:value={password}
+                type="email"
+                placeholder={isSignUp ? "Email address" : "name@work-email.com"}
+                class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
+                bind:value={email}
                 required
-                minlength="6"
               />
-            {:else}
-              <input
-                type="password"
-                placeholder="Password"
-                class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
-                bind:value={password}
-                required
-                minlength="6"
-              />
-            {/if}
-            <button
-              type="button"
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-              on:click={() => showPassword = !showPassword}
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {#if showPassword}
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.29 3.29m0 0A9.97 9.97 0 015 12c0 1.65.404 3.203 1.117 4.562M12 19c-1.65 0-3.203-.404-4.562-1.117M9.878 9.878L12 12m-2.122-2.122L9.88 9.88m2.242 2.242L14.12 14.12" />
-                {:else}
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                {/if}
-              </svg>
-            </button>
-          </div>
-
-          {#if !isSignUp}
-            <div class="flex items-center justify-between text-sm">
-              <button type="button" class="text-[#8ec07c] hover:text-[#a0d28c]">
-                Forgot password?
-              </button>
             </div>
           {/if}
 
-          <!-- Submit Button -->
-          <button
-            type="submit"
-            class="w-full bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] font-medium py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={loading}
-          >
-            {#if loading}
-              <span class="loading loading-spinner loading-sm"></span>
-            {:else}
-              {isSignUp ? 'Create Account' : 'Log in'}
+          {#if !isResetMode}
+            <!-- Password -->
+            <div class="relative">
+              {#if showPassword}
+                <input
+                  type="text"
+                  placeholder="Password"
+                  class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
+                  bind:value={password}
+                  required
+                  minlength="6"
+                />
+              {:else}
+                <input
+                  type="password"
+                  placeholder="Password"
+                  class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
+                  bind:value={password}
+                  required
+                  minlength="6"
+                />
+              {/if}
+              <button
+                type="button"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                on:click={() => showPassword = !showPassword}
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {#if showPassword}
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.29 3.29m0 0A9.97 9.97 0 015 12c0 1.65.404 3.203 1.117 4.562M12 19c-1.65 0-3.203-.404-4.562-1.117M9.878 9.878L12 12m-2.122-2.122L9.88 9.88m2.242 2.242L14.12 14.12" />
+                  {:else}
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  {/if}
+                </svg>
+              </button>
+            </div>
+
+            {#if !isSignUp}
+              <div class="flex items-center justify-between text-sm">
+                <button type="button" class="text-[#8ec07c] hover:text-[#a0d28c]" on:click={() => { showReset = true; resetSuccess = null; error = null; resetEmail = email; }}>
+                  Forgot password?
+                </button>
+              </div>
             {/if}
-          </button>
+          {/if}
+
+          {#if isResetMode}
+            <div class="space-y-3">
+              <input
+                type="email"
+                placeholder="Enter your account email"
+                class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
+                bind:value={resetEmail}
+                required
+              />
+              <button
+                type="submit"
+                class="w-full bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] font-medium py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={resetLoading}
+              >
+                {#if resetLoading}
+                  <span class="loading loading-spinner loading-sm"></span>
+                  <span class="ml-2">Sending reset link...</span>
+                {:else}
+                  Send reset link
+                {/if}
+              </button>
+              <button
+                type="button"
+                class="w-full btn btn-ghost text-white"
+                on:click={() => { showReset = false; resetSuccess = null; error = null; }}
+              >
+                Back to login
+              </button>
+              {#if resetSuccess}
+                <p class="text-xs text-[#8ec07c]">{resetSuccess}</p>
+              {/if}
+            </div>
+          {/if}
+
+          {#if !isResetMode}
+            <!-- Submit Button -->
+            <button
+              type="submit"
+              class="w-full bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] font-medium py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+            >
+              {#if loading}
+                <span class="loading loading-spinner loading-sm"></span>
+              {:else}
+                {isSignUp ? 'Create Account' : 'Log in'}
+              {/if}
+            </button>
+          {/if}
         </form>
 
         {#if isSignUp}

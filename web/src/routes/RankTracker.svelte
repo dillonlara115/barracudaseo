@@ -111,6 +111,7 @@
     
     checkingKeywords.add(keywordId);
     error = null; // Clear any previous errors
+    successMessage = null;
     
     try {
       const result = await checkKeyword(keywordId);
@@ -272,6 +273,16 @@
       <span class="loading loading-spinner loading-lg"></span>
     </div>
   {:else}
+    {#if successMessage}
+      <div class="alert alert-success mb-4">
+        <span>{successMessage}</span>
+      </div>
+    {/if}
+    {#if error && keywords.length > 0}
+      <div class="alert alert-error mb-4">
+        <span>{error}</span>
+      </div>
+    {/if}
     {#if error && keywords.length === 0}
       <div class="alert alert-warning mb-6">
         <span>{error}</span>

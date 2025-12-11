@@ -17,15 +17,17 @@ const (
 
 // trackKeywordUsage records a keyword check in the usage table
 func (s *Server) trackKeywordUsage(ctx context.Context, projectID, keywordID, userID, taskID, checkType string, cost float64) error {
+	_ = ctx
+
 	usageRecord := map[string]interface{}{
-		"id":                uuid.New().String(),
-		"project_id":       projectID,
-		"keyword_id":       keywordID,
-		"user_id":          userID,
-		"check_type":       checkType, // "manual" or "scheduled"
+		"id":                 uuid.New().String(),
+		"project_id":         projectID,
+		"keyword_id":         keywordID,
+		"user_id":            userID,
+		"check_type":         checkType, // "manual" or "scheduled"
 		"dataforseo_task_id": taskID,
-		"cost_usd":         cost,
-		"checked_at":       time.Now().UTC().Format(time.RFC3339),
+		"cost_usd":           cost,
+		"checked_at":         time.Now().UTC().Format(time.RFC3339),
 	}
 
 	_, _, err := s.serviceRole.From("keyword_usage").Insert(usageRecord, false, "", "", "").Execute()
@@ -39,6 +41,8 @@ func (s *Server) trackKeywordUsage(ctx context.Context, projectID, keywordID, us
 
 // getKeywordUsageStats returns usage statistics for a project or user
 func (s *Server) getKeywordUsageStats(ctx context.Context, projectID, userID string, startDate, endDate *time.Time) (map[string]interface{}, error) {
+	_ = ctx
+
 	query := s.serviceRole.From("keyword_usage").Select("*", "", false)
 
 	if projectID != "" {
@@ -74,9 +78,10 @@ func (s *Server) getKeywordUsageStats(ctx context.Context, projectID, userID str
 			totalCost += cost
 		}
 		if checkType, ok := record["check_type"].(string); ok {
-			if checkType == "manual" {
+			switch checkType {
+			case "manual":
 				manualChecks++
-			} else if checkType == "scheduled" {
+			case "scheduled":
 				scheduledChecks++
 			}
 		}
@@ -85,7 +90,7 @@ func (s *Server) getKeywordUsageStats(ctx context.Context, projectID, userID str
 	return map[string]interface{}{
 		"total_checks":     totalChecks,
 		"total_cost_usd":   totalCost,
-		"manual_checks":   manualChecks,
+		"manual_checks":    manualChecks,
 		"scheduled_checks": scheduledChecks,
 	}, nil
 }
@@ -104,6 +109,8 @@ func getKeywordLimit(subscriptionTier string) int {
 
 // checkKeywordLimit verifies if a user can add more keywords
 func (s *Server) checkKeywordLimit(ctx context.Context, projectID, userID string) (bool, int, int, error) {
+	_ = ctx
+
 	profile, err := s.fetchProfile(userID)
 	if err != nil {
 		return false, 0, 0, err
@@ -138,4 +145,3 @@ func (s *Server) checkKeywordLimit(ctx context.Context, projectID, userID string
 	canAdd := currentCount < maxKeywords
 	return canAdd, currentCount, maxKeywords, nil
 }
-

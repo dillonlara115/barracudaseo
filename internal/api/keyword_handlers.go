@@ -15,16 +15,16 @@ import (
 
 // CreateKeywordRequest represents a request to create a keyword
 type CreateKeywordRequest struct {
-	ProjectID     string   `json:"project_id"`
-	Keyword       string   `json:"keyword"`
-	TargetURL     string   `json:"target_url,omitempty"`
-	LocationName  string   `json:"location_name"`
-	LocationCode  *int     `json:"location_code,omitempty"`
-	LanguageName  string   `json:"language_name"`
-	Device        string   `json:"device"`
-	SearchEngine  string   `json:"search_engine"`
-	Tags          []string `json:"tags,omitempty"`
-	CheckFrequency string  `json:"check_frequency,omitempty"` // manual | daily | weekly
+	ProjectID      string   `json:"project_id"`
+	Keyword        string   `json:"keyword"`
+	TargetURL      string   `json:"target_url,omitempty"`
+	LocationName   string   `json:"location_name"`
+	LocationCode   *int     `json:"location_code,omitempty"`
+	LanguageName   string   `json:"language_name"`
+	Device         string   `json:"device"`
+	SearchEngine   string   `json:"search_engine"`
+	Tags           []string `json:"tags,omitempty"`
+	CheckFrequency string   `json:"check_frequency,omitempty"` // manual | daily | weekly
 }
 
 // KeywordResponse represents a keyword in API responses
@@ -53,16 +53,16 @@ type KeywordResponse struct {
 
 // RankSnapshotResponse represents a rank snapshot
 type RankSnapshotResponse struct {
-	ID             string    `json:"id"`
-	KeywordID      string    `json:"keyword_id"`
-	CheckedAt       time.Time `json:"checked_at"`
-	PositionAbsolute *int     `json:"position_absolute,omitempty"`
-	PositionOrganic *int      `json:"position_organic,omitempty"`
-	SERPURL         *string   `json:"serp_url,omitempty"`
-	SERPTitle       *string   `json:"serp_title,omitempty"`
-	SERPSnippet     *string   `json:"serp_snippet,omitempty"`
-	SERPFeatures    []string  `json:"serp_features,omitempty"`
-	RankType        string    `json:"rank_type"`
+	ID               string    `json:"id"`
+	KeywordID        string    `json:"keyword_id"`
+	CheckedAt        time.Time `json:"checked_at"`
+	PositionAbsolute *int      `json:"position_absolute,omitempty"`
+	PositionOrganic  *int      `json:"position_organic,omitempty"`
+	SERPURL          *string   `json:"serp_url,omitempty"`
+	SERPTitle        *string   `json:"serp_title,omitempty"`
+	SERPSnippet      *string   `json:"serp_snippet,omitempty"`
+	SERPFeatures     []string  `json:"serp_features,omitempty"`
+	RankType         string    `json:"rank_type"`
 }
 
 // handleKeywords handles keyword collection endpoints
@@ -233,14 +233,14 @@ func (s *Server) handleCreateKeyword(w http.ResponseWriter, r *http.Request, use
 	// Create keyword record
 	keywordID := uuid.New().String()
 	keywordDataMap := map[string]interface{}{
-		"id":             keywordID,
-		"project_id":    req.ProjectID,
-		"keyword":       req.Keyword,
-		"location_name": req.LocationName,
-		"language_name": req.LanguageName,
-		"device":        req.Device,
-		"search_engine":  req.SearchEngine,
-		"tags":          req.Tags,
+		"id":              keywordID,
+		"project_id":      req.ProjectID,
+		"keyword":         req.Keyword,
+		"location_name":   req.LocationName,
+		"language_name":   req.LanguageName,
+		"device":          req.Device,
+		"search_engine":   req.SearchEngine,
+		"tags":            req.Tags,
 		"check_frequency": req.CheckFrequency,
 	}
 
@@ -317,12 +317,12 @@ func (s *Server) handleListKeywords(w http.ResponseWriter, r *http.Request, user
 	data, _, err := query.Execute()
 	if err != nil {
 		// Check if error is because table doesn't exist yet (migration not run)
-		if strings.Contains(err.Error(), "Could not find the table") || 
-		   strings.Contains(err.Error(), "does not exist") ||
-		   strings.Contains(err.Error(), "PGRST205") ||
-		   strings.Contains(err.Error(), "relation") {
+		if strings.Contains(err.Error(), "Could not find the table") ||
+			strings.Contains(err.Error(), "does not exist") ||
+			strings.Contains(err.Error(), "PGRST205") ||
+			strings.Contains(err.Error(), "relation") {
 			// Table doesn't exist yet - return empty array (graceful degradation)
-			s.logger.Info("keywords table not found, returning empty list", 
+			s.logger.Info("keywords table not found, returning empty list",
 				zap.String("project_id", projectID),
 				zap.String("user_id", userID))
 			s.respondJSON(w, http.StatusOK, map[string]interface{}{
@@ -342,7 +342,7 @@ func (s *Server) handleListKeywords(w http.ResponseWriter, r *http.Request, user
 		s.respondError(w, http.StatusInternalServerError, "Failed to parse keywords")
 		return
 	}
-	
+
 	// Handle empty result gracefully
 	if keywords == nil {
 		keywords = []map[string]interface{}{}
@@ -352,7 +352,7 @@ func (s *Server) handleListKeywords(w http.ResponseWriter, r *http.Request, user
 	enrichedKeywords := make([]KeywordResponse, 0, len(keywords))
 	for _, k := range keywords {
 		keyword := s.mapToKeywordResponse(k)
-		
+
 		// Fetch latest snapshot
 		snapshot, err := s.fetchLatestSnapshot(keyword.ID)
 		if err == nil && snapshot != nil {
@@ -360,13 +360,13 @@ func (s *Server) handleListKeywords(w http.ResponseWriter, r *http.Request, user
 				keyword.LatestPosition = snapshot.PositionOrganic
 			}
 			keyword.LastChecked = &snapshot.CheckedAt
-			
+
 			// Calculate best position and trend
 			bestPos, trend := s.calculateBestPositionAndTrend(keyword.ID, snapshot.PositionOrganic)
 			keyword.BestPosition = bestPos
 			keyword.Trend = trend
 		}
-		
+
 		enrichedKeywords = append(enrichedKeywords, keyword)
 	}
 
@@ -378,6 +378,8 @@ func (s *Server) handleListKeywords(w http.ResponseWriter, r *http.Request, user
 
 // handleGetKeyword handles GET /api/v1/keywords/:id
 func (s *Server) handleGetKeyword(w http.ResponseWriter, r *http.Request, userID string, keywordID string) {
+	_ = r
+
 	keyword, err := s.fetchKeyword(keywordID)
 	if err != nil {
 		s.respondError(w, http.StatusNotFound, "Keyword not found")
@@ -458,6 +460,8 @@ func (s *Server) handleUpdateKeyword(w http.ResponseWriter, r *http.Request, use
 
 // handleDeleteKeyword handles DELETE /api/v1/keywords/:id
 func (s *Server) handleDeleteKeyword(w http.ResponseWriter, r *http.Request, userID string, keywordID string) {
+	_ = r
+
 	keyword, err := s.fetchKeyword(keywordID)
 	if err != nil {
 		s.respondError(w, http.StatusNotFound, "Keyword not found")
@@ -526,7 +530,7 @@ func (s *Server) handleCheckKeyword(w http.ResponseWriter, r *http.Request, user
 		SearchEngine: keyword.SearchEngine,
 	}
 
-	s.logger.Info("Using Live API for immediate rank check", 
+	s.logger.Info("Using Live API for immediate rank check",
 		zap.String("keyword_id", keywordID),
 		zap.String("keyword", keyword.Keyword))
 
@@ -548,7 +552,7 @@ func (s *Server) handleCheckKeyword(w http.ResponseWriter, r *http.Request, user
 	taskID := taskResult.ID
 	taskStatusCode := taskResult.StatusCode
 
-	s.logger.Info("Received Live API response", 
+	s.logger.Info("Received Live API response",
 		zap.String("task_id", taskID),
 		zap.String("keyword_id", keywordID),
 		zap.String("keyword", keyword.Keyword),
@@ -557,10 +561,10 @@ func (s *Server) handleCheckKeyword(w http.ResponseWriter, r *http.Request, user
 
 	// Check if task was successful
 	if taskStatusCode != 20000 {
-		s.logger.Warn("DataForSEO Live API returned non-success status", 
+		s.logger.Warn("DataForSEO Live API returned non-success status",
 			zap.Int("status_code", taskStatusCode),
 			zap.String("status_message", taskResult.StatusMessage))
-		s.respondError(w, http.StatusBadRequest, fmt.Sprintf("DataForSEO task failed: %s (code: %d)", 
+		s.respondError(w, http.StatusBadRequest, fmt.Sprintf("DataForSEO task failed: %s (code: %d)",
 			taskResult.StatusMessage, taskStatusCode))
 		return
 	}
@@ -568,8 +572,20 @@ func (s *Server) handleCheckKeyword(w http.ResponseWriter, r *http.Request, user
 	// Create task record for tracking
 	taskRecordID := uuid.New().String()
 	now := time.Now().UTC()
+	projectID := keyword.ProjectID
+	if projectID == "" {
+		// Defensive fallback: fetch keyword to populate project_id
+		if kw, err := s.fetchKeyword(keywordID); err == nil && kw.ProjectID != "" {
+			projectID = kw.ProjectID
+		}
+	}
+	if projectID == "" {
+		s.logger.Warn("Missing project_id for keyword task record", zap.String("keyword_id", keywordID))
+	}
+
 	taskRecord := map[string]interface{}{
 		"id":                 taskRecordID,
+		"project_id":         projectID,
 		"keyword_id":         keywordID,
 		"dataforseo_task_id": taskID,
 		"status":             "completed", // Live API completes immediately
@@ -598,7 +614,7 @@ func (s *Server) handleCheckKeyword(w http.ResponseWriter, r *http.Request, user
 	}
 
 	// Create snapshot
-	snapshot, err := s.createSnapshot(keywordID, taskID, ranking)
+	snapshot, err := s.createSnapshot(keyword.ProjectID, keywordID, taskID, ranking)
 	if err != nil {
 		s.logger.Error("Failed to create snapshot", zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to create snapshot: %v", err))
@@ -821,9 +837,9 @@ func (s *Server) fetchLatestSnapshot(keywordID string) (*RankSnapshotResponse, e
 
 func (s *Server) mapToSnapshotResponse(m map[string]interface{}) RankSnapshotResponse {
 	snapshot := RankSnapshotResponse{
-		ID:      getKeywordString(m, "id"),
+		ID:        getKeywordString(m, "id"),
 		KeywordID: getKeywordString(m, "keyword_id"),
-		RankType: getKeywordString(m, "rank_type"),
+		RankType:  getKeywordString(m, "rank_type"),
 	}
 
 	if checkedAt, ok := m["checked_at"].(string); ok {
@@ -860,13 +876,22 @@ func (s *Server) mapToSnapshotResponse(m map[string]interface{}) RankSnapshotRes
 	return snapshot
 }
 
-func (s *Server) createSnapshot(keywordID, taskID string, ranking *dataforseo.RankingData) (*RankSnapshotResponse, error) {
+func (s *Server) createSnapshot(projectID, keywordID, taskID string, ranking *dataforseo.RankingData) (*RankSnapshotResponse, error) {
+	// Backfill project_id if missing
+	if projectID == "" {
+		if kw, err := s.fetchKeyword(keywordID); err == nil && kw.ProjectID != "" {
+			projectID = kw.ProjectID
+		}
+	}
+	if projectID == "" {
+		return nil, fmt.Errorf("project_id missing for keyword %s", keywordID)
+	}
 	// Try to find matching crawl page by URL
 	var crawlPageID *int64
 	if ranking.URL != "" {
 		// Normalize URL for matching (remove trailing slashes, etc.)
 		normalizedURL := strings.TrimSuffix(ranking.URL, "/")
-		
+
 		// Find pages matching this URL (get the most recent one)
 		var pages []map[string]interface{}
 		pageData, _, err := s.serviceRole.From("pages").
@@ -889,10 +914,11 @@ func (s *Server) createSnapshot(keywordID, taskID string, ranking *dataforseo.Ra
 	snapshotID := uuid.New().String()
 	snapshotData := map[string]interface{}{
 		"id":                 snapshotID,
-		"keyword_id":          keywordID,
+		"project_id":         projectID,
+		"keyword_id":         keywordID,
 		"dataforseo_task_id": taskID,
-		"position_absolute":   ranking.PositionAbsolute,
-		"position_organic":    ranking.PositionOrganic,
+		"position_absolute":  ranking.PositionAbsolute,
+		"position_organic":   ranking.PositionOrganic,
 		"serp_url":           ranking.URL,
 		"serp_title":         ranking.Title,
 		"serp_snippet":       ranking.Snippet,
@@ -975,6 +1001,8 @@ func (s *Server) calculateBestPositionAndTrend(keywordID string, currentPos *int
 
 // handleProjectKeywordMetrics handles GET /api/v1/projects/:id/keyword-metrics
 func (s *Server) handleProjectKeywordMetrics(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	_ = r
+
 	// Verify project access
 	hasAccess, err := s.verifyProjectAccess(userID, projectID)
 	if err != nil {
@@ -1048,37 +1076,37 @@ func (s *Server) handleProjectKeywordMetrics(w http.ResponseWriter, r *http.Requ
 	}
 
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{
-		"total_keywords":    totalKeywords,
-		"tracked_keywords":  trackedKeywords,
-		"average_position":  avgPosition,
-		"improved_count":    improvedCount,
-		"declined_count":    declinedCount,
-		"no_change_count":   noChangeCount,
+		"total_keywords":   totalKeywords,
+		"tracked_keywords": trackedKeywords,
+		"average_position": avgPosition,
+		"improved_count":   improvedCount,
+		"declined_count":   declinedCount,
+		"no_change_count":  noChangeCount,
 	})
 }
 
 // DiscoverKeywordsRequest represents a request to discover keywords for a domain/URL
 type DiscoverKeywordsRequest struct {
-	Target      string `json:"target"`       // Domain (e.g., "example.com") or URL
-	LocationName string `json:"location_name"` // e.g., "United States"
-	LanguageName string `json:"language_name"` // e.g., "English"
-	Limit       int    `json:"limit,omitempty"` // Max results (default 1000)
-	MinPosition int    `json:"min_position,omitempty"` // Minimum position to include
-	MaxPosition int    `json:"max_position,omitempty"` // Maximum position to include
+	Target       string `json:"target"`                 // Domain (e.g., "example.com") or URL
+	LocationName string `json:"location_name"`          // e.g., "United States"
+	LanguageName string `json:"language_name"`          // e.g., "English"
+	Limit        int    `json:"limit,omitempty"`        // Max results (default 1000)
+	MinPosition  int    `json:"min_position,omitempty"` // Minimum position to include
+	MaxPosition  int    `json:"max_position,omitempty"` // Maximum position to include
 }
 
 // DiscoveredKeywordResponse represents a discovered keyword
 type DiscoveredKeywordResponse struct {
-	Keyword       string  `json:"keyword"`
-	Position      int     `json:"position"`
-	URL           string  `json:"url"`
-	Title         string  `json:"title"`
-	SearchVolume  int     `json:"search_volume"`
-	Competition   string  `json:"competition"`
-	CPC           float64 `json:"cpc"`
-	KeywordDifficulty int `json:"keyword_difficulty"`
-	MatchedPageID *int64  `json:"matched_page_id,omitempty"` // ID of crawled page if matched
-	MatchedPageURL *string `json:"matched_page_url,omitempty"` // URL of matched page
+	Keyword           string  `json:"keyword"`
+	Position          int     `json:"position"`
+	URL               string  `json:"url"`
+	Title             string  `json:"title"`
+	SearchVolume      int     `json:"search_volume"`
+	Competition       string  `json:"competition"`
+	CPC               float64 `json:"cpc"`
+	KeywordDifficulty int     `json:"keyword_difficulty"`
+	MatchedPageID     *int64  `json:"matched_page_id,omitempty"`  // ID of crawled page if matched
+	MatchedPageURL    *string `json:"matched_page_url,omitempty"` // URL of matched page
 }
 
 // handleDiscoverKeywords handles POST /api/v1/projects/:id/discover-keywords
@@ -1136,8 +1164,8 @@ func (s *Server) handleDiscoverKeywords(w http.ResponseWriter, r *http.Request, 
 		Target:           req.Target,
 		LocationName:     req.LocationName,
 		LanguageName:     req.LanguageName,
-		LoadRankAbsolute: true,  // Load absolute rank as shown in API example
-		LoadKeywordInfo:  true,  // Load keyword metrics (search volume, competition, CPC)
+		LoadRankAbsolute: true, // Load absolute rank as shown in API example
+		LoadKeywordInfo:  true, // Load keyword metrics (search volume, competition, CPC)
 		Limit:            req.Limit,
 	}
 
@@ -1148,15 +1176,15 @@ func (s *Server) handleDiscoverKeywords(w http.ResponseWriter, r *http.Request, 
 			zap.String("target", req.Target),
 			zap.String("location", req.LocationName),
 			zap.String("language", req.LanguageName))
-		
+
 		// Check if it's a 40400 error (endpoint not found)
 		errorMsg := err.Error()
 		if strings.Contains(errorMsg, "40400") || strings.Contains(errorMsg, "Not Found") {
-			s.respondError(w, http.StatusBadRequest, 
+			s.respondError(w, http.StatusBadRequest,
 				"Ranked Keywords API endpoint not available. This feature may require a DataForSEO Labs subscription or the endpoint may not be available in your account tier.")
 			return
 		}
-		
+
 		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to discover keywords: %v", err))
 		return
 	}
@@ -1172,7 +1200,7 @@ func (s *Server) handleDiscoverKeywords(w http.ResponseWriter, r *http.Request, 
 		s.logger.Warn("Ranked Keywords API returned non-success status",
 			zap.Int("status_code", resp.StatusCode),
 			zap.String("status_message", resp.StatusMessage))
-		s.respondError(w, http.StatusBadRequest, 
+		s.respondError(w, http.StatusBadRequest,
 			fmt.Sprintf("DataForSEO API error: %d - %s", resp.StatusCode, resp.StatusMessage))
 		return
 	}
@@ -1206,7 +1234,7 @@ func (s *Server) handleDiscoverKeywords(w http.ResponseWriter, r *http.Request, 
 	}
 
 	if len(taskResult.Result[0].Items) == 0 {
-		s.logger.Info("No items in result", 
+		s.logger.Info("No items in result",
 			zap.String("target", req.Target),
 			zap.Int("task_status_code", taskResult.StatusCode))
 		s.respondJSON(w, http.StatusOK, map[string]interface{}{
@@ -1245,7 +1273,7 @@ func (s *Server) handleDiscoverKeywords(w http.ResponseWriter, r *http.Request, 
 		Select("id,url", "", false).
 		Eq("project_id", projectID).
 		Execute()
-	
+
 	pageMap := make(map[string]int64) // URL -> page ID
 	if err == nil {
 		var pages []map[string]interface{}
@@ -1267,7 +1295,7 @@ func (s *Server) handleDiscoverKeywords(w http.ResponseWriter, r *http.Request, 
 	resultItems := taskResult.Result[0].Items
 	s.logger.Debug("Processing items",
 		zap.Int("items_count", len(resultItems)))
-	
+
 	discovered := make([]DiscoveredKeywordResponse, 0, len(resultItems))
 	for _, item := range resultItems {
 		// Get position (prefer rank_group, fallback to rank_absolute)
@@ -1275,7 +1303,7 @@ func (s *Server) handleDiscoverKeywords(w http.ResponseWriter, r *http.Request, 
 		if position == 0 {
 			position = item.RankedSERPElement.SERPItem.RankAbsolute
 		}
-		
+
 		// Apply position filters client-side if specified
 		if req.MinPosition > 0 && position < req.MinPosition {
 			continue
@@ -1296,7 +1324,7 @@ func (s *Server) handleDiscoverKeywords(w http.ResponseWriter, r *http.Request, 
 
 		// Extract keyword from nested keyword_data structure
 		keyword := item.KeywordData.Keyword
-		
+
 		// Extract keyword info from nested structure
 		searchVolume := item.KeywordData.KeywordInfo.SearchVolume
 		competition := item.KeywordData.KeywordInfo.CompetitionLevel
@@ -1304,18 +1332,18 @@ func (s *Server) handleDiscoverKeywords(w http.ResponseWriter, r *http.Request, 
 		if item.KeywordData.KeywordInfo.CPC != nil {
 			cpc = *item.KeywordData.KeywordInfo.CPC
 		}
-		
+
 		discovered = append(discovered, DiscoveredKeywordResponse{
-			Keyword:            keyword,
-			Position:           position,
-			URL:                item.RankedSERPElement.SERPItem.URL,
-			Title:              item.RankedSERPElement.SERPItem.Title,
-			SearchVolume:       searchVolume,
-			Competition:        competition,
-			CPC:                cpc,
+			Keyword:           keyword,
+			Position:          position,
+			URL:               item.RankedSERPElement.SERPItem.URL,
+			Title:             item.RankedSERPElement.SERPItem.Title,
+			SearchVolume:      searchVolume,
+			Competition:       competition,
+			CPC:               cpc,
 			KeywordDifficulty: item.RankedSERPElement.KeywordDifficulty,
-			MatchedPageID:      matchedPageID,
-			MatchedPageURL:     matchedPageURL,
+			MatchedPageID:     matchedPageID,
+			MatchedPageURL:    matchedPageURL,
 		})
 	}
 
@@ -1332,4 +1360,3 @@ func getKeywordString(m map[string]interface{}, key string) string {
 	}
 	return ""
 }
-

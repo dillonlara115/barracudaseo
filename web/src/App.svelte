@@ -21,6 +21,7 @@
   import ImpactFirstView from './routes/ImpactFirstView.svelte';
   import DiscoverKeywords from './routes/DiscoverKeywords.svelte';
   import Crawls from './routes/Crawls.svelte';
+  import ResetPassword from './routes/ResetPassword.svelte';
   import { loadSubscriptionData } from './lib/subscription.js';
 
   let loading = true;
@@ -50,6 +51,7 @@
     '/team/accept': TeamAccept,
     '/reports/:token': PublicReportView,
     '/auth': Auth, // Auth route for when user is authenticated but needs to redirect
+    '/reset': ResetPassword, // Password reset flow after Supabase recovery email
   };
 
   // Check Supabase configuration
@@ -94,7 +96,10 @@
     }
     
     // Check for auth callback (email confirmation, password reset, etc.)
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    // Support auth hashes like "#access_token=..." and "#/reset#access_token=..."
+    const hashParts = window.location.hash.split('#').filter(Boolean);
+    const lastHash = hashParts.length ? hashParts[hashParts.length - 1] : '';
+    const hashParams = new URLSearchParams(lastHash.startsWith('/') ? lastHash.substring(1) : lastHash);
     const accessToken = hashParams.get('access_token');
     
     if (accessToken) {
