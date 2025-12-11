@@ -11,8 +11,11 @@ RUN apk add --no-cache git make
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy source code (web/ and marketing/ excluded via .dockerignore)
+# Copy source code (marketing/ and node_modules excluded via .dockerignore, web/ included for embed)
 COPY . .
+
+# Remove any node_modules that might have been copied (safety check)
+RUN rm -rf web/node_modules marketing/node_modules || true
 
 # Update go.sum to include all dependencies
 RUN go mod tidy

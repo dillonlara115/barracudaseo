@@ -46,7 +46,10 @@ test-results.json
 supabase/.branches
 supabase/.temp
 
-# Frontend directories (hosted separately on Vercel, not needed in API container)
-web/
+# Node modules (exclude to prevent Go import path errors with @ symbols)
+web/node_modules/
+marketing/node_modules/
+
+# Marketing site (hosted separately, not needed in API container)
 marketing/
 
