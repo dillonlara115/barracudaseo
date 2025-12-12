@@ -122,9 +122,9 @@ enabled = true
 # in emails.
 site_url = "http://127.0.0.1:3000"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
-# How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
-jwt_expiry = 3600
+additional_redirect_urls = ["https://127.0.0.1:3000", "http://127.0.0.1:3000/#/", "http://localhost:3000", "http://localhost:3000/#/"]
+# How long tokens are valid for, in seconds. 604800 = 7 days (maximum allowed)
+jwt_expiry = 604800
 # Path to JWT signing key. DO NOT commit your signing keys file to git.
 # signing_keys_path = "./signing_keys.json"
 # If disabled, the refresh token will never expire.
@@ -173,14 +173,16 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
+# Set to false for passwordless magic link flow
 enable_confirmations = false
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
-# Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
-max_frequency = "1s"
-# Number of characters used in the email OTP.
+# Controls the minimum amount of time that must pass before sending another signup confirmation or magic link email.
+# Increased to prevent abuse of magic link requests
+max_frequency = "60s"
+# Number of characters used in the email OTP (magic link code).
 otp_length = 6
-# Number of seconds before the email OTP expires (defaults to 1 hour).
+# Number of seconds before the email OTP expires. 3600 = 1 hour (good for magic links)
 otp_expiry = 3600
 
 # Use a production-ready SMTP server

@@ -3,6 +3,10 @@
   import { supabase } from '../lib/supabase.js';
   import { push } from 'svelte-spa-router';
 
+  // NOTE: This component is kept for backward compatibility with old password reset links
+  // New auth flow uses magic links exclusively - users don't need password reset anymore
+  // They can just request a new magic link from the login page
+
   let loading = true;
   let submitting = false;
   let error = null;
@@ -69,11 +73,14 @@
           <span class="loading loading-spinner loading-md"></span>
         </div>
       {:else if needsRecoverySession}
-        <div class="alert alert-warning">
-          <span>Reset link invalid or expired. Please start the reset from the login page.</span>
+        <div class="alert alert-info">
+          <span>This reset link has expired. We now use magic links for signing in - no password needed!</span>
         </div>
-        <button class="btn btn-primary w-full" on:click={() => push('#/auth')}>
-          Back to Login
+        <p class="text-sm text-base-content/70 my-4">
+          Simply enter your email on the login page and we'll send you a magic link to sign in instantly.
+        </p>
+        <button class="btn btn-primary w-full" on:click={() => push('#/')}>
+          Go to Login
         </button>
       {:else}
         {#if error}

@@ -1,11 +1,10 @@
 <script>
-  import { signIn, signUp, signOut } from '../lib/auth.js';
+  import { signIn, signInWithMagicLink, signUpWithMagicLink, signOut } from '../lib/auth.js';
   import { user } from '../lib/auth.js';
   import { link, push } from 'svelte-spa-router';
   import { Plug, CreditCard } from 'lucide-svelte';
   import Logo from './Logo.svelte';
   import { userProfile, isProOrTeam } from '../lib/subscription.js';
-  import { supabase } from '../lib/supabase.js';
 
   let email = '';
   let password = '';
@@ -15,11 +14,7 @@
   let loading = false;
   let error = null;
   let success = null;
-  let resetEmail = '';
-  let resetSuccess = null;
-  let resetLoading = false;
-  let showReset = false;
-  $: isResetMode = showReset && !isSignUp;
+  let magicLinkSent = false;
 
   $: isAuthenticated = $user !== null;
   
@@ -43,35 +38,34 @@
   // Default to signup tab if there's an invite token (user needs to create account)
   // This ensures users coming from invite links see the signup form first
   let isSignUp = typeof window !== 'undefined' && inviteToken !== null;
+  
+  // Toggle for showing password login option
+  let showPasswordOption = false;
 
-  async function handleSubmit() {
+  async function handleMagicLinkSubmit() {
     loading = true;
     error = null;
     success = null;
-    resetSuccess = null;
-    shouldRedirect = false; // Reset redirect flag
+    magicLinkSent = false;
+    shouldRedirect = false;
 
     try {
       const displayName = isSignUp ? `${firstName} ${lastName}`.trim() : '';
+      
       if (isSignUp) {
-        const { data, error: signUpError } = await signUp(email, password, displayName);
+        // Sign up with magic link
+        const { data, error: signUpError } = await signUpWithMagicLink(email, displayName);
         if (signUpError) throw signUpError;
         
-        // Check if email confirmation is required
-        if (data.user && !data.session) {
-          success = 'Account created! Please check your email to confirm your account.';
-          // Don't redirect - user needs to confirm email
-        } else if (data.session) {
-          success = 'Account created successfully! Redirecting...';
-          shouldRedirect = true; // Set flag to redirect
-        } else {
-          success = 'Account created successfully!';
-        }
+        magicLinkSent = true;
+        success = 'Check your email! We sent you a magic link to complete your signup.';
       } else {
-        const { data, error: signInError } = await signIn(email, password);
+        // Sign in with magic link
+        const { data, error: signInError } = await signInWithMagicLink(email);
         if (signInError) throw signInError;
-        success = 'Signed in successfully! Redirecting...';
-        shouldRedirect = true; // Set flag to redirect
+        
+        magicLinkSent = true;
+        success = 'Check your email! We sent you a magic link to sign in.';
       }
     } catch (err) {
       error = err.message || 'An error occurred';
@@ -80,7 +74,25 @@
     }
   }
 
-  // Only redirect if we just completed signup/signin AND user is authenticated
+  async function handlePasswordSubmit() {
+    loading = true;
+    error = null;
+    success = null;
+    shouldRedirect = false;
+
+    try {
+      const { data, error: signInError } = await signIn(email, password);
+      if (signInError) throw signInError;
+      success = 'Signed in successfully! Redirecting...';
+      shouldRedirect = true;
+    } catch (err) {
+      error = err.message || 'An error occurred';
+    } finally {
+      loading = false;
+    }
+  }
+
+  // Only redirect if we just completed signin AND user is authenticated
   $: if (shouldRedirect && isAuthenticated && $user) {
     // Small delay to show success message, then redirect
     setTimeout(() => {
@@ -104,34 +116,6 @@
       error = err.message || 'An error occurred';
     } finally {
       loading = false;
-    }
-  }
-
-  async function handleResetRequest() {
-    resetLoading = true;
-    error = null;
-    resetSuccess = null;
-
-    const targetEmail = (resetEmail || email || '').trim();
-    if (!targetEmail) {
-      error = 'Please enter your email to reset your password.';
-      resetLoading = false;
-      return;
-    }
-
-    try {
-      const redirectTo = typeof window !== 'undefined'
-        ? `${window.location.origin}/#/reset`
-        : undefined;
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(targetEmail, {
-        redirectTo
-      });
-      if (resetError) throw resetError;
-      resetSuccess = 'Reset email sent. Check your inbox for the link.';
-    } catch (err) {
-      error = err.message || 'Failed to send reset email.';
-    } finally {
-      resetLoading = false;
     }
   }
 </script>
@@ -182,36 +166,30 @@
         <h1 class="text-4xl font-bold text-white mb-2">
           {#if isSignUp}
             Create Account
-          {:else if isResetMode}
-            Reset your password
           {:else}
             Log in to Barracuda
           {/if}
         </h1>
         
-        {#if !isSignUp && !isResetMode}
+        {#if !isSignUp}
           <p class="text-gray-400 mb-8">
             Don't have an account yet? 
             <button 
               class="text-[#8ec07c] hover:text-[#a0d28c] font-medium"
-              on:click={() => isSignUp = true}
+              on:click={() => { isSignUp = true; showPasswordOption = false; magicLinkSent = false; error = null; success = null; }}
             >
               Sign up for free
             </button>
           </p>
-        {:else if isSignUp}
+        {:else}
           <p class="text-gray-400 mb-8">
             Already have an account? 
             <button 
               class="text-[#8ec07c] hover:text-[#a0d28c] font-medium"
-              on:click={() => isSignUp = false}
+              on:click={() => { isSignUp = false; showPasswordOption = false; magicLinkSent = false; error = null; success = null; }}
             >
               Log in
             </button>
-          </p>
-        {:else}
-          <p class="text-gray-400 mb-8">
-            Enter your account email and we'll send a reset link.
           </p>
         {/if}
 
@@ -222,8 +200,8 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div>
-                <p class="font-medium mb-1">Account Activated</p>
-                <p class="text-sm">Please complete your account setup to accept the team invitation.</p>
+                <p class="font-medium mb-1">Team Invitation</p>
+                <p class="text-sm">Complete your account setup to accept the team invitation.</p>
               </div>
             </div>
           </div>
@@ -241,33 +219,53 @@
           </div>
         {/if}
 
-        <form on:submit|preventDefault={isResetMode ? handleResetRequest : handleSubmit} class="space-y-4">
-          {#if isSignUp}
-            <!-- First Name and Last Name side by side -->
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <input
-                  type="text"
-                  placeholder="First name"
-                  class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
-                  bind:value={firstName}
-                  required
-                />
-              </div>
-              <div>
-                <input
-                  type="text"
-                  placeholder="Last name"
-                  class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
-                  bind:value={lastName}
-                  required
-                />
-              </div>
+        {#if magicLinkSent}
+          <!-- Magic Link Sent State -->
+          <div class="space-y-4">
+            <div class="text-center py-8">
+              <svg class="w-16 h-16 mx-auto mb-4 text-[#8ec07c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
+              </svg>
+              <p class="text-white text-lg mb-2">Check your email</p>
+              <p class="text-gray-400 text-sm">We sent a magic link to <span class="text-white font-medium">{email}</span></p>
+              <p class="text-gray-400 text-sm mt-2">Click the link in the email to {isSignUp ? 'complete your signup' : 'sign in'}</p>
             </div>
-          {/if}
+            <button
+              type="button"
+              class="w-full btn btn-ghost text-white"
+              on:click={() => { magicLinkSent = false; error = null; success = null; }}
+            >
+              Try a different email
+            </button>
+          </div>
+        {:else}
+          <!-- Main Form -->
+          <form on:submit|preventDefault={showPasswordOption ? handlePasswordSubmit : handleMagicLinkSubmit} class="space-y-4">
+            {#if isSignUp}
+              <!-- First Name and Last Name side by side -->
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <input
+                    type="text"
+                    placeholder="First name"
+                    class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
+                    bind:value={firstName}
+                    required
+                  />
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Last name"
+                    class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
+                    bind:value={lastName}
+                    required
+                  />
+                </div>
+              </div>
+            {/if}
 
-          <!-- Email -->
-          {#if !isResetMode}
+            <!-- Email -->
             <div>
               <input
                 type="email"
@@ -277,90 +275,46 @@
                 required
               />
             </div>
-          {/if}
 
-          {#if !isResetMode}
-            <!-- Password -->
-            <div class="relative">
-              {#if showPassword}
-                <input
-                  type="text"
-                  placeholder="Password"
-                  class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
-                  bind:value={password}
-                  required
-                  minlength="6"
-                />
-              {:else}
-                <input
-                  type="password"
-                  placeholder="Password"
-                  class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
-                  bind:value={password}
-                  required
-                  minlength="6"
-                />
-              {/if}
-              <button
-                type="button"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                on:click={() => showPassword = !showPassword}
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {#if showPassword}
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.29 3.29m0 0A9.97 9.97 0 015 12c0 1.65.404 3.203 1.117 4.562M12 19c-1.65 0-3.203-.404-4.562-1.117M9.878 9.878L12 12m-2.122-2.122L9.88 9.88m2.242 2.242L14.12 14.12" />
-                  {:else}
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  {/if}
-                </svg>
-              </button>
-            </div>
-
-            {#if !isSignUp}
-              <div class="flex items-center justify-between text-sm">
-                <button type="button" class="text-[#8ec07c] hover:text-[#a0d28c]" on:click={() => { showReset = true; resetSuccess = null; error = null; resetEmail = email; }}>
-                  Forgot password?
+            {#if showPasswordOption}
+              <!-- Password (only shown when "Use password instead" is clicked) -->
+              <div class="relative">
+                {#if showPassword}
+                  <input
+                    type="text"
+                    placeholder="Password"
+                    class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
+                    bind:value={password}
+                    required
+                    minlength="6"
+                  />
+                {:else}
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
+                    bind:value={password}
+                    required
+                    minlength="6"
+                  />
+                {/if}
+                <button
+                  type="button"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                  on:click={() => showPassword = !showPassword}
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {#if showPassword}
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.29 3.29m0 0A9.97 9.97 0 015 12c0 1.65.404 3.203 1.117 4.562M12 19c-1.65 0-3.203-.404-4.562-1.117M9.878 9.878L12 12m-2.122-2.122L9.88 9.88m2.242 2.242L14.12 14.12" />
+                    {:else}
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    {/if}
+                  </svg>
                 </button>
               </div>
             {/if}
-          {/if}
 
-          {#if isResetMode}
-            <div class="space-y-3">
-              <input
-                type="email"
-                placeholder="Enter your account email"
-                class="w-full bg-[#282828] border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#8ec07c] transition-colors"
-                bind:value={resetEmail}
-                required
-              />
-              <button
-                type="submit"
-                class="w-full bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] font-medium py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={resetLoading}
-              >
-                {#if resetLoading}
-                  <span class="loading loading-spinner loading-sm"></span>
-                  <span class="ml-2">Sending reset link...</span>
-                {:else}
-                  Send reset link
-                {/if}
-              </button>
-              <button
-                type="button"
-                class="w-full btn btn-ghost text-white"
-                on:click={() => { showReset = false; resetSuccess = null; error = null; }}
-              >
-                Back to login
-              </button>
-              {#if resetSuccess}
-                <p class="text-xs text-[#8ec07c]">{resetSuccess}</p>
-              {/if}
-            </div>
-          {/if}
-
-          {#if !isResetMode}
             <!-- Submit Button -->
             <button
               type="submit"
@@ -369,20 +323,47 @@
             >
               {#if loading}
                 <span class="loading loading-spinner loading-sm"></span>
+                <span class="ml-2">{showPasswordOption ? 'Signing in...' : 'Sending magic link...'}</span>
               {:else}
-                {isSignUp ? 'Create Account' : 'Log in'}
+                {#if showPasswordOption}
+                  Sign in with password
+                {:else if isSignUp}
+                  Send magic link
+                {:else}
+                  Send magic link
+                {/if}
               {/if}
             </button>
-          {/if}
-        </form>
 
-        {#if isSignUp}
-          <p class="text-sm text-gray-500 mt-6 text-center">
-            By creating an account, I agree with Barracuda's 
-            <a href="#/privacy" use:link class="text-[#8ec07c] hover:underline">Privacy Policy</a> 
-            and 
-            <a href="#/terms" use:link class="text-[#8ec07c] hover:underline">Terms of Service</a>.
-          </p>
+            {#if !isSignUp}
+              <!-- Divider and Password Option -->
+              <div class="relative py-2">
+                <div class="absolute inset-0 flex items-center">
+                  <div class="w-full border-t border-gray-600"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                  <span class="px-2 bg-[#282828] text-gray-400">or</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="w-full text-[#8ec07c] hover:text-[#a0d28c] text-sm font-medium py-2"
+                on:click={() => { showPasswordOption = !showPasswordOption; error = null; }}
+              >
+                {showPasswordOption ? '← Use magic link instead' : 'Use password instead'}
+              </button>
+            {/if}
+          </form>
+
+          {#if isSignUp}
+            <p class="text-sm text-gray-500 mt-6 text-center">
+              By creating an account, I agree with Barracuda's 
+              <a href="#/privacy" use:link class="text-[#8ec07c] hover:underline">Privacy Policy</a> 
+              and 
+              <a href="#/terms" use:link class="text-[#8ec07c] hover:underline">Terms of Service</a>.
+            </p>
+          {/if}
         {/if}
       </div>
     </div>

@@ -30,12 +30,39 @@ export async function initAuth() {
   }
 }
 
-// Sign up
+// Sign up with magic link (passwordless)
+export async function signUpWithMagicLink(email, displayName = null) {
+  try {
+    // Get the current origin (works for both localhost and production)
+    const redirectTo = typeof window !== 'undefined' 
+      ? `${window.location.origin}/#/`
+      : undefined;
+
+    const { data, error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        data: {
+          display_name: displayName
+        },
+        emailRedirectTo: redirectTo,
+        shouldCreateUser: true
+      }
+    });
+
+    if (error) throw error;
+
+    return { data, error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+// Legacy sign up with password (kept for existing users)
 export async function signUp(email, password, displayName = null) {
   try {
     // Get the current origin (works for both localhost and production)
     const redirectTo = typeof window !== 'undefined' 
-      ? `${window.location.origin}/auth/callback`
+      ? `${window.location.origin}/#/`
       : undefined;
 
     const { data, error } = await supabase.auth.signUp({
@@ -72,7 +99,29 @@ export async function signUp(email, password, displayName = null) {
   }
 }
 
-// Sign in
+// Sign in with magic link (primary method)
+export async function signInWithMagicLink(email) {
+  try {
+    const redirectTo = typeof window !== 'undefined' 
+      ? `${window.location.origin}/#/`
+      : undefined;
+
+    const { data, error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: redirectTo,
+        shouldCreateUser: false // Don't create user on sign-in, only on sign-up
+      }
+    });
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+// Sign in with password (legacy/optional method)
 export async function signIn(email, password) {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -102,6 +151,20 @@ export async function signOut() {
 export async function getCurrentUser() {
   const { data: { user } } = await supabase.auth.getUser();
   return user;
+}
+
+// Update user password (optional for users who want to set one)
+export async function updatePassword(newPassword) {
+  try {
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
 }
 
 // Update user email

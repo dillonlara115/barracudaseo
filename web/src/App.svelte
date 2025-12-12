@@ -95,25 +95,55 @@
       console.log('Auto-fixed hash from #/#/ to:', fixedHash);
     }
     
-    // Check for auth callback (email confirmation, password reset, etc.)
-    // Support auth hashes like "#access_token=..." and "#/reset#access_token=..."
-    const hashParts = window.location.hash.split('#').filter(Boolean);
-    const lastHash = hashParts.length ? hashParts[hashParts.length - 1] : '';
-    const hashParams = new URLSearchParams(lastHash.startsWith('/') ? lastHash.substring(1) : lastHash);
-    const accessToken = hashParams.get('access_token');
+    // Check for auth callback (magic link, email confirmation, password reset)
+    // Magic links use URL fragments: #access_token=...&refresh_token=...&type=magiclink
+    // They can appear in different formats:
+    // 1. Direct: https://app.barracudaseo.com#access_token=...
+    // 2. With hash route: https://app.barracudaseo.com/#/#access_token=...
+    // 3. With path: https://app.barracudaseo.com/#/some-path#access_token=...
     
-    if (accessToken) {
-      // Handle auth callback from email confirmation
-      const { data, error } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: hashParams.get('refresh_token') || ''
-      });
+    const fullHash = window.location.hash;
+    console.log('Full URL hash:', fullHash);
+    
+    // Extract auth parameters from hash (handle multiple # symbols)
+    let authParams = new URLSearchParams();
+    let hasAuthToken = false;
+    
+    // Check if hash contains access_token
+    if (fullHash.includes('access_token=')) {
+      // Find the auth token portion (everything after the last # or first access_token)
+      const accessTokenIndex = fullHash.indexOf('access_token=');
+      const authFragment = fullHash.substring(accessTokenIndex);
+      authParams = new URLSearchParams(authFragment);
+      hasAuthToken = true;
+      console.log('Found auth token in URL');
+    }
+    
+    if (hasAuthToken) {
+      const accessToken = authParams.get('access_token');
+      const refreshToken = authParams.get('refresh_token');
+      const tokenType = authParams.get('type');
       
-      if (error) {
-        console.error('Auth callback error:', error);
-      } else {
-        // Clear hash from URL
-        window.history.replaceState(null, '', window.location.pathname);
+      console.log('Auth callback detected:', { type: tokenType, hasAccessToken: !!accessToken, hasRefreshToken: !!refreshToken });
+      
+      if (accessToken && refreshToken) {
+        try {
+          // Set the session using tokens from magic link
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          
+          if (error) {
+            console.error('Auth callback error:', error);
+          } else {
+            console.log('Magic link session set successfully:', data);
+            // Clean up URL - remove auth tokens from hash
+            window.history.replaceState(null, '', window.location.pathname + window.location.search + '#/');
+          }
+        } catch (err) {
+          console.error('Failed to set session:', err);
+        }
       }
     }
 

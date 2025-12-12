@@ -24,10 +24,9 @@ export const supabase = createClient(
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
-      // Set redirect URL based on current origin
-      redirectTo: typeof window !== 'undefined' 
-        ? `${window.location.origin}/auth/callback`
-        : undefined
+      // Don't set a default redirectTo - let it use the current URL
+      // This allows magic links to work with hash routing
+      flowType: 'pkce'
     }
   }
 );
