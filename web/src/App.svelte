@@ -22,6 +22,7 @@
   import DiscoverKeywords from './routes/DiscoverKeywords.svelte';
   import Crawls from './routes/Crawls.svelte';
   import ResetPassword from './routes/ResetPassword.svelte';
+  import AuthConfirm from './routes/AuthConfirm.svelte';
   import { loadSubscriptionData } from './lib/subscription.js';
 
   let loading = true;
@@ -29,7 +30,7 @@
   let currentHash = typeof window !== 'undefined' ? window.location.hash : '';
   
   $: isLegalPage = currentHash === '#/privacy' || currentHash === '#/terms';
-  $: isPublicPage = isLegalPage || currentHash.startsWith('#/team/accept') || currentHash.startsWith('#/reports/');
+  $: isPublicPage = isLegalPage || currentHash.startsWith('#/team/accept') || currentHash.startsWith('#/reports/') || currentHash.startsWith('#/auth/confirm');
 
   // Route definitions
   const routes = {
@@ -51,6 +52,7 @@
     '/team/accept': TeamAccept,
     '/reports/:token': PublicReportView,
     '/auth': Auth, // Auth route for when user is authenticated but needs to redirect
+    '/auth/confirm': AuthConfirm, // PKCE magic link verification endpoint
     '/reset': ResetPassword, // Password reset flow after Supabase recovery email
   };
 
@@ -88,6 +90,17 @@
       setInterval(updateHash, 100);
     }
     
+    // Handle PKCE magic link redirect (Supabase redirects to /auth/confirm?token_hash=...)
+    // Convert regular path to hash route for SPA routing
+    if (window.location.pathname === '/auth/confirm' && window.location.search) {
+      const queryParams = window.location.search;
+      console.log('🔍 PKCE redirect detected - converting to hash route');
+      console.log('🔍 Query params:', queryParams);
+      // Convert /auth/confirm?token_hash=... to /#/auth/confirm?token_hash=...
+      window.location.replace(`${window.location.origin}/#/auth/confirm${queryParams}`);
+      return; // Exit early, let the redirect happen
+    }
+    
     // Fix double hash issue if present (e.g., #/#/billing -> #/billing)
     if (window.location.hash.startsWith('#/#/')) {
       const fixedHash = window.location.hash.replace('#/#/', '#/');
@@ -103,7 +116,9 @@
     // 3. With path: https://app.barracudaseo.com/#/some-path#access_token=...
     
     const fullHash = window.location.hash;
-    console.log('Full URL hash:', fullHash);
+    console.log('Full URL hash:', fullHash || '<empty string>');
+    console.log('Full URL pathname:', window.location.pathname);
+    console.log('Full URL search:', window.location.search);
     
     // Extract auth parameters from hash (handle multiple # symbols)
     let authParams = new URLSearchParams();
@@ -138,8 +153,10 @@
             console.error('Auth callback error:', error);
           } else {
             console.log('Magic link session set successfully:', data);
-            // Clean up URL - remove auth tokens from hash
-            window.history.replaceState(null, '', window.location.pathname + window.location.search + '#/');
+            // Clean up URL and redirect to dashboard
+            window.history.replaceState(null, '', window.location.pathname + '#/');
+            // Force reload to ensure app state is fresh
+            window.location.hash = '#/';
           }
         } catch (err) {
           console.error('Failed to set session:', err);

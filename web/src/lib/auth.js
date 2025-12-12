@@ -33,10 +33,15 @@ export async function initAuth() {
 // Sign up with magic link (passwordless)
 export async function signUpWithMagicLink(email, displayName = null) {
   try {
-    // Get the current origin (works for both localhost and production)
+    // For PKCE flow, redirect to /auth/confirm endpoint (not hash route)
+    // App.svelte will convert /auth/confirm to /#/auth/confirm for SPA routing
     const redirectTo = typeof window !== 'undefined' 
-      ? `${window.location.origin}/#/`
+      ? `${window.location.origin}/auth/confirm`
       : undefined;
+
+    console.log('🔍 Requesting magic link signup for:', email);
+    console.log('🔍 Redirect URL:', redirectTo);
+    console.log('🔍 Display name:', displayName);
 
     const { data, error } = await supabase.auth.signInWithOtp({
       email,
@@ -49,10 +54,15 @@ export async function signUpWithMagicLink(email, displayName = null) {
       }
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error('🔴 Magic link signup error:', error);
+      throw error;
+    }
 
+    console.log('✅ Magic link signup sent successfully');
     return { data, error: null };
   } catch (error) {
+    console.error('🔴 Failed to send magic link signup:', error);
     return { data: null, error };
   }
 }
@@ -60,9 +70,9 @@ export async function signUpWithMagicLink(email, displayName = null) {
 // Legacy sign up with password (kept for existing users)
 export async function signUp(email, password, displayName = null) {
   try {
-    // Get the current origin (works for both localhost and production)
+    // Don't include hash in redirect URL
     const redirectTo = typeof window !== 'undefined' 
-      ? `${window.location.origin}/#/`
+      ? window.location.origin
       : undefined;
 
     const { data, error } = await supabase.auth.signUp({
@@ -102,9 +112,15 @@ export async function signUp(email, password, displayName = null) {
 // Sign in with magic link (primary method)
 export async function signInWithMagicLink(email) {
   try {
+    // For PKCE flow, redirect to /auth/confirm endpoint (not hash route)
+    // App.svelte will convert /auth/confirm to /#/auth/confirm for SPA routing
     const redirectTo = typeof window !== 'undefined' 
-      ? `${window.location.origin}/#/`
+      ? `${window.location.origin}/auth/confirm`
       : undefined;
+
+    console.log('🔍 Requesting magic link for:', email);
+    console.log('🔍 Redirect URL:', redirectTo);
+    console.log('🔍 Current origin:', window?.location?.origin);
 
     const { data, error } = await supabase.auth.signInWithOtp({
       email,
@@ -114,9 +130,15 @@ export async function signInWithMagicLink(email) {
       }
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error('🔴 Magic link error:', error);
+      throw error;
+    }
+    
+    console.log('✅ Magic link sent successfully');
     return { data, error: null };
   } catch (error) {
+    console.error('🔴 Failed to send magic link:', error);
     return { data: null, error };
   }
 }
