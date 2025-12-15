@@ -279,3 +279,4 @@ Based on the console output:
 - **If you see nothing** → Tokens aren't in URL, check Supabase redirect config
 
 Let me know what you see in the console!
+

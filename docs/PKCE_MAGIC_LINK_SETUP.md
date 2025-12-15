@@ -288,3 +288,4 @@ If you encounter issues:
 
 **Last Updated**: December 11, 2024
 **PKCE Documentation**: https://supabase.com/docs/guides/auth/auth-email-passwordless
+

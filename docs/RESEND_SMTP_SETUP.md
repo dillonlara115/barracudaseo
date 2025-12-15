@@ -181,3 +181,4 @@ After configuring Resend:
 ---
 
 **Status**: Ready to configure! Follow steps above to set up Resend SMTP.
+

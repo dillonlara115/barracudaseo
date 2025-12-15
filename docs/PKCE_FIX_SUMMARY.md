@@ -50,3 +50,4 @@ https://app.barracudaseo.com/#/auth/confirm
 1. ✅ Code deployed
 2. ⏳ **Update Supabase redirect URLs** (add `/auth/confirm`)
 3. ⏳ **Test with fresh magic link**
+

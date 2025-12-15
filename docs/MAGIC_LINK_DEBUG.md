@@ -193,3 +193,4 @@ This eliminates redirect URL issues entirely.
 4. **Check browser console** when requesting magic link - any errors?
 
 Let me know what you find!
+
