@@ -242,7 +242,10 @@ func (s *Server) authMiddleware(next http.Handler) http.Handler {
 		// We'll use the Supabase REST API to verify the token
 		user, err := s.validateToken(token)
 		if err != nil {
-			s.logger.Debug("Token validation failed", zap.Error(err))
+			s.logger.Warn("Token validation failed",
+				zap.Error(err),
+				zap.String("path", r.URL.Path),
+				zap.String("supabase_url", s.config.SupabaseURL))
 			s.respondError(w, http.StatusUnauthorized, "Invalid or expired token")
 			return
 		}
@@ -298,7 +301,9 @@ func (s *Server) validateToken(token string) (*User, error) {
 	// Prefer local JWT validation to avoid hammering Supabase (reduces 401s when rate limited)
 	if s.jwks != nil {
 		if user, err = s.validateTokenLocally(token); err != nil {
-			s.logger.Debug("Local token validation failed, falling back to Supabase", zap.Error(err))
+			s.logger.Info("Local token validation failed, falling back to Supabase API",
+				zap.Error(err),
+				zap.String("jwks_url", s.jwksURL))
 		}
 	}
 
@@ -306,6 +311,9 @@ func (s *Server) validateToken(token string) (*User, error) {
 	if user == nil {
 		user, err = s.validateTokenViaAPI(token)
 		if err != nil {
+			s.logger.Warn("Token validation failed via both local JWKS and Supabase API",
+				zap.Error(err),
+				zap.String("supabase_url", s.config.SupabaseURL))
 			return nil, err
 		}
 	}
@@ -342,14 +350,23 @@ func (s *Server) validateTokenLocally(token string) (*User, error) {
 		return nil, errors.New("jwks not initialized")
 	}
 
-	parsed, err := jwt.ParseWithClaims(token, &supabaseClaims{}, s.jwks.Keyfunc)
+	// Expected issuer should be the Supabase auth endpoint
+	expectedIssuer := strings.TrimSuffix(s.config.SupabaseURL, "/") + "/auth/v1"
+
+	// Parse token with validation options - jwt library validates expiration automatically
+	parsed, err := jwt.ParseWithClaims(token, &supabaseClaims{}, s.jwks.Keyfunc, jwt.WithValidMethods([]string{"HS256", "RS256"}))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse token: %w", err)
 	}
 
 	claims, ok := parsed.Claims.(*supabaseClaims)
 	if !ok || !parsed.Valid {
-		return nil, errors.New("invalid token claims")
+		return nil, errors.New("invalid token claims or token not valid")
+	}
+
+	// Validate issuer matches our Supabase project
+	if claims.Issuer != expectedIssuer {
+		return nil, fmt.Errorf("token issuer mismatch: expected %s, got %s", expectedIssuer, claims.Issuer)
 	}
 
 	if claims.Subject == "" {
@@ -387,7 +404,7 @@ func (s *Server) validateTokenViaAPI(token string) (*User, error) {
 	if resp.StatusCode != http.StatusOK {
 		// Read response body for error details
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		s.logger.Debug("Token validation failed",
+		s.logger.Warn("Token validation failed via Supabase API",
 			zap.String("url", authURL),
 			zap.Int("status", resp.StatusCode),
 			zap.String("response", string(bodyBytes)),

@@ -65,12 +65,13 @@
 							<p class="mb-4">
 								Screaming Frog is a powerful desktop crawler—but it's single-device, manual, and lacks team collaboration unless you export CSVs and spreadsheets.
 							</p>
-							<p class="mb-4">Barracuda offers a hybrid model:</p>
+							<p class="mb-4">Barracuda offers a cloud-first approach:</p>
 							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
-								<li><strong class="text-white">Fast local crawls (CLI — coming soon)</strong></li>
+								<li><strong class="text-white">Fast cloud-based crawling</strong> via web dashboard</li>
 								<li><strong class="text-white">Cloud-based dashboard for teams</strong></li>
-								<li><strong class="text-white">AI-powered issue explanations (coming soon)</strong></li>
-								<li><strong class="text-white">Built-in integrations</strong> with Google Search Console, GA4, Microsoft Clarity, Slack, and Google Drive</li>
+								<li><strong class="text-white">AI-powered issue explanations</strong> and recommendations</li>
+								<li><strong class="text-white">Built-in integrations</strong> with Google Search Console (available now), GA4 and Microsoft Clarity (coming soon)</li>
+								<li><strong class="text-white">CLI for local crawling</strong> coming soon for advanced users</li>
 							</ul>
 							<p class="italic">Think of Barracuda as <em>Screaming Frog + team dashboard + automation layer</em>.</p>
 						</div>
@@ -107,11 +108,11 @@
 							</ul>
 							<p class="mb-4">Barracuda:</p>
 							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
-								<li>Runs <strong class="text-white">local crawls via CLI (coming soon)</strong> for full control</li>
-								<li>Allows uploading data to the cloud dashboard</li>
-								<li>Stores complete crawl datasets</li>
+								<li>Runs <strong class="text-white">fast crawls via web dashboard</strong></li>
+								<li>Stores complete crawl datasets in the cloud</li>
 								<li>Has <strong class="text-white">no credits or crawl caps</strong></li>
 								<li>Mirrors what your site serves to <em>real browsers</em></li>
+								<li><strong class="text-white">CLI for local crawling</strong> coming soon for even more control</li>
 							</ul>
 							<p class="font-semibold text-white">Barracuda is <em>your own crawler, your own infrastructure</em>.</p>
 						</div>
@@ -141,9 +142,9 @@
 							<p class="mb-4">Looker Studio is excellent for reporting—but it can't crawl your site or diagnose SEO issues.</p>
 							<p class="mb-4">Barracuda does:</p>
 							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
-								<li>Website crawling (CLI coming soon)</li>
+								<li>Website crawling via web dashboard</li>
 								<li>SEO issue detection</li>
-								<li>Data collection from GSC, GA4, and Clarity</li>
+								<li>Data collection from Google Search Console (available now), GA4 and Clarity (coming soon)</li>
 								<li>Dashboard generation automatically</li>
 								<li>Full issue prioritization and insights</li>
 							</ul>
@@ -181,12 +182,15 @@
 								<li>Custom Looker Studio builds</li>
 								<li>GA4/GSC spreadsheet workflows</li>
 							</ul>
+							<p class="mb-2 font-semibold text-white">Integrates with:</p>
+							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
+								<li>Google Search Console (available now)</li>
+								<li>Google Analytics 4 (coming soon)</li>
+								<li>Microsoft Clarity (coming soon)</li>
+							</ul>
 							<p class="mb-2 font-semibold text-white">Complements:</p>
 							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
 								<li>SEMrush/Ahrefs for keyword research</li>
-								<li>GSC for search insights</li>
-								<li>GA4 for user behavior</li>
-								<li>Clarity for UX signals</li>
 							</ul>
 							<p class="font-semibold text-white">Barracuda becomes your <em>technical SEO command center</em>.</p>
 						</div>
@@ -213,14 +217,19 @@
 					</button>
 					{#if openItems[5]}
 						<div class="px-6 pb-5 text-white/80">
-							<p class="mb-4">Once released, the CLI will be extremely fast due to:</p>
+							<p class="mb-4">Barracuda's web-based crawler is optimized for speed:</p>
 							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
-								<li>A Go-based worker-pool engine</li>
-								<li>Concurrent crawling</li>
-								<li>Intelligent robots.txt + sitemap handling</li>
-								<li>Lightweight architecture</li>
+								<li>Concurrent crawling with intelligent rate limiting</li>
+								<li>Efficient robots.txt and sitemap handling</li>
+								<li>Cloud infrastructure for fast processing</li>
+								<li>Real-time progress tracking</li>
 							</ul>
-							<p class="font-semibold text-white">Expected speed: <strong>100–500 pages/min</strong>, depending on target site performance.</p>
+							<p class="mb-2">For even faster local crawling, our CLI (coming soon) will offer:</p>
+							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
+								<li>Go-based worker-pool engine</li>
+								<li>Direct local processing</li>
+								<li>Expected speed: <strong class="text-white">100–500 pages/min</strong>, depending on target site performance</li>
+							</ul>
 						</div>
 					{/if}
 				</div>

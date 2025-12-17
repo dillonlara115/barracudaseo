@@ -6,6 +6,10 @@
 drop policy if exists "Account owners can view their team members" on public.team_members;
 drop policy if exists "Team members can view their own record" on public.team_members;
 drop policy if exists "Account owners can manage their team members" on public.team_members;
+drop policy if exists "Users can view team members" on public.team_members;
+drop policy if exists "Account owners can insert team members" on public.team_members;
+drop policy if exists "Account owners can update team members" on public.team_members;
+drop policy if exists "Account owners can delete team members" on public.team_members;
 
 -- Create consolidated SELECT policy
 -- Covers both account owners and team members

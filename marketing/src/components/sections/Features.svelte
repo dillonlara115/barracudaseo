@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Search, BarChart3, Target, Plug, Users } from 'lucide-svelte';
+	import { Search, BarChart3, Target, Plug, Users, Sparkles, TrendingUp, Share2 } from 'lucide-svelte';
 </script>
 
 <section class="py-20 bg-[#3c3836]">
@@ -10,7 +10,7 @@
 				Everything you need to crawl, analyze, and optimize your website's SEO
 			</p>
 		</div>
-		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
 			<div class="bg-[#2d2826] rounded-lg shadow-xl p-6 border border-white/10">
 				<div class="flex items-center gap-3 mb-3">
 					<div class="p-2 bg-[#8ec07c]/10 rounded-lg">
@@ -48,6 +48,30 @@
 				<div class="absolute -top-2 -right-2 bg-[#8ec07c] text-[#3c3836] px-2 py-1 rounded text-xs font-bold">Pro</div>
 				<div class="flex items-center gap-3 mb-3">
 					<div class="p-2 bg-[#8ec07c]/10 rounded-lg">
+						<Sparkles class="w-5 h-5 text-[#8ec07c]" />
+					</div>
+					<h3 class="text-xl font-heading font-bold text-[#8ec07c]">AI Insights</h3>
+				</div>
+				<p class="text-white/70">
+					AI-powered issue explanations, crawl summaries, and intelligent recommendations to help you fix issues faster and understand root causes.
+				</p>
+			</div>
+			<div class="bg-[#2d2826] rounded-lg shadow-xl p-6 border border-[#8ec07c]/30 relative">
+				<div class="absolute -top-2 -right-2 bg-[#8ec07c] text-[#3c3836] px-2 py-1 rounded text-xs font-bold">Pro</div>
+				<div class="flex items-center gap-3 mb-3">
+					<div class="p-2 bg-[#8ec07c]/10 rounded-lg">
+						<TrendingUp class="w-5 h-5 text-[#8ec07c]" />
+					</div>
+					<h3 class="text-xl font-heading font-bold text-[#8ec07c]">Rank Tracking</h3>
+				</div>
+				<p class="text-white/70">
+					Track keyword rankings over time with automatic daily or weekly checks. Monitor position changes, view historical trends, and connect rankings to your crawl data.
+				</p>
+			</div>
+			<div class="bg-[#2d2826] rounded-lg shadow-xl p-6 border border-[#8ec07c]/30 relative">
+				<div class="absolute -top-2 -right-2 bg-[#8ec07c] text-[#3c3836] px-2 py-1 rounded text-xs font-bold">Pro</div>
+				<div class="flex items-center gap-3 mb-3">
+					<div class="p-2 bg-[#8ec07c]/10 rounded-lg">
 						<Users class="w-5 h-5 text-[#8ec07c]" />
 					</div>
 					<h3 class="text-xl font-heading font-bold text-[#8ec07c]">Collaborate</h3>
@@ -66,6 +90,18 @@
 				</div>
 				<p class="text-white/70">
 					Connect Google Search Console, Analytics, and Microsoft Clarity to enrich your audit data and track performance over time.
+				</p>
+			</div>
+			<div class="bg-[#2d2826] rounded-lg shadow-xl p-6 border border-[#8ec07c]/30 relative">
+				<div class="absolute -top-2 -right-2 bg-[#8ec07c] text-[#3c3836] px-2 py-1 rounded text-xs font-bold">Pro</div>
+				<div class="flex items-center gap-3 mb-3">
+					<div class="p-2 bg-[#8ec07c]/10 rounded-lg">
+						<Share2 class="w-5 h-5 text-[#8ec07c]" />
+					</div>
+					<h3 class="text-xl font-heading font-bold text-[#8ec07c]">Share Reports</h3>
+				</div>
+				<p class="text-white/70">
+					Create public, shareable reports for clients or stakeholders. Share crawl results and issue summaries without requiring login.
 				</p>
 			</div>
 		</div>

@@ -186,6 +186,18 @@
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
 							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">HTML report generator</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">AI executive summaries</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Dedicated Crawls & Audits management page</span>
 						</div>
 					</div>
@@ -473,13 +485,7 @@
 					<div class="bg-[#3c3836] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
 							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
-							<span class="text-white/90">PDF/HTML report generator</span>
-						</div>
-					</div>
-					<div class="bg-[#3c3836] rounded-lg p-6 border border-white/10">
-						<div class="flex items-start gap-3">
-							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
-							<span class="text-white/90">AI executive summaries</span>
+							<span class="text-white/90">PDF report generator</span>
 						</div>
 					</div>
 					<div class="bg-[#3c3836] rounded-lg p-6 border border-white/10">
@@ -650,14 +656,7 @@
 					We believe in building Barracuda in the open. Your feedback shapes our roadmap, and we're always listening to what matters most to you.
 				</p>
 				<ul class="space-y-4 text-white/80 mb-6">
-					<li class="flex items-start gap-3">
-						<MessageSquare class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
-						<span>Have a feature idea? <a href="https://github.com/dillonlara115/barracuda/discussions" class="text-[#8ec07c] hover:text-[#a0d28c] underline" target="_blank" rel="noopener noreferrer">Share it in our GitHub Discussions</a></span>
-					</li>
-					<li class="flex items-start gap-3">
-						<Github class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
-						<span>Want to contribute? <a href="https://github.com/dillonlara115/barracuda" class="text-[#8ec07c] hover:text-[#a0d28c] underline" target="_blank" rel="noopener noreferrer">Check out our open-source repository</a></span>
-					</li>
+					
 					<li class="flex items-start gap-3">
 						<MessageSquare class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
 						<span>This roadmap is updated regularly as priorities shift and new opportunities emerge.</span>
@@ -688,27 +687,9 @@
 					Start a Free Crawl
 					<ExternalLink class="w-5 h-5" />
 				</a>
-				<a 
-					href="https://github.com/dillonlara115/barracuda/discussions" 
-					class="inline-flex items-center justify-center gap-2 border-2 border-white/20 hover:border-[#8ec07c] text-white px-8 py-4 rounded-lg font-medium text-lg transition-colors" 
-					target="_blank" 
-					rel="noopener noreferrer"
-				>
-					<MessageSquare class="w-5 h-5" />
-					Join the Community
-				</a>
+				
 			</div>
-			<div class="flex flex-col sm:flex-row gap-4 justify-center">
-				<a 
-					href="https://github.com/dillonlara115/barracuda" 
-					class="inline-flex items-center justify-center gap-2 text-white/70 hover:text-[#8ec07c] transition-colors" 
-					target="_blank" 
-					rel="noopener noreferrer"
-				>
-					<Github class="w-5 h-5" />
-					View on GitHub
-				</a>
-			</div>
+			
 		</div>
 	</div>
 </section>

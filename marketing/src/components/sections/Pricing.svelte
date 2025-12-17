@@ -63,11 +63,19 @@
 					</li>
 					<li class="flex items-center gap-2 text-[#3c3836]">
 						<span>✓</span>
-						<span>Full recommendation engine with contextual fixes</span>
+						<span><strong>AI-powered recommendations</strong> with contextual fixes and crawl summaries</span>
+					</li>
+					<li class="flex items-center gap-2 text-[#3c3836]">
+						<span>✓</span>
+						<span><strong>Keyword rank tracking</strong> with automatic daily/weekly checks</span>
 					</li>
 					<li class="flex items-center gap-2 text-[#3c3836]">
 						<span>✓</span>
 						<span>Integrations: Google Search Console, Analytics, Clarity, Slack</span>
+					</li>
+					<li class="flex items-center gap-2 text-[#3c3836]">
+						<span>✓</span>
+						<span>Public report sharing for clients and stakeholders</span>
 					</li>
 					<li class="flex items-center gap-2 text-[#3c3836]">
 						<span>✓</span>

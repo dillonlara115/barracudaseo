@@ -41,6 +41,13 @@ web/.env.local
 results.*
 *.csv
 *.json
+!marketing/package.json
+!marketing/tsconfig.json
+!marketing/svelte.config.mjs
+!marketing/vite.config.ts
+!tsconfig.json
+!svelte.config.mjs
+!vite.config.ts
 link-graph.json
 graph.json
 crawls/

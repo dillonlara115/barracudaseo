@@ -3,6 +3,7 @@
 
 -- Update Pages RLS Policies
 drop policy if exists "Project members can view pages" on public.pages;
+drop policy if exists "Project members and teammates can view pages" on public.pages;
 create policy "Project members and teammates can view pages"
   on public.pages
   for select
@@ -41,6 +42,7 @@ create policy "Project members and teammates can view pages"
   );
 
 drop policy if exists "Project members can insert pages" on public.pages;
+drop policy if exists "Project members and teammates can insert pages" on public.pages;
 create policy "Project members and teammates can insert pages"
   on public.pages
   for insert
@@ -80,6 +82,7 @@ create policy "Project members and teammates can insert pages"
 
 -- Update Issues RLS Policies
 drop policy if exists "Project members can view issues" on public.issues;
+drop policy if exists "Project members and teammates can view issues" on public.issues;
 create policy "Project members and teammates can view issues"
   on public.issues
   for select
@@ -115,6 +118,7 @@ create policy "Project members and teammates can view issues"
   );
 
 drop policy if exists "Project members can update issue status" on public.issues;
+drop policy if exists "Project members and teammates can update issue status" on public.issues;
 create policy "Project members and teammates can update issue status"
   on public.issues
   for update
@@ -151,6 +155,7 @@ create policy "Project members and teammates can update issue status"
   );
 
 drop policy if exists "Project members can insert issues" on public.issues;
+drop policy if exists "Project members and teammates can insert issues" on public.issues;
 create policy "Project members and teammates can insert issues"
   on public.issues
   for insert

@@ -60,10 +60,10 @@
 						<div class="px-6 py-4 text-white/80 text-sm">
 							<p class="mb-2">Screaming Frog is powerful but single-device and manual. Barracuda offers:</p>
 							<ul class="list-disc list-inside space-y-1 ml-2">
-								<li>Fast local crawls (CLI coming soon)</li>
-								<li>Cloud-based dashboard for teams</li>
-								<li>AI-powered issue explanations</li>
-								<li>Built-in integrations</li>
+								<li>Fast cloud-based crawling via web dashboard</li>
+								<li>Team collaboration and shared projects</li>
+								<li>AI-powered issue explanations and recommendations</li>
+								<li>Built-in integrations with Google Search Console</li>
 							</ul>
 						</div>
 					{/if}
@@ -91,10 +91,11 @@
 						<div class="px-6 py-4 text-white/80 text-sm">
 							<p class="mb-2">SEMrush and Ahrefs run crawls on their servers with limited control. Barracuda:</p>
 							<ul class="list-disc list-inside space-y-1 ml-2">
-								<li>Runs local crawls via CLI for full control</li>
+								<li>Runs fast crawls via web dashboard</li>
 								<li>Has no credits or crawl caps</li>
 								<li>Stores complete crawl datasets</li>
 								<li>Mirrors what your site serves to real browsers</li>
+								<li>CLI for local crawling coming soon for even more control</li>
 							</ul>
 						</div>
 					{/if}
@@ -159,10 +160,15 @@
 								<li>Manual CSV exports</li>
 								<li>Custom Looker Studio builds</li>
 							</ul>
+							<p class="mb-1 font-semibold text-white">Integrates with:</p>
+							<ul class="list-disc list-inside space-y-1 ml-2 mb-2">
+								<li>Google Search Console (available now)</li>
+								<li>Google Analytics 4 (coming soon)</li>
+								<li>Microsoft Clarity (coming soon)</li>
+							</ul>
 							<p class="mb-1 font-semibold text-white">Complements:</p>
 							<ul class="list-disc list-inside space-y-1 ml-2">
 								<li>SEMrush/Ahrefs for keyword research</li>
-								<li>GSC, GA4, Clarity for insights</li>
 							</ul>
 						</div>
 					{/if}
@@ -188,14 +194,19 @@
 					</button>
 					{#if open5}
 						<div class="px-6 py-4 text-white/80 text-sm">
-							<p class="mb-2">The CLI will be extremely fast due to:</p>
+							<p class="mb-2">Barracuda's web-based crawler is optimized for speed:</p>
+							<ul class="list-disc list-inside space-y-1 ml-2">
+								<li>Concurrent crawling with intelligent rate limiting</li>
+								<li>Efficient robots.txt and sitemap handling</li>
+								<li>Cloud infrastructure for fast processing</li>
+								<li>Real-time progress tracking</li>
+							</ul>
+							<p class="mt-2 mb-2">For even faster local crawling, our CLI (coming soon) will offer:</p>
 							<ul class="list-disc list-inside space-y-1 ml-2">
 								<li>Go-based worker-pool engine</li>
-								<li>Concurrent crawling</li>
-								<li>Intelligent robots.txt + sitemap handling</li>
-								<li>Lightweight architecture</li>
+								<li>Direct local processing</li>
+								<li>Expected speed: 100–500 pages/min</li>
 							</ul>
-							<p class="mt-2 font-semibold text-white">Expected speed: 100–500 pages/min</p>
 						</div>
 					{/if}
 				</div>
@@ -225,7 +236,8 @@
 								<li>Prioritizes by severity + impact</li>
 								<li>Groups by URL structure</li>
 								<li>Connects crawl data with GSC/GA4</li>
-								<li>Uses AI to explain root causes (coming soon)</li>
+								<li>Uses AI to explain root causes and provide actionable recommendations</li>
+								<li>Enriches issues with traffic data from Google Search Console</li>
 							</ul>
 						</div>
 					{/if}
