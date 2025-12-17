@@ -74,6 +74,7 @@
         "@fontsource/dm-sans": "^5.2.8",
         "@fontsource/jetbrains-mono": "^5.2.8",
         "@fontsource/sora": "^5.2.8",
+        "@lucide/svelte": "^0.561.0",
         "autoprefixer": "^10.4.21",
         "daisyui": "^5.4.5",
         "lucide-svelte": "^0.552.0",
