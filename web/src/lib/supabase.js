@@ -16,6 +16,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Create Supabase client (will fail gracefully if URL/key are missing)
+// Note: Using 'implicit' flow for email magic links because PKCE requires code_verifier
+// to be in the same browser session, which doesn't work when opening email links
+// in different browsers or after session storage is cleared.
+// For production OAuth flows, PKCE is still recommended, but email magic links
+// work better with implicit flow.
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder-key',
@@ -26,7 +31,8 @@ export const supabase = createClient(
       detectSessionInUrl: true,
       // Don't set a default redirectTo - let it use the current URL
       // This allows magic links to work with hash routing
-      flowType: 'pkce'
+      // Using implicit flow for email magic links (works better than PKCE for email)
+      flowType: 'implicit'
     }
   }
 );

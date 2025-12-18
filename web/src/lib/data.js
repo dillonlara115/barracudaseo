@@ -317,19 +317,27 @@ export async function fetchProjects() {
   }
 }
 
-// Fetch crawls for a project
+// Fetch crawls for a project - use backend API for reliable access
 export async function fetchCrawls(projectId) {
   try {
-    const { data, error } = await supabase
-      .from('crawls')
-      .select('*')
-      .eq('project_id', projectId)
-      .order('started_at', { ascending: false });
-
-    if (error) throw error;
+    const response = await authorizedRequest(`/api/v1/projects/${projectId}/crawls`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+      const errorMessage = errorData.error || `Failed to fetch crawls: ${response.status}`;
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      throw error;
+    }
+    const responseData = await response.json();
+    // Backend returns { crawls: [...], count: ... }, extract the crawls array
+    const data = responseData.crawls || (Array.isArray(responseData) ? responseData : []);
     return { data, error: null };
   } catch (error) {
-    return { data: null, error };
+    console.error('Error fetching crawls:', error);
+    return { 
+      data: null, 
+      error: error instanceof Error ? error : new Error(String(error))
+    };
   }
 }
 
@@ -371,46 +379,47 @@ export async function fetchCrawlPageCount(crawlId) {
   }
 }
 
-// Fetch pages for a crawl
+// Fetch pages for a crawl - use backend API for reliable access
 export async function fetchPages(crawlId) {
   try {
-    const { data, error } = await supabase
-      .from('pages')
-      .select('*')
-      .eq('crawl_id', crawlId)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    
-    // Flatten the data field - merge data.* fields into the top-level page object
-    const flattenedData = (data || []).map(page => {
-      const flattened = { ...page };
-      if (page.data && typeof page.data === 'object') {
-        // Merge data fields into top level
-        Object.assign(flattened, page.data);
-      }
-      return flattened;
-    });
-    
-    return { data: flattenedData, error: null };
+    const response = await authorizedRequest(`/api/v1/crawls/${crawlId}/pages`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+      const errorMessage = errorData.error || `Failed to fetch pages: ${response.status}`;
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      throw error;
+    }
+    const data = await response.json();
+    return { data, error: null };
   } catch (error) {
-    return { data: null, error };
+    console.error('Error fetching pages:', error);
+    return { 
+      data: null, 
+      error: error instanceof Error ? error : new Error(String(error))
+    };
   }
 }
 
-// Fetch issues for a crawl
+// Fetch issues for a crawl - use backend API for reliable access
 export async function fetchIssues(crawlId) {
   try {
-    const { data, error } = await supabase
-      .from('issues')
-      .select('*')
-      .eq('crawl_id', crawlId)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
+    const response = await authorizedRequest(`/api/v1/crawls/${crawlId}/issues`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+      const errorMessage = errorData.error || `Failed to fetch issues: ${response.status}`;
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      throw error;
+    }
+    const data = await response.json();
     return { data, error: null };
   } catch (error) {
-    return { data: null, error };
+    console.error('Error fetching issues:', error);
+    return { 
+      data: null, 
+      error: error instanceof Error ? error : new Error(String(error))
+    };
   }
 }
 

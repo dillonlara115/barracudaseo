@@ -33,10 +33,11 @@ export async function initAuth() {
 // Sign up with magic link (passwordless)
 export async function signUpWithMagicLink(email, displayName = null) {
   try {
-    // For PKCE flow, redirect to /auth/confirm endpoint (not hash route)
-    // App.svelte will convert /auth/confirm to /#/auth/confirm for SPA routing
+    // For implicit flow, redirect to app root (no hash - Supabase will append tokens)
+    // Supabase will redirect to: origin#access_token=...&refresh_token=...
+    // App.svelte will handle tokens and add #/ for SPA routing
     const redirectTo = typeof window !== 'undefined' 
-      ? `${window.location.origin}/auth/confirm`
+      ? window.location.origin
       : undefined;
 
     console.log('🔍 Requesting magic link signup for:', email);
@@ -112,10 +113,11 @@ export async function signUp(email, password, displayName = null) {
 // Sign in with magic link (primary method)
 export async function signInWithMagicLink(email) {
   try {
-    // For PKCE flow, redirect to /auth/confirm endpoint (not hash route)
-    // App.svelte will convert /auth/confirm to /#/auth/confirm for SPA routing
+    // For implicit flow, redirect to app root (no hash - Supabase will append tokens)
+    // Supabase will redirect to: origin#access_token=...&refresh_token=...
+    // App.svelte will handle tokens and add #/ for SPA routing
     const redirectTo = typeof window !== 'undefined' 
-      ? `${window.location.origin}/auth/confirm`
+      ? window.location.origin
       : undefined;
 
     console.log('🔍 Requesting magic link for:', email);

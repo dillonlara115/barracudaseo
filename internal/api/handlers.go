@@ -636,8 +636,9 @@ func (s *Server) handleListProjectCrawls(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
+	// Use serviceRole to bypass RLS since we've already verified access
 	var crawls []map[string]interface{}
-	data, _, err := s.supabase.From("crawls").Select("*", "", false).Eq("project_id", projectID).Order("started_at", nil).Execute()
+	data, _, err := s.serviceRole.From("crawls").Select("*", "", false).Eq("project_id", projectID).Order("started_at", nil).Execute()
 	if err != nil {
 		s.logger.Error("Failed to list project crawls", zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, "Failed to list crawls")
@@ -1444,6 +1445,20 @@ func (s *Server) handleCrawlByID(w http.ResponseWriter, r *http.Request) {
 				s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			}
 			return
+		case "pages":
+			if r.Method == http.MethodGet {
+				s.handleCrawlPages(w, r, crawlID, userID)
+			} else {
+				s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			}
+			return
+		case "issues":
+			if r.Method == http.MethodGet {
+				s.handleCrawlIssues(w, r, crawlID, userID)
+			} else {
+				s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			}
+			return
 		default:
 			s.respondError(w, http.StatusNotFound, fmt.Sprintf("Resource not found: %s", resource))
 			return
@@ -1826,6 +1841,112 @@ func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlI
 	}
 
 	s.respondJSON(w, http.StatusOK, graph)
+}
+
+// handleCrawlPages handles GET /api/v1/crawls/:id/pages - returns all pages for a crawl
+func (s *Server) handleCrawlPages(w http.ResponseWriter, r *http.Request, crawlID string, userID string) {
+	_ = r
+
+	s.logger.Info("Fetching crawl pages", zap.String("crawl_id", crawlID), zap.String("user_id", userID))
+
+	// Verify user has access to this crawl (via project membership)
+	hasAccess, err := s.verifyCrawlAccess(userID, crawlID)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			s.respondError(w, http.StatusNotFound, "Crawl not found")
+		} else {
+			s.logger.Error("Failed to verify crawl access", zap.String("crawl_id", crawlID), zap.String("user_id", userID), zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, "Failed to verify crawl access")
+		}
+		return
+	}
+	if !hasAccess {
+		s.respondError(w, http.StatusForbidden, "You don't have access to this crawl")
+		return
+	}
+
+	// Fetch pages using service role to ensure access
+	var pages []map[string]interface{}
+	data, _, err := s.serviceRole.From("pages").Select("*", "", false).Eq("crawl_id", crawlID).Order("created_at", nil).Execute()
+	if err != nil {
+		s.logger.Error("Failed to fetch pages", zap.String("crawl_id", crawlID), zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to fetch pages")
+		return
+	}
+
+	if err := json.Unmarshal(data, &pages); err != nil {
+		s.logger.Error("Failed to parse pages data", zap.String("crawl_id", crawlID), zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to parse pages")
+		return
+	}
+
+	// Flatten the data field - merge data.* fields into the top-level page object
+	flattenedPages := make([]map[string]interface{}, 0, len(pages))
+	for _, page := range pages {
+		flattened := make(map[string]interface{})
+		for k, v := range page {
+			flattened[k] = v
+		}
+		// Merge data fields into top level if data field exists
+		if dataField, ok := page["data"].(map[string]interface{}); ok {
+			for k, v := range dataField {
+				flattened[k] = v
+			}
+		} else if dataStr, ok := page["data"].(string); ok && dataStr != "" {
+			// Try to parse data field if it's a JSON string
+			var dataField map[string]interface{}
+			if err := json.Unmarshal([]byte(dataStr), &dataField); err == nil {
+				for k, v := range dataField {
+					flattened[k] = v
+				}
+			}
+		}
+		flattenedPages = append(flattenedPages, flattened)
+	}
+
+	s.logger.Info("Fetched crawl pages", zap.String("crawl_id", crawlID), zap.Int("page_count", len(flattenedPages)))
+	s.respondJSON(w, http.StatusOK, flattenedPages)
+}
+
+// handleCrawlIssues handles GET /api/v1/crawls/:id/issues - returns all issues for a crawl
+func (s *Server) handleCrawlIssues(w http.ResponseWriter, r *http.Request, crawlID string, userID string) {
+	_ = r
+
+	s.logger.Info("Fetching crawl issues", zap.String("crawl_id", crawlID), zap.String("user_id", userID))
+
+	// Verify user has access to this crawl (via project membership)
+	hasAccess, err := s.verifyCrawlAccess(userID, crawlID)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			s.respondError(w, http.StatusNotFound, "Crawl not found")
+		} else {
+			s.logger.Error("Failed to verify crawl access", zap.String("crawl_id", crawlID), zap.String("user_id", userID), zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, "Failed to verify crawl access")
+		}
+		return
+	}
+	if !hasAccess {
+		s.respondError(w, http.StatusForbidden, "You don't have access to this crawl")
+		return
+	}
+
+	// Fetch issues using service role to ensure access
+	var issues []map[string]interface{}
+	data, _, err := s.serviceRole.From("issues").Select("*", "", false).Eq("crawl_id", crawlID).Order("created_at", nil).Execute()
+	if err != nil {
+		s.logger.Error("Failed to fetch issues", zap.String("crawl_id", crawlID), zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to fetch issues")
+		return
+	}
+
+	if err := json.Unmarshal(data, &issues); err != nil {
+		s.logger.Error("Failed to parse issues data", zap.String("crawl_id", crawlID), zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to parse issues")
+		return
+	}
+
+	s.logger.Info("Fetched crawl issues", zap.String("crawl_id", crawlID), zap.Int("issue_count", len(issues)))
+	s.respondJSON(w, http.StatusOK, issues)
 }
 
 // getMapKeys returns the keys of a map for logging purposes

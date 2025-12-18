@@ -33,38 +33,65 @@
     console.log('🔍 Hash:', window.location.hash);
     console.log('🔍 Search:', window.location.search);
 
-    // Check if user is already logged in
+    // STEP 1: Check if user is already logged in (App.svelte may have already handled tokens)
     const { data: { session: existingSession } } = await supabase.auth.getSession();
     if (existingSession) {
-      console.log('✅ User already logged in, redirecting...');
-      push('/');
+      console.log('✅ User already logged in (session set by App.svelte), redirecting...');
+      success = true;
+      loading = false;
+      setTimeout(() => {
+        push('/');
+      }, 500);
       return;
     }
 
+    // STEP 2: Check if tokens are in hash (implicit flow - should be handled by App.svelte)
+    const fullHash = window.location.hash;
+    if (fullHash.includes('access_token=')) {
+      console.log('⚠️ Tokens found in hash - App.svelte should handle this');
+      console.log('⏳ Waiting for App.svelte to process tokens...');
+      
+      // Wait a bit for App.svelte to process
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Check again if session was set
+      const { data: { session: sessionAfterWait } } = await supabase.auth.getSession();
+      if (sessionAfterWait) {
+        console.log('✅ Session set by App.svelte, redirecting...');
+        success = true;
+        loading = false;
+        setTimeout(() => {
+          push('/');
+        }, 500);
+        return;
+      } else {
+        console.log('⚠️ Session not set yet, will handle tokens here');
+        // Fall through to handle tokens below
+      }
+    }
+
     try {
-      // Extract token_hash and type from URL
-      // URL format: /#/auth/confirm?token_hash=XXXXX&type=email
+      // Extract parameters from URL
+      // PKCE flow can use either:
+      // - token_hash + type (older format)
+      // - code (newer format)
       const hashParts = window.location.hash.split('?');
       const queryString = hashParts.length > 1 ? hashParts[1] : window.location.search.substring(1);
       const params = new URLSearchParams(queryString);
       
       const tokenHash = params.get('token_hash');
+      const code = params.get('code');
       const type = params.get('type');
 
       console.log('🔍 Token hash:', tokenHash ? 'present' : 'missing');
+      console.log('🔍 Code:', code ? 'present' : 'missing');
       console.log('🔍 Type:', type);
-
-      if (!tokenHash || !type) {
-        throw new Error('Missing token_hash or type parameter in URL');
-      }
 
       // Mark verification as attempted
       verificationAttempted = true;
 
       // Clear URL immediately to prevent re-runs
       window.history.replaceState(null, '', window.location.pathname + '#/');
-
-      console.log('🔄 Verifying OTP with token hash...');
 
       // Wait for SIGNED_IN event to ensure session is fully established
       const signedInPromise = new Promise((resolve, reject) => {
@@ -82,13 +109,73 @@
         });
       });
 
-      // Exchange the token hash for a session (PKCE flow)
-      // Per Supabase docs: https://supabase.com/docs/guides/auth/auth-email-passwordless
-      // verifyOtp automatically sets the session and triggers SIGNED_IN event
-      const { data, error: verifyError } = await supabase.auth.verifyOtp({
-        token_hash: tokenHash,
-        type: type
-      });
+      let data, verifyError;
+
+      // Handle implicit flow tokens in hash (if App.svelte didn't handle them)
+      const urlHash = window.location.hash;
+      if (urlHash.includes('access_token=')) {
+        console.log('🔄 Processing access_token from URL hash (implicit flow)...');
+        // Extract tokens from URL hash
+        // Handle case where hash might be: #/auth/confirm#access_token=... or #access_token=...
+        const hashPart = urlHash.includes('#access_token=') 
+          ? urlHash.substring(urlHash.indexOf('#access_token=') + 1) // Remove leading #
+          : urlHash.substring(urlHash.indexOf('access_token='));
+        
+        const hashParams = new URLSearchParams(hashPart);
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        
+        if (accessToken && refreshToken) {
+          console.log('🔄 Setting session from URL tokens...');
+          const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          
+          if (sessionError) {
+            console.error('🔴 Failed to set session:', sessionError);
+            throw sessionError;
+          }
+          
+          if (sessionData?.session) {
+            console.log('✅ Session set from URL tokens');
+            data = sessionData;
+            verifyError = null;
+          } else {
+            throw new Error('Session was not created from URL tokens');
+          }
+        } else {
+          throw new Error('Missing access_token or refresh_token in URL');
+        }
+      }
+      // Handle code parameter (PKCE flow - shouldn't happen with implicit flow)
+      else if (code) {
+        console.log('⚠️ Code parameter found - this shouldn\'t happen with implicit flow');
+        console.log('🔄 Attempting code exchange (may fail)...');
+        const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        data = exchangeData;
+        verifyError = exchangeError;
+        
+        if (exchangeError) {
+          throw new Error('Code exchange failed. Please request a new magic link.');
+        }
+      }
+      // Handle token_hash + type (older PKCE format)
+      else if (tokenHash && type) {
+        console.log('🔄 Verifying OTP with token hash...');
+        // Exchange the token hash for a session (PKCE flow)
+        // Per Supabase docs: https://supabase.com/docs/guides/auth/auth-email-passwordless
+        // verifyOtp automatically sets the session and triggers SIGNED_IN event
+        const { data: verifyData, error: verifyErr } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: type
+        });
+        data = verifyData;
+        verifyError = verifyErr;
+      }
+      else {
+        throw new Error('Missing code or token_hash+type parameters in URL');
+      }
 
       if (verifyError) {
         console.error('🔴 OTP verification failed:', verifyError);

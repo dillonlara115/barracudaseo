@@ -18,6 +18,7 @@
   let error = null;
   let currentProjectId = null;
   let currentCrawlId = null;
+  let isLoadingData = false;
 
   $: projectId = $params?.projectId || null;
   $: crawlId = $params?.crawlId || null;
@@ -44,7 +45,8 @@
 
   $: if (projectId && crawlId && 
         (projectId !== currentProjectId || crawlId !== currentCrawlId) && 
-        $params?.projectId && $params?.crawlId) {
+        $params?.projectId && $params?.crawlId &&
+        !isLoadingData) {
     currentProjectId = projectId;
     currentCrawlId = crawlId;
     loadData();
@@ -52,8 +54,14 @@
 
   async function loadData() {
     if (!projectId || !crawlId) return;
+    if (isLoadingData) {
+      console.log('CrawlView: loadData already in progress, skipping');
+      return;
+    }
     
+    isLoadingData = true;
     loading = true;
+    error = null;
     try {
       // Load projects
       const { data: projectsData, error: projectsError } = await fetchProjects();
@@ -69,29 +77,72 @@
         return;
       }
 
-      // Load crawls for this project
-      const { data: crawlsData, error: crawlsError } = await fetchCrawls(projectId);
-      if (crawlsError) throw crawlsError;
-      crawls = crawlsData || [];
-
-      // Find selected crawl
-      selectedCrawl = crawls.find(c => c.id === crawlId);
-      if (!selectedCrawl) {
-        error = 'Crawl not found';
+      // Fetch the crawl directly using the backend API (more reliable than searching the list)
+      const { data: crawlData, error: crawlError } = await fetchCrawl(crawlId);
+      if (crawlError) {
+        // If crawl not found, check if it's a 404 or other error
+        if (crawlError.message && crawlError.message.includes('not found')) {
+          error = 'Crawl not found';
+        } else {
+          error = crawlError.message || 'Failed to load crawl';
+        }
         loading = false;
         return;
+      }
+
+      // Verify the crawl belongs to the project
+      if (crawlData.project_id !== projectId) {
+        error = 'Crawl does not belong to this project';
+        loading = false;
+        return;
+      }
+
+      // Set the selected crawl
+      selectedCrawl = crawlData;
+      console.log('CrawlView: Set selectedCrawl', { 
+        id: selectedCrawl.id, 
+        project_id: selectedCrawl.project_id,
+        started_at: selectedCrawl.started_at,
+        total_pages: selectedCrawl.total_pages,
+        total_issues: selectedCrawl.total_issues
+      });
+
+      // Load crawls list for the selector - ensure current crawl is included
+      const { data: crawlsData, error: crawlsError } = await fetchCrawls(projectId);
+      if (!crawlsError && crawlsData) {
+        crawls = crawlsData;
+        console.log('CrawlView: Loaded crawls list', { count: crawls.length, crawlIds: crawls.map(c => c.id) });
+        // Ensure the current crawl is in the list (in case it's not returned yet)
+        const crawlExists = crawls.some(c => c.id === crawlId);
+        if (!crawlExists) {
+          // Add the current crawl to the list so it appears in the selector
+          crawls = [crawlData, ...crawls];
+          console.log('CrawlView: Added current crawl to list');
+        }
+      } else {
+        // If crawls list fails to load, at least show the current crawl
+        crawls = [crawlData];
+        console.log('CrawlView: Crawls list failed, using current crawl only', crawlsError);
       }
 
       // Load crawl data
       await loadCrawlData(crawlId);
     } catch (err) {
+      console.error('CrawlView: Error in loadData', err);
       error = err.message;
       loading = false;
+    } finally {
+      isLoadingData = false;
     }
   }
 
   async function loadCrawlData(crawlId) {
-    if (!crawlId) return;
+    if (!crawlId) {
+      console.error('CrawlView: loadCrawlData called without crawlId');
+      return;
+    }
+
+    console.log('CrawlView: loadCrawlData called', { crawlId });
 
     try {
       // Fetch pages and issues in parallel
@@ -100,11 +151,29 @@
         fetchIssues(crawlId)
       ]);
 
-      if (pagesResult.error) throw pagesResult.error;
-      if (issuesResult.error) throw issuesResult.error;
+      console.log('CrawlView: Fetched pages and issues', {
+        pagesCount: pagesResult.data?.length || 0,
+        pagesError: pagesResult.error?.message,
+        issuesCount: issuesResult.data?.length || 0,
+        issuesError: issuesResult.error?.message
+      });
+
+      if (pagesResult.error) {
+        console.error('CrawlView: Error fetching pages', pagesResult.error);
+        throw pagesResult.error;
+      }
+      if (issuesResult.error) {
+        console.error('CrawlView: Error fetching issues', issuesResult.error);
+        throw issuesResult.error;
+      }
 
       results = pagesResult.data || [];
       const issues = issuesResult.data || [];
+      
+      console.log('CrawlView: Set results and issues', {
+        resultsCount: results.length,
+        issuesCount: issues.length
+      });
 
       // Calculate link statistics from pages
       let totalInternalLinks = 0;
@@ -156,8 +225,15 @@
         summary.issues_by_type[issue.type] = (summary.issues_by_type[issue.type] || 0) + 1;
       });
 
+      console.log('CrawlView: Generated summary', {
+        total_pages: summary.total_pages,
+        total_issues: summary.total_issues,
+        issues_by_type: Object.keys(summary.issues_by_type).length
+      });
+
       loading = false;
     } catch (err) {
+      console.error('CrawlView: Error in loadCrawlData', err);
       error = err.message;
       loading = false;
     }

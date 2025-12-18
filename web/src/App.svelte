@@ -112,15 +112,29 @@
       setInterval(updateHash, 100);
     }
     
-    // Handle PKCE magic link redirect (Supabase redirects to /auth/confirm?token_hash=...)
+    // STEP 1: Handle /auth/confirm path redirect (legacy PKCE support)
     // Convert regular path to hash route for SPA routing
-    if (window.location.pathname === '/auth/confirm' && window.location.search) {
+    // This is only needed if someone uses PKCE flow with token_hash
+    if (window.location.pathname === '/auth/confirm') {
       const queryParams = window.location.search;
-      console.log('🔍 PKCE redirect detected - converting to hash route');
-      console.log('🔍 Query params:', queryParams);
-      // Convert /auth/confirm?token_hash=... to /#/auth/confirm?token_hash=...
-      window.location.replace(`${window.location.origin}/#/auth/confirm${queryParams}`);
-      return; // Exit early, let the redirect happen
+      const hashParams = window.location.hash;
+      
+      if (queryParams) {
+        console.log('🔍 Converting /auth/confirm path with query params to hash route');
+        // Convert /auth/confirm?token_hash=... to /#/auth/confirm?token_hash=...
+        window.location.replace(`${window.location.origin}/#/auth/confirm${queryParams}`);
+        return; // Exit early, let the redirect happen
+      } else if (hashParams && hashParams.includes('access_token=')) {
+        // If tokens are in hash, extract them and redirect to root
+        console.log('🔍 Converting /auth/confirm path - extracting tokens to root');
+        // Extract tokens and redirect to root where App.svelte will handle them
+        window.location.replace(`${window.location.origin}/#/${hashParams.substring(1)}`);
+        return;
+      } else {
+        // No params, redirect to root
+        window.location.replace(`${window.location.origin}/#/`);
+        return;
+      }
     }
     
     // Fix double hash issue if present (e.g., #/#/billing -> #/billing)
@@ -130,13 +144,10 @@
       console.log('Auto-fixed hash from #/#/ to:', fixedHash);
     }
     
-    // Check for auth callback (magic link, email confirmation, password reset)
+    // STEP 2: Check for auth callback tokens in hash (implicit flow)
     // Magic links use URL fragments: #access_token=...&refresh_token=...&type=magiclink
-    // They can appear in different formats:
-    // 1. Direct: https://app.barracudaseo.com#access_token=...
-    // 2. With hash route: https://app.barracudaseo.com/#/#access_token=...
-    // 3. With path: https://app.barracudaseo.com/#/some-path#access_token=...
-    
+    // Supabase redirects to: origin#access_token=... (no hash route initially)
+    // They can appear as: #access_token=... or #/#access_token=... or #/route#access_token=...
     const fullHash = window.location.hash;
     console.log('Full URL hash:', fullHash || '<empty string>');
     console.log('Full URL pathname:', window.location.pathname);
@@ -146,14 +157,30 @@
     let authParams = new URLSearchParams();
     let hasAuthToken = false;
     
-    // Check if hash contains access_token
+    // Check if hash contains access_token (implicit flow)
     if (fullHash.includes('access_token=')) {
-      // Find the auth token portion (everything after the last # or first access_token)
+      // Find the auth token portion
+      // Handle cases like: 
+      // - #access_token=... (direct from Supabase)
+      // - #/#access_token=... (double hash)
+      // - #/route#access_token=... (route + tokens)
       const accessTokenIndex = fullHash.indexOf('access_token=');
-      const authFragment = fullHash.substring(accessTokenIndex);
+      
+      // Extract everything from access_token onwards
+      let authFragment;
+      if (accessTokenIndex > 0 && fullHash[accessTokenIndex - 1] === '#') {
+        // Case: #/route#access_token=... - extract from the second #
+        authFragment = fullHash.substring(accessTokenIndex - 1);
+        // Remove the leading # to make it a proper fragment
+        authFragment = authFragment.substring(1);
+      } else {
+        // Case: #access_token=... - extract from access_token
+        authFragment = fullHash.substring(accessTokenIndex);
+      }
+      
       authParams = new URLSearchParams(authFragment);
       hasAuthToken = true;
-      console.log('Found auth token in URL');
+      console.log('✅ Found auth token in URL');
     }
     
     if (hasAuthToken) {
@@ -166,6 +193,7 @@
       if (accessToken && refreshToken) {
         try {
           // Set the session using tokens from magic link
+          console.log('🔄 Setting session from magic link tokens...');
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
@@ -174,11 +202,26 @@
           if (error) {
             console.error('Auth callback error:', error);
           } else {
-            console.log('Magic link session set successfully:', data);
-            // Clean up URL and redirect to dashboard
-            window.history.replaceState(null, '', window.location.pathname + '#/');
-            // Force reload to ensure app state is fresh
+            console.log('✅ Magic link session set successfully:', data);
+            
+            // STEP 3: Wait for session to be fully established and propagated
+            // Give Supabase time to persist the session and update all stores
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Verify session is actually set
+            const { data: { session: verifySession } } = await supabase.auth.getSession();
+            if (!verifySession) {
+              console.error('⚠️ Session was not persisted after setSession');
+            } else {
+              console.log('✅ Session verified and persisted');
+            }
+            
+            // Clean up URL - remove tokens, redirect to dashboard
+            // After setting session, redirect to app root with clean hash
+            window.history.replaceState(null, '', window.location.pathname);
             window.location.hash = '#/';
+            
+            // Don't return here - let initAuth() run to ensure everything is synced
           }
         } catch (err) {
           console.error('Failed to set session:', err);
@@ -186,7 +229,7 @@
       }
     }
 
-    // Initialize auth
+    // STEP 3: Initialize auth (this will sync the session state)
     await initAuth();
 
     // React to auth state changes
@@ -245,6 +288,8 @@
         }, 2000); // Increased delay to 2 seconds to allow token refresh to complete
       } else {
         // Load subscription data when user is authenticated
+        // Add a small delay to ensure session is fully propagated before making API calls
+        await new Promise(resolve => setTimeout(resolve, 200));
         await loadSubscriptionData();
         
         // If user just authenticated and is on /auth route, check for invite token and redirect
