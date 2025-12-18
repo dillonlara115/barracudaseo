@@ -196,6 +196,9 @@
     }
   }
 
+  // Alias for consistency
+  const openBillingPortal = openCustomerPortal;
+
   async function handleRedeemCode() {
     if (!$user || !redeemCode.trim()) return;
     
@@ -400,9 +403,9 @@
           <div class="space-y-4">
             <!-- Current Email Display -->
             <div>
-              <label class="label">
+              <div class="label">
                 <span class="label-text font-semibold">Current Email</span>
-              </label>
+              </div>
               <div class="flex items-center gap-2">
                 <input 
                   type="email" 
@@ -444,10 +447,11 @@
 
                 <div class="space-y-4">
                   <div>
-                    <label class="label">
+                    <label class="label" for="new-email">
                       <span class="label-text font-semibold">New Email Address</span>
                     </label>
                     <input 
+                      id="new-email"
                       type="email" 
                       placeholder="Enter new email address"
                       class="input input-bordered w-full"
@@ -457,22 +461,23 @@
                   </div>
 
                   <div>
-                    <label class="label">
+                    <label class="label" for="password-for-email-change">
                       <span class="label-text font-semibold">Confirm Password</span>
                       <span class="label-text-alt">Required to change email</span>
                     </label>
                     <input 
+                      id="password-for-email-change"
                       type="password" 
                       placeholder="Enter your password"
                       class="input input-bordered w-full"
                       bind:value={passwordForEmailChange}
                       disabled={updatingEmail}
                     />
-                    <label class="label">
+                    <div class="label">
                       <span class="label-text-alt text-base-content/60">
                         For security, you'll need to confirm the change via email on both your old and new email addresses.
                       </span>
-                    </label>
+                    </div>
                   </div>
 
                   <button 
@@ -704,12 +709,13 @@
             <!-- Team Seats Selection -->
             {#if STRIPE_PRICE_ID_TEAM_SEAT}
               <div class="mb-4 p-4 border border-base-300 rounded-lg">
-                <label class="label">
+                <label class="label" for="team-seats-quantity">
                   <span class="label-text font-semibold">Additional Team Seats</span>
                   <span class="label-text-alt">$5/month each</span>
                 </label>
                 <div class="flex items-center gap-4 mt-2">
                   <input 
+                    id="team-seats-quantity"
                     type="number" 
                     min="0" 
                     max="20" 
@@ -774,18 +780,18 @@
                 <div class="form-control pt-2 gap-4">
                   <!-- Team Size Input -->
                   <div class="form-control w-full">
-                    <label class="label">
+                    <label class="label" for="redeem-team-size">
                       <span class="label-text">Team Size (Optional)</span>
                       <span class="label-text-alt">Max 10 for Beta</span>
                     </label>
                     <div class="join">
                       <button class="btn join-item" on:click={() => redeemTeamSize = Math.max(1, redeemTeamSize - 1)}>-</button>
-                      <input type="number" min="1" max="10" bind:value={redeemTeamSize} class="input input-bordered join-item w-full text-center" />
+                      <input id="redeem-team-size" type="number" min="1" max="10" bind:value={redeemTeamSize} class="input input-bordered join-item w-full text-center" />
                       <button class="btn join-item" on:click={() => redeemTeamSize = Math.min(10, redeemTeamSize + 1)}>+</button>
                     </div>
-                    <label class="label">
+                    <div class="label">
                       <span class="label-text-alt">Includes {redeemTeamSize} user{redeemTeamSize > 1 ? 's' : ''}</span>
-                    </label>
+                    </div>
                   </div>
 
                   <div class="join w-full">
@@ -808,9 +814,9 @@
                     </button>
                   </div>
                   {#if redeemError}
-                    <label class="label">
+                    <div class="label">
                       <span class="label-text-alt text-error">{redeemError}</span>
-                    </label>
+                    </div>
                   {/if}
                 </div>
               </div>
@@ -839,7 +845,7 @@
         
         <div class="form-control gap-4">
           <div>
-            <label class="label">
+            <label class="label" for="beta-team-size">
               <span class="label-text">New Team Size</span>
               {#if profile?.team_size}
                 <span class="label-text-alt">Current: {profile.team_size}</span>
@@ -847,16 +853,17 @@
             </label>
             <div class="join w-full">
               <button class="btn join-item" on:click={() => redeemTeamSize = Math.max(1, redeemTeamSize - 1)}>-</button>
-              <input type="number" min="1" max="10" bind:value={redeemTeamSize} class="input input-bordered join-item w-full text-center" />
+              <input id="beta-team-size" type="number" min="1" max="10" bind:value={redeemTeamSize} class="input input-bordered join-item w-full text-center" />
               <button class="btn join-item" on:click={() => redeemTeamSize = Math.min(10, redeemTeamSize + 1)}>+</button>
             </div>
           </div>
 
           <div>
-            <label class="label">
+            <label class="label" for="beta-invite-code">
               <span class="label-text">Beta Invite Code</span>
             </label>
             <input 
+              id="beta-invite-code"
               type="text" 
               placeholder="Enter code to confirm" 
               class="input input-bordered w-full"

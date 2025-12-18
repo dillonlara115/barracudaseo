@@ -216,10 +216,11 @@
       <h3 class="font-bold text-lg mb-4">Create Public Report</h3>
       
       <div class="form-control mb-4">
-        <label class="label">
+        <label class="label" for="report-title">
           <span class="label-text">Report Title</span>
         </label>
         <input
+          id="report-title"
           type="text"
           class="input input-bordered"
           bind:value={formData.title}
@@ -228,10 +229,11 @@
       </div>
 
       <div class="form-control mb-4">
-        <label class="label">
+        <label class="label" for="report-description">
           <span class="label-text">Description (Optional)</span>
         </label>
         <textarea
+          id="report-description"
           class="textarea textarea-bordered"
           bind:value={formData.description}
           placeholder="Add a description for this report..."
@@ -240,34 +242,36 @@
       </div>
 
       <div class="form-control mb-4">
-        <label class="label">
+        <label class="label" for="report-password">
           <span class="label-text">Password Protection (Optional)</span>
         </label>
         <input
+          id="report-password"
           type="password"
           class="input input-bordered"
           bind:value={formData.password}
           placeholder="Leave empty for no password"
         />
-        <label class="label">
+        <div class="label">
           <span class="label-text-alt">Clients will need this password to view the report</span>
-        </label>
+        </div>
       </div>
 
       <div class="form-control mb-4">
-        <label class="label">
+        <label class="label" for="report-expires">
           <span class="label-text">Expires In (Days, Optional)</span>
         </label>
         <input
+          id="report-expires"
           type="number"
           class="input input-bordered"
           bind:value={formData.expiresInDays}
           placeholder="e.g., 30 (leave empty for no expiry)"
           min="1"
         />
-        <label class="label">
+        <div class="label">
           <span class="label-text-alt">Report will automatically expire after this many days</span>
-        </label>
+        </div>
       </div>
 
       <div class="modal-action">
@@ -294,7 +298,14 @@
         </button>
       </div>
     </div>
-    <div class="modal-backdrop" on:click={() => showCreateModal = false}></div>
+    <div 
+      class="modal-backdrop" 
+      role="button"
+      tabindex="0"
+      on:click={() => showCreateModal = false}
+      on:keydown={(e) => e.key === 'Enter' || e.key === ' ' ? showCreateModal = false : null}
+      aria-label="Close report generator"
+    ></div>
   </div>
 {/if}
 

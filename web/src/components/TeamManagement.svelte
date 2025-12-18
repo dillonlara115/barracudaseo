@@ -372,19 +372,20 @@
       <h3 class="font-bold text-lg mb-4">Invite Team Member</h3>
       
       <div class="form-control w-full">
-        <label class="label">
+        <label class="label" for="invite-email">
           <span class="label-text">Email Address</span>
         </label>
         <input 
+          id="invite-email"
           type="email" 
           placeholder="colleague@example.com" 
           class="input input-bordered w-full"
           bind:value={inviteEmail}
           disabled={inviting}
         />
-        <label class="label">
+        <div class="label">
           <span class="label-text-alt">They'll receive an invite link to join your team.</span>
-        </label>
+        </div>
       </div>
 
       {#if inviteError}
@@ -402,13 +403,13 @@
       {/if}
 
       <div class="modal-action">
-        <label 
-          for="invite-modal" 
+        <button 
+          type="button"
           class="btn"
           on:click={() => { showInviteModal = false; inviteEmail = ''; inviteError = null; }}
         >
           Cancel
-        </label>
+        </button>
         <button 
           class="btn btn-primary" 
           on:click={inviteMember}

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CheckCircle2, Clock, Rocket, Target, Sparkles, Zap, Github, MessageSquare, ExternalLink } from 'lucide-svelte';
+	import { CircleCheck, Clock, Rocket, Target, Sparkles, Zap, Github, MessageSquare, ExternalLink } from '@lucide/svelte';
 </script>
 
 <svelte:head>
@@ -27,7 +27,7 @@
 		<div class="max-w-6xl mx-auto">
 			<div class="flex items-center gap-4 mb-8">
 				<div class="p-3 bg-[#8ec07c]/10 rounded-lg">
-					<CheckCircle2 class="w-8 h-8 text-[#8ec07c]" />
+					<CircleCheck class="w-8 h-8 text-[#8ec07c]" />
 				</div>
 				<h2 class="text-4xl md:text-5xl font-heading font-bold text-white">Completed Milestones</h2>
 			</div>
@@ -38,25 +38,25 @@
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Supabase backend with RLS</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Cloud Run API server</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">SvelteKit app deployed to Vercel</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Production environment variables & secrets configured</span>
 						</div>
 					</div>
@@ -69,31 +69,31 @@
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Website crawler</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Google Search Console integration</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Project workspace system</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Team accounts + invites</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Billing + Stripe integration</span>
 						</div>
 					</div>
@@ -106,25 +106,25 @@
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Local crawling</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Exporting results (CSV, JSON)</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Optional cloud upload</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Embedded dashboard (serve command)</span>
 						</div>
 					</div>
@@ -137,73 +137,73 @@
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Project overview pages</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Crawl history</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Issue management interface</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Page-level detail views</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Link graph visualization</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">GSC overlays inside UI</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">AI insights with GSC data integration</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Public-facing client reports</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">HTML report generator</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">AI executive summaries</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Dedicated Crawls & Audits management page</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Improved navigation and UX with page descriptions</span>
 						</div>
 					</div>
@@ -216,37 +216,37 @@
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">SERP data integration for rank tracking</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Keyword rank tracking with historical snapshots</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Ranked keywords discovery (reverse lookup)</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Impact-First View (pages ranking with issues)</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Scheduled keyword checks</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Position trend tracking and visualization</span>
 						</div>
 					</div>
@@ -259,31 +259,31 @@
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Updated feature descriptions</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">New visual direction to match the app</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">SEO-optimized landing pages</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Pricing, features, and signup funnels</span>
 						</div>
 					</div>
 					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
 						<div class="flex items-start gap-3">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Product roadmap page</span>
 						</div>
 					</div>

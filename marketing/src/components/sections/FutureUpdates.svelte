@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Rocket, Sparkles, Zap, ArrowRight, TrendingUp } from 'lucide-svelte';
+	import { Rocket, Sparkles, Zap, ArrowRight, TrendingUp } from '@lucide/svelte';
 </script>
 
 <section class="py-20 bg-[#2d2826]">

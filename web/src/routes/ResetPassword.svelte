@@ -100,10 +100,11 @@
 
         <form class="space-y-4" on:submit|preventDefault={handleReset}>
           <div class="form-control">
-            <label class="label">
+            <label class="label" for="new-password">
               <span class="label-text">New password</span>
             </label>
             <input
+              id="new-password"
               type="password"
               class="input input-bordered w-full"
               bind:value={password}
@@ -113,10 +114,11 @@
             />
           </div>
           <div class="form-control">
-            <label class="label">
+            <label class="label" for="confirm-password">
               <span class="label-text">Confirm password</span>
             </label>
             <input
+              id="confirm-password"
               type="password"
               class="input input-bordered w-full"
               bind:value={confirmPassword}

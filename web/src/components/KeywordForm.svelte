@@ -128,10 +128,11 @@
     <form on:submit|preventDefault={handleSubmit}>
       <div class="space-y-4">
         <div class="form-control">
-          <label class="label">
+          <label class="label" for="keyword-input">
             <span class="label-text">Keyword *</span>
           </label>
           <input
+            id="keyword-input"
             type="text"
             class="input input-bordered w-full"
             placeholder="e.g., best singing bowls"
@@ -141,26 +142,27 @@
         </div>
 
         <div class="form-control">
-          <label class="label">
+          <label class="label" for="target-url-input">
             <span class="label-text">Target URL (optional)</span>
           </label>
           <input
+            id="target-url-input"
             type="url"
             class="input input-bordered w-full"
             placeholder="https://example.com/page"
             bind:value={formData.target_url}
           />
-          <label class="label">
+          <div class="label">
             <span class="label-text-alt">The URL you want to rank for this keyword</span>
-          </label>
+          </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div class="form-control">
-            <label class="label">
+            <label class="label" for="location-select">
               <span class="label-text">Location *</span>
             </label>
-            <select class="select select-bordered w-full" bind:value={formData.location_name} required>
+            <select id="location-select" class="select select-bordered w-full" bind:value={formData.location_name} required>
               {#each commonLocations as location}
                 <option value={location}>{location}</option>
               {/each}
@@ -168,10 +170,10 @@
           </div>
 
           <div class="form-control">
-            <label class="label">
+            <label class="label" for="language-select">
               <span class="label-text">Language</span>
             </label>
-            <select class="select select-bordered w-full" bind:value={formData.language_name}>
+            <select id="language-select" class="select select-bordered w-full" bind:value={formData.language_name}>
               <option value="English">English</option>
               <option value="Spanish">Spanish</option>
               <option value="French">French</option>
@@ -187,20 +189,20 @@
 
         <div class="grid grid-cols-2 gap-4">
           <div class="form-control">
-            <label class="label">
+            <label class="label" for="device-select">
               <span class="label-text">Device</span>
             </label>
-            <select class="select select-bordered w-full" bind:value={formData.device}>
+            <select id="device-select" class="select select-bordered w-full" bind:value={formData.device}>
               <option value="desktop">Desktop</option>
               <option value="mobile">Mobile</option>
             </select>
           </div>
 
           <div class="form-control">
-            <label class="label">
+            <label class="label" for="search-engine-select">
               <span class="label-text">Search Engine</span>
             </label>
-            <select class="select select-bordered w-full" bind:value={formData.search_engine}>
+            <select id="search-engine-select" class="select select-bordered w-full" bind:value={formData.search_engine}>
               <option value="google.com">Google</option>
               <option value="google.co.uk">Google UK</option>
               <option value="google.ca">Google Canada</option>
@@ -210,21 +212,21 @@
         </div>
 
         <div class="form-control">
-          <label class="label">
+          <label class="label" for="check-frequency-select">
             <span class="label-text">Check Frequency</span>
           </label>
-          <select class="select select-bordered w-full" bind:value={formData.check_frequency}>
+          <select id="check-frequency-select" class="select select-bordered w-full" bind:value={formData.check_frequency}>
             <option value="manual">Manual (check when you click "Check Now")</option>
             <option value="daily">Daily (automatic daily checks)</option>
             <option value="weekly">Weekly (automatic weekly checks)</option>
           </select>
-          <label class="label">
+          <div class="label">
             <span class="label-text-alt">Scheduled checks run automatically via cron job</span>
-          </label>
+          </div>
         </div>
 
         <div class="form-control">
-          <label class="label">
+          <label class="label" for="tags-input">
             <span class="label-text">Tags (optional)</span>
           </label>
           <div class="flex gap-2 mb-2">
@@ -269,6 +271,13 @@
       </div>
     </form>
   </div>
-  <div class="modal-backdrop" on:click={() => dispatch('close')}></div>
+  <div 
+    class="modal-backdrop" 
+    role="button"
+    tabindex="0"
+    on:click={() => dispatch('close')}
+    on:keydown={(e) => e.key === 'Enter' || e.key === ' ' ? dispatch('close') : null}
+    aria-label="Close keyword form"
+  ></div>
 </div>
 

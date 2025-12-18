@@ -181,10 +181,11 @@
       <div class="card-body">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="form-control">
-            <label class="label">
+            <label class="label" for="gsc-search-query">
               <span class="label-text">Search Pages or Keywords</span>
             </label>
             <input
+              id="gsc-search-query"
               type="text"
               placeholder="Search..."
               class="input input-bordered w-full"
@@ -192,20 +193,20 @@
             />
           </div>
           <div class="form-control">
-            <label class="label">
+            <label class="label" for="gsc-sort-by">
               <span class="label-text">Sort By</span>
             </label>
-            <select class="select select-bordered w-full" bind:value={sortBy}>
+            <select id="gsc-sort-by" class="select select-bordered w-full" bind:value={sortBy}>
               <option value="impressions">Page Impressions</option>
               <option value="clicks">Page Clicks</option>
               <option value="query_count">Keyword Count</option>
             </select>
           </div>
           <div class="form-control">
-            <label class="label">
+            <label class="label" for="gsc-sort-order">
               <span class="label-text">Order</span>
             </label>
-            <select class="select select-bordered w-full" bind:value={sortOrder}>
+            <select id="gsc-sort-order" class="select select-bordered w-full" bind:value={sortOrder}>
               <option value="desc">Descending</option>
               <option value="asc">Ascending</option>
             </select>

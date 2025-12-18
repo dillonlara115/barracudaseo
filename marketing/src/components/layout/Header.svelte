@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import Logo from '../Logo.svelte';
-	import { ChevronDown } from 'lucide-svelte';
+	import { ChevronDown } from '@lucide/svelte';
 
 	let mobileMenuOpen = $state(false);
 	let useCasesDropdownOpen = $state(false);

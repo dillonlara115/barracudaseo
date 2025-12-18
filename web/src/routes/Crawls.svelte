@@ -119,7 +119,10 @@
     return badges[status] || 'badge-ghost';
   }
 
-  function viewCrawl(crawl) {
+  function viewCrawl(crawl, event) {
+    if (event) {
+      event.stopPropagation();
+    }
     push(`/project/${projectId}/crawl/${crawl.id}`);
   }
 
@@ -280,10 +283,10 @@
                       {/if}
                     </td>
                     <td>
-                      <div class="flex items-center gap-2" on:click|stopPropagation>
+                      <div class="flex items-center gap-2">
                         <button
                           class="btn btn-ghost btn-xs"
-                          on:click={() => viewCrawl(crawl)}
+                          on:click={(e) => viewCrawl(crawl, e)}
                           title="View crawl"
                         >
                           <Eye class="w-4 h-4" />
@@ -340,7 +343,14 @@
         </button>
       </div>
     </div>
-    <div class="modal-backdrop" on:click={cancelDelete}></div>
+    <div 
+      class="modal-backdrop" 
+      role="button"
+      tabindex="0"
+      on:click={cancelDelete}
+      on:keydown={(e) => e.key === 'Enter' || e.key === ' ' ? cancelDelete() : null}
+      aria-label="Close delete confirmation"
+    ></div>
   </div>
 {/if}
 

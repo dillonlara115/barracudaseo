@@ -292,6 +292,13 @@
       {/if}
     {/if}
   </div>
-  <div class="modal-backdrop" on:click={() => dispatch('close')}></div>
+  <div 
+    class="modal-backdrop" 
+    role="button"
+    tabindex="0"
+    on:click={() => dispatch('close')}
+    on:keydown={(e) => e.key === 'Enter' || e.key === ' ' ? dispatch('close') : null}
+    aria-label="Close keyword details"
+  ></div>
 </div>
 

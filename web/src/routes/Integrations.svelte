@@ -216,19 +216,20 @@
         {:else}
           <div class="space-y-4">
             <div class="form-control">
-              <label class="label">
+              <label class="label" for="openai-api-key">
                 <span class="label-text">Your OpenAI API Key</span>
               </label>
               <input
+                id="openai-api-key"
                 type="password"
                 placeholder="sk-..."
                 class="input input-bordered"
                 bind:value={openaiApiKey}
                 disabled={savingOpenAIKey}
               />
-              <label class="label">
+              <div class="label">
                 <span class="label-text-alt">Your key is encrypted and stored securely. Leave empty to use the app-wide key.</span>
-              </label>
+              </div>
             </div>
             
             {#if openaiError}

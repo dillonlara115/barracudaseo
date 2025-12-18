@@ -1,28 +1,11 @@
 <script>
   import { onMount } from 'svelte';
   import Router, { link, push } from 'svelte-spa-router';
+  import { wrap } from 'svelte-spa-router/wrap';
   import { initAuth, user, authEvent, session } from './lib/auth.js';
   import { supabase } from './lib/supabase.js';
   import Auth from './components/Auth.svelte';
   import ConfigError from './components/ConfigError.svelte';
-  import ProjectsList from './routes/ProjectsList.svelte';
-  import ProjectView from './routes/ProjectView.svelte';
-  import CrawlView from './routes/CrawlView.svelte';
-  import IntegrationsProtected from './routes/IntegrationsProtected.svelte';
-  import Settings from './routes/Settings.svelte';
-  import Billing from './routes/Billing.svelte';
-  import PrivacyPolicy from './routes/PrivacyPolicy.svelte';
-  import TermsOfService from './routes/TermsOfService.svelte';
-  import GSCDashboard from './routes/GSCDashboard.svelte';
-  import GSCKeywords from './routes/GSCKeywords.svelte';
-  import TeamAccept from './routes/TeamAccept.svelte';
-  import PublicReportView from './routes/PublicReportView.svelte';
-  import RankTracker from './routes/RankTracker.svelte';
-  import ImpactFirstView from './routes/ImpactFirstView.svelte';
-  import DiscoverKeywords from './routes/DiscoverKeywords.svelte';
-  import Crawls from './routes/Crawls.svelte';
-  import ResetPassword from './routes/ResetPassword.svelte';
-  import AuthConfirm from './routes/AuthConfirm.svelte';
   import { loadSubscriptionData } from './lib/subscription.js';
 
   let loading = true;
@@ -32,28 +15,67 @@
   $: isLegalPage = currentHash === '#/privacy' || currentHash === '#/terms';
   $: isPublicPage = isLegalPage || currentHash.startsWith('#/team/accept') || currentHash.startsWith('#/reports/') || currentHash.startsWith('#/auth/confirm');
 
-  // Route definitions
+  // Route definitions with dynamic imports (code splitting)
+  // Using wrap() for proper async component loading
   const routes = {
-    '/': ProjectsList,
-    '/project/:id': ProjectView,
-    '/project/:projectId/crawl/:crawlId': CrawlView,
-    '/project/:projectId/settings': Settings,
-    '/integrations': IntegrationsProtected,
-    '/billing': Billing,
-    '/settings': Billing, // Alias for billing
-    '/privacy': PrivacyPolicy,
-    '/terms': TermsOfService,
-    '/project/:projectId/gsc': GSCDashboard,
-    '/project/:projectId/gsc/keywords': GSCKeywords,
-    '/project/:projectId/rank-tracker': RankTracker,
-    '/project/:projectId/discover-keywords': DiscoverKeywords,
-    '/project/:projectId/impact-first': ImpactFirstView,
-    '/project/:projectId/crawls': Crawls,
-    '/team/accept': TeamAccept,
-    '/reports/:token': PublicReportView,
-    '/auth': Auth, // Auth route for when user is authenticated but needs to redirect
-    '/auth/confirm': AuthConfirm, // PKCE magic link verification endpoint
-    '/reset': ResetPassword, // Password reset flow after Supabase recovery email
+    '/': wrap({
+      asyncComponent: () => import('./routes/ProjectsList.svelte')
+    }),
+    '/project/:id': wrap({
+      asyncComponent: () => import('./routes/ProjectView.svelte')
+    }),
+    '/project/:projectId/crawl/:crawlId': wrap({
+      asyncComponent: () => import('./routes/CrawlView.svelte')
+    }),
+    '/project/:projectId/settings': wrap({
+      asyncComponent: () => import('./routes/Settings.svelte')
+    }),
+    '/integrations': wrap({
+      asyncComponent: () => import('./routes/IntegrationsProtected.svelte')
+    }),
+    '/billing': wrap({
+      asyncComponent: () => import('./routes/Billing.svelte')
+    }),
+    '/settings': wrap({
+      asyncComponent: () => import('./routes/Billing.svelte') // Alias for billing
+    }),
+    '/privacy': wrap({
+      asyncComponent: () => import('./routes/PrivacyPolicy.svelte')
+    }),
+    '/terms': wrap({
+      asyncComponent: () => import('./routes/TermsOfService.svelte')
+    }),
+    '/project/:projectId/gsc': wrap({
+      asyncComponent: () => import('./routes/GSCDashboard.svelte')
+    }),
+    '/project/:projectId/gsc/keywords': wrap({
+      asyncComponent: () => import('./routes/GSCKeywords.svelte')
+    }),
+    '/project/:projectId/rank-tracker': wrap({
+      asyncComponent: () => import('./routes/RankTracker.svelte')
+    }),
+    '/project/:projectId/discover-keywords': wrap({
+      asyncComponent: () => import('./routes/DiscoverKeywords.svelte')
+    }),
+    '/project/:projectId/impact-first': wrap({
+      asyncComponent: () => import('./routes/ImpactFirstView.svelte')
+    }),
+    '/project/:projectId/crawls': wrap({
+      asyncComponent: () => import('./routes/Crawls.svelte')
+    }),
+    '/team/accept': wrap({
+      asyncComponent: () => import('./routes/TeamAccept.svelte')
+    }),
+    '/reports/:token': wrap({
+      asyncComponent: () => import('./routes/PublicReportView.svelte')
+    }),
+    '/auth': Auth, // Auth route - keep static as it's needed immediately
+    '/auth/confirm': wrap({
+      asyncComponent: () => import('./routes/AuthConfirm.svelte') // PKCE magic link verification endpoint
+    }),
+    '/reset': wrap({
+      asyncComponent: () => import('./routes/ResetPassword.svelte') // Password reset flow after Supabase recovery email
+    }),
   };
 
   // Check Supabase configuration

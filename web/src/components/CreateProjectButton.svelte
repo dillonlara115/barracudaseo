@@ -98,10 +98,11 @@
       {/if}
 
       <div class="form-control w-full mb-4">
-        <label class="label">
+        <label class="label" for="project-name">
           <span class="label-text text-base-content">Project Name</span>
         </label>
         <input
+          id="project-name"
           type="text"
           placeholder="My Website"
           class="input input-bordered w-full bg-base-200 text-base-content placeholder-gray-500 border-base-300 focus:border-primary"
@@ -110,18 +111,19 @@
       </div>
 
       <div class="form-control w-full mb-4">
-        <label class="label">
+        <label class="label" for="starting-url">
           <span class="label-text text-base-content">Starting URL</span>
         </label>
         <input
+          id="starting-url"
           type="url"
           placeholder="https://example.com"
           class="input input-bordered w-full bg-base-200 text-base-content placeholder-gray-500 border-base-300 focus:border-primary"
           bind:value={newProjectUrl}
         />
-        <label class="label">
+        <div class="label">
           <span class="label-text-alt text-base-content opacity-70">The domain will be automatically extracted from this URL</span>
-        </label>
+        </div>
       </div>
 
       <div class="modal-action">

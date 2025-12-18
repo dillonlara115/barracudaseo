@@ -21,9 +21,9 @@
 
 <div class="mb-4">
   <div class="flex items-center justify-between mb-2">
-    <label class="label py-0">
+    <div class="label py-0">
       <span class="label-text text-base-content font-semibold">Select Crawl:</span>
-    </label>
+    </div>
     {#if projectId && crawls.length > 0}
       <a 
         href="/project/{projectId}/crawls" 

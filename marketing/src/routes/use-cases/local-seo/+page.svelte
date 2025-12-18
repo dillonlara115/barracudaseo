@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { MapPin, Search, Target, TrendingUp, CheckCircle2, HelpCircle, ArrowRight } from 'lucide-svelte';
+	import { MapPin, Search, Target, TrendingUp, CircleCheck, CircleQuestionMark, ArrowRight } from '@lucide/svelte';
 </script>
 
 <svelte:head>
@@ -55,15 +55,15 @@
 					</p>
 					<ul class="space-y-2 text-white/70">
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Detect missing or inconsistent location data</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Identify duplicate location pages</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Verify schema markup implementation</span>
 						</li>
 					</ul>
@@ -81,15 +81,15 @@
 					</p>
 					<ul class="space-y-2 text-white/70">
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Page speed optimization for mobile users</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Mobile-friendly markup validation</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Click-to-call and map integration checks</span>
 						</li>
 					</ul>
@@ -107,15 +107,15 @@
 					</p>
 					<ul class="space-y-2 text-white/70">
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>GSC integration for local search insights</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Track local keyword performance</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Identify high-opportunity local pages</span>
 						</li>
 					</ul>
@@ -133,15 +133,15 @@
 					</p>
 					<ul class="space-y-2 text-white/70">
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>NAP consistency across all pages</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Local business schema validation</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Hours of operation and service area checks</span>
 						</li>
 					</ul>
@@ -232,7 +232,7 @@
 		<div class="max-w-4xl mx-auto">
 			<div class="flex items-center justify-center gap-4 mb-8">
 				<div class="p-3 bg-[#8ec07c]/10 rounded-lg">
-					<HelpCircle class="w-8 h-8 text-[#8ec07c]" />
+					<CircleQuestionMark class="w-8 h-8 text-[#8ec07c]" />
 				</div>
 				<h2 class="text-4xl md:text-5xl font-heading font-bold text-white">
 					Local SEO FAQs

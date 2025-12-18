@@ -248,59 +248,59 @@
 {/if}
 
 <style>
-  .prose {
+  :global(.prose) {
     color: inherit;
   }
-  .prose p {
+  :global(.prose p) {
     margin-top: 0.75em;
     margin-bottom: 0.75em;
     line-height: 1.6;
   }
   /* DaisyUI heading styles */
-  .prose h1 {
+  :global(.prose h1) {
     @apply text-3xl font-bold mb-4 mt-6;
   }
-  .prose h2 {
+  :global(.prose h2) {
     @apply text-2xl font-semibold mb-3 mt-5;
   }
-  .prose h3 {
+  :global(.prose h3) {
     @apply text-xl font-semibold mb-2 mt-4;
   }
-  .prose h4 {
+  :global(.prose h4) {
     @apply text-lg font-semibold mb-2 mt-3;
   }
-  .prose h5 {
+  :global(.prose h5) {
     @apply text-base font-semibold mb-2 mt-2;
   }
-  .prose h6 {
+  :global(.prose h6) {
     @apply text-sm font-semibold mb-1 mt-2;
   }
-  .prose ul, .prose ol {
+  :global(.prose ul), :global(.prose ol) {
     margin-top: 0.5em;
     margin-bottom: 0.5em;
     padding-left: 1.5em;
   }
-  .prose li {
+  :global(.prose li) {
     margin-top: 0.25em;
     margin-bottom: 0.25em;
   }
-  .prose code {
+  :global(.prose code) {
     @apply bg-base-300 px-2 py-1 rounded text-sm;
   }
-  .prose pre {
+  :global(.prose pre) {
     @apply bg-base-300 p-4 rounded-lg overflow-x-auto my-4;
   }
-  .prose pre code {
+  :global(.prose pre code) {
     background-color: transparent;
     padding: 0;
   }
-  .prose strong {
+  :global(.prose strong) {
     @apply font-bold;
   }
-  .prose em {
+  :global(.prose em) {
     @apply italic;
   }
-  .prose blockquote {
+  :global(.prose blockquote) {
     @apply border-l-4 border-base-300 pl-4 my-4 italic;
   }
 </style>

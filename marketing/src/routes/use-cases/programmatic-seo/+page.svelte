@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Zap, Layers, TrendingUp, BarChart3, CheckCircle2, HelpCircle, ArrowRight } from 'lucide-svelte';
+	import { Zap, Layers, TrendingUp, ChartBar, CircleCheck, CircleQuestionMark, ArrowRight } from '@lucide/svelte';
 </script>
 
 <svelte:head>
@@ -55,15 +55,15 @@
 					</p>
 					<ul class="space-y-2 text-white/70">
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Crawl 10,000+ pages with Pro plan</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Fast, concurrent crawling engine</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Export results for bulk analysis</span>
 						</li>
 					</ul>
@@ -81,15 +81,15 @@
 					</p>
 					<ul class="space-y-2 text-white/70">
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Group issues by URL pattern</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Identify duplicate content across templates</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Detect missing or inconsistent meta tags</span>
 						</li>
 					</ul>
@@ -107,15 +107,15 @@
 					</p>
 					<ul class="space-y-2 text-white/70">
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>GSC integration for performance data</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Identify high-traffic programmatic pages</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Focus fixes on pages that matter most</span>
 						</li>
 					</ul>
@@ -124,7 +124,7 @@
 				<div class="bg-[#2d2826] rounded-lg p-8 border border-white/10">
 					<div class="flex items-center gap-4 mb-4">
 						<div class="p-3 bg-[#8ec07c]/10 rounded-lg">
-							<BarChart3 class="w-6 h-6 text-[#8ec07c]" />
+							<ChartBar class="w-6 h-6 text-[#8ec07c]" />
 						</div>
 						<h3 class="text-2xl font-heading font-bold text-white">Bulk Issue Resolution</h3>
 					</div>
@@ -133,15 +133,15 @@
 					</p>
 					<ul class="space-y-2 text-white/70">
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>CSV and JSON export for analysis</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Historical crawl comparisons</span>
 						</li>
 						<li class="flex items-start gap-2">
-							<CheckCircle2 class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
+							<CircleCheck class="w-5 h-5 text-[#8ec07c] flex-shrink-0 mt-0.5" />
 							<span>Track improvements over time</span>
 						</li>
 					</ul>
@@ -235,7 +235,7 @@
 		<div class="max-w-4xl mx-auto">
 			<div class="flex items-center justify-center gap-4 mb-8">
 				<div class="p-3 bg-[#8ec07c]/10 rounded-lg">
-					<HelpCircle class="w-8 h-8 text-[#8ec07c]" />
+					<CircleQuestionMark class="w-8 h-8 text-[#8ec07c]" />
 				</div>
 				<h2 class="text-4xl md:text-5xl font-heading font-bold text-white">
 					Programmatic SEO FAQs

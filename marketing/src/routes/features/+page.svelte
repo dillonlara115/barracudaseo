@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Bolt, BarChart3, Users, Plug, Code, CircleCheck, ChevronRight, Github, Target } from 'lucide-svelte';
+	import { Bolt, ChartBar, Users, Plug, Code, CircleCheck, ChevronRight, Github, Target } from '@lucide/svelte';
 </script>
 
 <svelte:head>
@@ -102,7 +102,7 @@
 		<div class="max-w-4xl mx-auto">
 			<div class="flex items-center gap-4 mb-6">
 				<div class="p-3 bg-[#8ec07c]/10 rounded-lg">
-					<BarChart3 class="w-8 h-8 text-[#8ec07c]" />
+					<ChartBar class="w-8 h-8 text-[#8ec07c]" />
 				</div>
 				<h2 class="text-4xl md:text-5xl font-heading font-bold text-white">Turn Data into Decisions</h2>
 			</div>

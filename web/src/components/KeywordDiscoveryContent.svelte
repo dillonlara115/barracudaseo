@@ -209,10 +209,11 @@
     <div class="card-body">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="form-control">
-          <label class="label">
+          <label class="label" for="target-domain">
             <span class="label-text">Domain or URL</span>
           </label>
           <input
+            id="target-domain"
             type="text"
             placeholder="example.com or https://example.com/page"
             class="input input-bordered"
@@ -221,10 +222,10 @@
         </div>
 
         <div class="form-control">
-          <label class="label">
+          <label class="label" for="location-select">
             <span class="label-text">Location</span>
           </label>
-          <select class="select select-bordered" bind:value={formData.location_name}>
+          <select id="location-select" class="select select-bordered" bind:value={formData.location_name}>
             {#each commonLocations as location}
               <option value={location}>{location}</option>
             {/each}
@@ -232,10 +233,10 @@
         </div>
 
         <div class="form-control">
-          <label class="label">
+          <label class="label" for="language-select">
             <span class="label-text">Language</span>
           </label>
-          <select class="select select-bordered" bind:value={formData.language_name}>
+          <select id="language-select" class="select select-bordered" bind:value={formData.language_name}>
             <option value="English">English</option>
             <option value="Spanish">Spanish</option>
             <option value="French">French</option>
@@ -248,10 +249,11 @@
         </div>
 
         <div class="form-control">
-          <label class="label">
+          <label class="label" for="max-results">
             <span class="label-text">Max Results</span>
           </label>
           <input
+            id="max-results"
             type="number"
             min="1"
             max="10000"
@@ -261,10 +263,11 @@
         </div>
 
         <div class="form-control">
-          <label class="label">
+          <label class="label" for="min-position">
             <span class="label-text">Min Position (optional)</span>
           </label>
           <input
+            id="min-position"
             type="number"
             min="1"
             max="100"
@@ -275,10 +278,11 @@
         </div>
 
         <div class="form-control">
-          <label class="label">
+          <label class="label" for="max-position">
             <span class="label-text">Max Position (optional)</span>
           </label>
           <input
+            id="max-position"
             type="number"
             min="1"
             max="100"

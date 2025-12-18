@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { HelpCircle } from 'lucide-svelte';
+	import { CircleQuestionMark } from '@lucide/svelte';
 
 	let openItems: Record<number, boolean> = $state({});
 
@@ -24,7 +24,7 @@
 		<div class="text-center max-w-4xl mx-auto">
 			<div class="flex items-center justify-center gap-4 mb-6">
 				<div class="p-3 bg-[#8ec07c]/10 rounded-lg">
-					<HelpCircle class="w-8 h-8 text-[#8ec07c]" />
+					<CircleQuestionMark class="w-8 h-8 text-[#8ec07c]" />
 				</div>
 				<h1 class="text-5xl md:text-6xl font-heading font-bold text-white">
 					Frequently Asked Questions

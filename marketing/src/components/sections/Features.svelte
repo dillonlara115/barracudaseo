@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Search, BarChart3, Target, Plug, Users, Sparkles, TrendingUp, Share2 } from 'lucide-svelte';
+	import { Search, ChartBar, Target, Plug, Users, Sparkles, TrendingUp, Share2 } from '@lucide/svelte';
 </script>
 
 <section class="py-20 bg-[#3c3836]">
@@ -25,7 +25,7 @@
 			<div class="bg-[#2d2826] rounded-lg shadow-xl p-6 border border-white/10">
 				<div class="flex items-center gap-3 mb-3">
 					<div class="p-2 bg-[#8ec07c]/10 rounded-lg">
-						<BarChart3 class="w-5 h-5 text-[#8ec07c]" />
+						<ChartBar class="w-5 h-5 text-[#8ec07c]" />
 					</div>
 					<h3 class="text-xl font-heading font-bold text-[#8ec07c]">Analyze</h3>
 				</div>
