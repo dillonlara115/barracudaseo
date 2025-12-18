@@ -1,15 +1,5 @@
 <script lang="ts">
-	// Import the correct icon components from lucide-svelte
-	import CheckCircle2 from 'lucide-svelte/CheckCircle2.svelte';
-	import Clock from 'lucide-svelte/icons/Clock.svelte';
-	import Rocket from 'lucide-svelte/icons/Rocket.svelte';
-	import Target from 'lucide-svelte/icons/Target.svelte';
-	import Sparkles from 'lucide-svelte/icons/Sparkles.svelte';
-	import Zap from 'lucide-svelte/icons/Zap.svelte';
-	import Github from 'lucide-svelte/icons/Github.svelte';
-	import MessageSquare from 'lucide-svelte/icons/MessageSquare.svelte';
-	import ExternalLink from 'lucide-svelte/icons/ExternalLink.svelte';
-	'@lucide/svelte/icons/circle-alert';
+	import { CheckCircle2, Clock, Rocket, Target, Sparkles, Zap, Github, MessageSquare, ExternalLink } from 'lucide-svelte';
 </script>
 
 <svelte:head>
