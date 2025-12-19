@@ -398,3 +398,5 @@ comment on function public.can_access_issue(bigint) is
 
 comment on function public.can_modify_project(uuid) is 
   'Check if current user can modify a project (owner or teammate). Used in RLS policies.';
+
+

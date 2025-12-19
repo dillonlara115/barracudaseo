@@ -213,3 +213,5 @@ SELECT
   '2. All access tests return expected results' as check_2,
   '3. Helper functions work correctly' as check_3,
   '4. Policy counts are correct (1 per table)' as check_4;
+
+

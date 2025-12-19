@@ -105,3 +105,5 @@ Once local testing is successful:
 
 **Migration File**: `supabase/migrations/20250120000000_comprehensive_rls_optimization.sql`
 **Created**: 2025-01-20
+
+

@@ -48,3 +48,5 @@ WHERE p.schemaname = 'public'
   AND pg_get_expr(pol.polqual, pol.polrelid) LIKE '%auth.uid()%'
   AND pg_get_expr(pol.polqual, pol.polrelid) NOT LIKE '%(SELECT auth.uid())%'
 ORDER BY p.tablename, p.policyname;
+
+

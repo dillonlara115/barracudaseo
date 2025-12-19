@@ -207,3 +207,5 @@ Once local testing is successful:
 - Check `docs/RLS_OPTIMIZATION_MIGRATION.md` for detailed migration info
 - Review `scripts/verify_rls_optimization.sql` output for issues
 - Check Supabase logs: `supabase logs`
+
+
