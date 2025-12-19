@@ -1195,7 +1195,7 @@ func (s *Server) verifyProjectAccess(userID, projectID string) (bool, error) {
 		Execute()
 
 	if err != nil {
-		s.logger.Error("Failed to query project_members", zap.Error(err))
+		s.logger.Error("Failed to query project_members", zap.String("user_id", userID), zap.String("project_id", projectID), zap.Error(err))
 		return false, err
 	}
 
@@ -1219,7 +1219,7 @@ func (s *Server) verifyProjectAccess(userID, projectID string) (bool, error) {
 		Execute()
 
 	if err != nil {
-		s.logger.Error("Failed to query projects", zap.Error(err))
+		s.logger.Error("Failed to query projects", zap.String("user_id", userID), zap.String("project_id", projectID), zap.Error(err))
 		return false, err
 	}
 

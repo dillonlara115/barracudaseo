@@ -118,12 +118,8 @@ deploy-backend: docker-push
 		echo "Loading environment variables from $(ENV_FILE)..."; \
 		. "$(ENV_FILE)"; \
 	fi; \
-	if [ -f "$(CURDIR)/.env.local" ]; then \
-		echo "Loading overrides from .env.local..."; \
-		. "$(CURDIR)/.env.local"; \
-	fi; \
 	if [ -z "$$PUBLIC_SUPABASE_URL" ] && [ -z "$$STRIPE_SECRET_KEY" ]; then \
-		echo "Warning: No environment variables loaded. Check .env or .env.local"; \
+		echo "Warning: No environment variables loaded. Check .env"; \
 	fi; \
 	set +a; \
 	if [ -z "$$GCP_PROJECT_ID" ] && [ -z "$(GCP_PROJECT_ID)" ]; then \

@@ -14,6 +14,13 @@ GCP_REGION=${GCP_REGION:-us-central1}
 ENV_FILE=".env"  # Always use .env (production), never .env.local
 USE_MERGE=true   # Use --update-env-vars by default (merges)
 
+# Secret Manager mappings (env var -> secret name)
+declare -A SECRET_VARS=(
+  ["SUPABASE_SERVICE_ROLE_KEY"]="supabase_service_role_key"
+  ["SUPABASE_JWT_SECRET"]="supabase_jwt_secret"
+  ["STRIPE_SECRET_KEY"]="stripe_secret_key"
+)
+
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -88,18 +95,29 @@ if [ -z "$ENV_VARS" ]; then
         # Skip if no = sign
         [[ ! "$line" =~ = ]] && continue
         
-        # Add to ENV_VARS
-        if [ -z "$ENV_VARS" ]; then
-            ENV_VARS="$line"
+        # Add to ENV_VARS or SECRET_ENV_VARS
+        VAR_NAME="${line%%=*}"
+        VAR_VALUE="${line#*=}"
+        if [[ -n "${SECRET_VARS[$VAR_NAME]}" ]]; then
+            SECRET_SPEC="${VAR_NAME}=${SECRET_VARS[$VAR_NAME]}:latest"
+            if [ -z "$SECRET_ENV_VARS" ]; then
+                SECRET_ENV_VARS="$SECRET_SPEC"
+            else
+                SECRET_ENV_VARS="$SECRET_ENV_VARS,$SECRET_SPEC"
+            fi
         else
-            ENV_VARS="$ENV_VARS,$line"
+            if [ -z "$ENV_VARS" ]; then
+                ENV_VARS="$line"
+            else
+                ENV_VARS="$ENV_VARS,$line"
+            fi
         fi
     done < "$ENV_FILE"
 fi
 
-if [ -z "$ENV_VARS" ]; then
+if [ -z "$ENV_VARS" ] && [ -z "$SECRET_ENV_VARS" ]; then
     echo "Error: No environment variables to set."
-    echo "Provide variables via command line (VAR=value) or --file option"
+    echo "Provide variables via command line (VAR=value) or populate $ENV_FILE"
     exit 1
 fi
 
@@ -108,13 +126,23 @@ echo "Region: $GCP_REGION"
 echo "Mode: $([ "$USE_MERGE" = true ] && echo "Merge (--update-env-vars)" || echo "Replace (--set-env-vars)")"
 echo "Source: $ENV_FILE (production only - .env.local is never used)"
 echo ""
-echo "Variables to set:"
-echo "$ENV_VARS" | tr ',' '\n' | sed 's/=.*/=***/' | sed 's/^/  - /'
-echo ""
+if [ -n "$ENV_VARS" ]; then
+    echo "Variables to set:"
+    echo "$ENV_VARS" | tr ',' '\n' | sed 's/=.*/=***/' | sed 's/^/  - /'
+    echo ""
+fi
+
+if [ -n "$SECRET_ENV_VARS" ]; then
+    echo "Secrets to set:"
+    echo "$SECRET_ENV_VARS" | tr ',' '\n' | sed 's/=.*/=*** (secret)/' | sed 's/^/  - /'
+    echo ""
+fi
 
 # Count variables
-VAR_COUNT=$(echo "$ENV_VARS" | tr ',' '\n' | wc -l)
+VAR_COUNT=$(echo "$ENV_VARS" | tr ',' '\n' | wc -l | xargs)
+SECRET_COUNT=$(echo "$SECRET_ENV_VARS" | tr ',' '\n' | wc -l | xargs)
 echo "Total variables: $VAR_COUNT"
+echo "Total secrets: $SECRET_COUNT"
 echo ""
 
 read -p "Continue? (y/N) " -n 1 -r
@@ -125,19 +153,30 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 # Execute the gcloud command
+GCLOUD_ARGS=(
+    gcloud run services update "$SERVICE_NAME"
+    --platform managed
+    --region "$GCP_REGION"
+    --quiet
+)
+
 if [ "$USE_MERGE" = true ]; then
-    gcloud run services update "$SERVICE_NAME" \
-        --platform managed \
-        --region "$GCP_REGION" \
-        --update-env-vars="$ENV_VARS" \
-        --quiet
+    if [ -n "$ENV_VARS" ]; then
+        GCLOUD_ARGS+=(--update-env-vars="$ENV_VARS")
+    fi
+    if [ -n "$SECRET_ENV_VARS" ]; then
+        GCLOUD_ARGS+=(--update-secrets="$SECRET_ENV_VARS")
+    fi
 else
-    gcloud run services update "$SERVICE_NAME" \
-        --platform managed \
-        --region "$GCP_REGION" \
-        --set-env-vars="$ENV_VARS" \
-        --quiet
+    if [ -n "$ENV_VARS" ]; then
+        GCLOUD_ARGS+=(--set-env-vars="$ENV_VARS")
+    fi
+    if [ -n "$SECRET_ENV_VARS" ]; then
+        GCLOUD_ARGS+=(--set-secrets="$SECRET_ENV_VARS")
+    fi
 fi
+
+"${GCLOUD_ARGS[@]}"
 
 echo ""
 echo "✓ Environment variables updated!"
@@ -147,4 +186,3 @@ gcloud run services describe "$SERVICE_NAME" \
     --platform managed \
     --region "$GCP_REGION" \
     --format="value(status.url)"
-

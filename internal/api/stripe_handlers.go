@@ -1133,10 +1133,12 @@ func (s *Server) fetchProfile(userID string) (map[string]interface{}, error) {
 		Execute()
 
 	if err != nil {
+		s.logger.Error("Profile query failed", zap.String("user_id", userID), zap.Error(err))
 		return nil, fmt.Errorf("failed to query profiles: %w", err)
 	}
 
 	if err := json.Unmarshal(data, &profiles); err != nil {
+		s.logger.Error("Profile parse failed", zap.String("user_id", userID), zap.Error(err))
 		return nil, fmt.Errorf("failed to parse profiles: %w", err)
 	}
 
@@ -1150,6 +1152,7 @@ func (s *Server) fetchProfile(userID string) (map[string]interface{}, error) {
 func (s *Server) ensureProfileExists(userID, authHeader string) (map[string]interface{}, error) {
 	profile, err := s.fetchProfile(userID)
 	if err != nil {
+		s.logger.Error("Failed to ensure profile exists", zap.String("user_id", userID), zap.Error(err))
 		return nil, err
 	}
 
@@ -1167,6 +1170,8 @@ func (s *Server) ensureProfileExists(userID, authHeader string) (map[string]inte
 		user, err := s.validateTokenViaAPI(token)
 		if err == nil && user != nil && user.Email != "" {
 			displayName = user.Email
+		} else if err != nil {
+			s.logger.Warn("Failed to validate token for profile creation", zap.String("user_id", userID), zap.Error(err))
 		}
 	}
 
@@ -1182,6 +1187,7 @@ func (s *Server) ensureProfileExists(userID, authHeader string) (map[string]inte
 		Insert(defaultProfile, false, "", "", "").
 		Execute()
 	if err != nil {
+		s.logger.Error("Failed to create default profile", zap.String("user_id", userID), zap.Error(err))
 		// If profile already exists (race condition), fetch it instead
 		// Check for PostgreSQL duplicate key error (23505)
 		if strings.Contains(err.Error(), "23505") || strings.Contains(err.Error(), "duplicate key") {
