@@ -43,10 +43,15 @@ func init() {
 
 func runAPI(cmd *cobra.Command, args []string) error {
 	// Load .env file if it exists (for production/shared defaults)
-	// Then load .env.local to override with local development values
+	// Only load .env.local in local development (not in Cloud Run/production)
 	// Ignore errors - these files are optional
-	_ = godotenv.Load()                 // Load .env first
-	_ = godotenv.Overload(".env.local") // Override with .env.local if it exists
+	_ = godotenv.Load() // Load .env first
+
+	// Skip .env.local in production (Cloud Run sets PORT env var)
+	// This prevents local dev values from overriding production config
+	if os.Getenv("PORT") == "" {
+		_ = godotenv.Overload(".env.local") // Only override with .env.local in local dev
+	}
 
 	// Initialize logger
 	logger, err := zap.NewProduction()

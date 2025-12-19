@@ -4,16 +4,16 @@
 # (doesn't replace them, so existing vars persist)
 #
 # Usage:
-#   ./scripts/update-cloud-run-env.sh           # Uses .env, then .env.local (if exists)
-#   ./scripts/update-cloud-run-env.sh --production  # Uses only .env (skips .env.local)
+#   ./scripts/update-cloud-run-env.sh           # Uses .env only (production-safe default)
+#   ./scripts/update-cloud-run-env.sh --local   # Uses .env, then .env.local (for testing)
 
 set -e
 
-# Check for --production flag
-SKIP_LOCAL=false
-if [ "$1" == "--production" ]; then
-    SKIP_LOCAL=true
-    echo "Production mode: Skipping .env.local"
+# Check for --local flag (default is production mode - skip .env.local)
+LOAD_LOCAL=false
+if [ "$1" == "--local" ]; then
+    LOAD_LOCAL=true
+    echo "Local mode: Will load .env.local overrides"
 fi
 
 # Load from .env (production defaults)
@@ -23,11 +23,14 @@ if [ -f .env ]; then
     export $(cat .env | grep -v '^#' | grep -v '^[[:space:]]*$' | sed 's/#.*$//' | xargs)
 fi
 
-# Load from .env.local (local overrides) unless --production flag is set
-if [ "$SKIP_LOCAL" = false ] && [ -f .env.local ]; then
+# Load from .env.local (local overrides) only if --local flag is set
+# By default, skip .env.local to prevent accidental local config deployment
+if [ "$LOAD_LOCAL" = true ] && [ -f .env.local ]; then
     echo "Loading local overrides from .env.local..."
     # Filter out comments and empty lines, remove inline comments
     export $(cat .env.local | grep -v '^#' | grep -v '^[[:space:]]*$' | sed 's/#.*$//' | xargs)
+elif [ "$LOAD_LOCAL" = false ]; then
+    echo "Production mode: Skipping .env.local (use --local flag to include it)"
 fi
 
 # Get project and region from gcloud config or environment

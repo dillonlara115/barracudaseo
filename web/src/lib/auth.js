@@ -43,6 +43,7 @@ export async function signUpWithMagicLink(email, displayName = null) {
     console.log('🔍 Requesting magic link signup for:', email);
     console.log('🔍 Redirect URL:', redirectTo);
     console.log('🔍 Display name:', displayName);
+    console.log('🔍 Full URL:', window?.location?.href);
 
     const { data, error } = await supabase.auth.signInWithOtp({
       email,
@@ -57,6 +58,10 @@ export async function signUpWithMagicLink(email, displayName = null) {
 
     if (error) {
       console.error('🔴 Magic link signup error:', error);
+      // Provide more helpful error message for redirect URL issues
+      if (error.message?.includes('redirect') || error.message?.includes('URL')) {
+        throw new Error('Redirect URL not configured. Please ensure https://app.barracudaseo.com is in your Supabase redirect URLs allowlist.');
+      }
       throw error;
     }
 
@@ -123,6 +128,7 @@ export async function signInWithMagicLink(email) {
     console.log('🔍 Requesting magic link for:', email);
     console.log('🔍 Redirect URL:', redirectTo);
     console.log('🔍 Current origin:', window?.location?.origin);
+    console.log('🔍 Full URL:', window?.location?.href);
 
     const { data, error } = await supabase.auth.signInWithOtp({
       email,
@@ -134,6 +140,10 @@ export async function signInWithMagicLink(email) {
 
     if (error) {
       console.error('🔴 Magic link error:', error);
+      // Provide more helpful error message for redirect URL issues
+      if (error.message?.includes('redirect') || error.message?.includes('URL')) {
+        throw new Error('Redirect URL not configured. Please ensure https://app.barracudaseo.com is in your Supabase redirect URLs allowlist.');
+      }
       throw error;
     }
     
