@@ -1,11 +1,21 @@
 <script lang="ts">
 	import { Zap, Layers, TrendingUp, ChartBar, CircleCheck, CircleQuestionMark, ArrowRight } from '@lucide/svelte';
+	import MetaTags from '../../../components/MetaTags.svelte';
+	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
+
+	const meta = getMetaTags({
+		title: 'Programmatic SEO Tool',
+		description: 'Scale your SEO content strategy with Barracuda SEO. Audit thousands of programmatic pages, identify technical issues, and optimize at scale for better search rankings.'
+	});
+
+	const structuredData = getBreadcrumbSchema([
+		{ name: 'Home', url: '/' },
+		{ name: 'Use Cases', url: '/use-cases' },
+		{ name: 'Programmatic SEO', url: '/use-cases/programmatic-seo' }
+	]);
 </script>
 
-<svelte:head>
-	<title>Programmatic SEO Tool - Barracuda SEO</title>
-	<meta name="description" content="Scale your SEO content strategy with Barracuda SEO. Audit thousands of programmatic pages, identify technical issues, and optimize at scale for better search rankings." />
-</svelte:head>
+<MetaTags config={{ ...meta, structuredData }} />
 
 <!-- Hero Section -->
 <section class="py-20 bg-gradient-to-b from-[#3c3836] to-[#2d2826]">

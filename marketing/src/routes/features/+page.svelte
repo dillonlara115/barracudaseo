@@ -1,11 +1,20 @@
 <script lang="ts">
 	import { Bolt, ChartBar, Users, Plug, Code, CircleCheck, ChevronRight, Github, Target } from '@lucide/svelte';
+	import MetaTags from '../../components/MetaTags.svelte';
+	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
+
+	const meta = getMetaTags({
+		title: 'Features',
+		description: 'Discover, analyze, prioritize, and integrate with Barracuda SEO. Crawl thousands of URLs, visualize site structure, and get actionable insights.'
+	});
+
+	const structuredData = getBreadcrumbSchema([
+		{ name: 'Home', url: '/' },
+		{ name: 'Features', url: '/features' }
+	]);
 </script>
 
-<svelte:head>
-	<title>Features - Barracuda SEO</title>
-	<meta name="description" content="Discover, analyze, prioritize, and integrate with Barracuda SEO. Crawl thousands of URLs, visualize site structure, and get actionable insights." />
-</svelte:head>
+<MetaTags config={{ ...meta, structuredData }} />
 
 <!-- Hero Section -->
 <section class="py-20 bg-gradient-to-b from-[#3c3836] to-[#2d2826]">

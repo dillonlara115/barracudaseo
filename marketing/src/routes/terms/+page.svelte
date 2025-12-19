@@ -1,7 +1,19 @@
-<svelte:head>
-	<title>Terms of Use - Barracuda SEO</title>
-	<meta name="description" content="Barracuda SEO Terms of Use - Read our terms and conditions for using the Service." />
-</svelte:head>
+<script lang="ts">
+	import MetaTags from '../../components/MetaTags.svelte';
+	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
+
+	const meta = getMetaTags({
+		title: 'Terms of Use',
+		description: 'Barracuda SEO Terms of Use - Read our terms and conditions for using the Service.'
+	});
+
+	const structuredData = getBreadcrumbSchema([
+		{ name: 'Home', url: '/' },
+		{ name: 'Terms of Use', url: '/terms' }
+	]);
+</script>
+
+<MetaTags config={{ ...meta, structuredData }} />
 
 <!-- Hero Section -->
 <section class="py-20 bg-gradient-to-b from-[#3c3836] to-[#2d2826]">

@@ -1,7 +1,19 @@
-<svelte:head>
-	<title>Privacy Policy - Barracuda SEO</title>
-	<meta name="description" content="Barracuda SEO Privacy Policy - Learn how we collect, use, and protect your data." />
-</svelte:head>
+<script lang="ts">
+	import MetaTags from '../../components/MetaTags.svelte';
+	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
+
+	const meta = getMetaTags({
+		title: 'Privacy Policy',
+		description: 'Barracuda SEO Privacy Policy - Learn how we collect, use, and protect your data.'
+	});
+
+	const structuredData = getBreadcrumbSchema([
+		{ name: 'Home', url: '/' },
+		{ name: 'Privacy Policy', url: '/privacy' }
+	]);
+</script>
+
+<MetaTags config={{ ...meta, structuredData }} />
 
 <!-- Hero Section -->
 <section class="py-20 bg-gradient-to-b from-[#3c3836] to-[#2d2826]">

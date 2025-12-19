@@ -2,15 +2,16 @@
 	import '../app.css';
 	import Header from '../components/layout/Header.svelte';
 	import Footer from '../components/layout/Footer.svelte';
+	import MetaTags from '../components/MetaTags.svelte';
+	import { getMetaTags, getOrganizationSchema, getWebSiteSchema } from '$lib/meta';
 
 	let { children } = $props();
+
+	const defaultMeta = getMetaTags();
+	const structuredData = [getOrganizationSchema(), getWebSiteSchema()];
 </script>
 
-<svelte:head>
-	<title>Barracuda SEO - Web-Based SEO Crawler & Auditing Tool</title>
-	<meta name="description" content="Barracuda is a web-based SEO crawler and auditing tool that helps you discover technical issues, prioritize fixes, and improve your site's performance." />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-</svelte:head>
+<MetaTags config={{ ...defaultMeta, structuredData }} />
 
 <div class="min-h-screen flex flex-col" data-theme="barracuda">
 	<Header />

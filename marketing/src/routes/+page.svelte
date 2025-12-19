@@ -5,12 +5,18 @@
 	import Pricing from '../components/sections/Pricing.svelte';
 	import FutureUpdates from '../components/sections/FutureUpdates.svelte';
 	import FAQ from '../components/sections/FAQ.svelte';
+	import MetaTags from '../components/MetaTags.svelte';
+	import { getMetaTags, getSoftwareApplicationSchema } from '$lib/meta';
+
+	const meta = getMetaTags({
+		title: 'Barracuda SEO',
+		description: 'Barracuda is a web-based SEO crawler and auditing tool that helps you discover technical issues, prioritize fixes, and improve your site\'s performance.'
+	});
+
+	const structuredData = getSoftwareApplicationSchema();
 </script>
 
-<svelte:head>
-	<title>Barracuda SEO - Web-Based SEO Crawler & Auditing Tool</title>
-	<meta name="description" content="Barracuda is a web-based SEO crawler and auditing tool that helps you discover technical issues, prioritize fixes, and improve your site's performance." />
-</svelte:head>
+<MetaTags config={{ ...meta, structuredData }} />
 
 <Hero />
 <VideoWalkthrough />

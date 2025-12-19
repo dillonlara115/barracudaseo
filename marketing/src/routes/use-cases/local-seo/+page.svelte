@@ -1,11 +1,21 @@
 <script lang="ts">
 	import { MapPin, Search, Target, TrendingUp, CircleCheck, CircleQuestionMark, ArrowRight } from '@lucide/svelte';
+	import MetaTags from '../../../components/MetaTags.svelte';
+	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
+
+	const meta = getMetaTags({
+		title: 'Local SEO Auditing Tool',
+		description: 'Optimize your local business website for local search with Barracuda SEO. Discover technical issues, improve Google Business Profile visibility, and dominate local search results.'
+	});
+
+	const structuredData = getBreadcrumbSchema([
+		{ name: 'Home', url: '/' },
+		{ name: 'Use Cases', url: '/use-cases' },
+		{ name: 'Local SEO', url: '/use-cases/local-seo' }
+	]);
 </script>
 
-<svelte:head>
-	<title>Local SEO Auditing Tool - Barracuda SEO</title>
-	<meta name="description" content="Optimize your local business website for local search with Barracuda SEO. Discover technical issues, improve Google Business Profile visibility, and dominate local search results." />
-</svelte:head>
+<MetaTags config={{ ...meta, structuredData }} />
 
 <!-- Hero Section -->
 <section class="py-20 bg-gradient-to-b from-[#3c3836] to-[#2d2826]">

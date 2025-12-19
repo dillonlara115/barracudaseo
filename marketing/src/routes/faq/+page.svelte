@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { CircleQuestionMark } from '@lucide/svelte';
+	import MetaTags from '../../components/MetaTags.svelte';
+	import { getMetaTags, getFAQPageSchema, getBreadcrumbSchema } from '$lib/meta';
 
 	let openItems: Record<number, boolean> = $state({});
 
@@ -11,12 +13,45 @@
 			[index]: !currentValue
 		};
 	}
+
+	const meta = getMetaTags({
+		title: 'Frequently Asked Questions',
+		description: 'Get answers to common questions about Barracuda SEO, including how it compares to other tools, pricing, features, and more.'
+	});
+
+	const faqs = [
+		{
+			question: 'What makes Barracuda different from tools like Screaming Frog?',
+			answer: 'Screaming Frog is a powerful desktop crawler—but it\'s single-device, manual, and lacks team collaboration unless you export CSVs and spreadsheets. Barracuda offers a cloud-first approach with fast cloud-based crawling via web dashboard, cloud-based dashboard for teams, AI-powered issue explanations and recommendations, built-in integrations with Google Search Console, and CLI for local crawling coming soon for advanced users.'
+		},
+		{
+			question: 'How is Barracuda different from SEMrush and Ahrefs?',
+			answer: 'SEMrush and Ahrefs run crawls on their servers, which means you have limited control over crawl behavior, crawl speeds are throttled, you don\'t get raw crawl data, pricing is tied to credits, and they may miss pages blocked to outside IPs. Barracuda runs fast crawls via web dashboard, stores complete crawl datasets in the cloud, has no credits or crawl caps, mirrors what your site serves to real browsers, and includes CLI for local crawling coming soon for even more control.'
+		},
+		{
+			question: 'How fast is the Barracuda crawler?',
+			answer: 'Barracuda\'s web-based crawler is optimized for speed with concurrent crawling with intelligent rate limiting, efficient robots.txt and sitemap handling, cloud infrastructure for fast processing, and real-time progress tracking. For even faster local crawling, our CLI (coming soon) will offer Go-based worker-pool engine, direct local processing, with expected speed of 100–500 pages/min, depending on target site performance.'
+		},
+		{
+			question: 'How does billing work?',
+			answer: 'No credits. No crawl caps. Free tier includes 100 pages per crawl. Pro plan is $29/month for 10,000+ pages with team collaboration, integrations, and recommendations. Team add-ons available at $5/user/month. Custom Team plans available for organizations with 5+ members.'
+		},
+		{
+			question: 'Who is Barracuda designed for?',
+			answer: 'Barracuda is ideal for technical SEO professionals who need scalable crawl data and clean reporting, agencies managing multiple clients and domains, developers who prefer API/CLI automation over GUIs, and website owners who want to understand their SEO issues without enterprise pricing.'
+		}
+	];
+
+	const structuredData = [
+		getFAQPageSchema(faqs),
+		getBreadcrumbSchema([
+			{ name: 'Home', url: '/' },
+			{ name: 'FAQ', url: '/faq' }
+		])
+	];
 </script>
 
-<svelte:head>
-	<title>Frequently Asked Questions - Barracuda SEO</title>
-	<meta name="description" content="Get answers to common questions about Barracuda SEO, including how it compares to other tools, pricing, features, and more." />
-</svelte:head>
+<MetaTags config={{ ...meta, structuredData }} />
 
 <!-- Hero Section -->
 <section class="py-20 bg-gradient-to-b from-[#3c3836] to-[#2d2826]">

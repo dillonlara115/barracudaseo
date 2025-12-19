@@ -1,7 +1,19 @@
-<svelte:head>
-	<title>About - Barracuda SEO</title>
-	<meta name="description" content="Learn about Barracuda SEO, a web-based SEO crawler and auditing tool that helps you discover, organize, and fix technical SEO issues." />
-</svelte:head>
+<script lang="ts">
+	import MetaTags from '../../components/MetaTags.svelte';
+	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
+
+	const meta = getMetaTags({
+		title: 'About',
+		description: 'Learn about Barracuda SEO, a web-based SEO crawler and auditing tool that helps you discover, organize, and fix technical SEO issues.'
+	});
+
+	const structuredData = getBreadcrumbSchema([
+		{ name: 'Home', url: '/' },
+		{ name: 'About', url: '/about' }
+	]);
+</script>
+
+<MetaTags config={{ ...meta, structuredData }} />
 
 <div class="py-20 bg-[#3c3836]">
 	<div class="container mx-auto px-4 max-w-4xl">

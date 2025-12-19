@@ -1,11 +1,20 @@
 <script lang="ts">
 	import Pricing from '../../components/sections/Pricing.svelte';
+	import MetaTags from '../../components/MetaTags.svelte';
+	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
+
+	const meta = getMetaTags({
+		title: 'Pricing',
+		description: 'Start with a free 100-page audit. Upgrade to Pro ($29/mo) for 10,000+ pages, team collaboration with role-based permissions, recommendations, and integrations.'
+	});
+
+	const structuredData = getBreadcrumbSchema([
+		{ name: 'Home', url: '/' },
+		{ name: 'Pricing', url: '/pricing' }
+	]);
 </script>
 
-<svelte:head>
-	<title>Pricing - Barracuda SEO</title>
-	<meta name="description" content="Start with a free 100-page audit. Upgrade to Pro ($29/mo) for 10,000+ pages, team collaboration with role-based permissions, recommendations, and integrations." />
-</svelte:head>
+<MetaTags config={{ ...meta, structuredData }} />
 
 <div class="py-20 bg-[#3c3836]">
 	<div class="container mx-auto px-4">

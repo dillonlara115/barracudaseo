@@ -1,11 +1,20 @@
 <script lang="ts">
 	import { CircleCheck, Clock, Rocket, Target, Sparkles, Zap, Github, MessageSquare, ExternalLink } from '@lucide/svelte';
+	import MetaTags from '../../components/MetaTags.svelte';
+	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
+
+	const meta = getMetaTags({
+		title: 'Product Roadmap',
+		description: 'See what\'s coming next for Barracuda SEO. Our roadmap includes AI-powered insights, scheduled crawls, rank tracking, and more.'
+	});
+
+	const structuredData = getBreadcrumbSchema([
+		{ name: 'Home', url: '/' },
+		{ name: 'Roadmap', url: '/roadmap' }
+	]);
 </script>
 
-<svelte:head>
-	<title>Product Roadmap - Barracuda SEO</title>
-	<meta name="description" content="See what's coming next for Barracuda SEO. Our roadmap includes AI-powered insights, scheduled crawls, rank tracking, and more." />
-</svelte:head>
+<MetaTags config={{ ...meta, structuredData }} />
 
 <!-- Hero Section -->
 <section class="py-20 bg-gradient-to-b from-[#3c3836] to-[#2d2826]">
