@@ -172,7 +172,7 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 		}
 		batch := pages[i:end]
 
-		_, _, err = s.serviceRole.From("pages").Insert(batch, false, "", "", "").Execute()
+		_, _, err = s.serviceRole.From("pages").Insert(batch, false, "", "minimal", "").Execute()
 		if err != nil {
 			s.logger.Error("Failed to insert pages batch", zap.Int("batch_start", i), zap.Error(err))
 			// Continue with other batches, but log error
@@ -204,7 +204,7 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 			}
 			batch := issues[i:end]
 
-			_, _, err = s.serviceRole.From("issues").Insert(batch, false, "", "", "").Execute()
+			_, _, err = s.serviceRole.From("issues").Insert(batch, false, "", "minimal", "").Execute()
 			if err != nil {
 				s.logger.Error("Failed to insert issues batch", zap.Int("batch_start", i), zap.Error(err))
 			}
@@ -864,6 +864,45 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 	batchSize := 50 // Smaller batches for more frequent updates
 	pages := make([]map[string]interface{}, 0, batchSize)
 	pageURLToID := make(map[string]int64)
+	fetchPageIDsByURL := func(urls []string) (map[string]int64, error) {
+		const lookupChunkSize = 200
+		pageIDs := make(map[string]int64, len(urls))
+
+		for i := 0; i < len(urls); i += lookupChunkSize {
+			end := i + lookupChunkSize
+			if end > len(urls) {
+				end = len(urls)
+			}
+
+			chunk := urls[i:end]
+			data, _, err := s.serviceRole.
+				From("pages").
+				Select("id,url", "", false).
+				Eq("crawl_id", crawlID).
+				In("url", chunk).
+				Execute()
+			if err != nil {
+				return pageIDs, err
+			}
+
+			var rows []map[string]interface{}
+			if err := json.Unmarshal(data, &rows); err != nil {
+				return pageIDs, err
+			}
+
+			for _, row := range rows {
+				url, ok := row["url"].(string)
+				if !ok || url == "" {
+					continue
+				}
+				if pageID, ok := row["id"].(float64); ok {
+					pageIDs[url] = int64(pageID)
+				}
+			}
+		}
+
+		return pageIDs, nil
+	}
 	var pagesMu sync.Mutex
 	totalPagesProcessed := int32(0)
 
@@ -959,17 +998,23 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 
 		// Insert in batches and update progress
 		if len(pages) >= batchSize {
-			var pageResults []map[string]interface{}
-			data, _, err := s.serviceRole.From("pages").Insert(pages, false, "", "", "").Execute()
+			data, _, err := s.serviceRole.From("pages").Insert(pages, false, "", "minimal", "").Execute()
 			if err != nil {
 				s.logger.Error("Failed to insert pages batch", zap.Error(err))
 			} else {
-				// Parse inserted pages to get IDs
-				if err := json.Unmarshal(data, &pageResults); err == nil {
-					for j, pageResult := range pageResults {
-						if pageID, ok := pageResult["id"].(float64); ok {
-							pageURLToID[pages[j]["url"].(string)] = int64(pageID)
-						}
+				_ = data
+				urls := make([]string, 0, len(pages))
+				for _, page := range pages {
+					if url, ok := page["url"].(string); ok {
+						urls = append(urls, url)
+					}
+				}
+				pageIDs, err := fetchPageIDsByURL(urls)
+				if err != nil {
+					s.logger.Warn("Failed to fetch page IDs after insert", zap.Error(err))
+				} else {
+					for url, pageID := range pageIDs {
+						pageURLToID[url] = pageID
 					}
 				}
 
@@ -1013,17 +1058,23 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 	// Store any remaining pages
 	pagesMu.Lock()
 	if len(pages) > 0 {
-		var pageResults []map[string]interface{}
-		data, _, err := s.serviceRole.From("pages").Insert(pages, false, "", "", "").Execute()
+		data, _, err := s.serviceRole.From("pages").Insert(pages, false, "", "minimal", "").Execute()
 		if err != nil {
 			s.logger.Error("Failed to insert final pages batch", zap.Error(err))
 		} else {
-			// Parse inserted pages to get IDs
-			if err := json.Unmarshal(data, &pageResults); err == nil {
-				for j, pageResult := range pageResults {
-					if pageID, ok := pageResult["id"].(float64); ok {
-						pageURLToID[pages[j]["url"].(string)] = int64(pageID)
-					}
+			_ = data
+			urls := make([]string, 0, len(pages))
+			for _, page := range pages {
+				if url, ok := page["url"].(string); ok {
+					urls = append(urls, url)
+				}
+			}
+			pageIDs, err := fetchPageIDsByURL(urls)
+			if err != nil {
+				s.logger.Warn("Failed to fetch page IDs after final insert", zap.Error(err))
+			} else {
+				for url, pageID := range pageIDs {
+					pageURLToID[url] = pageID
 				}
 			}
 		}
@@ -1087,7 +1138,7 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 			}
 			batch := issues[i:end]
 
-			_, _, err = s.serviceRole.From("issues").Insert(batch, false, "", "", "").Execute()
+			_, _, err = s.serviceRole.From("issues").Insert(batch, false, "", "minimal", "").Execute()
 			if err != nil {
 				s.logger.Error("Failed to insert issues batch", zap.Int("batch_start", i), zap.Error(err))
 			}
