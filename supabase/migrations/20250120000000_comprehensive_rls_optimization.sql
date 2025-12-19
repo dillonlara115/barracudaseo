@@ -303,54 +303,84 @@ create policy "Export requesters and owners can delete exports"
 -- ============================================================================
 
 -- user_ai_settings - single policy is fine, just ensure wrapped auth.uid()
-drop policy if exists "Users can view their own AI settings" on public.user_ai_settings;
-create policy "Users can view their own AI settings"
-  on public.user_ai_settings
-  for select
-  to authenticated
-  using (user_id = (select auth.uid()));
+do $$
+begin
+  if to_regclass('public.user_ai_settings') is not null then
+    drop policy if exists "Users can view their own AI settings" on public.user_ai_settings;
+    create policy "Users can view their own AI settings"
+      on public.user_ai_settings
+      for select
+      to authenticated
+      using (user_id = (select auth.uid()));
+  end if;
+end
+$$;
 
 -- ai_issue_insights
-drop policy if exists "Users can view their own AI issue insights" on public.ai_issue_insights;
-create policy "Users can view their own AI issue insights"
-  on public.ai_issue_insights
-  for select
-  to authenticated
-  using (
-    user_id = (select auth.uid())
-    and public.can_access_project(project_id)
-  );
+do $$
+begin
+  if to_regclass('public.ai_issue_insights') is not null then
+    drop policy if exists "Users can view their own AI issue insights" on public.ai_issue_insights;
+    create policy "Users can view their own AI issue insights"
+      on public.ai_issue_insights
+      for select
+      to authenticated
+      using (
+        user_id = (select auth.uid())
+        and public.can_access_project(project_id)
+      );
+  end if;
+end
+$$;
 
-drop policy if exists "Users can create their own AI issue insights" on public.ai_issue_insights;
-create policy "Users can create their own AI issue insights"
-  on public.ai_issue_insights
-  for insert
-  to authenticated
-  with check (
-    user_id = (select auth.uid())
-    and public.can_access_project(project_id)
-  );
+do $$
+begin
+  if to_regclass('public.ai_issue_insights') is not null then
+    drop policy if exists "Users can create their own AI issue insights" on public.ai_issue_insights;
+    create policy "Users can create their own AI issue insights"
+      on public.ai_issue_insights
+      for insert
+      to authenticated
+      with check (
+        user_id = (select auth.uid())
+        and public.can_access_project(project_id)
+      );
+  end if;
+end
+$$;
 
 -- ai_crawl_summaries
-drop policy if exists "Users can view AI crawl summaries for accessible crawls" on public.ai_crawl_summaries;
-create policy "Users can view AI crawl summaries for accessible crawls"
-  on public.ai_crawl_summaries
-  for select
-  to authenticated
-  using (
-    user_id = (select auth.uid())
-    and public.can_access_project(project_id)
-  );
+do $$
+begin
+  if to_regclass('public.ai_crawl_summaries') is not null then
+    drop policy if exists "Users can view AI crawl summaries for accessible crawls" on public.ai_crawl_summaries;
+    create policy "Users can view AI crawl summaries for accessible crawls"
+      on public.ai_crawl_summaries
+      for select
+      to authenticated
+      using (
+        user_id = (select auth.uid())
+        and public.can_access_project(project_id)
+      );
+  end if;
+end
+$$;
 
-drop policy if exists "Users can create AI crawl summaries for accessible crawls" on public.ai_crawl_summaries;
-create policy "Users can create AI crawl summaries for accessible crawls"
-  on public.ai_crawl_summaries
-  for insert
-  to authenticated
-  with check (
-    user_id = (select auth.uid())
-    and public.can_access_project(project_id)
-  );
+do $$
+begin
+  if to_regclass('public.ai_crawl_summaries') is not null then
+    drop policy if exists "Users can create AI crawl summaries for accessible crawls" on public.ai_crawl_summaries;
+    create policy "Users can create AI crawl summaries for accessible crawls"
+      on public.ai_crawl_summaries
+      for insert
+      to authenticated
+      with check (
+        user_id = (select auth.uid())
+        and public.can_access_project(project_id)
+      );
+  end if;
+end
+$$;
 
 -- ============================================================================
 -- PART 7: Add Indexes for Performance
@@ -398,5 +428,4 @@ comment on function public.can_access_issue(bigint) is
 
 comment on function public.can_modify_project(uuid) is 
   'Check if current user can modify a project (owner or teammate). Used in RLS policies.';
-
 

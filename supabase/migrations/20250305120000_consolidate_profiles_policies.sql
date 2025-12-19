@@ -3,6 +3,7 @@
 
 drop policy if exists "Team members can view account owner profile" on public.profiles;
 drop policy if exists "Users can view their own profile" on public.profiles;
+drop policy if exists "Profiles select for owners and teammates" on public.profiles;
 
 -- Helper: check if current user can view the given profile (self or account owner)
 create or replace function public.can_view_profile(profile_id uuid)

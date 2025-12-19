@@ -192,6 +192,7 @@ create policy "Project members and teammates can insert issues"
 
 -- Update Issue Recommendations RLS Policies
 drop policy if exists "Project members can view recommendations" on public.issue_recommendations;
+drop policy if exists "Project members and teammates can view recommendations" on public.issue_recommendations;
 create policy "Project members and teammates can view recommendations"
   on public.issue_recommendations
   for select
@@ -230,6 +231,7 @@ create policy "Project members and teammates can view recommendations"
   );
 
 drop policy if exists "Project members can create recommendations" on public.issue_recommendations;
+drop policy if exists "Project members and teammates can create recommendations" on public.issue_recommendations;
 create policy "Project members and teammates can create recommendations"
   on public.issue_recommendations
   for insert
@@ -269,6 +271,7 @@ create policy "Project members and teammates can create recommendations"
 
 -- Update Issue Status History RLS Policies
 drop policy if exists "Project members can view status history" on public.issue_status_history;
+drop policy if exists "Project members and teammates can view status history" on public.issue_status_history;
 create policy "Project members and teammates can view status history"
   on public.issue_status_history
   for select
@@ -307,6 +310,7 @@ create policy "Project members and teammates can view status history"
   );
 
 drop policy if exists "Project members can create status history" on public.issue_status_history;
+drop policy if exists "Project members and teammates can create status history" on public.issue_status_history;
 create policy "Project members and teammates can create status history"
   on public.issue_status_history
   for insert
@@ -346,6 +350,7 @@ create policy "Project members and teammates can create status history"
 
 -- Update Exports RLS Policies
 drop policy if exists "Project members can view exports" on public.exports;
+drop policy if exists "Project members and teammates can view exports" on public.exports;
 create policy "Project members and teammates can view exports"
   on public.exports
   for select
@@ -381,6 +386,7 @@ create policy "Project members and teammates can view exports"
   );
 
 drop policy if exists "Project members can create exports" on public.exports;
+drop policy if exists "Project members and teammates can create exports" on public.exports;
 create policy "Project members and teammates can create exports"
   on public.exports
   for insert
@@ -414,4 +420,3 @@ create policy "Project members and teammates can create exports"
         and tm.status = 'active'
     )
   );
-
