@@ -147,9 +147,7 @@ deploy-backend: docker-push
 	GCP_PROJ="$${GCP_PROJECT_ID:-$(GCP_PROJECT_ID)}"; \
 	GCP_REG="$${GCP_REGION:-$(GCP_REGION)}"; \
 	ENV_VARS="PUBLIC_SUPABASE_URL=$$SUPABASE_URL,PUBLIC_SUPABASE_ANON_KEY=$$SUPABASE_ANON"; \
-	if [ -n "$$STRIPE_SECRET_KEY" ]; then \
-		ENV_VARS="$$ENV_VARS,STRIPE_SECRET_KEY=$$STRIPE_SECRET_KEY"; \
-	fi; \
+	# STRIPE_SECRET_KEY is managed via Secret Manager (see --set-secrets) \
 	if [ -n "$$STRIPE_WEBHOOK_SECRET" ]; then \
 		ENV_VARS="$$ENV_VARS,STRIPE_WEBHOOK_SECRET=$$STRIPE_WEBHOOK_SECRET"; \
 	fi; \
@@ -174,7 +172,7 @@ deploy-backend: docker-push
 		--region $$GCP_REG \
 		--allow-unauthenticated \
 		--update-env-vars="$$ENV_VARS" \
-		--set-secrets="SUPABASE_SERVICE_ROLE_KEY=supabase-service-role-key:latest" \
+		--set-secrets="SUPABASE_SERVICE_ROLE_KEY=supabase_service_role_key:latest,SUPABASE_JWT_SECRET=supabase_jwt_secret:latest,STRIPE_SECRET_KEY=stripe_secret_key:latest" \
 		--memory=512Mi \
 		--cpu=1 \
 		--timeout=300 \
