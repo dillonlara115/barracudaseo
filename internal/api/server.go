@@ -25,6 +25,7 @@ type Config struct {
 	SupabaseURL        string
 	SupabaseServiceKey string
 	SupabaseAnonKey    string
+	SupabaseJWTSecret  string
 	CronSyncSecret     string
 	Logger             *zap.Logger
 }
@@ -307,6 +308,14 @@ func (s *Server) validateToken(token string) (*User, error) {
 		}
 	}
 
+	// Try validating with JWT secret (helps when sessions are not in auth API)
+	if user == nil {
+		if user, err = s.validateTokenWithJWTSecret(token); err != nil {
+			s.logger.Info("JWT secret validation failed, falling back to Supabase API",
+				zap.Error(err))
+		}
+	}
+
 	// Fall back to Supabase API validation if local validation was unavailable or failed
 	if user == nil {
 		user, err = s.validateTokenViaAPI(token)
@@ -371,6 +380,34 @@ func (s *Server) validateTokenLocally(token string) (*User, error) {
 
 	if claims.Subject == "" {
 		return nil, errors.New("missing subject in token")
+	}
+
+	return &User{
+		ID:    claims.Subject,
+		Email: claims.Email,
+	}, nil
+}
+
+func (s *Server) validateTokenWithJWTSecret(token string) (*User, error) {
+	if s.config.SupabaseJWTSecret == "" {
+		return nil, errors.New("jwt secret not configured")
+	}
+
+	expectedIssuer := strings.TrimSuffix(s.config.SupabaseURL, "/") + "/auth/v1"
+	parsed, err := jwt.ParseWithClaims(token, &supabaseClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(s.config.SupabaseJWTSecret), nil
+	}, jwt.WithValidMethods([]string{"HS256"}))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse token with jwt secret: %w", err)
+	}
+
+	claims, ok := parsed.Claims.(*supabaseClaims)
+	if !ok || !parsed.Valid {
+		return nil, errors.New("invalid token claims")
+	}
+
+	if claims.Issuer != expectedIssuer {
+		return nil, fmt.Errorf("invalid issuer: %s", claims.Issuer)
 	}
 
 	return &User{

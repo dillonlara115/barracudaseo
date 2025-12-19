@@ -103,6 +103,7 @@ func runAPI(cmd *cobra.Command, args []string) error {
 		SupabaseURL:        supabaseURL,
 		SupabaseServiceKey: supabaseServiceKey,
 		SupabaseAnonKey:    supabaseAnonKey,
+		SupabaseJWTSecret:  os.Getenv("SUPABASE_JWT_SECRET"),
 		CronSyncSecret:     os.Getenv("GSC_SYNC_SECRET"),
 		Logger:             logger,
 	})
