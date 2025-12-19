@@ -78,6 +78,7 @@ alter table public.keyword_rank_snapshots enable row level security;
 alter table public.keyword_tasks enable row level security;
 
 -- RLS Policy: Users can view keywords for projects they're members of
+drop policy if exists "Project members can view keywords" on public.keywords;
 create policy "Project members can view keywords"
   on public.keywords
   for select
@@ -97,6 +98,7 @@ create policy "Project members can view keywords"
   );
 
 -- RLS Policy: Users can insert keywords for projects they're members of
+drop policy if exists "Project members can insert keywords" on public.keywords;
 create policy "Project members can insert keywords"
   on public.keywords
   for insert
@@ -116,6 +118,7 @@ create policy "Project members can insert keywords"
   );
 
 -- RLS Policy: Users can update keywords for projects they're members of
+drop policy if exists "Project members can update keywords" on public.keywords;
 create policy "Project members can update keywords"
   on public.keywords
   for update
@@ -135,6 +138,7 @@ create policy "Project members can update keywords"
   );
 
 -- RLS Policy: Users can delete keywords for projects they're members of
+drop policy if exists "Project members can delete keywords" on public.keywords;
 create policy "Project members can delete keywords"
   on public.keywords
   for delete
@@ -154,6 +158,7 @@ create policy "Project members can delete keywords"
   );
 
 -- RLS Policy: Users can view snapshots for keywords in projects they're members of
+drop policy if exists "Project members can view keyword snapshots" on public.keyword_rank_snapshots;
 create policy "Project members can view keyword snapshots"
   on public.keyword_rank_snapshots
   for select
@@ -175,6 +180,7 @@ create policy "Project members can view keyword snapshots"
   );
 
 -- RLS Policy: Users can insert snapshots for keywords in projects they're members of
+drop policy if exists "Project members can insert keyword snapshots" on public.keyword_rank_snapshots;
 create policy "Project members can insert keyword snapshots"
   on public.keyword_rank_snapshots
   for insert
@@ -196,6 +202,7 @@ create policy "Project members can insert keyword snapshots"
   );
 
 -- RLS Policy: Users can view tasks for keywords in projects they're members of
+drop policy if exists "Project members can view keyword tasks" on public.keyword_tasks;
 create policy "Project members can view keyword tasks"
   on public.keyword_tasks
   for select
@@ -217,6 +224,7 @@ create policy "Project members can view keyword tasks"
   );
 
 -- RLS Policy: Users can insert tasks for keywords in projects they're members of
+drop policy if exists "Project members can insert keyword tasks" on public.keyword_tasks;
 create policy "Project members can insert keyword tasks"
   on public.keyword_tasks
   for insert
@@ -238,6 +246,7 @@ create policy "Project members can insert keyword tasks"
   );
 
 -- RLS Policy: Users can update tasks for keywords in projects they're members of
+drop policy if exists "Project members can update keyword tasks" on public.keyword_tasks;
 create policy "Project members can update keyword tasks"
   on public.keyword_tasks
   for update
@@ -273,8 +282,8 @@ end;
 $$ language plpgsql;
 
 -- Updated_at trigger for keywords
+drop trigger if exists set_updated_at_keywords on public.keywords;
 create trigger set_updated_at_keywords
   before update on public.keywords
   for each row
   execute function public.handle_updated_at();
-

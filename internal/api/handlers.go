@@ -545,8 +545,8 @@ func (s *Server) handleUpdateProject(w http.ResponseWriter, r *http.Request, pro
 		return
 	}
 
-	// Update project (RLS will enforce permissions)
-	_, _, err = s.supabase.From("projects").
+	// Update project using service role since we've already verified access
+	_, _, err = s.serviceRole.From("projects").
 		Update(updateData, "", "").
 		Eq("id", projectID).
 		Execute()
@@ -557,10 +557,10 @@ func (s *Server) handleUpdateProject(w http.ResponseWriter, r *http.Request, pro
 		return
 	}
 
-	// Fetch the updated project
+	// Fetch the updated project using service role since we've already verified access
 	var projects []map[string]interface{}
 	var data []byte
-	data, _, err = s.supabase.From("projects").
+	data, _, err = s.serviceRole.From("projects").
 		Select("*", "", false).
 		Eq("id", projectID).
 		Execute()
