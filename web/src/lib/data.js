@@ -294,51 +294,111 @@ async function authorizedJSON(path, options = {}) {
   }
 }
 
+const PROJECTS_CACHE_TTL_MS = 60000;
+const CRAWLS_CACHE_TTL_MS = 60000;
+
+const projectsCache = {
+  data: null,
+  error: null,
+  fetchedAt: 0,
+  inFlight: null
+};
+
+const crawlsCache = new Map();
+
+function isCacheFresh(fetchedAt, ttlMs) {
+  return fetchedAt > 0 && Date.now() - fetchedAt < ttlMs;
+}
+
 // Fetch user's projects
 export async function fetchProjects() {
   try {
-    const { data, error } = await supabase
-      .from('projects')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching projects:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
-      throw error;
+    if (projectsCache.inFlight) {
+      return await projectsCache.inFlight;
     }
-    
-    // Removed verbose logging to reduce console noise
-    
-    return { data, error: null };
+
+    if (projectsCache.data && isCacheFresh(projectsCache.fetchedAt, PROJECTS_CACHE_TTL_MS)) {
+      return { data: projectsCache.data, error: null };
+    }
+
+    projectsCache.inFlight = (async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching projects:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        return { data: null, error };
+      }
+
+      projectsCache.data = data;
+      projectsCache.error = null;
+      projectsCache.fetchedAt = Date.now();
+      return { data, error: null };
+    })();
+
+    return await projectsCache.inFlight;
   } catch (error) {
     console.error('Error fetching projects:', error);
     return { data: null, error };
+  } finally {
+    projectsCache.inFlight = null;
   }
 }
 
 // Fetch crawls for a project - use backend API for reliable access
 export async function fetchCrawls(projectId) {
-  try {
-    const response = await authorizedRequest(`/api/v1/projects/${projectId}/crawls`);
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
-      const errorMessage = errorData.error || `Failed to fetch crawls: ${response.status}`;
-      const error = new Error(errorMessage);
-      error.status = response.status;
-      throw error;
-    }
-    const responseData = await response.json();
-    // Backend returns { crawls: [...], count: ... }, extract the crawls array
-    const data = responseData.crawls || (Array.isArray(responseData) ? responseData : []);
-    return { data, error: null };
-  } catch (error) {
-    console.error('Error fetching crawls:', error);
-    return { 
-      data: null, 
-      error: error instanceof Error ? error : new Error(String(error))
-    };
+  const cacheEntry = crawlsCache.get(projectId);
+  if (cacheEntry?.inFlight) {
+    return await cacheEntry.inFlight;
   }
+  if (cacheEntry?.data && isCacheFresh(cacheEntry.fetchedAt, CRAWLS_CACHE_TTL_MS)) {
+    return { data: cacheEntry.data, error: null };
+  }
+
+  const inFlight = (async () => {
+    try {
+      const response = await authorizedRequest(`/api/v1/projects/${projectId}/crawls`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        const errorMessage = errorData.error || `Failed to fetch crawls: ${response.status}`;
+        const error = new Error(errorMessage);
+        error.status = response.status;
+        throw error;
+      }
+      const responseData = await response.json();
+      const data = responseData.crawls || (Array.isArray(responseData) ? responseData : []);
+      crawlsCache.set(projectId, {
+        data,
+        error: null,
+        fetchedAt: Date.now(),
+        inFlight: null
+      });
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error fetching crawls:', error);
+      return {
+        data: null,
+        error: error instanceof Error ? error : new Error(String(error))
+      };
+    }
+  })();
+
+  crawlsCache.set(projectId, {
+    data: cacheEntry?.data || null,
+    error: null,
+    fetchedAt: cacheEntry?.fetchedAt || 0,
+    inFlight
+  });
+
+  const result = await inFlight;
+  const updatedEntry = crawlsCache.get(projectId);
+  if (updatedEntry) {
+    updatedEntry.inFlight = null;
+  }
+  return result;
 }
 
 // Fetch a single crawl by ID - use backend API for real-time updates
@@ -1086,4 +1146,3 @@ export async function redeemPromoCode(code, teamSize = 1) {
     return { data: null, error: err };
   }
 }
-
