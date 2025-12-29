@@ -3,6 +3,7 @@
 	import Header from '../components/layout/Header.svelte';
 	import Footer from '../components/layout/Footer.svelte';
 	import MetaTags from '../components/MetaTags.svelte';
+	import GoogleAnalytics from '../components/GoogleAnalytics.svelte';
 	import { getMetaTags, getOrganizationSchema, getWebSiteSchema } from '$lib/meta';
 
 	let { children } = $props();
@@ -12,6 +13,7 @@
 </script>
 
 <MetaTags config={{ ...defaultMeta, structuredData }} />
+<GoogleAnalytics />
 
 <div class="min-h-screen flex flex-col" data-theme="barracuda">
 	<Header />
