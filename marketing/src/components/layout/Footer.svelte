@@ -28,6 +28,7 @@
 				<span class="block font-heading font-bold mb-4">Company</span>
 				<div class="flex flex-col gap-2">
 					<a href="/about" class="text-white/70 hover:text-[#8ec07c] transition-colors">About</a>
+					<a href="/blog" class="text-white/70 hover:text-[#8ec07c] transition-colors">Blog</a>
 					<a href="/faq" class="text-white/70 hover:text-[#8ec07c] transition-colors">FAQ</a>
 				</div>
 			</div>

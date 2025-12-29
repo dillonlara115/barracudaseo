@@ -94,6 +94,11 @@
 						</a>
 					</li>
 					<li>
+						<a href="/blog" class={`hover:text-[#8ec07c] transition-colors ${$page.url.pathname.startsWith('/blog') ? 'text-[#8ec07c]' : 'text-white'}`}>
+							Blog
+						</a>
+					</li>
+					<li>
 						<a
 							href="https://app.barracudaseo.com"
 							class="bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-4 py-2 rounded-lg font-medium transition-colors"
@@ -197,6 +202,15 @@
 						onclick={closeMobileMenu}
 					>
 						About
+					</a>
+				</li>
+				<li>
+					<a 
+						href="/blog" 
+						class={`block py-2 hover:text-[#8ec07c] transition-colors ${$page.url.pathname.startsWith('/blog') ? 'text-[#8ec07c]' : 'text-white'}`}
+						onclick={closeMobileMenu}
+					>
+						Blog
 					</a>
 				</li>
 				<li class="pt-2">

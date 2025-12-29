@@ -87,6 +87,61 @@ export const blogPosts: BlogPost[] = [
 		category: 'Guides',
 		tags: ['redirects', '301 redirects', 'redirect chains', 'technical SEO', 'site speed'],
 		featured: false
+	},
+	{
+		slug: 'prioritizing-seo-fixes',
+		title: 'Prioritizing SEO Fixes: A Data-Driven Framework',
+		description: 'Not all SEO issues are created equal. Learn how to prioritize fixes based on impact, effort, and data to maximize your SEO ROI.',
+		author: 'Barracuda Team',
+		publishDate: '2025-01-03',
+		readTime: 9,
+		category: 'Guides',
+		tags: ['SEO prioritization', 'SEO strategy', 'technical SEO', 'data-driven SEO'],
+		featured: false
+	},
+	{
+		slug: 'audit-large-sites-10000-pages',
+		title: 'How to Audit 10,000+ Pages: A Guide for Enterprise SEO',
+		description: 'Auditing large websites requires different strategies than small sites. Learn how to crawl, analyze, and fix issues at scale for enterprise-level SEO.',
+		author: 'Barracuda Team',
+		publishDate: '2025-01-01',
+		readTime: 10,
+		category: 'Guides',
+		tags: ['enterprise SEO', 'large site audit', 'scalable SEO', 'technical SEO'],
+		featured: false
+	},
+	{
+		slug: 'visualize-site-structure-link-graph',
+		title: 'How to Visualize Your Site Structure: Link Graph Analysis Guide',
+		description: 'Understanding your site\'s internal linking structure helps identify orphaned pages, improve crawlability, and optimize information architecture.',
+		author: 'Barracuda Team',
+		publishDate: '2024-12-29',
+		readTime: 8,
+		category: 'Guides',
+		tags: ['site structure', 'internal linking', 'link graph', 'information architecture', 'crawling'],
+		featured: false
+	},
+	{
+		slug: 'seo-audit-checklist',
+		title: 'The SEO Audit Checklist Every Agency Should Use',
+		description: 'A comprehensive checklist covering all aspects of technical SEO audits. Use this framework to ensure nothing falls through the cracks.',
+		author: 'Barracuda Team',
+		publishDate: '2024-12-27',
+		readTime: 7,
+		category: 'Guides',
+		tags: ['SEO checklist', 'SEO audit', 'agency SEO', 'technical SEO'],
+		featured: false
+	},
+	{
+		slug: 'ecommerce-seo-audit',
+		title: 'How to Audit E-commerce Sites: Common Issues and Fixes',
+		description: 'E-commerce sites have unique SEO challenges. Learn how to audit product pages, category structures, and technical issues specific to online stores.',
+		author: 'Barracuda Team',
+		publishDate: '2024-12-25',
+		readTime: 11,
+		category: 'Guides',
+		tags: ['ecommerce SEO', 'product pages', 'category pages', 'technical SEO'],
+		featured: false
 	}
 ];
 

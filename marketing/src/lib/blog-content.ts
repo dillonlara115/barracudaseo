@@ -1129,5 +1129,766 @@ sys.exit(0)</code></pre>
 
 		<h2>Find Your Redirect Chains</h2>
 		<p>Ready to audit your site for redirect chains? <a href="https://app.barracudaseo.com" class="text-[#8ec07c] hover:text-[#a0d28c] underline font-medium">Start your free crawl with Barracuda SEO</a> and get a complete list of redirect chains with their paths.</p>
+	`,
+	'prioritizing-seo-fixes': `
+		<h2>Introduction</h2>
+		<p>You've run your SEO audit and found 500+ issues. Now what? Fixing everything isn't realistic—and it's not necessary. The key to effective SEO is prioritizing fixes that deliver the most impact with the least effort.</p>
+		<p>This guide shows you how to prioritize SEO fixes using a data-driven framework that considers impact, effort, traffic, and business value.</p>
+
+		<h2>Why Prioritization Matters</h2>
+		<p>Without prioritization, you'll:</p>
+		<ul>
+			<li>Waste time on low-impact fixes</li>
+			<li>Miss critical issues that hurt rankings</li>
+			<li>Struggle to show ROI from SEO work</li>
+			<li>Burn out fixing everything at once</li>
+		</ul>
+		<p>With proper prioritization, you'll:</p>
+		<ul>
+			<li>Focus on high-impact fixes first</li>
+			<li>Maximize SEO ROI</li>
+			<li>Show measurable results quickly</li>
+			<li>Maintain sustainable workflows</li>
+		</ul>
+
+		<h2>The Prioritization Framework</h2>
+		<p>Use this framework to score each SEO issue:</p>
+
+		<h3>1. Impact Score (1-10)</h3>
+		<p>How much will fixing this issue improve SEO performance?</p>
+		<ul>
+			<li><strong>9-10:</strong> Critical issues affecting crawlability or indexability</li>
+			<li><strong>7-8:</strong> Major issues affecting user experience or rankings</li>
+			<li><strong>5-6:</strong> Moderate issues with measurable impact</li>
+			<li><strong>3-4:</strong> Minor issues with limited impact</li>
+			<li><strong>1-2:</strong> Edge cases or cosmetic issues</li>
+		</ul>
+
+		<h3>2. Effort Score (1-10)</h3>
+		<p>How much time and resources will fixing this require?</p>
+		<ul>
+			<li><strong>1-2:</strong> Quick fixes (under 1 hour)</li>
+			<li><strong>3-4:</strong> Simple fixes (1-4 hours)</li>
+			<li><strong>5-6:</strong> Moderate fixes (1-2 days)</li>
+			<li><strong>7-8:</strong> Complex fixes (1-2 weeks)</li>
+			<li><strong>9-10:</strong> Major projects (weeks or months)</li>
+		</ul>
+
+		<h3>3. Traffic Score (1-10)</h3>
+		<p>How much traffic does the affected page/pages receive?</p>
+		<ul>
+			<li><strong>9-10:</strong> Homepage or top 10 pages</li>
+			<li><strong>7-8:</strong> High-traffic category/product pages</li>
+			<li><strong>5-6:</strong> Moderate-traffic pages</li>
+			<li><strong>3-4:</strong> Low-traffic pages</li>
+			<li><strong>1-2:</strong> Minimal or no traffic</li>
+		</ul>
+
+		<h3>4. Business Value Score (1-10)</h3>
+		<p>How important is this page/content to business goals?</p>
+		<ul>
+			<li><strong>9-10:</strong> Revenue-critical pages</li>
+			<li><strong>7-8:</strong> High-value conversion pages</li>
+			<li><strong>5-6:</strong> Important content pages</li>
+			<li><strong>3-4:</strong> Supporting pages</li>
+			<li><strong>1-2:</strong> Low-value pages</li>
+		</ul>
+
+		<h2>Calculating Priority Score</h2>
+		<p>Use this formula to calculate priority:</p>
+		<p><strong>Priority Score = (Impact × Traffic × Business Value) / Effort</strong></p>
+		<p>Higher scores = higher priority. Focus on fixes with scores above 20 first.</p>
+
+		<h2>Example Prioritization</h2>
+		<p>Let's prioritize three common issues:</p>
+
+		<h3>Issue 1: Homepage Missing Title Tag</h3>
+		<ul>
+			<li>Impact: 10 (critical for SEO)</li>
+			<li>Effort: 1 (5-minute fix)</li>
+			<li>Traffic: 10 (homepage)</li>
+			<li>Business Value: 10 (most important page)</li>
+			<li><strong>Priority Score: (10 × 10 × 10) / 1 = 1000</strong></li>
+		</ul>
+		<p><strong>Action:</strong> Fix immediately (highest priority)</p>
+
+		<h3>Issue 2: 50 Product Pages with Duplicate Titles</h3>
+		<ul>
+			<li>Impact: 7 (hurts rankings)</li>
+			<li>Effort: 6 (requires template update)</li>
+			<li>Traffic: 8 (product pages get traffic)</li>
+			<li>Business Value: 9 (revenue-critical)</li>
+			<li><strong>Priority Score: (7 × 8 × 9) / 6 = 84</strong></li>
+		</ul>
+		<p><strong>Action:</strong> High priority, fix soon</p>
+
+		<h3>Issue 3: Blog Archive Page Missing Meta Description</h3>
+		<ul>
+			<li>Impact: 4 (minor SEO impact)</li>
+			<li>Effort: 2 (quick fix)</li>
+			<li>Traffic: 3 (low traffic)</li>
+			<li>Business Value: 3 (supporting page)</li>
+			<li><strong>Priority Score: (4 × 3 × 3) / 2 = 18</strong></li>
+		</ul>
+		<p><strong>Action:</strong> Low priority, fix when time allows</p>
+
+		<h2>Using Data to Prioritize</h2>
+		<p>Integrate data sources to improve prioritization:</p>
+
+		<h3>Google Search Console</h3>
+		<p>Use GSC data to identify:</p>
+		<ul>
+			<li>Pages with high impressions but low clicks (fix meta descriptions)</li>
+			<li>Pages losing rankings (fix critical issues first)</li>
+			<li>Pages with crawl errors (fix immediately)</li>
+		</ul>
+
+		<h3>Google Analytics</h3>
+		<p>Use GA data to prioritize:</p>
+		<ul>
+			<li>High-traffic pages (fix issues here first)</li>
+			<li>High-conversion pages (protect revenue)</li>
+			<li>Pages with high bounce rates (improve UX issues)</li>
+		</ul>
+
+		<h3>Crawl Data</h3>
+		<p>Use crawl results to identify:</p>
+		<ul>
+			<li>Issue frequency (fix widespread issues first)</li>
+			<li>Issue severity (critical vs. warnings)</li>
+			<li>URL patterns (fix template-level issues)</li>
+		</ul>
+
+		<h2>Prioritization Best Practices</h2>
+		<ul>
+			<li><strong>Start with crawlability:</strong> Fix issues preventing indexing first</li>
+			<li><strong>Focus on high-traffic pages:</strong> Maximum impact with fewer fixes</li>
+			<li><strong>Fix template-level issues:</strong> One fix solves many pages</li>
+			<li><strong>Batch similar fixes:</strong> Group related issues for efficiency</li>
+			<li><strong>Track progress:</strong> Monitor improvements to validate prioritization</li>
+		</ul>
+
+		<h2>Tools for Prioritization</h2>
+		<p>Tools like Barracuda SEO automatically prioritize issues by:</p>
+		<ul>
+			<li>Severity (critical, warning, info)</li>
+			<li>Impact (based on issue type)</li>
+			<li>Frequency (how many pages affected)</li>
+			<li>Integration with GSC/GA data (traffic-based prioritization)</li>
+		</ul>
+
+		<h2>Conclusion</h2>
+		<p>Effective SEO prioritization maximizes ROI by focusing on high-impact, low-effort fixes first. Use data to inform decisions, and don't try to fix everything at once.</p>
+		<p>Remember: A few well-prioritized fixes deliver more value than fixing everything randomly.</p>
+
+		<h2>Start Prioritizing Your SEO Fixes</h2>
+		<p>Ready to prioritize your SEO issues? <a href="https://app.barracudaseo.com" class="text-[#8ec07c] hover:text-[#a0d28c] underline font-medium">Try Barracuda SEO</a> and get automatic priority scoring for all detected issues.</p>
+	`,
+	'audit-large-sites-10000-pages': `
+		<h2>Introduction</h2>
+		<p>Auditing a 10,000+ page website is fundamentally different from auditing a small site. The scale introduces unique challenges: crawl time, data management, issue prioritization, and resource allocation.</p>
+		<p>This guide covers strategies, tools, and best practices for auditing enterprise-level websites efficiently and effectively.</p>
+
+		<h2>Challenges of Large Site Audits</h2>
+		<ul>
+			<li><strong>Crawl time:</strong> Large crawls can take hours or days</li>
+			<li><strong>Data volume:</strong> Managing millions of data points</li>
+			<li><strong>Issue volume:</strong> Thousands of issues to analyze</li>
+			<li><strong>Resource limits:</strong> Server, memory, and bandwidth constraints</li>
+			<li><strong>Prioritization:</strong> Finding needles in haystacks</li>
+		</ul>
+
+		<h2>Pre-Audit Planning</h2>
+
+		<h3>1. Define Scope</h3>
+		<p>Don't try to crawl everything at once:</p>
+		<ul>
+			<li>Start with main site sections</li>
+			<li>Exclude admin/private areas</li>
+			<li>Focus on public-facing content</li>
+			<li>Use sitemaps to guide scope</li>
+		</ul>
+
+		<h3>2. Set Up Infrastructure</h3>
+		<p>Ensure you have:</p>
+		<ul>
+			<li>Sufficient crawl capacity (cloud-based crawlers recommended)</li>
+			<li>Storage for crawl data</li>
+			<li>Processing power for analysis</li>
+			<li>Team collaboration tools</li>
+		</ul>
+
+		<h3>3. Configure Crawl Settings</h3>
+		<p>Optimize for large sites:</p>
+		<ul>
+			<li>Set appropriate crawl depth</li>
+			<li>Use sitemap seeding</li>
+			<li>Respect robots.txt</li>
+			<li>Configure rate limiting</li>
+			<li>Set page limits per section</li>
+		</ul>
+
+		<h2>Crawling Strategies</h2>
+
+		<h3>Strategy 1: Sectional Crawls</h3>
+		<p>Break large sites into sections:</p>
+		<ul>
+			<li>Crawl product pages separately from blog</li>
+			<li>Audit category pages independently</li>
+			<li>Combine results for analysis</li>
+		</ul>
+		<p><strong>Benefits:</strong> Faster crawls, easier to manage, parallel processing</p>
+
+		<h3>Strategy 2: Incremental Crawls</h3>
+		<p>Crawl in stages:</p>
+		<ul>
+			<li>Start with homepage and top-level pages</li>
+			<li>Expand to category pages</li>
+			<li>Finally crawl product/content pages</li>
+		</ul>
+		<p><strong>Benefits:</strong> Early insights, progressive analysis, manageable chunks</p>
+
+		<h3>Strategy 3: Sample-Based Audits</h3>
+		<p>For very large sites (100k+ pages):</p>
+		<ul>
+			<li>Crawl representative samples</li>
+			<li>Focus on high-traffic sections</li>
+			<li>Use statistical sampling</li>
+		</ul>
+		<p><strong>Benefits:</strong> Faster audits, still representative, actionable insights</p>
+
+		<h2>Data Management</h2>
+
+		<h3>Cloud Storage</h3>
+		<p>Use cloud-based storage for crawl data:</p>
+		<ul>
+			<li>Accessible from anywhere</li>
+			<li>No local storage limits</li>
+			<li>Team collaboration</li>
+			<li>Historical tracking</li>
+		</ul>
+
+		<h3>Data Export</h3>
+		<p>Export strategically:</p>
+		<ul>
+			<li>CSV for spreadsheet analysis</li>
+			<li>JSON for programmatic processing</li>
+			<li>Filter exports by issue type</li>
+			<li>Export subsets for focused analysis</li>
+		</ul>
+
+		<h2>Issue Analysis at Scale</h2>
+
+		<h3>1. Group by Pattern</h3>
+		<p>Identify template-level issues:</p>
+		<ul>
+			<li>Group issues by URL structure</li>
+			<li>Identify common patterns</li>
+			<li>Fix templates, not individual pages</li>
+		</ul>
+
+		<h3>2. Prioritize by Impact</h3>
+		<p>Use traffic and business data:</p>
+		<ul>
+			<li>Focus on high-traffic pages</li>
+			<li>Prioritize revenue-critical sections</li>
+			<li>Fix widespread issues first</li>
+		</ul>
+
+		<h3>3. Use Automation</h3>
+		<p>Automate where possible:</p>
+		<ul>
+			<li>Automated issue detection</li>
+			<li>Bulk fixes via templates</li>
+			<li>Automated reporting</li>
+		</ul>
+
+		<h2>Tools for Large Site Audits</h2>
+
+		<h3>Barracuda SEO</h3>
+		<p>Built for scale:</p>
+		<ul>
+			<li>Crawl 10,000+ pages with Pro plan</li>
+			<li>Cloud-based processing</li>
+			<li>Team collaboration</li>
+			<li>Priority scoring</li>
+			<li>Historical tracking</li>
+		</ul>
+
+		<h3>Other Options</h3>
+		<ul>
+			<li><strong>Screaming Frog:</strong> Desktop crawler, good for smaller sections</li>
+			<li><strong>Sitebulb:</strong> Visual reporting, good for analysis</li>
+			<li><strong>Custom scripts:</strong> For specific needs</li>
+		</ul>
+
+		<h2>Best Practices</h2>
+		<ul>
+			<li><strong>Start small:</strong> Test crawl settings on a subset first</li>
+			<li><strong>Monitor resources:</strong> Watch server load and bandwidth</li>
+			<li><strong>Document everything:</strong> Keep notes on crawl settings and findings</li>
+			<li><strong>Iterate:</strong> Refine approach based on results</li>
+			<li><strong>Collaborate:</strong> Use team features for large audits</li>
+		</ul>
+
+		<h2>Case Study: Auditing a 50,000-Page E-commerce Site</h2>
+		<p>Here's how we audited a large e-commerce site:</p>
+		<ol>
+			<li><strong>Planning:</strong> Defined scope (product pages, categories, blog)</li>
+			<li><strong>Sectional crawls:</strong> Crawled each section separately</li>
+			<li><strong>Analysis:</strong> Identified template-level issues</li>
+			<li><strong>Prioritization:</strong> Focused on high-traffic product pages</li>
+			<li><strong>Results:</strong> Fixed 200+ template issues affecting 30,000+ pages</li>
+		</ol>
+
+		<h2>Conclusion</h2>
+		<p>Large site audits require different strategies than small sites. By breaking crawls into sections, using cloud-based tools, and focusing on template-level fixes, you can efficiently audit enterprise websites.</p>
+		<p>Remember: Scale doesn't mean complexity. Smart strategies make large audits manageable.</p>
+
+		<h2>Audit Your Large Site</h2>
+		<p>Ready to audit your enterprise site? <a href="https://app.barracudaseo.com" class="text-[#8ec07c] hover:text-[#a0d28c] underline font-medium">Try Barracuda SEO Pro</a> and crawl 10,000+ pages with cloud-based processing and team collaboration.</p>
+	`,
+	'visualize-site-structure-link-graph': `
+		<h2>Introduction</h2>
+		<p>Your site's internal linking structure is the foundation of SEO. It determines how search engines crawl your site, how link equity flows, and how users navigate. Visualizing this structure helps you identify problems and optimize architecture.</p>
+		<p>This guide shows you how to analyze and visualize your site's link structure using crawl data and link graphs.</p>
+
+		<h2>Why Site Structure Matters</h2>
+		<p>Internal linking structure affects:</p>
+		<ul>
+			<li><strong>Crawlability:</strong> How easily search engines discover pages</li>
+			<li><strong>Indexability:</strong> Which pages get indexed</li>
+			<li><strong>Link equity:</strong> How PageRank flows through your site</li>
+			<li><strong>User experience:</strong> How users navigate content</li>
+			<li><strong>Information architecture:</strong> Content organization</li>
+		</ul>
+
+		<h2>What is a Link Graph?</h2>
+		<p>A link graph visualizes:</p>
+		<ul>
+			<li>Pages as nodes</li>
+			<li>Links as edges</li>
+			<li>Relationships between pages</li>
+			<li>Link flow patterns</li>
+		</ul>
+		<p>Link graphs help you see:</p>
+		<ul>
+			<li>Orphaned pages (no internal links)</li>
+			<li>Deep pages (many clicks from homepage)</li>
+			<li>Hub pages (many outgoing links)</li>
+			<li>Link clusters (related content groups)</li>
+		</ul>
+
+		<h2>How to Create a Link Graph</h2>
+
+		<h3>Step 1: Crawl Your Site</h3>
+		<p>Run a comprehensive crawl:</p>
+		<ul>
+			<li>Capture all internal links</li>
+			<li>Record link relationships</li>
+			<li>Export link data</li>
+		</ul>
+		<p>Tools like Barracuda SEO automatically generate link graphs from crawl data.</p>
+
+		<h3>Step 2: Analyze Link Data</h3>
+		<p>Look for patterns:</p>
+		<ul>
+			<li>Pages with no incoming links (orphaned)</li>
+			<li>Pages with many outgoing links (hubs)</li>
+			<li>Pages deep in the structure (4+ clicks from homepage)</li>
+			<li>Circular link patterns</li>
+		</ul>
+
+		<h3>Step 3: Visualize Structure</h3>
+		<p>Use visualization tools:</p>
+		<ul>
+			<li>Interactive link graphs (Barracuda SEO dashboard)</li>
+			<li>Tree diagrams</li>
+			<li>Sitemap visualizations</li>
+			<li>Custom visualizations</li>
+		</ul>
+
+		<h2>Common Structure Problems</h2>
+
+		<h3>1. Orphaned Pages</h3>
+		<p><strong>Problem:</strong> Pages with no internal links pointing to them</p>
+		<p><strong>Impact:</strong> Hard to discover, may not get crawled</p>
+		<p><strong>Solution:</strong> Add internal links from relevant pages</p>
+
+		<h3>2. Deep Pages</h3>
+		<p><strong>Problem:</strong> Important pages 5+ clicks from homepage</p>
+		<p><strong>Impact:</strong> Less crawl priority, less link equity</p>
+		<p><strong>Solution:</strong> Reduce click depth, add direct links</p>
+
+		<h3>3. Flat Structure</h3>
+		<p><strong>Problem:</strong> Too many pages linked from homepage</p>
+		<p><strong>Impact:</strong> Diluted link equity, poor organization</p>
+		<p><strong>Solution:</strong> Create category structure, use breadcrumbs</p>
+
+		<h3>4. Missing Hub Pages</h3>
+		<p><strong>Problem:</strong> No pages linking to related content</p>
+		<p><strong>Impact:</strong> Poor content discovery, weak topical clusters</p>
+		<p><strong>Solution:</strong> Create category/topic hub pages</p>
+
+		<h2>Optimizing Site Structure</h2>
+
+		<h3>1. Create Logical Hierarchy</h3>
+		<p>Organize content in a clear hierarchy:</p>
+		<ul>
+			<li>Homepage → Categories → Subcategories → Pages</li>
+			<li>Maximum 3-4 clicks to any page</li>
+			<li>Clear parent-child relationships</li>
+		</ul>
+
+		<h3>2. Build Topic Clusters</h3>
+		<p>Group related content:</p>
+		<ul>
+			<li>Create pillar pages for topics</li>
+			<li>Link related content together</li>
+			<li>Use hub pages to connect clusters</li>
+		</ul>
+
+		<h3>3. Add Strategic Internal Links</h3>
+		<p>Link strategically:</p>
+		<ul>
+			<li>Link from high-authority pages</li>
+			<li>Use descriptive anchor text</li>
+			<li>Link to related content</li>
+			<li>Avoid over-optimization</li>
+		</ul>
+
+		<h3>4. Fix Orphaned Pages</h3>
+		<p>Connect orphaned content:</p>
+		<ul>
+			<li>Add links from relevant pages</li>
+			<li>Include in category pages</li>
+			<li>Add to sitemap</li>
+			<li>Create hub pages if needed</li>
+		</ul>
+
+		<h2>Tools for Link Graph Analysis</h2>
+
+		<h3>Barracuda SEO</h3>
+		<p>Features include:</p>
+		<ul>
+			<li>Interactive link graph visualization</li>
+			<li>Orphaned page detection</li>
+			<li>Click depth analysis</li>
+			<li>Link flow visualization</li>
+		</ul>
+
+		<h3>Other Tools</h3>
+		<ul>
+			<li><strong>Screaming Frog:</strong> Link graph export</li>
+			<li><strong>Sitebulb:</strong> Visual structure analysis</li>
+			<li><strong>Custom scripts:</strong> For specific needs</li>
+		</ul>
+
+		<h2>Best Practices</h2>
+		<ul>
+			<li><strong>Regular audits:</strong> Review structure quarterly</li>
+			<li><strong>Monitor changes:</strong> Track structure over time</li>
+			<li><strong>Test improvements:</strong> Measure impact of changes</li>
+			<li><strong>Document structure:</strong> Keep structure maps updated</li>
+		</ul>
+
+		<h2>Conclusion</h2>
+		<p>Visualizing your site's link structure helps you identify problems and optimize architecture. Use link graphs to find orphaned pages, reduce click depth, and build better information architecture.</p>
+		<p>Remember: Good structure = better crawlability = better rankings.</p>
+
+		<h2>Visualize Your Site Structure</h2>
+		<p>Ready to analyze your site's structure? <a href="https://app.barracudaseo.com" class="text-[#8ec07c] hover:text-[#a0d28c] underline font-medium">Try Barracuda SEO</a> and get an interactive link graph showing your site's internal linking structure.</p>
+	`,
+	'seo-audit-checklist': `
+		<h2>Introduction</h2>
+		<p>SEO audits can be overwhelming. With so many things to check, it's easy to miss critical issues or waste time on low-priority items. This comprehensive checklist ensures you cover all aspects of technical SEO systematically.</p>
+		<p>Use this checklist for every audit to ensure consistency and completeness.</p>
+
+		<h2>Pre-Audit Setup</h2>
+		<ul>
+			<li>✓ Define audit scope (full site vs. sections)</li>
+			<li>✓ Set up crawling tool</li>
+			<li>✓ Configure crawl settings (depth, limits, robots.txt)</li>
+			<li>✓ Gather access to Google Search Console</li>
+			<li>✓ Gather access to Google Analytics</li>
+			<li>✓ Document current site structure</li>
+		</ul>
+
+		<h2>Crawlability & Indexability</h2>
+		<ul>
+			<li>✓ Check robots.txt for blocking issues</li>
+			<li>✓ Verify XML sitemap exists and is valid</li>
+			<li>✓ Check for meta noindex tags</li>
+			<li>✓ Verify canonical tags are correct</li>
+			<li>✓ Check for orphaned pages</li>
+			<li>✓ Verify important pages are crawlable</li>
+			<li>✓ Check for crawl errors in GSC</li>
+		</ul>
+
+		<h2>On-Page SEO</h2>
+		<ul>
+			<li>✓ Title tags (unique, proper length, optimized)</li>
+			<li>✓ Meta descriptions (unique, compelling, proper length)</li>
+			<li>✓ H1 tags (one per page, descriptive)</li>
+			<li>✓ Heading hierarchy (H2, H3, etc.)</li>
+			<li>✓ Image alt text (descriptive, relevant)</li>
+			<li>✓ URL structure (clean, descriptive, SEO-friendly)</li>
+			<li>✓ Internal linking (strategic, descriptive anchors)</li>
+		</ul>
+
+		<h2>Technical Issues</h2>
+		<ul>
+			<li>✓ Broken links (404 errors)</li>
+			<li>✓ Redirect chains</li>
+			<li>✓ Redirect loops</li>
+			<li>✓ Duplicate content</li>
+			<li>✓ Missing or duplicate meta tags</li>
+			<li>✓ HTTPS implementation</li>
+			<li>✓ SSL certificate validity</li>
+			<li>✓ Mobile responsiveness</li>
+		</ul>
+
+		<h2>Page Speed & Performance</h2>
+		<ul>
+			<li>✓ Page load times</li>
+			<li>✓ Core Web Vitals (LCP, FID, CLS)</li>
+			<li>✓ Image optimization</li>
+			<li>✓ CSS/JS minification</li>
+			<li>✓ Render-blocking resources</li>
+			<li>✓ Server response times</li>
+			<li>✓ CDN implementation</li>
+		</ul>
+
+		<h2>Structured Data</h2>
+		<ul>
+			<li>✓ Schema markup implementation</li>
+			<li>✓ Schema validation (Rich Results Test)</li>
+			<li>✓ Appropriate schema types</li>
+			<li>✓ Schema errors in GSC</li>
+		</ul>
+
+		<h2>Mobile SEO</h2>
+		<ul>
+			<li>✓ Mobile-friendly design</li>
+			<li>✓ Viewport configuration</li>
+			<li>✓ Touch-friendly elements</li>
+			<li>✓ Mobile page speed</li>
+			<li>✓ Mobile usability in GSC</li>
+		</ul>
+
+		<h2>Site Structure</h2>
+		<ul>
+			<li>✓ Information architecture</li>
+			<li>✓ Internal linking structure</li>
+			<li>✓ Click depth (max 3-4 clicks)</li>
+			<li>✓ Breadcrumb implementation</li>
+			<li>✓ Navigation structure</li>
+		</ul>
+
+		<h2>Content Quality</h2>
+		<ul>
+			<li>✓ Content uniqueness</li>
+			<li>✓ Content depth and quality</li>
+			<li>✓ Keyword optimization</li>
+			<li>✓ Content freshness</li>
+			<li>✓ Content gaps</li>
+		</ul>
+
+		<h2>Reporting & Documentation</h2>
+		<ul>
+			<li>✓ Document all findings</li>
+			<li>✓ Prioritize issues</li>
+			<li>✓ Create action plan</li>
+			<li>✓ Assign owners</li>
+			<li>✓ Set deadlines</li>
+			<li>✓ Track progress</li>
+		</ul>
+
+		<h2>Using This Checklist</h2>
+		<p>For each audit:</p>
+		<ol>
+			<li>Work through each section systematically</li>
+			<li>Document findings as you go</li>
+			<li>Use tools to automate checks where possible</li>
+			<li>Prioritize issues after completing the checklist</li>
+			<li>Create an action plan based on findings</li>
+		</ol>
+
+		<h2>Tools to Help</h2>
+		<p>Automate checks with:</p>
+		<ul>
+			<li><strong>Barracuda SEO:</strong> Comprehensive crawling and issue detection</li>
+			<li><strong>Google Search Console:</strong> Indexing and search performance</li>
+			<li><strong>Google Analytics:</strong> Traffic and user behavior</li>
+			<li><strong>PageSpeed Insights:</strong> Performance metrics</li>
+			<li><strong>Rich Results Test:</strong> Schema validation</li>
+		</ul>
+
+		<h2>Conclusion</h2>
+		<p>This checklist ensures you don't miss critical SEO issues. Use it for every audit to maintain consistency and completeness.</p>
+		<p>Remember: A thorough audit is the foundation of effective SEO.</p>
+
+		<h2>Start Your SEO Audit</h2>
+		<p>Ready to audit your site? <a href="https://app.barracudaseo.com" class="text-[#8ec07c] hover:text-[#a0d28c] underline font-medium">Try Barracuda SEO</a> and automate many of these checks with comprehensive crawling and issue detection.</p>
+	`,
+	'ecommerce-seo-audit': `
+		<h2>Introduction</h2>
+		<p>E-commerce sites have unique SEO challenges. Product pages, category structures, filters, pagination, and inventory management create specific technical SEO issues that don't exist on content sites.</p>
+		<p>This guide covers how to audit e-commerce sites, identify common issues, and implement fixes specific to online stores.</p>
+
+		<h2>E-commerce Specific Challenges</h2>
+		<ul>
+			<li><strong>Scale:</strong> Thousands of product pages</li>
+			<li><strong>Dynamic content:</strong> Prices, inventory, reviews</li>
+			<li><strong>URL parameters:</strong> Filters, sorting, pagination</li>
+			<li><strong>Duplicate content:</strong> Similar products, descriptions</li>
+			<li><strong>Thin content:</strong> Product pages with minimal text</li>
+			<li><strong>Index bloat:</strong> Too many indexed pages</li>
+		</ul>
+
+		<h2>E-commerce Audit Checklist</h2>
+
+		<h3>1. Product Pages</h3>
+		<p>Check each product page for:</p>
+		<ul>
+			<li>✓ Unique title tags (include product name, brand, category)</li>
+			<li>✓ Unique meta descriptions</li>
+			<li>✓ Product schema markup (Product schema)</li>
+			<li>✓ High-quality product images with alt text</li>
+			<li>✓ Product descriptions (unique, detailed)</li>
+			<li>✓ Price information</li>
+			<li>✓ Availability status</li>
+			<li>✓ Reviews/ratings schema</li>
+			<li>✓ Breadcrumb navigation</li>
+			<li>✓ Internal links to related products</li>
+		</ul>
+
+		<h3>2. Category Pages</h3>
+		<p>Audit category pages for:</p>
+		<ul>
+			<li>✓ Unique titles and descriptions</li>
+			<li>✓ Category descriptions (helpful content)</li>
+			<li>✓ Proper category hierarchy</li>
+			<li>✓ Product listings (proper pagination)</li>
+			<li>✓ Filter functionality (URL parameters)</li>
+			<li>✓ Canonical tags for filtered views</li>
+		</ul>
+
+		<h3>3. URL Structure</h3>
+		<p>Check URL patterns:</p>
+		<ul>
+			<li>✓ Clean, descriptive URLs</li>
+			<li>✓ Consistent URL structure</li>
+			<li>✓ URL parameters handled correctly</li>
+			<li>✓ Canonical tags for parameter variations</li>
+			<li>✓ No duplicate URLs</li>
+		</ul>
+
+		<h3>4. Duplicate Content</h3>
+		<p>Identify duplicate issues:</p>
+		<ul>
+			<li>✓ Duplicate product descriptions</li>
+			<li>✓ Manufacturer descriptions (rewrite these)</li>
+			<li>✓ Similar products with identical content</li>
+			<li>✓ Category pages with thin content</li>
+			<li>✓ Paginated content duplicates</li>
+		</ul>
+
+		<h3>5. Technical Issues</h3>
+		<p>Check for technical problems:</p>
+		<ul>
+			<li>✓ Broken product links</li>
+			<li>✓ Out-of-stock pages (noindex or redirect)</li>
+			<li>✓ Redirect chains</li>
+			<li>✓ Missing images</li>
+			<li>✓ Slow page load times</li>
+			<li>✓ Mobile usability issues</li>
+		</ul>
+
+		<h2>Common E-commerce SEO Issues</h2>
+
+		<h3>Issue 1: Duplicate Product Titles</h3>
+		<p><strong>Problem:</strong> Multiple products sharing the same title tag</p>
+		<p><strong>Example:</strong> "Product" used for 100+ products</p>
+		<p><strong>Solution:</strong> Create dynamic titles: "Product Name - Category | Brand"</p>
+
+		<h3>Issue 2: Thin Product Pages</h3>
+		<p><strong>Problem:</strong> Product pages with minimal content</p>
+		<p><strong>Impact:</strong> Poor rankings, low user engagement</p>
+		<p><strong>Solution:</strong> Add unique descriptions, specifications, reviews</p>
+
+		<h3>Issue 3: Filter URLs Indexed</h3>
+		<p><strong>Problem:</strong> Filter combinations creating thousands of URLs</p>
+		<p><strong>Impact:</strong> Index bloat, duplicate content</p>
+		<p><strong>Solution:</strong> Use canonical tags, noindex filtered views, or JavaScript filters</p>
+
+		<h3>Issue 4: Out-of-Stock Pages</h3>
+		<p><strong>Problem:</strong> Discontinued products still indexed</p>
+		<p><strong>Impact:</strong> Poor user experience, wasted crawl budget</p>
+		<p><strong>Solution:</strong> 301 redirect to category or noindex if permanently unavailable</p>
+
+		<h3>Issue 5: Missing Product Schema</h3>
+		<p><strong>Problem:</strong> Products without structured data</p>
+		<p><strong>Impact:</strong> Missing rich results, less visibility</p>
+		<p><strong>Solution:</strong> Implement Product schema with price, availability, reviews</p>
+
+		<h2>E-commerce Best Practices</h2>
+
+		<h3>1. Optimize Product Pages</h3>
+		<ul>
+			<li>Unique, descriptive titles</li>
+			<li>Compelling meta descriptions</li>
+			<li>High-quality product images</li>
+			<li>Detailed product descriptions</li>
+			<li>Customer reviews</li>
+			<li>Product schema markup</li>
+		</ul>
+
+		<h3>2. Structure Categories Properly</h3>
+		<ul>
+			<li>Clear category hierarchy</li>
+			<li>Category descriptions</li>
+			<li>Proper internal linking</li>
+			<li>Breadcrumb navigation</li>
+		</ul>
+
+		<h3>3. Handle URL Parameters</h3>
+		<ul>
+			<li>Use canonical tags</li>
+			<li>Noindex filtered views</li>
+			<li>Consolidate similar URLs</li>
+		</ul>
+
+		<h3>4. Manage Inventory</h3>
+		<ul>
+			<li>Redirect discontinued products</li>
+			<li>Update availability in schema</li>
+			<li>Handle out-of-stock pages</li>
+		</ul>
+
+		<h2>Tools for E-commerce Audits</h2>
+		<ul>
+			<li><strong>Barracuda SEO:</strong> Comprehensive crawling with e-commerce focus</li>
+			<li><strong>Google Search Console:</strong> Monitor product indexing</li>
+			<li><strong>Schema validators:</strong> Verify Product schema</li>
+			<li><strong>PageSpeed Insights:</strong> Check product page performance</li>
+		</ul>
+
+		<h2>Case Study: Fixing a 10,000-Product Store</h2>
+		<p>Here's how we fixed a large e-commerce site:</p>
+		<ol>
+			<li><strong>Identified issues:</strong> 8,000+ duplicate titles, missing schema, thin content</li>
+			<li><strong>Fixed templates:</strong> Created dynamic title/description generators</li>
+			<li><strong>Added schema:</strong> Implemented Product schema site-wide</li>
+			<li><strong>Improved content:</strong> Added unique descriptions to top products</li>
+			<li><strong>Results:</strong> 40% increase in organic traffic, better rankings</li>
+		</ol>
+
+		<h2>Conclusion</h2>
+		<p>E-commerce SEO audits require attention to product pages, categories, and technical issues specific to online stores. Focus on unique content, proper schema, and handling dynamic content correctly.</p>
+		<p>Remember: E-commerce SEO is about making products findable and purchase-ready.</p>
+
+		<h2>Audit Your E-commerce Site</h2>
+		<p>Ready to audit your online store? <a href="https://app.barracudaseo.com" class="text-[#8ec07c] hover:text-[#a0d28c] underline font-medium">Try Barracuda SEO</a> and crawl thousands of product pages to identify e-commerce-specific SEO issues.</p>
 	`
 };
