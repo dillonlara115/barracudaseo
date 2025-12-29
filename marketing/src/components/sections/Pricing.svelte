@@ -1,3 +1,29 @@
+<script lang="ts">
+	import { trackSignup, trackPricingAction } from '$lib/analytics';
+
+	function handleFreeSignup() {
+		trackSignup({
+			source: 'Get Started',
+			location: 'pricing_free',
+			plan: 'free'
+		});
+	}
+
+	function handleProSignup() {
+		trackSignup({
+			source: 'Start Free Trial',
+			location: 'pricing_pro',
+			plan: 'pro'
+		});
+	}
+
+	function handleContactSales() {
+		trackPricingAction('cta_click', {
+			cta_name: 'Contact Sales'
+		});
+	}
+</script>
+
 <section class="py-20 bg-[#2d2826]">
 	<div class="container mx-auto px-4">
 		<div class="text-center mb-16">
