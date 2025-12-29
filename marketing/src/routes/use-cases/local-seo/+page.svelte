@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { MapPin, Search, Target, TrendingUp, CircleCheck, CircleQuestionMark, ArrowRight } from '@lucide/svelte';
 	import MetaTags from '../../../components/MetaTags.svelte';
+	import OptimizedImage from '../../../components/OptimizedImage.svelte';
 	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
 
 	const meta = getMetaTags({
@@ -40,12 +41,12 @@
 <section class="py-12 bg-[#2d2826]">
 	<div class="container mx-auto px-4">
 		<div class="max-w-6xl mx-auto">
-			<img
+			<OptimizedImage
 				src="/mockups/barracuda-dashboard.png"
 				alt="Barracuda SEO Dashboard showing local SEO audit results"
 				class="w-full rounded-lg shadow-2xl border border-white/10"
 				loading="lazy"
-				decoding="async"
+				aspectRatio="16/9"
 			/>
 		</div>
 	</div>
@@ -205,12 +206,12 @@
 							Barracuda identifies broken links, missing meta tags, duplicate content, slow pages, and schema markup issues that impact your local search visibility.
 						</p>
 						<div class="mt-6">
-							<img
+							<OptimizedImage
 								src="/mockups/barracuda-issues.png"
 								alt="Barracuda SEO Issues Dashboard showing local SEO issues"
 								class="w-full rounded-lg shadow-lg border border-white/10"
 								loading="lazy"
-								decoding="async"
+								aspectRatio="16/9"
 							/>
 						</div>
 					</div>

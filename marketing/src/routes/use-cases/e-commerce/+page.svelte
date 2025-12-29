@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { ShoppingCart, Package, TrendingUp, ChartBar, CircleCheck, CircleQuestionMark, ArrowRight } from '@lucide/svelte';
 	import MetaTags from '../../../components/MetaTags.svelte';
+	import OptimizedImage from '../../../components/OptimizedImage.svelte';
 	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
 
 	const meta = getMetaTags({
@@ -40,12 +41,12 @@
 <section class="py-12 bg-[#2d2826]">
 	<div class="container mx-auto px-4">
 		<div class="max-w-6xl mx-auto">
-			<img
+			<OptimizedImage
 				src="/mockups/barracuda-dashboard.png"
 				alt="Barracuda SEO Dashboard showing e-commerce SEO audit results"
 				class="w-full rounded-lg shadow-2xl border border-white/10"
 				loading="lazy"
-				decoding="async"
+				aspectRatio="16/9"
 			/>
 		</div>
 	</div>
@@ -205,12 +206,12 @@
 							Barracuda detects missing product schema, duplicate content, thin pages, broken links, slow-loading products, and navigation issues that impact your e-commerce SEO performance.
 						</p>
 						<div class="mt-6">
-							<img
+							<OptimizedImage
 								src="/mockups/barracuda-issues.png"
 								alt="Barracuda SEO Issues Dashboard showing e-commerce product page issues"
 								class="w-full rounded-lg shadow-lg border border-white/10"
 								loading="lazy"
-								decoding="async"
+								aspectRatio="16/9"
 							/>
 						</div>
 					</div>
@@ -242,19 +243,19 @@
 							Use Barracuda's prioritized issue list to fix technical problems affecting your product pages. Track improvements over time with historical crawl comparisons and monitor organic traffic growth.
 						</p>
 						<div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-							<img
+							<OptimizedImage
 								src="/mockups/barracuda-recommendations.png"
 								alt="Barracuda SEO Recommendations for e-commerce pages"
 								class="w-full rounded-lg shadow-lg border border-white/10"
 								loading="lazy"
-								decoding="async"
+								aspectRatio="16/9"
 							/>
-							<img
+							<OptimizedImage
 								src="/mockups/barracuda-results.png"
 								alt="Barracuda SEO Results showing product page audit results"
 								class="w-full rounded-lg shadow-lg border border-white/10"
 								loading="lazy"
-								decoding="async"
+								aspectRatio="16/9"
 							/>
 						</div>
 					</div>
