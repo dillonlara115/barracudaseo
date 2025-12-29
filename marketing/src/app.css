@@ -2,7 +2,7 @@
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 
-/* Import fonts */
+/* Import fonts - fontsource packages handle font-display automatically */
 @import '@fontsource/sora/700.css';
 @import '@fontsource/dm-sans/400.css';
 @import '@fontsource/dm-sans/500.css';

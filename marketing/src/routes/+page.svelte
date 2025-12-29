@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Hero from '../components/sections/Hero.svelte';
-	import VideoWalkthrough from '../components/sections/VideoWalkthrough.svelte';
+	import LazyVideoWalkthrough from '../components/sections/LazyVideoWalkthrough.svelte';
 	import Features from '../components/sections/Features.svelte';
 	import Pricing from '../components/sections/Pricing.svelte';
 	import FutureUpdates from '../components/sections/FutureUpdates.svelte';
@@ -19,7 +19,7 @@
 <MetaTags config={{ ...meta, structuredData }} />
 
 <Hero />
-<VideoWalkthrough />
+<LazyVideoWalkthrough />
 <Features />
 <Pricing />
 <FutureUpdates />
