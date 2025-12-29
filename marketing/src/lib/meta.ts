@@ -127,3 +127,35 @@ export function getBreadcrumbSchema(items: Array<{ name: string; url: string }>)
 		}))
 	};
 }
+
+export function getArticleSchema(article: {
+	title: string;
+	description: string;
+	author: string;
+	publishDate: string;
+	image?: string;
+	url: string;
+}) {
+	return {
+		'@context': 'https://schema.org',
+		'@type': 'Article',
+		headline: article.title,
+		description: article.description,
+		author: {
+			'@type': 'Person',
+			name: article.author
+		},
+		datePublished: article.publishDate,
+		dateModified: article.publishDate,
+		image: article.image || `${SITE_URL}/mockups/barracuda-dashboard.png`,
+		url: article.url.startsWith('http') ? article.url : `${SITE_URL}${article.url}`,
+		publisher: {
+			'@type': 'Organization',
+			name: SITE_NAME,
+			logo: {
+				'@type': 'ImageObject',
+				url: `${SITE_URL}/favicon.svg`
+			}
+		}
+	};
+}

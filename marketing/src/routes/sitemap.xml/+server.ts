@@ -1,7 +1,9 @@
 import { SITE_URL } from '$lib/constants';
 
+import { getAllBlogPosts } from '$lib/blog';
+
 // Define all routes with their priority and change frequency
-const routes = [
+const staticRoutes = [
 	{ path: '', priority: '1.0', changefreq: 'weekly' }, // Home
 	{ path: '/about', priority: '0.8', changefreq: 'monthly' },
 	{ path: '/features', priority: '0.9', changefreq: 'monthly' },
@@ -12,8 +14,20 @@ const routes = [
 	{ path: '/terms', priority: '0.5', changefreq: 'yearly' },
 	{ path: '/use-cases/e-commerce', priority: '0.8', changefreq: 'monthly' },
 	{ path: '/use-cases/local-seo', priority: '0.8', changefreq: 'monthly' },
-	{ path: '/use-cases/programmatic-seo', priority: '0.8', changefreq: 'monthly' }
+	{ path: '/use-cases/programmatic-seo', priority: '0.8', changefreq: 'monthly' },
+	{ path: '/blog', priority: '0.9', changefreq: 'weekly' }
 ];
+
+// Get blog posts dynamically
+const blogPosts = getAllBlogPosts();
+const blogRoutes = blogPosts.map(post => ({
+	path: `/blog/${post.slug}`,
+	priority: '0.8',
+	changefreq: 'monthly',
+	lastmod: post.publishDate
+}));
+
+const routes = [...staticRoutes, ...blogRoutes];
 
 export async function GET() {
 	const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -22,7 +36,7 @@ ${routes
 	.map(
 		(route) => `  <url>
     <loc>${SITE_URL}${route.path}</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <lastmod>${route.lastmod ? route.lastmod.split('T')[0] : new Date().toISOString().split('T')[0]}</lastmod>
     <changefreq>${route.changefreq}</changefreq>
     <priority>${route.priority}</priority>
   </url>`
