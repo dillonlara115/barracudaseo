@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import Logo from '../Logo.svelte';
 	import { ChevronDown } from '@lucide/svelte';
+	import { trackSignup } from '$lib/analytics';
 
 	let mobileMenuOpen = $state(false);
 	let useCasesDropdownOpen = $state(false);
@@ -22,6 +23,13 @@
 
 	function toggleMobileUseCases() {
 		mobileUseCasesOpen = !mobileUseCasesOpen;
+	}
+
+	function handleHeaderSignupClick() {
+		trackSignup({
+			source: 'Get Started',
+			location: 'header'
+		});
 	}
 </script>
 
@@ -86,7 +94,13 @@
 						</a>
 					</li>
 					<li>
-						<a href="https://app.barracudaseo.com" class="bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-4 py-2 rounded-lg font-medium transition-colors" target="_blank" rel="noopener noreferrer">
+						<a
+							href="https://app.barracudaseo.com"
+							class="bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-4 py-2 rounded-lg font-medium transition-colors"
+							target="_blank"
+							rel="noopener noreferrer"
+							onclick={handleHeaderSignupClick}
+						>
 							Get Started
 						</a>
 					</li>
@@ -186,12 +200,15 @@
 					</a>
 				</li>
 				<li class="pt-2">
-					<a 
-						href="https://app.barracudaseo.com" 
-						class="block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-4 py-2 rounded-lg font-medium transition-colors text-center" 
-						target="_blank" 
+					<a
+						href="https://app.barracudaseo.com"
+						class="block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-4 py-2 rounded-lg font-medium transition-colors text-center"
+						target="_blank"
 						rel="noopener noreferrer"
-						onclick={closeMobileMenu}
+						onclick={(e) => {
+							handleHeaderSignupClick();
+							closeMobileMenu();
+						}}
 					>
 						Get Started
 					</a>

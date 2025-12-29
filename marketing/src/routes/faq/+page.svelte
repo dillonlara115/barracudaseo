@@ -2,6 +2,14 @@
 	import { CircleQuestionMark } from '@lucide/svelte';
 	import MetaTags from '../../components/MetaTags.svelte';
 	import { getMetaTags, getFAQPageSchema, getBreadcrumbSchema } from '$lib/meta';
+	import { trackSignup } from '$lib/analytics';
+
+	function handleFAQSignupClick() {
+		trackSignup({
+			source: 'Start Your Free 100-Page Audit',
+			location: 'faq_cta'
+		});
+	}
 
 	let openItems: Record<number, boolean> = $state({});
 
@@ -496,6 +504,7 @@
 					class="inline-block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-4 rounded-lg font-medium text-lg transition-colors"
 					target="_blank"
 					rel="noopener noreferrer"
+					onclick={handleFAQSignupClick}
 				>
 					Start Your Free 100-Page Audit
 				</a>

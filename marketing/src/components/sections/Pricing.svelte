@@ -36,7 +36,13 @@
 						<span class="text-white/50">No recommendations or integrations</span>
 					</li>
 				</ul>
-				<a href="https://app.barracudaseo.com" class="block w-full text-center border-2 border-white/20 hover:border-[#8ec07c] text-white px-6 py-3 rounded-lg font-medium transition-colors" target="_blank" rel="noopener noreferrer">
+				<a
+					href="https://app.barracudaseo.com"
+					class="block w-full text-center border-2 border-white/20 hover:border-[#8ec07c] text-white px-6 py-3 rounded-lg font-medium transition-colors"
+					target="_blank"
+					rel="noopener noreferrer"
+					onclick={handleFreeSignup}
+				>
 					Get Started
 				</a>
 				<p class="text-center text-sm text-white/50 mt-4">Great for quick technical audits or demos</p>
@@ -86,7 +92,13 @@
 						<span>CLI automation and priority support</span>
 					</li>
 				</ul>
-				<a href="https://app.barracudaseo.com" class="block w-full text-center bg-white text-[#3c3836] hover:bg-white/90 px-6 py-3 rounded-lg font-medium transition-colors" target="_blank" rel="noopener noreferrer">
+				<a
+					href="https://app.barracudaseo.com"
+					class="block w-full text-center bg-white text-[#3c3836] hover:bg-white/90 px-6 py-3 rounded-lg font-medium transition-colors"
+					target="_blank"
+					rel="noopener noreferrer"
+					onclick={handleProSignup}
+				>
 					Start Free Trial
 				</a>
 				<p class="text-center text-sm text-[#3c3836]/80 mt-4">Perfect for agencies and teams</p>
@@ -98,7 +110,13 @@
 				<p class="text-white/70 text-center mb-4">
 					For larger organizations with 5+ team members or custom crawl limits, we offer custom Team plans with dedicated support.
 				</p>
-				<a href="https://app.barracudaseo.com" class="block w-full text-center border-2 border-[#8ec07c] hover:bg-[#8ec07c]/10 text-[#8ec07c] px-6 py-3 rounded-lg font-medium transition-colors" target="_blank" rel="noopener noreferrer">
+				<a
+					href="https://app.barracudaseo.com"
+					class="block w-full text-center border-2 border-[#8ec07c] hover:bg-[#8ec07c]/10 text-[#8ec07c] px-6 py-3 rounded-lg font-medium transition-colors"
+					target="_blank"
+					rel="noopener noreferrer"
+					onclick={handleContactSales}
+				>
 					Contact Sales
 				</a>
 			</div>

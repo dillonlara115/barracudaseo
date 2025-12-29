@@ -16,6 +16,8 @@
 					webkitallowfullscreen
 					mozallowfullscreen
 					allowfullscreen
+					title="Barracuda SEO Video Walkthrough - See how Barracuda helps you discover, analyze, and fix SEO issues"
+					loading="lazy"
 					class="absolute top-0 left-0 w-full h-full rounded-lg shadow-2xl"
 				></iframe>
 			</div>

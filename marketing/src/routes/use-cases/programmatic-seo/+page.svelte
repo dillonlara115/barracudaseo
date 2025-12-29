@@ -40,7 +40,13 @@
 <section class="py-12 bg-[#2d2826]">
 	<div class="container mx-auto px-4">
 		<div class="max-w-6xl mx-auto">
-			<img src="/mockups/barracuda-dashboard.png" alt="Barracuda SEO Dashboard showing programmatic SEO audit at scale" class="w-full rounded-lg shadow-2xl border border-white/10" />
+			<img
+				src="/mockups/barracuda-dashboard.png"
+				alt="Barracuda SEO Dashboard showing programmatic SEO audit at scale"
+				class="w-full rounded-lg shadow-2xl border border-white/10"
+				loading="lazy"
+				decoding="async"
+			/>
 		</div>
 	</div>
 </section>
@@ -199,7 +205,13 @@
 							Barracuda groups issues by URL pattern, helping you identify template-level problems affecting multiple pages. See duplicate content, missing meta tags, and schema markup issues at scale.
 						</p>
 						<div class="mt-6">
-							<img src="/mockups/barracuda-results.png" alt="Barracuda SEO Results showing programmatic pages grouped by pattern" class="w-full rounded-lg shadow-lg border border-white/10" />
+							<img
+								src="/mockups/barracuda-results.png"
+								alt="Barracuda SEO Results showing programmatic pages grouped by pattern"
+								class="w-full rounded-lg shadow-lg border border-white/10"
+								loading="lazy"
+								decoding="async"
+							/>
 						</div>
 					</div>
 				</div>
@@ -230,7 +242,13 @@
 							Export results for bulk analysis, fix template-level issues efficiently, and track improvements over time with historical crawl comparisons.
 						</p>
 						<div class="mt-6">
-							<img src="/mockups/barracuda-link-graph.png" alt="Barracuda SEO Link Graph showing programmatic site structure" class="w-full rounded-lg shadow-lg border border-white/10" />
+							<img
+								src="/mockups/barracuda-link-graph.png"
+								alt="Barracuda SEO Link Graph showing programmatic site structure"
+								class="w-full rounded-lg shadow-lg border border-white/10"
+								loading="lazy"
+								decoding="async"
+							/>
 						</div>
 					</div>
 				</div>

@@ -1,3 +1,14 @@
+<script lang="ts">
+	import { trackSignup } from '$lib/analytics';
+
+	function handleSignupClick() {
+		trackSignup({
+			source: 'Start your free 100-page audit',
+			location: 'hero'
+		});
+	}
+</script>
+
 <section class="min-h-[50vh] flex items-center justify-center bg-gradient-to-b from-[#3c3836] via-[#8ec07c]/20 to-[#3c3836] py-12 px-4">
 	<div class="text-center max-w-4xl mx-auto">
 		<h1 class="mb-6 text-5xl md:text-6xl font-heading font-bold text-white">
@@ -10,7 +21,13 @@
 			Crawl smarter. Audit faster. Collaborate with your team.
 		</p>
 		<div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-			<a href="https://app.barracudaseo.com" class="bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-4 rounded-lg font-medium text-lg transition-colors" target="_blank" rel="noopener noreferrer">
+			<a
+				href="https://app.barracudaseo.com"
+				class="bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-4 rounded-lg font-medium text-lg transition-colors"
+				target="_blank"
+				rel="noopener noreferrer"
+				onclick={handleSignupClick}
+			>
 				Start your free 100-page audit
 			</a>
 			<a href="/features" class="border-2 border-white/20 hover:border-[#8ec07c] text-white px-8 py-4 rounded-lg font-medium text-lg transition-colors">
@@ -19,4 +36,3 @@
 		</div>
 	</div>
 </section>
-

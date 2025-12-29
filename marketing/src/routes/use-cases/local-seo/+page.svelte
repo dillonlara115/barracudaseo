@@ -40,7 +40,13 @@
 <section class="py-12 bg-[#2d2826]">
 	<div class="container mx-auto px-4">
 		<div class="max-w-6xl mx-auto">
-			<img src="/mockups/barracuda-dashboard.png" alt="Barracuda SEO Dashboard showing local SEO audit results" class="w-full rounded-lg shadow-2xl border border-white/10" />
+			<img
+				src="/mockups/barracuda-dashboard.png"
+				alt="Barracuda SEO Dashboard showing local SEO audit results"
+				class="w-full rounded-lg shadow-2xl border border-white/10"
+				loading="lazy"
+				decoding="async"
+			/>
 		</div>
 	</div>
 </section>
@@ -199,7 +205,13 @@
 							Barracuda identifies broken links, missing meta tags, duplicate content, slow pages, and schema markup issues that impact your local search visibility.
 						</p>
 						<div class="mt-6">
-							<img src="/mockups/barracuda-issues.png" alt="Barracuda SEO Issues Dashboard showing local SEO issues" class="w-full rounded-lg shadow-lg border border-white/10" />
+							<img
+								src="/mockups/barracuda-issues.png"
+								alt="Barracuda SEO Issues Dashboard showing local SEO issues"
+								class="w-full rounded-lg shadow-lg border border-white/10"
+								loading="lazy"
+								decoding="async"
+							/>
 						</div>
 					</div>
 				</div>

@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import Pricing from '../../components/sections/Pricing.svelte';
 	import MetaTags from '../../components/MetaTags.svelte';
 	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
+	import { trackPricingAction } from '$lib/analytics';
 
 	const meta = getMetaTags({
 		title: 'Pricing',
@@ -12,6 +14,11 @@
 		{ name: 'Home', url: '/' },
 		{ name: 'Pricing', url: '/pricing' }
 	]);
+
+	// Track pricing page view
+	onMount(() => {
+		trackPricingAction('view');
+	});
 </script>
 
 <MetaTags config={{ ...meta, structuredData }} />
