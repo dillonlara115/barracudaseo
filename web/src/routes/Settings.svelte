@@ -3,6 +3,7 @@
   import { params, push, link } from 'svelte-spa-router';
   import { fetchProjects, updateProject, deleteProject, fetchCrawls } from '../lib/data.js';
   import ProjectGSCSelector from '../components/ProjectGSCSelector.svelte';
+  import ProjectGA4Selector from '../components/ProjectGA4Selector.svelte';
   import CrawlManagement from '../components/CrawlManagement.svelte';
   import ProjectPageLayout from '../components/ProjectPageLayout.svelte';
   import { Loader, X, Trash2, Edit2, Check, AlertTriangle } from 'lucide-svelte';
@@ -305,15 +306,13 @@
         </div>
       </div>
 
-      <!-- Future integrations can be added here -->
-      <!-- 
+      <!-- Google Analytics 4 Integration -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">
-          <h2 class="card-title text-xl mb-4">Other Integration</h2>
-          <p>Integration settings here...</p>
+          <h2 class="card-title text-xl mb-4">Google Analytics 4 Integration</h2>
+          <ProjectGA4Selector {project} projectId={project.id} />
         </div>
       </div>
-      -->
 
       <!-- Danger Zone -->
       <div class="card bg-base-100 shadow">

@@ -66,12 +66,18 @@
             activeCrawl = crawl;
             showActiveCrawlNotification = true;
           } else {
-            // Clean up if crawl is done
+            // Clean up if crawl is done (only for active tracking)
+            // Completed crawls are still accessible via the crawl list
             localStorage.removeItem(`activeCrawl_${projectId}`);
           }
         } else {
-          // Crawl not found, clean up
-          localStorage.removeItem(`activeCrawl_${projectId}`);
+          // Crawl not found - might have been deleted, clean up
+          // But don't remove if we're currently viewing it (might be a temporary fetch error)
+          const currentPath = window.location.pathname;
+          const crawlIdInPath = currentPath.match(/\/crawl\/([^/]+)/)?.[1];
+          if (crawlIdInPath !== activeCrawlId) {
+            localStorage.removeItem(`activeCrawl_${projectId}`);
+          }
         }
       } catch (err) {
         console.error('Error checking active crawl:', err);

@@ -85,8 +85,16 @@
       if (crawlsError) throw crawlsError;
       crawls = crawlsData || [];
 
-      // If crawls exist, redirect to latest crawl
-      if (crawls.length > 0) {
+      // Sort crawls by started_at descending (newest first) to ensure latest is first
+      crawls.sort((a, b) => {
+        const dateA = new Date(a.started_at || 0).getTime();
+        const dateB = new Date(b.started_at || 0).getTime();
+        return dateB - dateA;
+      });
+
+      // If crawls exist and we're not already viewing a specific crawl, redirect to latest crawl
+      // Only redirect if we're on the base project route (not already on a crawl route)
+      if (crawls.length > 0 && !window.location.pathname.includes('/crawl/')) {
         push(`/project/${projectId}/crawl/${crawls[0].id}`);
       }
     } catch (err) {

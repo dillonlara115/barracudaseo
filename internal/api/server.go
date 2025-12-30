@@ -14,6 +14,7 @@ import (
 
 	"github.com/MicahParks/keyfunc"
 	"github.com/dillonlara115/barracuda/internal/dataforseo"
+	"github.com/dillonlara115/barracuda/internal/ga4"
 	"github.com/dillonlara115/barracuda/internal/gsc"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/supabase-community/supabase-go"
@@ -136,6 +137,26 @@ func (s *Server) Router() http.Handler {
 		s.logger.Info("GSC OAuth initialized", zap.String("redirect_url", gscRedirectURL))
 	}
 
+	// Initialize GA4 OAuth (non-blocking - will fail gracefully if credentials not set)
+	var ga4RedirectURL string
+	if redirectURL := os.Getenv("GA4_REDIRECT_URL"); redirectURL != "" {
+		ga4RedirectURL = redirectURL
+	} else if appURL := os.Getenv("APP_URL"); appURL != "" {
+		ga4RedirectURL = fmt.Sprintf("%s/api/ga4/callback", strings.TrimSuffix(appURL, "/"))
+	} else {
+		apiPort := os.Getenv("PORT")
+		if apiPort == "" {
+			apiPort = "8080"
+		}
+		ga4RedirectURL = fmt.Sprintf("http://localhost:%s/api/ga4/callback", apiPort)
+	}
+	if err := ga4.InitializeOAuth(ga4RedirectURL); err != nil {
+		s.logger.Warn("GA4 integration disabled", zap.Error(err))
+		s.logger.Info("Set GA4_CLIENT_ID, GA4_CLIENT_SECRET, or GA4_CREDENTIALS_JSON to enable")
+	} else {
+		s.logger.Info("GA4 OAuth initialized", zap.String("redirect_url", ga4RedirectURL))
+	}
+
 	// Initialize Stripe (non-blocking - will fail gracefully if credentials not set)
 	stripeConfig := GetStripeConfig()
 	if stripeConfig.SecretKey != "" {
@@ -157,6 +178,9 @@ func (s *Server) Router() http.Handler {
 	mux.HandleFunc("/api/gsc/callback", s.handleGSCCallback)
 	// Internal cron endpoint for background sync (protected via shared secret)
 	mux.HandleFunc("/api/internal/gsc/sync", s.handleGSCGlobalSync)
+
+	// GA4 OAuth callback (OAuth handles its own security)
+	mux.HandleFunc("/api/ga4/callback", s.handleGA4Callback)
 
 	// Stripe webhook (no auth required - verified by signature)
 	mux.HandleFunc("/api/stripe/webhook", s.handleStripeWebhook)

@@ -799,6 +799,49 @@ export async function disconnectProjectGSC(projectId) {
   });
 }
 
+// GA4 API functions
+export async function fetchProjectGA4Connect(projectId) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  return authorizedJSON(`/api/v1/projects/${projectId}/ga4/connect`);
+}
+
+export async function fetchProjectGA4Status(projectId) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  return authorizedJSON(`/api/v1/projects/${projectId}/ga4/status`);
+}
+
+export async function fetchProjectGA4Properties(projectId) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  return authorizedJSON(`/api/v1/projects/${projectId}/ga4/properties`);
+}
+
+export async function updateProjectGA4Property(projectId, propertyId, propertyName = null) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  if (!propertyId) return { data: null, error: new Error('propertyId is required') };
+  return authorizedJSON(`/api/v1/projects/${projectId}/ga4/property`, {
+    method: 'POST',
+    body: {
+      property_id: propertyId,
+      property_name: propertyName,
+    },
+  });
+}
+
+export async function triggerProjectGA4Sync(projectId, options = {}) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  return authorizedJSON(`/api/v1/projects/${projectId}/ga4/trigger-sync`, {
+    method: 'POST',
+    body: options,
+  });
+}
+
+export async function disconnectProjectGA4(projectId) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  return authorizedJSON(`/api/v1/projects/${projectId}/ga4/disconnect`, {
+    method: 'POST'
+  });
+}
+
 // AI-related API functions
 
 // Save OpenAI API key

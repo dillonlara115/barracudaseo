@@ -421,6 +421,9 @@ func (s *Server) handleProjectByID(w http.ResponseWriter, r *http.Request) {
 		case "gsc":
 			s.handleProjectGSC(w, r, projectID, userID, parts[2:])
 			return
+		case "ga4":
+			s.handleProjectGA4(w, r, projectID, userID, parts[2:])
+			return
 		case "keyword-metrics":
 			if r.Method == http.MethodGet {
 				s.handleProjectKeywordMetrics(w, r, projectID, userID)
