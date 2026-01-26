@@ -117,18 +117,21 @@ func (s *Server) Router() http.Handler {
 	if redirectURL := os.Getenv("GSC_REDIRECT_URL"); redirectURL != "" {
 		// Explicit redirect URL (e.g., https://barracuda-api-xxx.run.app/api/gsc/callback)
 		gscRedirectURL = redirectURL
-	} else if appURL := os.Getenv("APP_URL"); appURL != "" {
-		// Use APP_URL for production (e.g., https://app.barracudaseo.com)
-		// Note: This assumes the API is accessible at the same domain
-		// For Cloud Run, you should set GSC_REDIRECT_URL explicitly
-		gscRedirectURL = fmt.Sprintf("%s/api/gsc/callback", strings.TrimSuffix(appURL, "/"))
 	} else {
-		// Fallback to localhost for local development
-		apiPort := os.Getenv("PORT")
-		if apiPort == "" {
-			apiPort = "8080"
+		// For local development, use localhost with API port
+		// For production, use APP_URL if it's not localhost
+		appURL := os.Getenv("APP_URL")
+		if appURL != "" && !strings.Contains(appURL, "localhost") && !strings.Contains(appURL, "127.0.0.1") {
+			// Production URL
+			gscRedirectURL = fmt.Sprintf("%s/api/gsc/callback", strings.TrimSuffix(appURL, "/"))
+		} else {
+			// Local development - use API server port
+			apiPort := os.Getenv("PORT")
+			if apiPort == "" {
+				apiPort = "8080"
+			}
+			gscRedirectURL = fmt.Sprintf("http://localhost:%s/api/gsc/callback", apiPort)
 		}
-		gscRedirectURL = fmt.Sprintf("http://localhost:%s/api/gsc/callback", apiPort)
 	}
 	if err := gsc.InitializeOAuth(gscRedirectURL); err != nil {
 		s.logger.Warn("GSC integration disabled", zap.Error(err))
@@ -141,14 +144,21 @@ func (s *Server) Router() http.Handler {
 	var ga4RedirectURL string
 	if redirectURL := os.Getenv("GA4_REDIRECT_URL"); redirectURL != "" {
 		ga4RedirectURL = redirectURL
-	} else if appURL := os.Getenv("APP_URL"); appURL != "" {
-		ga4RedirectURL = fmt.Sprintf("%s/api/ga4/callback", strings.TrimSuffix(appURL, "/"))
 	} else {
-		apiPort := os.Getenv("PORT")
-		if apiPort == "" {
-			apiPort = "8080"
+		// For local development, use localhost with API port
+		// For production, use APP_URL if it's not localhost
+		appURL := os.Getenv("APP_URL")
+		if appURL != "" && !strings.Contains(appURL, "localhost") && !strings.Contains(appURL, "127.0.0.1") {
+			// Production URL
+			ga4RedirectURL = fmt.Sprintf("%s/api/ga4/callback", strings.TrimSuffix(appURL, "/"))
+		} else {
+			// Local development - use API server port
+			apiPort := os.Getenv("PORT")
+			if apiPort == "" {
+				apiPort = "8080"
+			}
+			ga4RedirectURL = fmt.Sprintf("http://localhost:%s/api/ga4/callback", apiPort)
 		}
-		ga4RedirectURL = fmt.Sprintf("http://localhost:%s/api/ga4/callback", apiPort)
 	}
 	if err := ga4.InitializeOAuth(ga4RedirectURL); err != nil {
 		s.logger.Warn("GA4 integration disabled", zap.Error(err))

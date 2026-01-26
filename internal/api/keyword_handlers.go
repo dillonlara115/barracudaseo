@@ -608,6 +608,15 @@ func (s *Server) handleCheckKeyword(w http.ResponseWriter, r *http.Request, user
 	}
 	ranking, err := dataforseo.ExtractRanking(liveResp, targetURL)
 	if err != nil {
+		// Check if error indicates site is not ranking
+		if strings.Contains(err.Error(), "is not ranking") {
+			s.logger.Info("Target URL is not ranking in search results",
+				zap.String("keyword_id", keywordID),
+				zap.String("target_url", targetURL),
+				zap.String("keyword", keyword.Keyword))
+			s.respondError(w, http.StatusOK, fmt.Sprintf("Your site (%s) is not currently ranking for the keyword '%s' in the search results. This is expected if your site is new or hasn't gained visibility for this keyword yet.", targetURL, keyword.Keyword))
+			return
+		}
 		s.logger.Error("Failed to extract ranking from Live API response", zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to extract ranking: %v", err))
 		return

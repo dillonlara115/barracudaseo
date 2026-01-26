@@ -210,21 +210,24 @@ func ExtractRanking(result *OrganicTaskGetResponse, targetURL string) (*RankingD
 				break
 			}
 		}
-	}
-
-	// If no exact URL match, prefer first organic result
-	if matchedItem == nil {
+		
+		// If target URL was provided but no match found, the site is not ranking
+		if matchedItem == nil {
+			return nil, fmt.Errorf("target URL %s is not ranking in the search results", targetURL)
+		}
+	} else {
+		// No target URL provided - use first organic result as reference
 		for i := range items {
 			if strings.ToLower(items[i].Type) == "organic" {
 				matchedItem = &items[i]
 				break
 			}
 		}
-	}
-
-	// If no target URL or no match, return first result
-	if matchedItem == nil && len(items) > 0 {
-		matchedItem = &items[0]
+		
+		// Fallback to first result if no organic result found
+		if matchedItem == nil && len(items) > 0 {
+			matchedItem = &items[0]
+		}
 	}
 
 	if matchedItem == nil {

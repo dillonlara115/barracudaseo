@@ -116,8 +116,23 @@
     try {
       const result = await checkKeyword(keywordId);
       
-      if (result.error) {
-        const errorMsg = result.error.message || 'Failed to check keyword';
+      // Check for error in result.error or result.data.error (backend may return 200 with error message)
+      const errorMsg = result.error?.message || result.data?.error || null;
+      
+      if (errorMsg) {
+        // Check if this is a "not ranking" message (informational, not an error)
+        if (errorMsg.includes('is not currently ranking') || errorMsg.includes('is not ranking')) {
+          successMessage = errorMsg;
+          setTimeout(() => {
+            successMessage = null;
+          }, 8000); // Show for 8 seconds since it's informational
+          checkingKeywords.delete(keywordId);
+          // Reload keywords to update last_checked_at
+          await loadData();
+          return;
+        }
+        
+        // Actual error
         error = errorMsg;
         console.error('Keyword check failed:', errorMsg);
         
@@ -274,7 +289,14 @@
     </div>
   {:else}
     {#if successMessage}
-      <div class="alert alert-success mb-4">
+      <div class="alert {successMessage.includes('not currently ranking') || successMessage.includes('is not ranking') ? 'alert-info' : 'alert-success'} mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+          {#if successMessage.includes('not currently ranking') || successMessage.includes('is not ranking')}
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          {:else}
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          {/if}
+        </svg>
         <span>{successMessage}</span>
       </div>
     {/if}

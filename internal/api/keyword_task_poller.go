@@ -287,6 +287,32 @@ func (s *Server) pollKeywordTasks(ctx context.Context) {
 
 		ranking, err := dataforseo.ExtractRanking(getResp, targetURL)
 		if err != nil {
+			// Check if error indicates site is not ranking (this is expected, not a failure)
+			if strings.Contains(err.Error(), "is not ranking") {
+				s.logger.Info("Target URL is not ranking in search results",
+					zap.String("keyword_id", keywordID),
+					zap.String("target_url", targetURL),
+					zap.String("keyword", keyword.Keyword))
+				// Mark task as completed with a note that site isn't ranking
+				// We don't create a snapshot since there's no position to record
+				_, _, _ = s.serviceRole.From("keyword_tasks").
+					Update(map[string]interface{}{
+						"status":       "completed",
+						"completed_at": time.Now().UTC().Format(time.RFC3339),
+						"error":         fmt.Sprintf("Site is not ranking: %s", err.Error()),
+						"raw_response":  getResp,
+					}, "", "").
+					Eq("id", taskID).
+					Execute()
+				// Update keyword's last_checked_at even though no snapshot was created
+				now := time.Now().UTC().Format(time.RFC3339)
+				_, _, _ = s.serviceRole.From("keywords").
+					Update(map[string]interface{}{"last_checked_at": now}, "", "").
+					Eq("id", keywordID).
+					Execute()
+				processed++
+				continue
+			}
 			s.logger.Error("Failed to extract ranking",
 				zap.String("task_id", taskID),
 				zap.String("keyword_id", keywordID),
@@ -486,6 +512,32 @@ func (s *Server) handleKeywordTaskPoll(w http.ResponseWriter, r *http.Request) {
 
 		ranking, err := dataforseo.ExtractRanking(getResp, targetURL)
 		if err != nil {
+			// Check if error indicates site is not ranking (this is expected, not a failure)
+			if strings.Contains(err.Error(), "is not ranking") {
+				s.logger.Info("Target URL is not ranking in search results",
+					zap.String("keyword_id", keywordID),
+					zap.String("target_url", targetURL),
+					zap.String("keyword", keyword.Keyword))
+				// Mark task as completed with a note that site isn't ranking
+				// We don't create a snapshot since there's no position to record
+				_, _, _ = s.serviceRole.From("keyword_tasks").
+					Update(map[string]interface{}{
+						"status":       "completed",
+						"completed_at": time.Now().UTC().Format(time.RFC3339),
+						"error":         fmt.Sprintf("Site is not ranking: %s", err.Error()),
+						"raw_response":  getResp,
+					}, "", "").
+					Eq("id", taskID).
+					Execute()
+				// Update keyword's last_checked_at even though no snapshot was created
+				now := time.Now().UTC().Format(time.RFC3339)
+				_, _, _ = s.serviceRole.From("keywords").
+					Update(map[string]interface{}{"last_checked_at": now}, "", "").
+					Eq("id", keywordID).
+					Execute()
+				processed++
+				continue
+			}
 			s.logger.Error("Failed to extract ranking", zap.String("task_id", dataforseoTaskID), zap.Error(err))
 			_, _, _ = s.serviceRole.From("keyword_tasks").
 				Update(map[string]interface{}{

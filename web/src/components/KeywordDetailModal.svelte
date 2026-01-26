@@ -18,6 +18,7 @@
   let snapshots = [];
   let checking = false;
   let chartData = null;
+  let infoMessage = null;
 
   onMount(() => {
     loadSnapshots();
@@ -50,11 +51,30 @@
     if (checking) return;
 
     checking = true;
+    error = null;
+    infoMessage = null;
+    
     const result = await checkKeyword(keyword.id);
     checking = false;
 
-    if (result.error) {
-      error = result.error.message || 'Failed to check keyword';
+    // Check for error in result.error or result.data.error (backend may return 200 with error message)
+    const errorMsg = result.error?.message || result.data?.error || null;
+    
+    if (errorMsg) {
+      // Check if this is a "not ranking" message (informational, not an error)
+      if (errorMsg.includes('is not currently ranking') || errorMsg.includes('is not ranking')) {
+        infoMessage = errorMsg;
+        setTimeout(() => {
+          infoMessage = null;
+        }, 8000); // Show for 8 seconds
+        // Reload snapshots to update last_checked_at
+        await loadSnapshots();
+        dispatch('checked');
+        return;
+      }
+      
+      // Actual error
+      error = errorMsg;
       return;
     }
 
@@ -188,6 +208,15 @@
       {#if error}
         <div class="alert alert-error mb-4">
           <span>{error}</span>
+        </div>
+      {/if}
+      
+      {#if infoMessage}
+        <div class="alert alert-info mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span>{infoMessage}</span>
         </div>
       {/if}
 

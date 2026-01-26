@@ -2,7 +2,9 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/dillonlara115/barracuda/internal/dataforseo"
@@ -163,8 +165,32 @@ func (s *Server) handleScheduledKeywordChecks(w http.ResponseWriter, r *http.Req
 					errorCount++
 				}
 			} else {
-				s.logger.Warn("Failed to extract ranking", zap.String("keyword_id", keywordID), zap.Error(err))
-				errorCount++
+				// Check if error indicates site is not ranking (this is expected, not an error)
+				if strings.Contains(err.Error(), "is not ranking") {
+					s.logger.Info("Target URL is not ranking in search results",
+						zap.String("keyword_id", keywordID),
+						zap.String("target_url", targetURL))
+					// Mark task as completed with a note that site isn't ranking
+					_, _, _ = s.serviceRole.From("keyword_tasks").
+						Update(map[string]interface{}{
+							"status":       "completed",
+							"completed_at": time.Now().UTC().Format(time.RFC3339),
+							"error":         fmt.Sprintf("Site is not ranking: %s", err.Error()),
+							"raw_response":  getResp,
+						}, "", "").
+						Eq("id", taskRecordID).
+						Execute()
+					// Update keyword's last_checked_at even though no snapshot was created
+					nowStr := time.Now().UTC().Format(time.RFC3339)
+					_, _, _ = s.serviceRole.From("keywords").
+						Update(map[string]interface{}{"last_checked_at": nowStr}, "", "").
+						Eq("id", keywordID).
+						Execute()
+					checkedCount++ // Count as checked, even though not ranking
+				} else {
+					s.logger.Warn("Failed to extract ranking", zap.String("keyword_id", keywordID), zap.Error(err))
+					errorCount++
+				}
 			}
 		} else {
 			// Task not ready - update status for background polling

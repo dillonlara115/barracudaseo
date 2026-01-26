@@ -22,6 +22,8 @@
   let selectedKeywords = new Set();
   let addingKeywords = new Set();
   let addedKeywords = new Set(); // Track successfully added keywords
+  let noResultsMessage = null; // Message when no keywords found
+  let lastSearchTarget = null; // Track what was searched
 
   const commonLocations = [
     'United States',
@@ -54,9 +56,11 @@
 
     loading = true;
     error = null;
+    noResultsMessage = null;
     discoveredKeywords = [];
     selectedKeywords.clear();
     addedKeywords.clear(); // Clear added keywords when discovering new ones
+    lastSearchTarget = formData.target.trim();
 
     try {
       const result = await discoverKeywords(projectId, {
@@ -72,6 +76,8 @@
       }
 
       let keywords = result.data?.keywords || [];
+      const count = result.data?.count || 0;
+      const message = result.data?.message;
       
       // Filter by position if specified
       if (formData.min_position > 0) {
@@ -82,6 +88,25 @@
       }
 
       discoveredKeywords = keywords;
+
+      // Show message if no keywords found
+      if (keywords.length === 0 && count === 0) {
+        noResultsMessage = {
+          message: message || 'No keywords found for this domain',
+          reason: 'The domain may not have enough ranking data in our database yet, or the location/language combination may not have sufficient data available. New domains or low-traffic sites may take time to appear in keyword databases.',
+          suggestion: 'Try again in a few hours, or try a different location/language combination. You can also try searching for a specific URL instead of the entire domain.'
+        };
+      } else if (keywords.length === 0 && count > 0) {
+        // Keywords were found but filtered out by position filters
+        const filterParts = [];
+        if (formData.min_position > 0) filterParts.push(`min position: ${formData.min_position}`);
+        if (formData.max_position > 0) filterParts.push(`max position: ${formData.max_position}`);
+        noResultsMessage = {
+          message: `Found ${count} keywords, but none match your position filters`,
+          reason: `Your position filters (${filterParts.join(', ')}) filtered out all ${count} keywords that were found.`,
+          suggestion: 'Try adjusting your position filters or removing them to see all keywords.'
+        };
+      }
     } catch (err) {
       error = err.message || 'An error occurred while discovering keywords';
     } finally {
@@ -314,6 +339,21 @@
   {#if error}
     <div class="alert alert-error mb-4">
       <span>{error}</span>
+    </div>
+  {/if}
+
+  {#if noResultsMessage && !loading}
+    <div class="alert alert-warning mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <div class="flex-1">
+        <h3 class="font-bold">{noResultsMessage.message}</h3>
+        <div class="text-sm mt-1">
+          <p class="mb-2">{noResultsMessage.reason}</p>
+          <p class="text-base-content/80">{noResultsMessage.suggestion}</p>
+        </div>
+      </div>
     </div>
   {/if}
 

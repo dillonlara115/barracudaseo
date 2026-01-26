@@ -29,13 +29,21 @@ const blogRoutes = blogPosts.map(post => ({
 
 const routes = [...staticRoutes, ...blogRoutes];
 
+// Normalize path: remove trailing slash except for root
+const normalizePath = (path: string): string => {
+	if (path !== '/' && path.endsWith('/')) {
+		return path.slice(0, -1);
+	}
+	return path;
+};
+
 export async function GET() {
 	const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${routes
 	.map(
 		(route) => `  <url>
-    <loc>${SITE_URL}${route.path}</loc>
+    <loc>${SITE_URL}${normalizePath(route.path)}</loc>
     <lastmod>${route.lastmod ? route.lastmod.split('T')[0] : new Date().toISOString().split('T')[0]}</lastmod>
     <changefreq>${route.changefreq}</changefreq>
     <priority>${route.priority}</priority>

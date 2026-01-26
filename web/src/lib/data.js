@@ -1114,10 +1114,9 @@ export async function discoverKeywords(projectId, discoveryData) {
   if (!discoveryData) return { data: null, error: new Error('discoveryData is required') };
   
   try {
-    const { data, error } = await authorizedJSON(`/keywords/discover`, {
+    const { data, error } = await authorizedJSON(`/api/v1/projects/${projectId}/discover-keywords`, {
       method: 'POST',
       body: {
-        project_id: projectId,
         ...discoveryData
       }
     });

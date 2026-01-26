@@ -5,8 +5,17 @@
 
 	let { config }: { config: MetaTagsConfig } = $props();
 
-	// Build full URL for canonical and OG tags
-	const fullUrl = $derived(`${SITE_URL}${$page.url.pathname}`);
+	// Normalize URL: remove trailing slash (except for root), ensure non-www
+	const normalizePath = (pathname: string): string => {
+		// Remove trailing slash except for root path
+		if (pathname !== '/' && pathname.endsWith('/')) {
+			return pathname.slice(0, -1);
+		}
+		return pathname;
+	};
+	
+	// Build full URL for canonical and OG tags (normalized)
+	const fullUrl = $derived(`${SITE_URL}${normalizePath($page.url.pathname)}`);
 	const ogImage = $derived(
 		config.ogImage 
 			? (config.ogImage.startsWith('http') ? config.ogImage : `${SITE_URL}${config.ogImage}`)
