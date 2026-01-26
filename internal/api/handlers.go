@@ -179,9 +179,53 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Insert issues
+	// Insert issues with URL normalization and deduplication
 	issues := make([]map[string]interface{}, 0, len(summary.Issues))
+	seenIssues := make(map[string]bool) // Track (type + normalized URL) to prevent duplicates
+	pageURLToID := make(map[string]int64)
+	
+	// Build page URL to ID map for this crawl
+	pageData, _, err := s.serviceRole.From("pages").
+		Select("id,url", "", false).
+		Eq("crawl_id", crawlID).
+		Execute()
+	if err == nil {
+		var pages []map[string]interface{}
+		if err := json.Unmarshal(pageData, &pages); err == nil {
+			for _, page := range pages {
+				if url, ok := page["url"].(string); ok {
+					// Normalize URL for consistent lookup
+					if normalizedURL, err := utils.NormalizeURL(url); err == nil {
+						if pageID, ok := page["id"].(float64); ok {
+							pageURLToID[normalizedURL] = int64(pageID)
+							// Also store original URL mapping in case normalization differs
+							pageURLToID[url] = int64(pageID)
+						}
+					}
+				}
+			}
+		}
+	}
+	
 	for _, issue := range summary.Issues {
+		// Normalize issue URL to prevent duplicates
+		normalizedIssueURL, err := utils.NormalizeURL(issue.URL)
+		if err != nil {
+			s.logger.Warn("Failed to normalize issue URL", zap.String("url", issue.URL), zap.Error(err))
+			normalizedIssueURL = issue.URL
+		}
+		
+		// Create deduplication key: type + normalized URL
+		dedupeKey := fmt.Sprintf("%s:%s", issue.Type, normalizedIssueURL)
+		if seenIssues[dedupeKey] {
+			s.logger.Debug("Skipping duplicate issue", 
+				zap.String("type", string(issue.Type)),
+				zap.String("url", issue.URL),
+				zap.String("normalized_url", normalizedIssueURL))
+			continue
+		}
+		seenIssues[dedupeKey] = true
+		
 		issueData := map[string]interface{}{
 			"crawl_id":       crawlID,
 			"project_id":     req.ProjectID,
@@ -191,6 +235,12 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 			"recommendation": issue.Recommendation,
 			"value":          issue.Value,
 			"status":         "new",
+		}
+		// Try to find page ID using normalized URL first, then fallback to original
+		if pageID, ok := pageURLToID[normalizedIssueURL]; ok {
+			issueData["page_id"] = pageID
+		} else if pageID, ok := pageURLToID[issue.URL]; ok {
+			issueData["page_id"] = pageID
 		}
 		issues = append(issues, issueData)
 	}
@@ -1112,9 +1162,31 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 	// Analyze results (only non-image URLs)
 	summary := analyzer.AnalyzeWithImages(filteredResults, config.Timeout)
 
-	// Store issues
+	// Store issues with URL normalization and deduplication
 	issues := make([]map[string]interface{}, 0, len(summary.Issues))
+	seenIssues := make(map[string]bool) // Track (type + normalized URL) to prevent duplicates
+	
 	for _, issue := range summary.Issues {
+		// Normalize issue URL to prevent duplicates (e.g., https://example.com vs https://example.com/)
+		normalizedIssueURL, err := utils.NormalizeURL(issue.URL)
+		if err != nil {
+			// If normalization fails, use original URL (shouldn't happen, but be defensive)
+			s.logger.Warn("Failed to normalize issue URL", zap.String("url", issue.URL), zap.Error(err))
+			normalizedIssueURL = issue.URL
+		}
+		
+		// Create deduplication key: type + normalized URL
+		dedupeKey := fmt.Sprintf("%s:%s", issue.Type, normalizedIssueURL)
+		if seenIssues[dedupeKey] {
+			// Skip duplicate issue (same type and URL)
+			s.logger.Debug("Skipping duplicate issue", 
+				zap.String("type", string(issue.Type)),
+				zap.String("url", issue.URL),
+				zap.String("normalized_url", normalizedIssueURL))
+			continue
+		}
+		seenIssues[dedupeKey] = true
+		
 		issueData := map[string]interface{}{
 			"crawl_id":       crawlID,
 			"project_id":     projectID,
@@ -1125,8 +1197,11 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 			"value":          issue.Value,
 			"status":         "new",
 		}
-		// Try to find page ID
-		if pageID, ok := pageURLToID[issue.URL]; ok {
+		// Try to find page ID using normalized URL first, then fallback to original
+		if pageID, ok := pageURLToID[normalizedIssueURL]; ok {
+			issueData["page_id"] = pageID
+		} else if pageID, ok := pageURLToID[issue.URL]; ok {
+			// Fallback to original URL in case page was stored with different normalization
 			issueData["page_id"] = pageID
 		}
 		issues = append(issues, issueData)

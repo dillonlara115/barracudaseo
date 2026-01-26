@@ -16,6 +16,8 @@ var (
 )
 
 // NormalizeURL normalizes a URL by removing fragments and trailing slashes
+// Root URLs (e.g., https://example.com/) are normalized to https://example.com (no trailing slash)
+// to ensure consistency and avoid duplicate detection issues
 func NormalizeURL(rawURL string) (string, error) {
 	u, err := url.Parse(rawURL)
 	if err != nil {
@@ -24,11 +26,14 @@ func NormalizeURL(rawURL string) (string, error) {
 
 	// Remove fragment
 	u.Fragment = ""
-	// Remove trailing slash unless it's root
+	
+	// Build normalized URL
 	normalized := u.String()
-	if normalized != u.Scheme+"://"+u.Host+"/" && strings.HasSuffix(normalized, "/") {
-		normalized = normalized[:len(normalized)-1]
-	}
+	
+	// Always remove trailing slash, including for root URLs
+	// This ensures https://example.com and https://example.com/ are treated as the same URL
+	// TrimSuffix is safe to use even if there's no trailing slash
+	normalized = strings.TrimSuffix(normalized, "/")
 
 	return normalized, nil
 }
