@@ -1,6 +1,6 @@
 module github.com/dillonlara115/barracuda
 
-go 1.24.0
+go 1.25
 
 require (
 	github.com/MicahParks/keyfunc v1.9.0

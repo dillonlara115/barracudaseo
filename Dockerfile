@@ -1,6 +1,6 @@
 # Multi-stage build for Cloud Run deployment
 # Frontend is hosted separately on Vercel, so we only build the API server
-FROM golang:1.21-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
