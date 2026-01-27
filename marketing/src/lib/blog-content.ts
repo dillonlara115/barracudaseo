@@ -733,7 +733,7 @@ jobs:
       
       - name: Install Barracuda CLI
         run: |
-          go install github.com/dillonlara115/barracuda/cmd/barracuda@latest
+          go install github.com/dillonlara115/barracudaseo@latest
       
       - name: Run Crawl
         env:
@@ -756,7 +756,7 @@ jobs:
   stage: test
   image: golang:1.21
   script:
-    - go install github.com/dillonlara115/barracuda/cmd/barracuda@latest
+    - go install github.com/dillonlara115/barracudaseo@latest
     - barracuda crawl $STAGING_URL --export json
     - python scripts/validate-seo.py crawl-results.json
   only:

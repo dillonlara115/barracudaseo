@@ -41,7 +41,7 @@ else
     echo "❌ Supabase is not running"
     echo ""
     echo "   Start it with:"
-    echo "   cd /home/dillon/Sites/cli-scanner"
+    echo "   cd /home/dillon/Sites/barracuda"
     echo "   supabase start"
     exit 1
 fi

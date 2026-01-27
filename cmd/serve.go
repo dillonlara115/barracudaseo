@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dillonlara115/barracuda/internal/analyzer"
-	"github.com/dillonlara115/barracuda/internal/exporter"
-	"github.com/dillonlara115/barracuda/internal/gsc"
-	"github.com/dillonlara115/barracuda/pkg/models"
+	"github.com/dillonlara115/barracudaseo/internal/analyzer"
+	"github.com/dillonlara115/barracudaseo/internal/exporter"
+	"github.com/dillonlara115/barracudaseo/internal/gsc"
+	"github.com/dillonlara115/barracudaseo/pkg/models"
 	"github.com/spf13/cobra"
 )
 

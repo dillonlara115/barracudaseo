@@ -7,12 +7,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/dillonlara115/barracuda/internal/analyzer"
-	"github.com/dillonlara115/barracuda/internal/crawler"
-	"github.com/dillonlara115/barracuda/internal/exporter"
-	"github.com/dillonlara115/barracuda/internal/graph"
-	"github.com/dillonlara115/barracuda/internal/utils"
-	"github.com/dillonlara115/barracuda/pkg/models"
+	"github.com/dillonlara115/barracudaseo/internal/analyzer"
+	"github.com/dillonlara115/barracudaseo/internal/crawler"
+	"github.com/dillonlara115/barracudaseo/internal/exporter"
+	"github.com/dillonlara115/barracudaseo/internal/graph"
+	"github.com/dillonlara115/barracudaseo/internal/utils"
+	"github.com/dillonlara115/barracudaseo/pkg/models"
 	"github.com/spf13/cobra"
 )
 

@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/dillonlara115/barracuda/pkg/models"
+	"github.com/dillonlara115/barracudaseo/pkg/models"
 	"google.golang.org/api/searchconsole/v1"
 )
 

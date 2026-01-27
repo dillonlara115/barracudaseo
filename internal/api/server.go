@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/MicahParks/keyfunc"
-	"github.com/dillonlara115/barracuda/internal/dataforseo"
-	"github.com/dillonlara115/barracuda/internal/ga4"
-	"github.com/dillonlara115/barracuda/internal/gsc"
+	"github.com/dillonlara115/barracudaseo/internal/dataforseo"
+	"github.com/dillonlara115/barracudaseo/internal/ga4"
+	"github.com/dillonlara115/barracudaseo/internal/gsc"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/supabase-community/supabase-go"
 	"go.uber.org/zap"

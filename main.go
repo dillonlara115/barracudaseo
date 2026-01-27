@@ -3,7 +3,7 @@ package main
 import (
 	"embed"
 
-	"github.com/dillonlara115/barracuda/cmd"
+	"github.com/dillonlara115/barracudaseo/cmd"
 )
 
 // Embed frontend files only when building with 'serve' tag

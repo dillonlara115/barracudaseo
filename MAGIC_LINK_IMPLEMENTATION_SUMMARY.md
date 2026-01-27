@@ -56,7 +56,7 @@ Test the implementation locally before deploying:
 
 ```bash
 # Start Supabase
-cd /home/dillon/Sites/cli-scanner
+cd /home/dillon/Sites/barracuda
 supabase start
 
 # Start web app

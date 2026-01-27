@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dillonlara115/barracuda/internal/ga4"
+	"github.com/dillonlara115/barracudaseo/internal/ga4"
 	"go.uber.org/zap"
 )
 

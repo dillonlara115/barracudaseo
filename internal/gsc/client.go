@@ -7,8 +7,8 @@ import (
 
 	"google.golang.org/api/searchconsole/v1"
 	
-	"github.com/dillonlara115/barracuda/internal/analyzer"
-	"github.com/dillonlara115/barracuda/pkg/models"
+	"github.com/dillonlara115/barracudaseo/internal/analyzer"
+	"github.com/dillonlara115/barracudaseo/pkg/models"
 )
 
 // EnrichedIssue extends analyzer.Issue with GSC performance data

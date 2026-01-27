@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dillonlara115/barracuda/internal/dataforseo"
+	"github.com/dillonlara115/barracudaseo/internal/dataforseo"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )

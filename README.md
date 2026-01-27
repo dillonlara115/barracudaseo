@@ -35,7 +35,7 @@ A fast, lightweight SEO website crawler CLI tool inspired by Screaming Frog.
 **Important:** The frontend must be built before compiling the Go binary, as it is embedded into the executable.
 
 ```bash
-git clone https://github.com/dillonlara115/barracuda.git
+git clone https://github.com/dillonlara115/barracudaseo.git
 cd barracuda
 make frontend-build  # Build frontend first
 make build           # Build binary (includes embedded frontend)
@@ -45,7 +45,7 @@ sudo mv bin/barracuda /usr/local/bin/
 Or manually:
 
 ```bash
-git clone https://github.com/dillonlara115/barracuda.git
+git clone https://github.com/dillonlara115/barracudaseo.git
 cd barracuda
 cd web && npm install && npm run build && cd ..
 go build -o barracuda .
@@ -57,11 +57,11 @@ sudo mv barracuda /usr/local/bin/
 Download the latest release binary:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dillonlara115/barracuda/main/scripts/install-barracuda.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dillonlara115/barracudaseo/main/scripts/install-barracuda.sh | bash
 ```
 
 Optional overrides:
-- `BARRACUDA_VERSION=v0.3.0`
+- `BARRACUDA_VERSION=v0.1.0`
 - `BARRACUDA_REPO=org/repo`
 - `INSTALL_DIR=$HOME/.local/bin`
 
@@ -70,7 +70,7 @@ Homebrew users can also install via a tap that points to release binaries. See `
 ### Using Go Install
 
 ```bash
-go install github.com/dillonlara115/barracuda@latest
+go install github.com/dillonlara115/barracudaseo@latest
 ```
 
 ### Frontend Setup (Required for Building)

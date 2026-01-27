@@ -35,7 +35,7 @@ The app frontend is located in `/web` and deploys automatically via Vercel when 
 
 ```bash
 # Navigate to project root
-cd /home/dillon/Sites/cli-scanner
+cd /home/dillon/Sites/barracuda
 
 # Stage all changes
 git add .
@@ -56,7 +56,7 @@ git push origin main
 ### Option B: Manual Deployment via Vercel CLI
 
 ```bash
-cd /home/dillon/Sites/cli-scanner/web
+cd /home/dillon/Sites/barracuda/web
 
 # Deploy to production
 npx vercel --prod
@@ -91,7 +91,7 @@ The marketing site is located in `/marketing` and also deploys automatically via
 
 ```bash
 # Navigate to project root
-cd /home/dillon/Sites/cli-scanner
+cd /home/dillon/Sites/barracuda
 
 # Stage marketing site changes
 git add marketing/
@@ -112,7 +112,7 @@ git push origin main
 ### Option B: Manual Deployment via Vercel CLI
 
 ```bash
-cd /home/dillon/Sites/cli-scanner/marketing
+cd /home/dillon/Sites/barracuda/marketing
 
 # Deploy to production
 npx vercel --prod
@@ -182,7 +182,7 @@ gcloud run services update barracuda-api \
 
 ```bash
 # Navigate to project root
-cd /home/dillon/Sites/cli-scanner
+cd /home/dillon/Sites/barracuda
 
 # Build Docker image
 make docker-build

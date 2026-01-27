@@ -497,7 +497,7 @@
 			<!-- CTA Section -->
 			<div class="mt-12 text-center">
 				<p class="text-lg text-white/80 mb-6">
-					Still have questions? Check out our <a href="/roadmap" class="text-[#8ec07c] hover:text-[#a0d28c] underline">product roadmap</a> or <a href="https://github.com/dillonlara115/barracuda/discussions" class="text-[#8ec07c] hover:text-[#a0d28c] underline" target="_blank" rel="noopener noreferrer">join our community discussions</a>.
+					Still have questions? Check out our <a href="/roadmap" class="text-[#8ec07c] hover:text-[#a0d28c] underline">product roadmap</a> or <a href="https://github.com/dillonlara115/barracudaseo/discussions" class="text-[#8ec07c] hover:text-[#a0d28c] underline" target="_blank" rel="noopener noreferrer">join our community discussions</a>.
 				</p>
 				<a
 					href="https://app.barracudaseo.com"

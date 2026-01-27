@@ -211,8 +211,8 @@ import (
     "github.com/spf13/cobra"
     
     // Internal
-    "github.com/dillonlara115/barracuda/internal/utils"
-    "github.com/dillonlara115/barracuda/pkg/models"
+    "github.com/dillonlara115/barracudaseo/internal/utils"
+    "github.com/dillonlara115/barracudaseo/pkg/models"
 )
 ```
 
@@ -572,7 +572,7 @@ make release          # Cross-platform builds
 
 ## Contact & Resources
 
-- **Project:** github.com/dillonlara115/barracuda
+- **Project:** github.com/dillonlara115/barracudaseo
 - **Documentation:** See `README.md` and `docs/` directory
 - **Issues:** Check GitHub issues
 

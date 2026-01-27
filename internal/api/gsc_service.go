@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dillonlara115/barracuda/internal/gsc"
+	"github.com/dillonlara115/barracudaseo/internal/gsc"
 	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 )

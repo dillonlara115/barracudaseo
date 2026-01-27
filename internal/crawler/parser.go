@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/dillonlara115/barracuda/internal/utils"
-	"github.com/dillonlara115/barracuda/pkg/models"
+	"github.com/dillonlara115/barracudaseo/internal/utils"
+	"github.com/dillonlara115/barracudaseo/pkg/models"
 )
 
 // Parser extracts SEO data from HTML content

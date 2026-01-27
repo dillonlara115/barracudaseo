@@ -7,7 +7,7 @@
 ## File Structure
 
 ```
-cli-scanner/
+barracuda/
 ├── .env              ← ADD PRODUCTION VARIABLES HERE
 ├── .env.local       ← Keep local development values here
 └── scripts/

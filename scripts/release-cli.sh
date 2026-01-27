@@ -7,7 +7,7 @@ cd "$ROOT_DIR"
 VERSION="${1:-}"
 if [[ -z "$VERSION" ]]; then
   echo "Usage: scripts/release-cli.sh <version-tag>"
-  echo "Example: scripts/release-cli.sh v0.3.0"
+  echo "Example: scripts/release-cli.sh v0.1.0"
   exit 1
 fi
 
@@ -41,3 +41,4 @@ echo "==> Generating checksums"
 echo
 echo "Artifacts created in: $OUTPUT_DIR"
 echo "Upload all files to GitHub Release: $VERSION"
+echo "Tip: scripts/publish-release.sh $VERSION"

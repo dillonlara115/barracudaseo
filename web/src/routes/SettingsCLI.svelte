@@ -77,7 +77,7 @@
         <div class="card-body space-y-4">
           <div>
             <p class="text-sm font-semibold mb-1">1) Install (macOS/Linux)</p>
-            <pre class="bg-base-200 rounded-lg p-3 text-sm overflow-x-auto"><code>curl -fsSL https://raw.githubusercontent.com/dillonlara115/barracuda/main/scripts/install-barracuda.sh | bash</code></pre>
+            <pre class="bg-base-200 rounded-lg p-3 text-sm overflow-x-auto"><code>curl -fsSL https://raw.githubusercontent.com/dillonlara115/barracudaseo/main/scripts/install-barracuda.sh | bash</code></pre>
           </div>
 
           <div>
@@ -98,7 +98,7 @@
           <div class="text-sm text-base-content/70">
             <a
               class="link link-primary"
-              href="https://github.com/dillonlara115/barracuda/releases/latest"
+              href="https://github.com/dillonlara115/barracudaseo/releases/latest"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -107,7 +107,7 @@
             <span> · </span>
             <a
               class="link link-primary"
-              href="https://github.com/dillonlara115/barracuda"
+              href="https://github.com/dillonlara115/barracudaseo"
               target="_blank"
               rel="noopener noreferrer"
             >

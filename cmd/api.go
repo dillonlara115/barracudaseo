@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/dillonlara115/barracuda/internal/api"
+	"github.com/dillonlara115/barracudaseo/internal/api"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dillonlara115/barracuda/pkg/models"
+	"github.com/dillonlara115/barracudaseo/pkg/models"
 )
 
 // ImportCSV imports page results from a CSV file

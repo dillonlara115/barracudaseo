@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dillonlara115/barracuda/internal/dataforseo"
+	"github.com/dillonlara115/barracudaseo/internal/dataforseo"
 	"go.uber.org/zap"
 )
 

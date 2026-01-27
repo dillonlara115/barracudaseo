@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/dillonlara115/barracuda/internal/ai/providers"
+	"github.com/dillonlara115/barracudaseo/internal/ai/providers"
 	"github.com/supabase-community/supabase-go"
 	"go.uber.org/zap"
 )

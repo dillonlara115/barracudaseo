@@ -1,6 +1,6 @@
 package api
 
-import "github.com/dillonlara115/barracuda/pkg/models"
+import "github.com/dillonlara115/barracudaseo/pkg/models"
 
 // CreateCrawlRequest represents a crawl ingestion request
 type CreateCrawlRequest struct {

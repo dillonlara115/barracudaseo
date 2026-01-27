@@ -5,7 +5,7 @@ Since Supabase is running (you just started it), here's how to test the migratio
 ## Option 1: Using Supabase CLI (Recommended)
 
 ```bash
-cd /home/dillon/Sites/cli-scanner
+cd /home/dillon/Sites/barracuda
 
 # Apply the migration (this will apply all pending migrations including the new RLS optimization)
 sudo supabase db push

@@ -97,7 +97,7 @@ otp_expiry = 3600
 
 1. **Start Supabase locally**:
    ```bash
-   cd /home/dillon/Sites/cli-scanner
+   cd /home/dillon/Sites/barracuda
    supabase start
    ```
 

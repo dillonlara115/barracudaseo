@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dillonlara115/barracuda/internal/ai"
+	"github.com/dillonlara115/barracudaseo/internal/ai"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )

@@ -13,7 +13,7 @@ This guide walks you through testing the RLS optimization migration locally.
 ### Option 1: Automated Test Script (Recommended)
 
 ```bash
-cd /home/dillon/Sites/cli-scanner
+cd /home/dillon/Sites/barracuda
 
 # Make sure Supabase is running
 supabase start
@@ -34,7 +34,7 @@ This script will:
 #### Step 1: Start Supabase
 
 ```bash
-cd /home/dillon/Sites/cli-scanner
+cd /home/dillon/Sites/barracuda
 supabase start
 ```
 

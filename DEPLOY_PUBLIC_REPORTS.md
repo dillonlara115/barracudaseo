@@ -17,7 +17,7 @@ The new `public_reports` table needs to be created in Supabase.
 
 ```bash
 # Navigate to project root
-cd /home/dillon/Sites/cli-scanner
+cd /home/dillon/Sites/barracuda
 
 # Apply migration
 supabase db push

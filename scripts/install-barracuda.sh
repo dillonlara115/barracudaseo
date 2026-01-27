@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_DEFAULT="dillonlara115/barracuda"
+REPO_DEFAULT="dillonlara115/barracudaseo"
 REPO="${BARRACUDA_REPO:-$REPO_DEFAULT}"
 VERSION="${BARRACUDA_VERSION:-latest}"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
@@ -37,7 +37,12 @@ TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
 echo "Downloading ${URL}"
-curl -fsSL "$URL" -o "$TMP_DIR/$ASSET"
+if ! curl -fsSL "$URL" -o "$TMP_DIR/$ASSET"; then
+  echo "Download failed."
+  echo "Verify a GitHub Release exists with asset: $ASSET"
+  echo "Releases: https://github.com/${REPO}/releases"
+  exit 1
+fi
 
 chmod +x "$TMP_DIR/$ASSET"
 

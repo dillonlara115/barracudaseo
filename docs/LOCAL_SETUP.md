@@ -16,7 +16,7 @@ Before you begin, ensure you have the following installed:
 
 ```bash
 # Clone the repository
-git clone https://github.com/dillonlara115/barracuda.git
+git clone https://github.com/dillonlara115/barracudaseo.git
 cd barracuda
 
 # Install frontend dependencies

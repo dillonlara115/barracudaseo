@@ -11,7 +11,7 @@ This guide will help you set up magic link authentication for local development 
 ## Step 1: Start Supabase Locally
 
 ```bash
-cd /home/dillon/Sites/cli-scanner
+cd /home/dillon/Sites/barracuda
 supabase start
 ```
 
@@ -64,7 +64,7 @@ cat .env.local 2>/dev/null || cat .env 2>/dev/null || echo "No .env file found"
 ### Check Supabase Status
 
 ```bash
-cd /home/dillon/Sites/cli-scanner
+cd /home/dillon/Sites/barracuda
 supabase status
 ```
 
@@ -172,7 +172,7 @@ The app should start on **http://localhost:5173** (or the port shown in terminal
 
 2. **Get anon key** from Supabase:
    ```bash
-   cd /home/dillon/Sites/cli-scanner
+   cd /home/dillon/Sites/barracuda
    supabase status | grep "anon key"
    ```
 

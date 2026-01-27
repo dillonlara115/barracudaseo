@@ -288,7 +288,7 @@
 				</ul>
 			</div>
 			<div class="text-center">
-				<a href="https://github.com/dillonlara115/barracuda" class="inline-flex items-center gap-2 border-2 border-white/20 hover:border-[#8ec07c] text-white px-6 py-3 rounded-lg font-medium transition-colors" target="_blank" rel="noopener noreferrer">
+				<a href="https://github.com/dillonlara115/barracudaseo" class="inline-flex items-center gap-2 border-2 border-white/20 hover:border-[#8ec07c] text-white px-6 py-3 rounded-lg font-medium transition-colors" target="_blank" rel="noopener noreferrer">
 					<Github class="w-5 h-5" />
 					Download the CLI on GitHub
 				</a>

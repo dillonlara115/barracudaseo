@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dillonlara115/barracuda/internal/gsc"
+	"github.com/dillonlara115/barracudaseo/internal/gsc"
 	"go.uber.org/zap"
 )
 

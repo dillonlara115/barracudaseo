@@ -10,11 +10,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/dillonlara115/barracuda/internal/analyzer"
-	"github.com/dillonlara115/barracuda/internal/crawler"
-	"github.com/dillonlara115/barracuda/internal/gsc"
-	"github.com/dillonlara115/barracuda/internal/utils"
-	"github.com/dillonlara115/barracuda/pkg/models"
+	"github.com/dillonlara115/barracudaseo/internal/analyzer"
+	"github.com/dillonlara115/barracudaseo/internal/crawler"
+	"github.com/dillonlara115/barracudaseo/internal/gsc"
+	"github.com/dillonlara115/barracudaseo/internal/utils"
+	"github.com/dillonlara115/barracudaseo/pkg/models"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
