@@ -59,6 +59,7 @@ func (s *SitemapParser) ParseSitemap(sitemapURL string) ([]string, error) {
 	err := xml.Unmarshal(result.Body, &index)
 	if err == nil && len(index.Sitemaps) > 0 {
 		// It's a sitemap index, recursively parse each sitemap
+		seen := make(map[string]bool)
 		urls := make([]string, 0)
 		for _, sitemap := range index.Sitemaps {
 			subURLs, err := s.ParseSitemap(strings.TrimSpace(sitemap.Loc))
@@ -66,7 +67,13 @@ func (s *SitemapParser) ParseSitemap(sitemapURL string) ([]string, error) {
 				utils.Debug("Failed to parse sub-sitemap", utils.NewField("url", sitemap.Loc), utils.NewField("error", err.Error()))
 				continue
 			}
-			urls = append(urls, subURLs...)
+			// Deduplicate URLs from sub-sitemaps
+			for _, u := range subURLs {
+				if !seen[u] {
+					seen[u] = true
+					urls = append(urls, u)
+				}
+			}
 		}
 		return urls, nil
 	}
@@ -78,7 +85,8 @@ func (s *SitemapParser) ParseSitemap(sitemapURL string) ([]string, error) {
 		return nil, fmt.Errorf("failed to parse sitemap XML: %w", err)
 	}
 
-	// Extract URLs and normalize them
+	// Extract URLs, normalize them, and deduplicate
+	seen := make(map[string]bool)
 	urls := make([]string, 0, len(urlSet.URLs))
 	for _, u := range urlSet.URLs {
 		normalized, err := utils.NormalizeURL(strings.TrimSpace(u.Loc))
@@ -86,6 +94,12 @@ func (s *SitemapParser) ParseSitemap(sitemapURL string) ([]string, error) {
 			utils.Debug("Invalid URL in sitemap", utils.NewField("url", u.Loc), utils.NewField("error", err.Error()))
 			continue
 		}
+		// Skip duplicates (e.g., same URL with/without trailing slash)
+		if seen[normalized] {
+			utils.Debug("Skipping duplicate URL in sitemap", utils.NewField("original", u.Loc), utils.NewField("normalized", normalized))
+			continue
+		}
+		seen[normalized] = true
 		urls = append(urls, normalized)
 	}
 

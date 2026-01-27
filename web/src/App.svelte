@@ -30,6 +30,9 @@
     '/project/:projectId/settings': wrap({
       asyncComponent: () => import('./routes/Settings.svelte')
     }),
+    '/project/:projectId/settings/cli': wrap({
+      asyncComponent: () => import('./routes/SettingsCLI.svelte')
+    }),
     '/integrations': wrap({
       asyncComponent: () => import('./routes/IntegrationsProtected.svelte')
     }),
@@ -65,6 +68,9 @@
     }),
     '/team/accept': wrap({
       asyncComponent: () => import('./routes/TeamAccept.svelte')
+    }),
+    '/cli-auth': wrap({
+      asyncComponent: () => import('./routes/CLIAuth.svelte')
     }),
     '/reports/:token': wrap({
       asyncComponent: () => import('./routes/PublicReportView.svelte')
@@ -110,6 +116,14 @@
       
       // Also check periodically in case hashchange doesn't fire
       setInterval(updateHash, 100);
+    }
+
+    // Preserve CLI auth redirect for magic link flows
+    if (typeof window !== 'undefined' && currentHash.startsWith('#/cli-auth')) {
+      localStorage.setItem(
+        'barracuda_cli_redirect',
+        JSON.stringify({ hash: currentHash, ts: Date.now() })
+      );
     }
     
     // STEP 1: Handle /auth/confirm path redirect (legacy PKCE support)
@@ -216,10 +230,23 @@
               console.log('✅ Session verified and persisted');
             }
             
-            // Clean up URL - remove tokens, redirect to dashboard
-            // After setting session, redirect to app root with clean hash
+            // Clean up URL - remove tokens, redirect to dashboard or CLI auth
             window.history.replaceState(null, '', window.location.pathname);
-            window.location.hash = '#/';
+            const cliRedirectRaw = localStorage.getItem('barracuda_cli_redirect');
+            if (cliRedirectRaw) {
+              try {
+                const parsed = JSON.parse(cliRedirectRaw);
+                if (parsed?.hash && parsed?.ts && Date.now() - parsed.ts < 10 * 60 * 1000) {
+                  localStorage.removeItem('barracuda_cli_redirect');
+                  window.location.hash = parsed.hash;
+                }
+              } catch (err) {
+                // Ignore parse errors and fall back to default redirect
+              }
+              localStorage.removeItem('barracuda_cli_redirect');
+            } else {
+              window.location.hash = '#/';
+            }
             
             // Don't return here - let initAuth() run to ensure everything is synced
           }

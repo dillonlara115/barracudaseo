@@ -42,6 +42,23 @@
   // Toggle for showing password login option
   let showPasswordOption = false;
 
+  // Optional redirect target (used for CLI auth flow)
+  let redirectTo = null;
+  if (typeof window !== 'undefined') {
+    const currentHash = window.location.hash || '';
+    let params;
+    if (currentHash.includes('?')) {
+      const hashPart = currentHash.split('?')[1];
+      params = new URLSearchParams(hashPart);
+    } else {
+      params = new URLSearchParams(window.location.search);
+    }
+    redirectTo = params.get('redirect_to');
+    if (!redirectTo && currentHash.startsWith('#/cli-auth')) {
+      redirectTo = currentHash;
+    }
+  }
+
   async function handleMagicLinkSubmit() {
     loading = true;
     error = null;
@@ -99,6 +116,8 @@
       // If there's an invite token, redirect to accept page
       if (inviteToken) {
         push(`#/team/accept?token=${inviteToken}`);
+      } else if (redirectTo) {
+        push(redirectTo);
       } else {
         push('#/');
       }

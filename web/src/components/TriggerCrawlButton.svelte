@@ -227,7 +227,11 @@
       
       dispatch('created', { crawl_id: activeCrawlId });
       dispatch('completed', { crawlId: activeCrawlId });
-      // Don't close modal yet - let parent handle navigation
+      
+      // Close the modal so the navigation to crawl results is visible
+      showModal = false;
+      showProgress = false;
+      activeCrawlId = null;
     }
   }
 </script>

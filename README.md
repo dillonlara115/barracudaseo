@@ -52,6 +52,21 @@ go build -o barracuda .
 sudo mv barracuda /usr/local/bin/
 ```
 
+### Install from GitHub Releases (binary)
+
+Download the latest release binary:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dillonlara115/barracuda/main/scripts/install-barracuda.sh | bash
+```
+
+Optional overrides:
+- `BARRACUDA_VERSION=v0.3.0`
+- `BARRACUDA_REPO=org/repo`
+- `INSTALL_DIR=$HOME/.local/bin`
+
+Homebrew users can also install via a tap that points to release binaries. See `docs/CLI_DISTRIBUTION.md`.
+
 ### Using Go Install
 
 ```bash

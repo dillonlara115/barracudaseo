@@ -12,7 +12,8 @@
     Search,
     Settings,
     BarChart,
-    FileSearch
+    FileSearch,
+    Terminal
   } from 'lucide-svelte';
 
   export let projectId = null;
@@ -31,7 +32,8 @@
   $: isImpactFirst = currentPath.includes('/impact-first');
   $: isGSCDashboard = currentPath.includes('/gsc') && !currentPath.includes('/keywords');
   $: isGSCKeywords = currentPath.includes('/gsc/keywords');
-  $: isSettings = currentPath.includes('/settings');
+  $: isSettings = currentPath.includes(`/project/${projectId}/settings`) && !currentPath.includes('/settings/cli');
+  $: isCLISettings = currentPath.includes('/settings/cli');
 
   // Check if GSC is connected
   $: gscConnected = gscStatus?.integration?.property_url ? true : false;
@@ -179,6 +181,16 @@
             Settings
           </a>
         </li>
+        <li class="ml-6">
+          <a
+            href="/project/{projectId}/settings/cli"
+            use:link
+            class:active={isCLISettings}
+          >
+            <Terminal class="w-4 h-4" />
+            CLI Setup
+          </a>
+        </li>
       {/if}
     </ul>
   </aside>
@@ -199,4 +211,3 @@
     color: hsl(var(--p));
   }
 </style>
-

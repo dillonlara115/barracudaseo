@@ -108,6 +108,19 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Enforce subscription limits for CLI ingestion
+	subscription, err := s.resolveSubscription(userID)
+	if err != nil {
+		s.logger.Error("Failed to resolve subscription", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify subscription")
+		return
+	}
+	maxPagesLimit := getMaxPagesLimit(subscription.EffectiveTier)
+	if len(req.Pages) > maxPagesLimit {
+		s.respondError(w, http.StatusForbidden, fmt.Sprintf("Your %s plan allows a maximum of %d pages per crawl. Please upgrade to crawl more pages.", subscription.EffectiveTier, maxPagesLimit))
+		return
+	}
+
 	// Analyze pages to detect issues
 	summary := analyzer.AnalyzeWithImages(req.Pages, 30*time.Second)
 
@@ -138,10 +151,25 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 
 	// Insert pages in batch
 	pages := make([]map[string]interface{}, 0, len(req.Pages))
+	seenPageURLs := make(map[string]bool) // Track normalized URLs to prevent duplicate pages
 	for _, page := range req.Pages {
+		// Normalize page URL to prevent duplicates (e.g., with/without trailing slash)
+		normalizedPageURL, err := utils.NormalizeURL(page.URL)
+		if err != nil {
+			s.logger.Warn("Failed to normalize page URL", zap.String("url", page.URL), zap.Error(err))
+			normalizedPageURL = page.URL
+		}
+
+		// Skip duplicate pages (same normalized URL)
+		if seenPageURLs[normalizedPageURL] {
+			s.logger.Debug("Skipping duplicate page", zap.String("url", page.URL), zap.String("normalized_url", normalizedPageURL))
+			continue
+		}
+		seenPageURLs[normalizedPageURL] = true
+
 		pageData := map[string]interface{}{
 			"crawl_id":         crawlID,
-			"url":              page.URL,
+			"url":              normalizedPageURL,
 			"status_code":      page.StatusCode,
 			"response_time_ms": page.ResponseTime,
 			"title":            page.Title,
@@ -183,7 +211,7 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 	issues := make([]map[string]interface{}, 0, len(summary.Issues))
 	seenIssues := make(map[string]bool) // Track (type + normalized URL) to prevent duplicates
 	pageURLToID := make(map[string]int64)
-	
+
 	// Build page URL to ID map for this crawl
 	pageData, _, err := s.serviceRole.From("pages").
 		Select("id,url", "", false).
@@ -206,7 +234,7 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	
+
 	for _, issue := range summary.Issues {
 		// Normalize issue URL to prevent duplicates
 		normalizedIssueURL, err := utils.NormalizeURL(issue.URL)
@@ -214,18 +242,18 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 			s.logger.Warn("Failed to normalize issue URL", zap.String("url", issue.URL), zap.Error(err))
 			normalizedIssueURL = issue.URL
 		}
-		
+
 		// Create deduplication key: type + normalized URL
 		dedupeKey := fmt.Sprintf("%s:%s", issue.Type, normalizedIssueURL)
 		if seenIssues[dedupeKey] {
-			s.logger.Debug("Skipping duplicate issue", 
+			s.logger.Debug("Skipping duplicate issue",
 				zap.String("type", string(issue.Type)),
 				zap.String("url", issue.URL),
 				zap.String("normalized_url", normalizedIssueURL))
 			continue
 		}
 		seenIssues[dedupeKey] = true
-		
+
 		issueData := map[string]interface{}{
 			"crawl_id":       crawlID,
 			"project_id":     req.ProjectID,
@@ -756,45 +784,15 @@ func (s *Server) handleTriggerCrawl(w http.ResponseWriter, r *http.Request, proj
 		req.Workers = 10
 	}
 
-	// Get user profile to check subscription tier
-	profile, err := s.fetchProfile(userID)
+	// Get effective subscription for limits
+	subscription, err := s.resolveSubscription(userID)
 	if err != nil {
-		s.logger.Error("Failed to fetch user profile", zap.Error(err))
+		s.logger.Error("Failed to resolve subscription", zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, "Failed to verify subscription")
 		return
 	}
 
-	// Check if user is a team member - if so, use account owner's subscription tier
-	teamInfo := s.getTeamInfo(userID, profile)
-	if teamInfo != nil && !teamInfo.IsOwner {
-		// User is a team member - fetch account owner's profile for subscription tier
-		ownerProfile, err := s.fetchProfile(teamInfo.AccountOwnerID)
-		if err == nil && ownerProfile != nil {
-			profile = ownerProfile // Use owner's profile for subscription checks
-			s.logger.Info("Using account owner's subscription tier for team member",
-				zap.String("user_id", userID),
-				zap.String("account_owner_id", teamInfo.AccountOwnerID),
-				zap.Any("owner_tier", ownerProfile["subscription_tier"]))
-		}
-	}
-
-	// Determine max pages limit based on subscription tier
-	subscriptionTier := "free"
-	if profile != nil {
-		if tier, ok := profile["subscription_tier"].(string); ok && tier != "" {
-			subscriptionTier = tier
-		}
-	}
-
-	var maxPagesLimit int
-	switch subscriptionTier {
-	case "pro":
-		maxPagesLimit = 10000
-	case "team":
-		maxPagesLimit = 25000
-	default: // free
-		maxPagesLimit = 100
-	}
+	maxPagesLimit := getMaxPagesLimit(subscription.EffectiveTier)
 
 	// Set default max pages if not provided
 	if req.MaxPages == 0 {
@@ -803,7 +801,7 @@ func (s *Server) handleTriggerCrawl(w http.ResponseWriter, r *http.Request, proj
 
 	// Enforce subscription limit
 	if req.MaxPages > maxPagesLimit {
-		s.respondError(w, http.StatusForbidden, fmt.Sprintf("Your %s plan allows a maximum of %d pages per crawl. Please upgrade to crawl more pages.", subscriptionTier, maxPagesLimit))
+		s.respondError(w, http.StatusForbidden, fmt.Sprintf("Your %s plan allows a maximum of %d pages per crawl. Please upgrade to crawl more pages.", subscription.EffectiveTier, maxPagesLimit))
 		return
 	}
 
@@ -1011,9 +1009,16 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 			images = []models.Image{}
 		}
 
+		// Normalize page URL to prevent duplicates (e.g., with/without trailing slash)
+		normalizedPageURL, err := utils.NormalizeURL(page.URL)
+		if err != nil {
+			s.logger.Warn("Failed to normalize page URL in progress callback", zap.String("url", page.URL), zap.Error(err))
+			normalizedPageURL = page.URL
+		}
+
 		pageData := map[string]interface{}{
 			"crawl_id":         crawlID,
-			"url":              page.URL,
+			"url":              normalizedPageURL,
 			"status_code":      page.StatusCode,
 			"response_time_ms": page.ResponseTime,
 			"title":            page.Title,
@@ -1165,7 +1170,7 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 	// Store issues with URL normalization and deduplication
 	issues := make([]map[string]interface{}, 0, len(summary.Issues))
 	seenIssues := make(map[string]bool) // Track (type + normalized URL) to prevent duplicates
-	
+
 	for _, issue := range summary.Issues {
 		// Normalize issue URL to prevent duplicates (e.g., https://example.com vs https://example.com/)
 		normalizedIssueURL, err := utils.NormalizeURL(issue.URL)
@@ -1174,19 +1179,19 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 			s.logger.Warn("Failed to normalize issue URL", zap.String("url", issue.URL), zap.Error(err))
 			normalizedIssueURL = issue.URL
 		}
-		
+
 		// Create deduplication key: type + normalized URL
 		dedupeKey := fmt.Sprintf("%s:%s", issue.Type, normalizedIssueURL)
 		if seenIssues[dedupeKey] {
 			// Skip duplicate issue (same type and URL)
-			s.logger.Debug("Skipping duplicate issue", 
+			s.logger.Debug("Skipping duplicate issue",
 				zap.String("type", string(issue.Type)),
 				zap.String("url", issue.URL),
 				zap.String("normalized_url", normalizedIssueURL))
 			continue
 		}
 		seenIssues[dedupeKey] = true
-		
+
 		issueData := map[string]interface{}{
 			"crawl_id":       crawlID,
 			"project_id":     projectID,

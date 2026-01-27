@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -16,21 +17,23 @@ import (
 )
 
 var (
-	startURL      string
-	maxDepth      int
-	maxPages      int
-	workers       int
-	delay         time.Duration
-	timeout       time.Duration
-	userAgent     string
-	respectRobots bool
-	parseSitemap  bool
-	exportFormat  string
-	exportPath    string
-	domainFilter  string
-	graphExport   string
-	interactive   bool
-	openBrowser   bool
+	startURL       string
+	maxDepth       int
+	maxPages       int
+	workers        int
+	delay          time.Duration
+	timeout        time.Duration
+	userAgent      string
+	respectRobots  bool
+	parseSitemap   bool
+	exportFormat   string
+	exportPath     string
+	domainFilter   string
+	graphExport    string
+	interactive    bool
+	openBrowser    bool
+	cloudUpload    bool
+	cloudProjectID string
 )
 
 // crawlCmd represents the crawl command
@@ -64,12 +67,16 @@ func init() {
 	crawlCmd.Flags().StringVarP(&exportFormat, "format", "f", "csv", "Export format: 'csv' or 'json'")
 	crawlCmd.Flags().StringVarP(&exportPath, "export", "e", "", "Export file path (default: stdout or results.csv/json)")
 	crawlCmd.Flags().StringVar(&graphExport, "graph-export", "", "Export link graph to JSON file")
-	
+
 	// Interactive mode
 	crawlCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Run in interactive mode with prompts")
-	
+
 	// Browser options
 	crawlCmd.Flags().BoolVarP(&openBrowser, "open", "o", true, "Automatically open web dashboard in browser after crawl")
+
+	// Cloud options
+	crawlCmd.Flags().BoolVar(&cloudUpload, "cloud", false, "Upload crawl results to Barracuda cloud")
+	crawlCmd.Flags().StringVar(&cloudProjectID, "project-id", "", "Project ID to associate with cloud upload")
 }
 
 func runCrawl(cmd *cobra.Command, args []string) error {
@@ -78,22 +85,22 @@ func runCrawl(cmd *cobra.Command, args []string) error {
 	shouldRunInteractive := interactive
 	if !shouldRunInteractive && startURL == "" && len(args) == 0 {
 		// Check if any flags were provided
-		hasFlags := maxDepth != 3 || maxPages != 1000 || workers != 10 || exportFormat != "csv" || 
+		hasFlags := maxDepth != 3 || maxPages != 1000 || workers != 10 || exportFormat != "csv" ||
 			exportPath != "" || graphExport != "" || respectRobots != true || parseSitemap != false
 		if !hasFlags {
 			shouldRunInteractive = true
 		}
 	}
-	
+
 	var crawlDir string
-	
+
 	if shouldRunInteractive {
 		// Run interactive prompts
 		config, graphExportPath, dir, shouldOpen, err := utils.PromptInteractive()
 		if err != nil {
 			return fmt.Errorf("interactive setup failed: %w", err)
 		}
-		
+
 		// Use config from prompts
 		startURL = config.StartURL
 		maxDepth = config.MaxDepth
@@ -111,7 +118,7 @@ func runCrawl(cmd *cobra.Command, args []string) error {
 		if len(args) > 0 {
 			startURL = args[0]
 		}
-		
+
 		// Validate that URL is provided
 		if startURL == "" {
 			return fmt.Errorf("starting URL is required. Provide it as an argument, use --url flag, or run with --interactive")
@@ -186,9 +193,32 @@ func runCrawl(cmd *cobra.Command, args []string) error {
 
 	fmt.Fprintf(os.Stdout, "\n✓ Crawled %d pages\n", len(results))
 	fmt.Fprintf(os.Stdout, "✓ Results exported to %s\n", config.ExportPath)
-	
+
 	if crawlDir != "" {
 		fmt.Fprintf(os.Stdout, "📁 All files saved to: %s\n", crawlDir)
+	}
+
+	// Optional cloud upload
+	if cloudUpload {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		client, _, err := newAPIClient(ctx)
+		if err != nil {
+			return fmt.Errorf("cloud upload failed: %w", err)
+		}
+
+		projectID, err := ensureProjectSelection(ctx, client, config.StartURL, cloudProjectID)
+		if err != nil {
+			return fmt.Errorf("cloud upload failed: %w", err)
+		}
+
+		resp, err := uploadCrawl(ctx, client, projectID, results)
+		if err != nil {
+			return fmt.Errorf("cloud upload failed: %w", err)
+		}
+
+		fmt.Fprintf(os.Stdout, "✓ Uploaded crawl to cloud (project %s, %d pages)\n", resp.ProjectID, resp.TotalPages)
 	}
 
 	// Optionally open browser with dashboard
@@ -217,7 +247,7 @@ func exportLinkGraph(graph *graph.Graph, filePath string) error {
 	edges := graph.GetAllEdges()
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
-	
+
 	if err := encoder.Encode(edges); err != nil {
 		return fmt.Errorf("failed to encode graph JSON: %w", err)
 	}
@@ -235,4 +265,3 @@ func exportResults(results []*models.PageResult, config *utils.Config) error {
 		return fmt.Errorf("unsupported export format: %s", config.ExportFormat)
 	}
 }
-

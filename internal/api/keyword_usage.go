@@ -111,28 +111,12 @@ func getKeywordLimit(subscriptionTier string) int {
 func (s *Server) checkKeywordLimit(ctx context.Context, projectID, userID string) (bool, int, int, error) {
 	_ = ctx
 
-	profile, err := s.fetchProfile(userID)
+	subscription, err := s.resolveSubscription(userID)
 	if err != nil {
 		return false, 0, 0, err
 	}
 
-	// Check if user is a team member
-	teamInfo := s.getTeamInfo(userID, profile)
-	if teamInfo != nil && !teamInfo.IsOwner {
-		ownerProfile, err := s.fetchProfile(teamInfo.AccountOwnerID)
-		if err == nil && ownerProfile != nil {
-			profile = ownerProfile
-		}
-	}
-
-	subscriptionTier := "free"
-	if profile != nil {
-		if tier, ok := profile["subscription_tier"].(string); ok && tier != "" {
-			subscriptionTier = tier
-		}
-	}
-
-	maxKeywords := getKeywordLimit(subscriptionTier)
+	maxKeywords := getKeywordLimit(subscription.EffectiveTier)
 
 	// Get current keyword count
 	var keywords []map[string]interface{}

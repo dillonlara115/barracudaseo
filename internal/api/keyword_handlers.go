@@ -183,27 +183,11 @@ func (s *Server) handleCreateKeyword(w http.ResponseWriter, r *http.Request, use
 	}
 
 	// Check subscription tier limits
-	profile, err := s.fetchProfile(userID)
+	subscription, err := s.resolveSubscription(userID)
 	if err != nil {
-		s.logger.Error("Failed to fetch user profile", zap.Error(err))
+		s.logger.Error("Failed to resolve subscription", zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, "Failed to verify subscription")
 		return
-	}
-
-	// Check if user is a team member - if so, use account owner's subscription tier
-	teamInfo := s.getTeamInfo(userID, profile)
-	if teamInfo != nil && !teamInfo.IsOwner {
-		ownerProfile, err := s.fetchProfile(teamInfo.AccountOwnerID)
-		if err == nil && ownerProfile != nil {
-			profile = ownerProfile
-		}
-	}
-
-	subscriptionTier := "free"
-	if profile != nil {
-		if tier, ok := profile["subscription_tier"].(string); ok && tier != "" {
-			subscriptionTier = tier
-		}
 	}
 
 	// Get current keyword count for project
@@ -214,19 +198,10 @@ func (s *Server) handleCreateKeyword(w http.ResponseWriter, r *http.Request, use
 	}
 	currentKeywordCount := len(keywords)
 
-	// Define limits based on subscription tier
-	var maxKeywords int
-	switch subscriptionTier {
-	case "pro":
-		maxKeywords = 500
-	case "team":
-		maxKeywords = 2000
-	default: // free
-		maxKeywords = 10
-	}
+	maxKeywords := getKeywordLimit(subscription.EffectiveTier)
 
 	if currentKeywordCount >= maxKeywords {
-		s.respondError(w, http.StatusForbidden, fmt.Sprintf("Your %s plan allows a maximum of %d keywords. Please upgrade to add more keywords.", subscriptionTier, maxKeywords))
+		s.respondError(w, http.StatusForbidden, fmt.Sprintf("Your %s plan allows a maximum of %d keywords. Please upgrade to add more keywords.", subscription.EffectiveTier, maxKeywords))
 		return
 	}
 
