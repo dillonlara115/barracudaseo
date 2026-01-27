@@ -440,6 +440,74 @@
 					</div>
 				</div>
 			</div>
+
+			<!-- 3.4 Local SEO (Geo-Grid) -->
+			<div class="mb-12">
+				<h3 class="text-2xl md:text-3xl font-heading font-bold mb-6 text-[#8ec07c]">3.4 Local SEO (Geo-Grid + Maps Rankings)</h3>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Zap class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Geo-grid rank scans (3×3 to 21×21) using Google Maps SERP</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Zap class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Adjustable radius + grid spacing (local focus control)</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Zap class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Disable grid points to optimize API credits</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Zap class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Interactive heatmap visualization + shareable map links</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Sparkles class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">AI explanations for weak zones (proximity, competition, reviews, categories)</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- 3.5 Keyword Intelligence (Labs + Keywords Data) -->
+			<div class="mb-12">
+				<h3 class="text-2xl md:text-3xl font-heading font-bold mb-6 text-[#8ec07c]">3.5 Keyword Intelligence (Competitors + Content Gap)</h3>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Zap class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Competitor ranked keyword discovery (domain/url reverse lookup)</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Zap class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Content gap recommendations (keywords competitors rank for that you don't)</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Zap class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Keyword metrics (search volume, CPC, competition) for prioritization</span>
+						</div>
+					</div>
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Sparkles class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">AI opportunity scoring: impact × difficulty × effort</span>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </section>
@@ -540,6 +608,62 @@
 						<div class="flex items-start gap-3">
 							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
 							<span class="text-white/90">Integrations with task managers (Jira, Asana, ClickUp)</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- 4.4 Backlink Monitoring -->
+			<div class="mb-12">
+				<h3 class="text-2xl md:text-3xl font-heading font-bold mb-6 text-[#8ec07c]">4.4 Backlink Monitoring & Opportunities</h3>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="bg-[#3c3836] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Backlink profile overview + referring domains</span>
+						</div>
+					</div>
+					<div class="bg-[#3c3836] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">New/lost backlinks + alerts</span>
+						</div>
+					</div>
+					<div class="bg-[#3c3836] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Competitor backlink overlap + link opportunity lists</span>
+						</div>
+					</div>
+					<div class="bg-[#3c3836] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Sparkles class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">AI suggestions for outreach targets + anchor strategy</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- 4.5 Performance Audits (Lighthouse) -->
+			<div class="mb-12">
+				<h3 class="text-2xl md:text-3xl font-heading font-bold mb-6 text-[#8ec07c]">4.5 Performance Audits (Lighthouse + Core Web Vitals)</h3>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="bg-[#3c3836] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Lighthouse audits for key pages (perf, a11y, best practices, SEO)</span>
+						</div>
+					</div>
+					<div class="bg-[#3c3836] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Regression alerts when scores drop between scans</span>
+						</div>
+					</div>
+					<div class="bg-[#3c3836] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Sparkles class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">AI "fix-first" guidance tied to audit findings</span>
 						</div>
 					</div>
 				</div>

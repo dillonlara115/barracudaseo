@@ -1,0 +1,335 @@
+# Barracuda SEO Marketing Site - LLM Context File
+
+## Project Overview
+
+This is the marketing website for Barracuda SEO, a fast, lightweight SEO website crawler CLI tool. The site is built with SvelteKit and deployed to Vercel at https://barracudaseo.com.
+
+## Tech Stack
+
+- **Framework**: SvelteKit 2.47.1 (Svelte 5.41.0)
+- **Styling**: Tailwind CSS v4.1.16 + DaisyUI 5.4.5
+- **Deployment**: Vercel (using @sveltejs/adapter-vercel)
+- **TypeScript**: 5.9.3
+- **Build Tool**: Vite 7.1.10
+- **Testing**: Vitest (unit) + Playwright (e2e)
+- **Fonts**: Sora (headings), DM Sans (body), JetBrains Mono (code)
+
+## Project Structure
+
+```
+marketing/
+├── src/
+│   ├── routes/              # SvelteKit routes (file-based routing)
+│   │   ├── +layout.svelte   # Global layout with Header/Footer
+│   │   ├── +page.svelte     # Homepage
+│   │   ├── +error.svelte    # Error page (404, etc.)
+│   │   ├── blog/            # Blog routes
+│   │   │   ├── +page.svelte # Blog archive
+│   │   │   └── [slug]/      # Individual blog posts
+│   │   ├── robots.txt/      # Dynamic robots.txt endpoint
+│   │   └── sitemap.xml/     # Dynamic sitemap endpoint
+│   ├── components/
+│   │   ├── layout/          # Header, Footer
+│   │   ├── sections/        # Marketing sections (Hero, Features, Pricing, etc.)
+│   │   ├── skeletons/       # Loading skeletons
+│   │   ├── MetaTags.svelte  # SEO meta tags component
+│   │   └── GoogleAnalytics.svelte
+│   ├── lib/
+│   │   ├── constants.ts     # SITE_URL, SITE_NAME, etc.
+│   │   ├── meta.ts          # Meta tag helpers and schema generators
+│   │   ├── blog.ts          # Blog post management
+│   │   ├── blog-content.ts  # Blog post content (markdown-like HTML)
+│   │   └── analytics.ts     # Google Analytics tracking
+│   ├── app.html             # HTML template
+│   └── app.css              # Global styles + Tailwind theme
+├── static/                  # Static assets (images, favicons)
+├── vercel.json              # Vercel redirects (www → non-www)
+├── svelte.config.js         # SvelteKit config
+├── tailwind.config.cjs      # Tailwind config
+└── vite.config.ts           # Vite config
+```
+
+## Key Files and Their Purposes
+
+### Core Configuration
+
+- **`svelte.config.js`**: SvelteKit configuration, uses Vercel adapter
+- **`vercel.json`**: Redirects www.barracudaseo.com → barracudaseo.com (301)
+- **`src/lib/constants.ts`**: Site constants (SITE_URL, SITE_NAME, APP_URL)
+- **`src/app.html`**: HTML template with deferred GA4 loading
+
+### SEO and Meta Tags
+
+- **`src/components/MetaTags.svelte`**: 
+  - Generates canonical URLs (normalized: no trailing slash except root)
+  - Open Graph tags
+  - Twitter Card tags
+  - Structured data (JSON-LD)
+  - Uses `$page.url.pathname` and normalizes it
+
+- **`src/lib/meta.ts`**: 
+  - `getMetaTags()`: Creates meta tag config
+  - `getWebSiteSchema()`: Organization schema
+  - `getArticleSchema()`: Blog post schema
+  - `getBreadcrumbSchema()`: Breadcrumb schema
+
+### Blog System
+
+- **`src/lib/blog.ts`**: 
+  - `getAllBlogPosts()`: Returns all blog posts
+  - `getBlogPost(slug)`: Returns single post
+  - Posts defined with metadata (title, description, publishDate, etc.)
+
+- **`src/lib/blog-content.ts`**: 
+  - Contains HTML content for each blog post
+  - Key: post slug, Value: HTML string
+  - Posts cover SEO topics (broken links, redirect chains, etc.)
+
+- **`src/routes/blog/[slug]/+page.ts`**: 
+  - Loads blog post data
+  - Generates static paths at build time
+
+- **`src/routes/blog/[slug]/+page.svelte`**: 
+  - Renders blog post with meta tags
+  - Includes breadcrumbs and related posts
+
+### Routes and Pages
+
+- **`src/routes/+layout.svelte`**: 
+  - Global layout with Header/Footer
+  - Includes MetaTags, GoogleAnalytics, PageTransitionLoader
+  - Adds organization and website schema
+
+- **`src/routes/+page.svelte`**: Homepage
+- **`src/routes/about/+page.svelte`**: About page
+- **`src/routes/features/+page.svelte`**: Features page
+- **`src/routes/pricing/+page.svelte`**: Pricing page
+- **`src/routes/faq/+page.svelte`**: FAQ page
+- **`src/routes/roadmap/+page.svelte`**: Roadmap page
+- **`src/routes/privacy/+page.svelte`**: Privacy policy
+- **`src/routes/terms/+page.svelte`**: Terms of service
+- **`src/routes/use-cases/*/`: Use case pages (e-commerce, local-seo, programmatic-seo)
+
+### Dynamic Endpoints
+
+- **`src/routes/robots.txt/+server.ts`**: 
+  - Generates robots.txt dynamically
+  - References sitemap URL
+
+- **`src/routes/sitemap.xml/+server.ts`**: 
+  - Generates XML sitemap dynamically
+  - Includes static routes + blog posts
+  - Normalizes URLs (removes trailing slashes)
+
+### Components
+
+- **`src/components/layout/Header.svelte`**: Site navigation header
+- **`src/components/layout/Footer.svelte`**: Site footer
+- **`src/components/sections/Hero.svelte`**: Homepage hero section
+- **`src/components/sections/Features.svelte`**: Features grid
+- **`src/components/sections/Pricing.svelte`**: Pricing tiers
+- **`src/components/sections/FAQ.svelte`**: FAQ accordion
+- **`src/components/MetaTags.svelte`**: SEO meta tags (see above)
+
+## Important Conventions
+
+### URL Normalization
+
+- **Canonical URLs**: Always normalized to remove trailing slashes (except root `/`)
+- **Sitemap**: URLs normalized to no trailing slash
+- **Redirects**: `vercel.json` handles www → non-www redirects
+- **Implementation**: `MetaTags.svelte` uses `normalizePath()` function
+
+### SEO Best Practices
+
+- Every page uses `MetaTags.svelte` component
+- Canonical URLs point to non-www, non-trailing-slash versions
+- Structured data (JSON-LD) for organization, articles, breadcrumbs
+- Open Graph and Twitter Card tags for social sharing
+- Sitemap includes all routes with priorities and change frequencies
+
+### Styling
+
+- **Theme**: Dark theme with primary color `#8ec07c` (green)
+- **Base color**: `#3c3836` (dark gray)
+- **Fonts**: 
+  - Headings: Sora (700 weight)
+  - Body: DM Sans (400-500 weight)
+  - Code: JetBrains Mono (400-500 weight)
+- **Components**: Uses DaisyUI classes (`btn`, `card`, `badge`, etc.)
+- **Tailwind**: v4 with CSS-based configuration in `src/app.css`
+
+### Blog Posts
+
+- Blog posts are defined in `src/lib/blog.ts` with metadata
+- Content stored in `src/lib/blog-content.ts` as HTML strings
+- Posts sorted by `publishDate` (newest first)
+- Each post has: slug, title, description, author, publishDate, category, tags
+- Blog archive shows all posts with filtering by category
+
+## Development Workflow
+
+### Local Development
+
+```bash
+cd marketing
+npm install
+npm run dev          # Start dev server (http://localhost:5173)
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run check        # Type checking
+npm run lint         # Linting
+npm test             # Run tests (unit + e2e)
+```
+
+### Adding a New Page
+
+1. Create route file: `src/routes/your-page/+page.svelte`
+2. Add meta tags using `MetaTags` component
+3. Add route to sitemap in `src/routes/sitemap.xml/+server.ts`
+4. Update navigation in `Header.svelte` if needed
+
+### Adding a Blog Post
+
+1. Add metadata to `src/lib/blog.ts`:
+   ```typescript
+   {
+     slug: 'your-post-slug',
+     title: 'Your Post Title',
+     description: 'Post description',
+     author: 'Author Name',
+     publishDate: '2025-01-27',
+     category: 'technical-seo',
+     tags: ['tag1', 'tag2']
+   }
+   ```
+
+2. Add content to `src/lib/blog-content.ts`:
+   ```typescript
+   'your-post-slug': `
+     <h2>Introduction</h2>
+     <p>Your content here...</p>
+   `
+   ```
+
+3. Sitemap automatically includes new posts
+
+## Deployment
+
+### Platform: Vercel
+
+- **Auto-deploy**: Pushes to `main` branch trigger automatic deployments
+- **Manual deploy**: `npx vercel --prod` from marketing directory
+- **Domain**: barracudaseo.com (configured in Vercel dashboard)
+
+### Build Configuration
+
+- **Framework**: SvelteKit
+- **Build Command**: `npm run build`
+- **Output Directory**: `.svelte-kit/output` (handled by adapter)
+
+### Environment Variables (Optional)
+
+- `PUBLIC_SUPABASE_URL`: If using Supabase features
+- `PUBLIC_SUPABASE_ANON_KEY`: If using Supabase features
+
+### Redirects
+
+- **`vercel.json`**: Handles www → non-www redirects (301)
+- All www URLs redirect to non-www version
+- Trailing slashes handled by SvelteKit routing
+
+## URL Normalization Details
+
+### Canonical URLs
+
+- **Implementation**: `src/components/MetaTags.svelte`
+- **Function**: `normalizePath()` removes trailing slashes except for root
+- **Example**: 
+  - `/about/` → `/about`
+  - `/` → `/` (root keeps trailing slash)
+  - `https://barracudaseo.com/about/` → `https://barracudaseo.com/about`
+
+### Sitemap
+
+- **File**: `src/routes/sitemap.xml/+server.ts`
+- **Normalization**: Uses `normalizePath()` function
+- **Format**: All URLs use non-trailing-slash format
+- **Includes**: Static routes + dynamic blog posts
+
+### Redirects
+
+- **File**: `vercel.json`
+- **Rule**: `www.barracudaseo.com/*` → `barracudaseo.com/*` (301)
+- **Purpose**: Prevents duplicate content indexing
+
+## Analytics
+
+- **Google Analytics 4**: Deferred loading in `src/app.html`
+- **Tracking**: `src/lib/analytics.ts` provides `trackEvent()` function
+- **Component**: `src/components/GoogleAnalytics.svelte` handles page views
+
+## Testing
+
+- **Unit Tests**: Vitest (`npm run test:unit`)
+- **E2E Tests**: Playwright (`npm run test:e2e`)
+- **Test Files**: `*.spec.ts` or `*.test.ts`
+- **E2E Config**: `playwright.config.ts`
+
+## Important Notes
+
+1. **URL Consistency**: Always use normalized URLs (no trailing slash except root)
+2. **SEO**: Every page must include MetaTags component with proper meta data
+3. **Blog Posts**: Content is stored as HTML strings, not markdown files
+4. **Deployment**: Auto-deploys on git push to main branch
+5. **Styling**: Use DaisyUI classes where possible, Tailwind utilities for custom styles
+6. **Fonts**: Imported via @fontsource packages, configured in `src/app.css`
+7. **Images**: Store in `static/` directory, reference as `/image.png`
+8. **Canonical URLs**: Always point to non-www, non-trailing-slash versions
+
+## Common Tasks
+
+### Update Site Constants
+
+Edit `src/lib/constants.ts`:
+- `SITE_URL`: Main site URL
+- `SITE_NAME`: Site name
+- `APP_URL`: Application URL
+
+### Add New Route
+
+1. Create `src/routes/your-route/+page.svelte`
+2. Add to sitemap in `src/routes/sitemap.xml/+server.ts`
+3. Add navigation link in `Header.svelte` if needed
+
+### Update Blog Post
+
+1. Edit metadata in `src/lib/blog.ts`
+2. Edit content in `src/lib/blog-content.ts`
+3. Content uses HTML, not markdown
+
+### Change Theme Colors
+
+Edit `src/app.css` - Tailwind v4 uses CSS variables:
+- `--color-primary`: Primary color (#8ec07c)
+- `--color-base-100`: Background color (#3c3836)
+
+## Related Documentation
+
+- `README.md`: Basic project info
+- `README_DEV.md`: Developer guide with detailed conventions
+- `SETUP_NOTES.md`: Setup and configuration notes
+- `MARKETING_MESSAGING.md`: Marketing messaging guidelines
+- `DEPLOY_TO_PRODUCTION.md`: Deployment instructions (in parent directory)
+
+## Deployment Checklist
+
+Before deploying:
+1. ✅ All routes have meta tags
+2. ✅ Canonical URLs normalized (no trailing slashes)
+3. ✅ Sitemap includes all routes
+4. ✅ Blog posts have proper schema
+5. ✅ Redirects configured in vercel.json
+6. ✅ Analytics tracking enabled
+7. ✅ Build succeeds locally (`npm run build`)
+8. ✅ Preview works (`npm run preview`)
