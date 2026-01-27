@@ -134,7 +134,7 @@ PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 
 **Important Notes:**
 - `.env.local` files are gitignored and won't be committed
-- The CLI loads `.env` first, then `.env.local` (if present)
+- The CLI does **not** auto-load `.env`/`.env.local` by default. For local development, set `BARRACUDA_LOAD_ENV=1` or `BARRACUDA_ENV_FILE=/path/to/.env`.
 - Frontend (Vite) only reads variables prefixed with `VITE_` or `PUBLIC_`
 
 ## Step 4: Build the Frontend
@@ -176,6 +176,7 @@ The API server connects to Supabase and provides REST endpoints:
 
 ```bash
 # Using environment variables from .env.local
+export BARRACUDA_LOAD_ENV=1
 go run . api --port 8080
 
 # Or with explicit flags
@@ -341,4 +342,3 @@ make test
 - Review error messages carefully - they often point to missing configuration
 - Verify all environment variables are set correctly
 - Ensure Supabase migrations have been applied
-

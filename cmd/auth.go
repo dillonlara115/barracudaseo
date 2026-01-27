@@ -64,9 +64,6 @@ func runAuthLogin(cmd *cobra.Command, args []string) error {
 	loadEnv()
 
 	supabaseURL, supabaseAnonKey := resolveSupabaseConfig()
-	if supabaseURL == "" || supabaseAnonKey == "" {
-		return errors.New("missing Supabase configuration. Set PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY")
-	}
 
 	appURL := resolveAppURL()
 	apiURL := resolveAPIURL()
@@ -141,6 +138,14 @@ func runAuthLogin(cmd *cobra.Command, args []string) error {
 		}
 		if payload.SupabaseAnonKey == "" {
 			payload.SupabaseAnonKey = supabaseAnonKey
+		}
+		if payload.SupabaseURL == "" || payload.SupabaseAnonKey == "" {
+			http.Error(w, "Missing Supabase configuration in auth payload", http.StatusBadRequest)
+			select {
+			case done <- errors.New("missing Supabase configuration in auth payload"):
+			default:
+			}
+			return
 		}
 		if payload.APIURL == "" {
 			payload.APIURL = apiURL

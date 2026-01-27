@@ -28,7 +28,7 @@ A fast, lightweight SEO website crawler CLI tool inspired by Screaming Frog.
 - Node 18+ (for building the Svelte frontend)
 - Supabase project (URL, anon key, and optionally service role key) if you plan to use the hosted workspace or API
 
-> `.env` files: the CLI loads `.env` first and then `.env.local` (if present) so you can keep shared defaults in `.env` and developer overrides in `.env.local`.
+> `.env` files: the CLI does **not** auto-load `.env`/`.env.local` by default. For local development, set `BARRACUDA_LOAD_ENV=1` to load `.env` then `.env.local`, or set `BARRACUDA_ENV_FILE=/path/to/.env`.
 
 ### From Source
 
@@ -109,7 +109,7 @@ See `docs/SUPABASE_SCHEMA.md`, `docs/API_SERVER.md`, and `docs/CLOUD_RUN_SUPABAS
 The `api` command starts the Supabase-backed REST service used in Cloud Run.
 
 ```bash
-# With env vars already exported or present in .env/.env.local
+# With env vars already exported (or set `BARRACUDA_LOAD_ENV=1` to load .env/.env.local)
 go run . api --port 8080
 
 # Or pass flags explicitly

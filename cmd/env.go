@@ -8,6 +8,20 @@ import (
 )
 
 func loadEnv() {
+	if envFiles := strings.TrimSpace(os.Getenv("BARRACUDA_ENV_FILE")); envFiles != "" {
+		for _, path := range splitEnvFiles(envFiles) {
+			if path == "" {
+				continue
+			}
+			_ = godotenv.Overload(path)
+		}
+		return
+	}
+
+	if !isTruthy(os.Getenv("BARRACUDA_LOAD_ENV")) {
+		return
+	}
+
 	_ = godotenv.Load()
 	if os.Getenv("PORT") == "" {
 		_ = godotenv.Overload(".env.local")
@@ -58,4 +72,20 @@ func defaultEnv(fallback string, keys ...string) string {
 		return val
 	}
 	return fallback
+}
+
+func isTruthy(value string) bool {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "1", "true", "yes", "y":
+		return true
+	default:
+		return false
+	}
+}
+
+func splitEnvFiles(value string) []string {
+	parts := strings.FieldsFunc(value, func(r rune) bool {
+		return r == ',' || r == ';' || r == ':' || r == '|'
+	})
+	return parts
 }

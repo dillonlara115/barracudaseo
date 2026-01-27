@@ -68,7 +68,7 @@ This document captures the target hosted architecture for Barracuda when splitti
 4. **Secrets Management**
    - Cloud Run: configure Secret Manager -> environment variables.
    - Vercel: set public (anon) and private keys through the dashboard.
-   - CLI: read from local `.env`, send signed requests to Cloud Run using Supabase auth tokens.
+   - CLI: read from environment variables (or `.env` via `BARRACUDA_LOAD_ENV=1`), send signed requests to Cloud Run using Supabase auth tokens.
 
 ---
 
