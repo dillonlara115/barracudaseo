@@ -28,8 +28,8 @@ var (
 )
 
 type oauthState struct {
-	ProjectID string
-	Expires   time.Time
+	UserID  string
+	Expires time.Time
 }
 
 // InitializeOAuth sets up OAuth2 configuration
@@ -77,8 +77,8 @@ func InitializeOAuth(redirectURL string) error {
 	return nil
 }
 
-// GenerateAuthURL creates an OAuth2 authorization URL and binds it to a project
-func GenerateAuthURL(projectID string) (string, string, error) {
+// GenerateAuthURL creates an OAuth2 authorization URL and binds it to a user
+func GenerateAuthURL(userID string) (string, string, error) {
 	if oauthConfig == nil {
 		return "", "", fmt.Errorf("OAuth not initialized. Call InitializeOAuth first")
 	}
@@ -93,8 +93,8 @@ func GenerateAuthURL(projectID string) (string, string, error) {
 	// Store state with timestamp (expires in 10 minutes)
 	stateMu.Lock()
 	stateStore[state] = oauthState{
-		ProjectID: projectID,
-		Expires:   time.Now().Add(10 * time.Minute),
+		UserID:  userID,
+		Expires: time.Now().Add(10 * time.Minute),
 	}
 	stateMu.Unlock()
 
@@ -105,7 +105,7 @@ func GenerateAuthURL(projectID string) (string, string, error) {
 	return url, state, nil
 }
 
-// ConsumeState validates OAuth state and returns the associated project ID
+// ConsumeState validates OAuth state and returns the associated user ID
 func ConsumeState(state string) (string, bool) {
 	stateMu.RLock()
 	entry, exists := stateStore[state]
@@ -123,7 +123,7 @@ func ConsumeState(state string) (string, bool) {
 	stateMu.Lock()
 	delete(stateStore, state)
 	stateMu.Unlock()
-	return entry.ProjectID, true
+	return entry.UserID, true
 }
 
 // ExchangeCode exchanges authorization code for token

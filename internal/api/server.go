@@ -218,6 +218,10 @@ func (s *Server) Router() http.Handler {
 	v1.HandleFunc("/ai/crawl-summary", s.handleCrawlSummary)
 	// Integrations routes
 	v1.HandleFunc("/integrations/openai-key", s.handleOpenAIKey)
+	v1.HandleFunc("/integrations/gsc/", s.handleIntegrationsGSC)
+	v1.HandleFunc("/integrations/gsc", s.handleIntegrationsGSC)
+	v1.HandleFunc("/integrations/ga4/", s.handleIntegrationsGA4)
+	v1.HandleFunc("/integrations/ga4", s.handleIntegrationsGA4)
 	// Public report routes (authenticated)
 	v1.HandleFunc("/reports/public/", s.handlePublicReportByID) // Handles DELETE for specific report
 	v1.HandleFunc("/reports/public", s.handlePublicReports)     // Handles GET (list) and POST (create)

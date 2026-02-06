@@ -557,8 +557,8 @@
     </div>
   {:else if !gscStatus?.integration?.property_url}
     <div class="alert alert-warning">
-      <span>Google Search Console is not connected for this project. Please connect it in the Settings page.</span>
-      <a href="/project/{projectId}/settings" use:link class="btn btn-sm btn-primary mt-2">Go to Settings</a>
+      <span>Google Search Console is not connected for your account. Connect it in Integrations, then select a property in Project Settings.</span>
+      <a href="/integrations" use:link class="btn btn-sm btn-primary mt-2">Go to Integrations</a>
     </div>
   {:else if !hasData}
     <div class="alert alert-info">
@@ -787,4 +787,3 @@
   {/if}
 </div>
 </ProjectPageLayout>
-

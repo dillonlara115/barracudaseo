@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dillonlara115/barracudaseo/internal/gsc"
@@ -40,13 +41,13 @@ func (s *Server) handleProjectGSC(w http.ResponseWriter, r *http.Request, projec
 
 	switch segments[0] {
 	case "connect":
-		s.handleProjectGSCConnect(w, r, projectID)
+		s.handleProjectGSCConnect(w, r, userID)
 	case "disconnect":
 		s.handleProjectGSCDisconnect(w, r, projectID)
 	case "properties":
-		s.handleProjectGSCProperties(w, r, projectID)
+		s.handleProjectGSCProperties(w, r, userID)
 	case "property":
-		s.handleProjectGSCSetProperty(w, r, projectID)
+		s.handleProjectGSCSetProperty(w, r, projectID, userID)
 	case "trigger-sync":
 		s.handleProjectGSCTriggerSync(w, r, projectID)
 	case "status":
@@ -60,20 +61,16 @@ func (s *Server) handleProjectGSC(w http.ResponseWriter, r *http.Request, projec
 	}
 }
 
-func (s *Server) handleProjectGSCConnect(w http.ResponseWriter, r *http.Request, projectID string) {
+func (s *Server) handleProjectGSCConnect(w http.ResponseWriter, r *http.Request, userID string) {
 	if r.Method != http.MethodGet {
 		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
-	authURL, state, err := gsc.GenerateAuthURL(projectID)
+	authURL, state, err := gsc.GenerateAuthURL(userID)
 	if err != nil {
 		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to generate auth URL: %v", err))
 		return
-	}
-
-	if _, err := s.ensureGSCSyncState(projectID, ""); err != nil {
-		s.logger.Warn("Failed to ensure GSC sync state", zap.Error(err))
 	}
 
 	s.respondJSON(w, http.StatusOK, map[string]string{
@@ -82,19 +79,19 @@ func (s *Server) handleProjectGSCConnect(w http.ResponseWriter, r *http.Request,
 	})
 }
 
-func (s *Server) handleProjectGSCProperties(w http.ResponseWriter, r *http.Request, projectID string) {
+func (s *Server) handleProjectGSCProperties(w http.ResponseWriter, r *http.Request, userID string) {
 	if r.Method != http.MethodGet {
 		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
-	cfg, err := s.loadTokenIntoMemory(projectID)
+	cfg, err := s.loadTokenIntoMemory(userID)
 	if err != nil {
 		s.respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	properties, err := gsc.GetProperties(projectID)
+	properties, err := gsc.GetProperties(userID)
 	if err != nil {
 		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to get properties: %v", err))
 		return
@@ -111,7 +108,7 @@ func (s *Server) handleProjectGSCProperties(w http.ResponseWriter, r *http.Reque
 	})
 }
 
-func (s *Server) handleProjectGSCSetProperty(w http.ResponseWriter, r *http.Request, projectID string) {
+func (s *Server) handleProjectGSCSetProperty(w http.ResponseWriter, r *http.Request, projectID, userID string) {
 	if r.Method != http.MethodPost && r.Method != http.MethodPatch {
 		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
@@ -132,7 +129,7 @@ func (s *Server) handleProjectGSCSetProperty(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	cfg, _, err := s.getGSCIntegration(projectID)
+	cfg, _, err := s.getGSCIntegration(userID)
 	if err != nil {
 		s.respondError(w, http.StatusInternalServerError, "Failed to load integration")
 		return
@@ -141,12 +138,12 @@ func (s *Server) handleProjectGSCSetProperty(w http.ResponseWriter, r *http.Requ
 		s.respondError(w, http.StatusBadRequest, "Connect Google Search Console before selecting a property")
 		return
 	}
-
-	cfg.PropertyURL = req.PropertyURL
-	cfg.PropertyType = req.PropertyType
-
-	if err := s.saveGSCIntegration(projectID, cfg); err != nil {
-		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to update integration: %v", err))
+	if err := s.updateProjectSettings(projectID, map[string]interface{}{
+		"gsc_property_url":        req.PropertyURL,
+		"gsc_property_type":       req.PropertyType,
+		"gsc_integration_user_id": userID,
+	}); err != nil {
+		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to update project settings: %v", err))
 		return
 	}
 
@@ -155,8 +152,8 @@ func (s *Server) handleProjectGSCSetProperty(w http.ResponseWriter, r *http.Requ
 	}
 
 	s.respondJSON(w, http.StatusOK, map[string]string{
-		"property_url":  cfg.PropertyURL,
-		"property_type": cfg.PropertyType,
+		"property_url":  req.PropertyURL,
+		"property_type": req.PropertyType,
 	})
 }
 
@@ -182,17 +179,34 @@ func (s *Server) handleProjectGSCTriggerSync(w http.ResponseWriter, r *http.Requ
 		req.Period = fmt.Sprintf("last_%d_days", req.LookbackDays)
 	}
 
-	cfg, err := s.loadTokenIntoMemory(projectID)
+	settings, err := s.loadProjectSettings(projectID)
+	if err != nil {
+		s.respondError(w, http.StatusInternalServerError, "Failed to load project settings")
+		return
+	}
+	propertyURL, _ := settings["gsc_property_url"].(string)
+	integrationUserID, _ := settings["gsc_integration_user_id"].(string)
+	if propertyURL == "" {
+		s.respondError(w, http.StatusBadRequest, "GSC property not selected for this project")
+		return
+	}
+	if integrationUserID == "" {
+		s.respondError(w, http.StatusBadRequest, "No connected GSC account for this project")
+		return
+	}
+
+	cfg, err := s.loadTokenIntoMemory(integrationUserID)
 	if err != nil {
 		s.respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	cfg.PropertyURL = propertyURL
 
 	if err := s.updateGSCSyncState(projectID, "running", nil, nil); err != nil {
 		s.logger.Warn("Failed to mark sync running", zap.Error(err))
 	}
 
-	if err := s.syncProjectGSCData(projectID, cfg, req.LookbackDays, req.Period); err != nil {
+	if err := s.syncProjectGSCData(projectID, integrationUserID, cfg, req.LookbackDays, req.Period); err != nil {
 		s.logger.Error("GSC sync failed", zap.Error(err))
 		_ = s.updateGSCSyncState(projectID, "error", nil, map[string]interface{}{
 			"message": err.Error(),
@@ -219,13 +233,24 @@ func (s *Server) handleProjectGSCStatus(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	cfg, _, err := s.getGSCIntegration(projectID)
+	settings, err := s.loadProjectSettings(projectID)
 	if err != nil {
-		s.respondError(w, http.StatusInternalServerError, "Failed to load integration")
+		s.respondError(w, http.StatusInternalServerError, "Failed to load project settings")
 		return
 	}
+	propertyURL, _ := settings["gsc_property_url"].(string)
+	propertyType, _ := settings["gsc_property_type"].(string)
+	integrationUserID, _ := settings["gsc_integration_user_id"].(string)
 
-	state, err := s.ensureGSCSyncState(projectID, "")
+	connected := false
+	if integrationUserID != "" {
+		cfg, _, err := s.getGSCIntegration(integrationUserID)
+		if err == nil && cfg != nil && (cfg.AccessToken != "" || cfg.RefreshToken != "") {
+			connected = true
+		}
+	}
+
+	state, err := s.ensureGSCSyncState(projectID, propertyURL)
 	if err != nil {
 		s.respondError(w, http.StatusInternalServerError, "Failed to load sync state")
 		return
@@ -237,9 +262,14 @@ func (s *Server) handleProjectGSCStatus(w http.ResponseWriter, r *http.Request, 
 	}
 
 	response := map[string]interface{}{
-		"integration": cfg,
-		"sync_state":  state,
-		"summary":     summary,
+		"integration": map[string]interface{}{
+			"property_url":        propertyURL,
+			"property_type":       propertyType,
+			"integration_user_id": integrationUserID,
+			"connected":           connected,
+		},
+		"sync_state": state,
+		"summary":    summary,
 	}
 	s.respondJSON(w, http.StatusOK, response)
 }
@@ -396,31 +426,33 @@ func (s *Server) handleGSCGlobalSync(w http.ResponseWriter, r *http.Request) {
 	targetProjects := req.ProjectIDs
 	if len(targetProjects) == 0 {
 		data, _, err := s.serviceRole.
-			From("api_integrations").
-			Select("project_id", "", false).
-			Eq("provider", "gsc").
+			From("projects").
+			Select("id,settings", "", false).
 			Execute()
 		if err != nil {
-			s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to load integrations: %v", err))
+			s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to load projects: %v", err))
 			return
 		}
 
 		var rows []map[string]interface{}
 		if err := json.Unmarshal(data, &rows); err != nil {
-			s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to parse integrations: %v", err))
+			s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to parse projects: %v", err))
 			return
 		}
 
-		unique := make(map[string]struct{}, len(rows))
 		for _, row := range rows {
-			if projectID, ok := row["project_id"].(string); ok && projectID != "" {
-				unique[projectID] = struct{}{}
+			projectID, _ := row["id"].(string)
+			settings, _ := row["settings"].(map[string]interface{})
+			if projectID == "" || settings == nil {
+				continue
 			}
-		}
-
-		targetProjects = make([]string, 0, len(unique))
-		for id := range unique {
-			targetProjects = append(targetProjects, id)
+			if url, _ := settings["gsc_property_url"].(string); url == "" {
+				continue
+			}
+			if uid, _ := settings["gsc_integration_user_id"].(string); uid == "" {
+				continue
+			}
+			targetProjects = append(targetProjects, projectID)
 		}
 	}
 
@@ -440,19 +472,30 @@ func (s *Server) handleGSCGlobalSync(w http.ResponseWriter, r *http.Request) {
 			"status":     "skipped",
 		}
 
-		cfg, _, err := s.getGSCIntegration(projectID)
+		settings, err := s.loadProjectSettings(projectID)
 		if err != nil {
 			entry["status"] = "error"
-			entry["error"] = fmt.Sprintf("failed to load integration: %v", err)
+			entry["error"] = fmt.Sprintf("failed to load project settings: %v", err)
 			results = append(results, entry)
 			continue
 		}
-		if cfg == nil || cfg.PropertyURL == "" {
+		propertyURL, _ := settings["gsc_property_url"].(string)
+		integrationUserID, _ := settings["gsc_integration_user_id"].(string)
+		if propertyURL == "" || integrationUserID == "" {
 			entry["status"] = "skipped"
 			entry["message"] = "No connected GSC property"
 			results = append(results, entry)
 			continue
 		}
+
+		cfg, _, err := s.getGSCIntegration(integrationUserID)
+		if err != nil || cfg == nil {
+			entry["status"] = "error"
+			entry["error"] = fmt.Sprintf("failed to load user integration: %v", err)
+			results = append(results, entry)
+			continue
+		}
+		cfg.PropertyURL = propertyURL
 
 		if _, err := s.ensureGSCSyncState(projectID, cfg.PropertyURL); err != nil {
 			entry["status"] = "error"
@@ -468,7 +511,7 @@ func (s *Server) handleGSCGlobalSync(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		if err := s.syncProjectGSCData(projectID, cfg, req.LookbackDays, fmt.Sprintf("cron_last_%d_days", req.LookbackDays)); err != nil {
+		if err := s.syncProjectGSCData(projectID, integrationUserID, cfg, req.LookbackDays, fmt.Sprintf("cron_last_%d_days", req.LookbackDays)); err != nil {
 			entry["status"] = "error"
 			entry["error"] = err.Error()
 			results = append(results, entry)
@@ -513,16 +556,12 @@ func (s *Server) handleProjectGSCDisconnect(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Delete integration record
-	_, _, err := s.serviceRole.
-		From("api_integrations").
-		Delete("", "").
-		Eq("project_id", projectID).
-		Eq("provider", "gsc").
-		Execute()
-
-	if err != nil {
-		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to remove integration: %v", err))
+	if err := s.updateProjectSettings(projectID, map[string]interface{}{
+		"gsc_property_url":        nil,
+		"gsc_property_type":       nil,
+		"gsc_integration_user_id": nil,
+	}); err != nil {
+		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to update project settings: %v", err))
 		return
 	}
 
@@ -538,37 +577,81 @@ func (s *Server) handleProjectGSCDisconnect(w http.ResponseWriter, r *http.Reque
 		// Not fatal
 	}
 
-	// Also clear the gsc_property_url from project settings
-	// We first fetch the project to get current settings
-	data, _, err := s.serviceRole.
-		From("projects").
-		Select("settings", "", false).
-		Eq("id", projectID).
-		Execute()
+	s.respondJSON(w, http.StatusOK, map[string]string{
+		"status": "disconnected",
+	})
+}
 
-	if err == nil && len(data) > 0 {
-		var rows []struct {
-			Settings map[string]interface{} `json:"settings"`
-		}
-		if err := json.Unmarshal(data, &rows); err == nil && len(rows) > 0 {
-			settings := rows[0].Settings
-			if settings == nil {
-				settings = make(map[string]interface{})
-			}
-			// Remove the property URL
-			delete(settings, "gsc_property_url")
-
-			// Update project
-			_, _, _ = s.serviceRole.
-				From("projects").
-				Update(map[string]interface{}{"settings": settings}, "", "").
-				Eq("id", projectID).
-				Execute()
-		}
+// handleIntegrationsGSC handles /api/v1/integrations/gsc/* endpoints
+func (s *Server) handleIntegrationsGSC(w http.ResponseWriter, r *http.Request) {
+	userID, ok := userIDFromContext(r.Context())
+	if !ok {
+		s.respondError(w, http.StatusUnauthorized, "User not authenticated")
+		return
 	}
 
-	// Clear in-memory token cache if present
-	gsc.StoreToken(projectID, nil)
+	path := strings.TrimPrefix(r.URL.Path, "/integrations/gsc")
+	path = strings.Trim(path, "/")
+	segments := []string{}
+	if path != "" {
+		segments = strings.Split(path, "/")
+	}
+
+	if len(segments) == 0 || segments[0] == "" {
+		segments = []string{"status"}
+	}
+
+	switch segments[0] {
+	case "connect":
+		s.handleProjectGSCConnect(w, r, userID)
+	case "disconnect":
+		s.handleIntegrationsGSCDisconnect(w, r, userID)
+	case "properties":
+		s.handleProjectGSCProperties(w, r, userID)
+	case "status":
+		s.handleIntegrationsGSCStatus(w, r, userID)
+	default:
+		s.respondError(w, http.StatusNotFound, "Unknown GSC integration resource")
+	}
+}
+
+func (s *Server) handleIntegrationsGSCStatus(w http.ResponseWriter, r *http.Request, userID string) {
+	if r.Method != http.MethodGet {
+		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	cfg, _, err := s.getGSCIntegration(userID)
+	if err != nil {
+		s.respondError(w, http.StatusInternalServerError, "Failed to load integration")
+		return
+	}
+
+	connected := cfg != nil && (cfg.AccessToken != "" || cfg.RefreshToken != "")
+
+	s.respondJSON(w, http.StatusOK, map[string]interface{}{
+		"connected": connected,
+	})
+}
+
+func (s *Server) handleIntegrationsGSCDisconnect(w http.ResponseWriter, r *http.Request, userID string) {
+	if r.Method != http.MethodPost && r.Method != http.MethodDelete {
+		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	_, _, err := s.serviceRole.
+		From("user_api_integrations").
+		Delete("", "").
+		Eq("user_id", userID).
+		Eq("provider", "gsc").
+		Execute()
+	if err != nil {
+		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to disconnect integration: %v", err))
+		return
+	}
+
+	gsc.StoreToken(userID, nil)
 
 	s.respondJSON(w, http.StatusOK, map[string]string{
 		"status": "disconnected",

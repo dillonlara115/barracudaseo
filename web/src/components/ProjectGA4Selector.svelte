@@ -2,12 +2,12 @@
   import { createEventDispatcher, onMount } from 'svelte';
   import { link } from 'svelte-spa-router';
   import {
-    fetchProjectGA4Connect,
     fetchProjectGA4Status,
-    fetchProjectGA4Properties,
     updateProjectGA4Property,
     triggerProjectGA4Sync,
-    disconnectProjectGA4
+    disconnectProjectGA4,
+    fetchGA4Status,
+    fetchGA4Properties
   } from '../lib/data.js';
   
   const dispatch = createEventDispatcher();
@@ -16,6 +16,7 @@
   export let projectId = null;
 
   let isConnected = false;
+  let globalConnected = false;
   let properties = [];
   let selectedPropertyId = null;
   let isLoadingProperties = false;
@@ -28,9 +29,7 @@
   let ga4Error = null;
   let lastProjectId = null;
   let propertySelectId = 'ga4-property-select';
-  let isConnecting = false;
-  let connectSuccess = false;
-  let activePopup = null;
+  let loadingGlobalStatus = false;
 
   const formatDateTime = (value) => {
     if (!value) return null;
@@ -39,8 +38,8 @@
     return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   };
 
-  // Connected if integration exists with access token (property_id is optional)
-  $: isConnected = Boolean(ga4Status?.integration?.access_token);
+  // Connected if a global integration exists
+  $: isConnected = Boolean(globalConnected);
   $: hasPropertySelected = Boolean(ga4Status?.integration?.property_id);
   $: lastSyncedDisplay = ga4Status?.sync_state?.last_synced_at ? formatDateTime(ga4Status.sync_state.last_synced_at) : null;
   $: if (projectId && projectId !== lastProjectId && !ga4Loading) {
@@ -55,56 +54,12 @@
     }
 
     initialize();
-
-    if (typeof window !== 'undefined') {
-      const handleMessage = async (event) => {
-        // Only handle GA4-related messages
-        if (!event.data?.type || !event.data.type.startsWith('ga4_')) {
-          return;
-        }
-        
-        // If project_id is specified, it must match (unless we're in a popup context)
-        if (event.data?.project_id && event.data.project_id !== projectId) {
-          console.log('Message project_id mismatch, ignoring', { 
-            expected: projectId, 
-            received: event.data.project_id,
-            type: event.data.type 
-          });
-          return;
-        }
-        
-        console.log('GA4 message received', { 
-          type: event.data.type, 
-          projectId, 
-          receivedProjectId: event.data.project_id,
-          hasActivePopup: !!activePopup
-        });
-        
-        if (event.data?.type === 'ga4_connected') {
-          console.log('GA4 connected message received');
-          await initialize();
-          connectSuccess = true;
-          isConnecting = false;
-          // Clear success message after 5 seconds
-          setTimeout(() => {
-            connectSuccess = false;
-          }, 5000);
-        } else if (event.data?.type === 'ga4_error') {
-          console.error('GA4 error message received', event.data.error);
-          error = event.data.error || 'Failed to connect to Google Analytics 4.';
-          isConnecting = false;
-          connectSuccess = false;
-        }
-      };
-
-      window.addEventListener('message', handleMessage);
-      return () => window.removeEventListener('message', handleMessage);
-    }
   });
 
   async function initialize() {
     if (!projectId) return;
     try {
+      await loadGlobalStatus();
       await loadStatus();
       // Load properties if connected (even if no property selected yet)
       if (isConnected) {
@@ -149,12 +104,12 @@
   }
 
   async function loadProperties() {
-    if (!projectId) return;
+    if (!projectId || !isConnected) return;
 
     isLoadingProperties = true;
     error = null;
 
-    const result = await fetchProjectGA4Properties(projectId);
+    const result = await fetchGA4Properties();
     if (result.error) {
       error = result.error.message || 'Failed to load properties';
       properties = [];
@@ -176,6 +131,18 @@
     }
 
     isLoadingProperties = false;
+  }
+
+  async function loadGlobalStatus() {
+    loadingGlobalStatus = true;
+    const statusResult = await fetchGA4Status();
+    if (statusResult.error) {
+      globalConnected = false;
+      loadingGlobalStatus = false;
+      return;
+    }
+    globalConnected = Boolean(statusResult.data?.connected);
+    loadingGlobalStatus = false;
   }
 
   async function saveProperty() {
@@ -216,161 +183,10 @@
     ga4Refreshing = false;
   }
 
-  async function connectGA4() {
-    if (!projectId) {
-      error = 'Project ID is required';
-      return;
-    }
-
-    isConnecting = true;
-    error = null;
-
-    try {
-      const result = await fetchProjectGA4Connect(projectId);
-      if (result.error) {
-        error = result.error.message || 'Failed to get authorization URL';
-        isConnecting = false;
-        return;
-      }
-
-      const { auth_url } = result.data;
-      if (!auth_url) {
-        error = 'No authorization URL returned';
-        isConnecting = false;
-        return;
-      }
-
-      // Open OAuth popup window
-      const width = 600;
-      const height = 700;
-      const left = (window.screen.width - width) / 2;
-      const top = (window.screen.height - height) / 2;
-      
-      const popup = window.open(
-        auth_url,
-        'ga4-oauth',
-        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
-      );
-
-      if (!popup) {
-        error = 'Popup blocked. Please allow popups for this site.';
-        isConnecting = false;
-        return;
-      }
-
-      // Store popup reference
-      activePopup = popup;
-      let messageReceived = false;
-
-      // Listen for OAuth completion message from popup
-      const messageHandler = async (event) => {
-        // Only handle GA4 messages
-        if (!event.data?.type || !event.data.type.startsWith('ga4_')) {
-          return;
-        }
-        
-        // Security: Verify origin matches expected API origin
-        const expectedOrigin = window.location.origin;
-        if (event.origin !== expectedOrigin && !event.origin.includes('localhost') && !event.origin.includes('127.0.0.1')) {
-          console.warn('Message from unexpected origin:', event.origin);
-          return;
-        }
-        
-        console.log('OAuth popup message received', event.data);
-        
-        // If project_id is specified, it must match
-        if (event.data?.project_id && event.data.project_id !== projectId) {
-          console.log('Popup message project_id mismatch', { expected: projectId, received: event.data.project_id });
-          return;
-        }
-        
-        messageReceived = true;
-        
-        if (event.data?.type === 'ga4_connected') {
-          console.log('GA4 connected via popup handler');
-          // Clean up handlers immediately
-          window.removeEventListener('message', messageHandler);
-          if (checkClosed) {
-            clearInterval(checkClosed);
-          }
-          
-          // Close popup if still open
-          if (popup && !popup.closed) {
-            try {
-              popup.close();
-            } catch (e) {
-              console.warn('Could not close popup:', e);
-            }
-          }
-          activePopup = null;
-          
-          // Update UI
-          await initialize();
-          connectSuccess = true;
-          isConnecting = false;
-          // Clear success message after 5 seconds
-          setTimeout(() => {
-            connectSuccess = false;
-          }, 5000);
-        } else if (event.data?.type === 'ga4_error') {
-          console.error('GA4 error via popup handler', event.data.error);
-          // Clean up handlers immediately
-          window.removeEventListener('message', messageHandler);
-          if (checkClosed) {
-            clearInterval(checkClosed);
-          }
-          
-          // Close popup if still open
-          if (popup && !popup.closed) {
-            try {
-              popup.close();
-            } catch (e) {
-              console.warn('Could not close popup:', e);
-            }
-          }
-          activePopup = null;
-          
-          // Update UI
-          error = event.data.error || 'Failed to connect Google Analytics 4';
-          isConnecting = false;
-          connectSuccess = false;
-        }
-      };
-
-      // Set up message listener BEFORE popup navigates
-      window.addEventListener('message', messageHandler);
-
-      // Check if popup was closed manually (but give time for message to arrive)
-      const checkClosed = setInterval(() => {
-        if (popup.closed) {
-          console.log('Popup closed', { messageReceived });
-          clearInterval(checkClosed);
-          window.removeEventListener('message', messageHandler);
-          activePopup = null;
-          
-          // Only show error if we didn't receive a success/error message
-          // The callback page should have sent a message before closing
-          if (!messageReceived && isConnecting && !connectSuccess) {
-            // Wait a bit more in case message is delayed
-            setTimeout(() => {
-              if (isConnecting && !connectSuccess) {
-                isConnecting = false;
-                error = 'Connection cancelled or popup was closed';
-              }
-            }, 500);
-          }
-        }
-      }, 300);
-    } catch (err) {
-      error = err.message || 'Failed to connect Google Analytics 4';
-      isConnecting = false;
-    }
-  }
-
   async function disconnectGA4() {
     if (!projectId) return;
     
-    if (!confirm('Are you sure you want to disconnect Google Analytics 4? This will stop data synchronization.')) {
+    if (!confirm('Clear the Google Analytics 4 property selection for this project?')) {
       return;
     }
 
@@ -388,7 +204,7 @@
     ga4Status = null;
     properties = [];
     selectedPropertyId = null;
-    isConnected = false;
+    isConnected = globalConnected;
 
     await initialize();
     isSaving = false;
@@ -405,39 +221,18 @@
   </div>
 {:else if !isConnected}
   <div class="space-y-4">
-    {#if connectSuccess}
-      <div class="alert alert-success">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <span>Successfully connected to Google Analytics 4! Please wait while we load your properties...</span>
+    <div class="alert alert-info">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <div class="flex-1">
+        <div class="font-semibold mb-1">Connect Google Analytics 4</div>
+        <div class="text-sm">Connect a Google Analytics 4 account in Integrations to enable property selection.</div>
       </div>
-    {:else}
-      <div class="alert alert-info">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <div class="flex-1">
-          <div class="font-semibold mb-1">Connect Google Analytics 4</div>
-          <div class="text-sm">Connect your Google Analytics 4 account to enhance recommendations with real user behavior data.</div>
-        </div>
-      </div>
-      <button
-        class="btn btn-primary w-full"
-        on:click={connectGA4}
-        disabled={isConnecting || !projectId}
-      >
-        {#if isConnecting}
-          <span class="loading loading-spinner loading-sm"></span>
-          Connecting...
-        {:else}
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-          </svg>
-          Connect Google Analytics 4
-        {/if}
-      </button>
-    {/if}
+    </div>
+    <a href="/integrations" use:link class="btn btn-primary w-full">
+      Go to Integrations
+    </a>
     {#if error}
       <div class="alert alert-error">
         <span>{error}</span>
@@ -536,7 +331,7 @@
         on:click={disconnectGA4}
         disabled={isSaving || ga4Loading}
       >
-        Disconnect Google Analytics 4
+        Clear Property Selection
       </button>
     </div>
   </div>

@@ -105,21 +105,21 @@ func parseGA4IntegrationConfig(raw interface{}) (*ga4IntegrationConfig, error) {
 	return &cfg, nil
 }
 
-func (s *Server) getGA4Integration(projectID string) (*ga4IntegrationConfig, string, error) {
+func (s *Server) getGA4Integration(userID string) (*ga4IntegrationConfig, string, error) {
 	data, _, err := s.serviceRole.
-		From("api_integrations").
+		From("user_api_integrations").
 		Select("*", "", false).
-		Eq("project_id", projectID).
+		Eq("user_id", userID).
 		Eq("provider", "ga4").
 		Execute()
 
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to query api_integrations: %w", err)
+		return nil, "", fmt.Errorf("failed to query user_api_integrations: %w", err)
 	}
 
 	var rows []map[string]interface{}
 	if err := json.Unmarshal(data, &rows); err != nil {
-		return nil, "", fmt.Errorf("failed to parse api_integrations data: %w", err)
+		return nil, "", fmt.Errorf("failed to parse user_api_integrations data: %w", err)
 	}
 
 	if len(rows) == 0 {
@@ -146,8 +146,8 @@ func (s *Server) getGA4Integration(projectID string) (*ga4IntegrationConfig, str
 	return cfg, id, nil
 }
 
-func (s *Server) saveGA4Integration(projectID string, cfg *ga4IntegrationConfig) error {
-	existing, recordID, err := s.getGA4Integration(projectID)
+func (s *Server) saveGA4Integration(userID string, cfg *ga4IntegrationConfig) error {
+	existing, recordID, err := s.getGA4Integration(userID)
 	if err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ func (s *Server) saveGA4Integration(projectID string, cfg *ga4IntegrationConfig)
 
 	if recordID != "" {
 		// Update existing
-		_, _, err = s.serviceRole.From("api_integrations").
+		_, _, err = s.serviceRole.From("user_api_integrations").
 			Update(map[string]interface{}{
 				"config":     configData,
 				"updated_at": time.Now().UTC().Format(time.RFC3339),
@@ -169,22 +169,21 @@ func (s *Server) saveGA4Integration(projectID string, cfg *ga4IntegrationConfig)
 	}
 
 	// Create new
-	_, _, err = s.serviceRole.From("api_integrations").
+	_, _, err = s.serviceRole.From("user_api_integrations").
 		Insert(map[string]interface{}{
-			"id":               uuid.New().String(),
-			"project_id":       projectID,
-			"provider":         "ga4",
-			"integration_type": "ga4",
-			"config":           configData,
-			"created_at":       time.Now().UTC().Format(time.RFC3339),
-			"updated_at":       time.Now().UTC().Format(time.RFC3339),
+			"id":         uuid.New().String(),
+			"user_id":    userID,
+			"provider":   "ga4",
+			"config":     configData,
+			"created_at": time.Now().UTC().Format(time.RFC3339),
+			"updated_at": time.Now().UTC().Format(time.RFC3339),
 		}, false, "", "", "").
 		Execute()
 	return err
 }
 
-func (s *Server) loadGA4TokenIntoMemory(projectID string) (*ga4IntegrationConfig, error) {
-	cfg, _, err := s.getGA4Integration(projectID)
+func (s *Server) loadGA4TokenIntoMemory(userID string) (*ga4IntegrationConfig, error) {
+	cfg, _, err := s.getGA4Integration(userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load GA4 integration: %w", err)
 	}
@@ -194,7 +193,7 @@ func (s *Server) loadGA4TokenIntoMemory(projectID string) (*ga4IntegrationConfig
 
 	// Load token into memory
 	token := cfg.toOAuthToken()
-	ga4.StoreToken(projectID, token)
+	ga4.StoreToken(userID, token)
 
 	return cfg, nil
 }
@@ -324,7 +323,7 @@ func (s *Server) updateGA4SyncState(projectID string, status string, lastSyncedA
 	return err
 }
 
-func (s *Server) syncProjectGA4Data(projectID string, cfg *ga4IntegrationConfig, lookbackDays int, period string) error {
+func (s *Server) syncProjectGA4Data(projectID, userID string, cfg *ga4IntegrationConfig, lookbackDays int, period string) error {
 	if cfg.PropertyID == "" {
 		return fmt.Errorf("property_id not set")
 	}
@@ -333,7 +332,7 @@ func (s *Server) syncProjectGA4Data(projectID string, cfg *ga4IntegrationConfig,
 	startDate := endDate.AddDate(0, 0, -lookbackDays)
 
 	// Fetch performance data
-	performanceMap, err := ga4.FetchPerformanceData(projectID, cfg.PropertyID, startDate, endDate)
+	performanceMap, err := ga4.FetchPerformanceData(userID, cfg.PropertyID, startDate, endDate)
 	if err != nil {
 		return fmt.Errorf("failed to fetch GA4 data: %w", err)
 	}
@@ -401,5 +400,5 @@ func (s *Server) syncProjectGA4Data(projectID string, cfg *ga4IntegrationConfig,
 
 	// Update last sync period
 	cfg.LastSyncPeriod = period
-	return s.saveGA4Integration(projectID, cfg)
+	return s.saveGA4Integration(userID, cfg)
 }

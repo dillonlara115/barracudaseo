@@ -1504,7 +1504,7 @@ func (s *Server) handleGSCCallback(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	state := r.URL.Query().Get("state")
 
-	projectID, ok := gsc.ConsumeState(state)
+	userID, ok := gsc.ConsumeState(state)
 	if !ok {
 		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusBadRequest)
@@ -1592,14 +1592,11 @@ func (s *Server) handleGSCCallback(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := s.saveGSCIntegration(projectID, cfg); err != nil {
+	if err := s.saveGSCIntegration(userID, cfg); err != nil {
 		s.logger.Error("Failed to persist GSC token", zap.Error(err))
 	}
 
-	gsc.StoreToken(projectID, token)
-	if _, err := s.ensureGSCSyncState(projectID, ""); err != nil {
-		s.logger.Warn("Failed to ensure sync state after OAuth", zap.Error(err))
-	}
+	gsc.StoreToken(userID, token)
 
 	// Return success page that closes popup and signals parent window
 	w.Header().Set("Content-Type", "text/html")
@@ -1645,7 +1642,7 @@ func (s *Server) handleGSCCallback(w http.ResponseWriter, r *http.Request) {
 						try {
 							window.opener.postMessage({
 								type: 'gsc_connected',
-								project_id: '%s'
+								user_id: '%s'
 							}, '*');
 						} catch (e) {
 							console.error('Failed to post message to opener:', e);
@@ -1667,7 +1664,7 @@ func (s *Server) handleGSCCallback(w http.ResponseWriter, r *http.Request) {
 			</script>
 		</body>
 		</html>
-	`, projectID)
+	`, userID)
 }
 
 // handleCrawlByID handles crawl-specific endpoints like /crawls/:id/graph

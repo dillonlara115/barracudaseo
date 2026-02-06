@@ -169,7 +169,7 @@
     </div>
   {:else if !gscStatus?.integration?.property_url}
     <div class="alert alert-warning">
-      <span>Google Search Console is not connected for this project. Please connect it in the Settings page.</span>
+      <span>Google Search Console is not connected for your account. Connect it in Integrations, then select a property in Project Settings.</span>
     </div>
   {:else if !hasData}
     <div class="alert alert-info">
@@ -385,4 +385,3 @@
     {/if}
   {/if}
 </div>
-

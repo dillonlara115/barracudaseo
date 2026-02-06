@@ -831,6 +831,25 @@ export async function fetchProjectGA4Connect(projectId) {
   return authorizedJSON(`/api/v1/projects/${projectId}/ga4/connect`);
 }
 
+// Global GA4 integrations
+export async function fetchGA4Status() {
+  return authorizedJSON('/api/v1/integrations/ga4/status');
+}
+
+export async function fetchGA4Connect() {
+  return authorizedJSON('/api/v1/integrations/ga4/connect');
+}
+
+export async function fetchGA4Properties() {
+  return authorizedJSON('/api/v1/integrations/ga4/properties');
+}
+
+export async function disconnectGA4Integration() {
+  return authorizedJSON('/api/v1/integrations/ga4/disconnect', {
+    method: 'POST'
+  });
+}
+
 export async function fetchProjectGA4Status(projectId) {
   if (!projectId) return { data: null, error: new Error('projectId is required') };
   return authorizedJSON(`/api/v1/projects/${projectId}/ga4/status`);
@@ -864,6 +883,25 @@ export async function triggerProjectGA4Sync(projectId, options = {}) {
 export async function disconnectProjectGA4(projectId) {
   if (!projectId) return { data: null, error: new Error('projectId is required') };
   return authorizedJSON(`/api/v1/projects/${projectId}/ga4/disconnect`, {
+    method: 'POST'
+  });
+}
+
+// Global GSC integrations
+export async function fetchGSCStatus() {
+  return authorizedJSON('/api/v1/integrations/gsc/status');
+}
+
+export async function fetchGSCConnect() {
+  return authorizedJSON('/api/v1/integrations/gsc/connect');
+}
+
+export async function fetchGSCProperties() {
+  return authorizedJSON('/api/v1/integrations/gsc/properties');
+}
+
+export async function disconnectGSCIntegration() {
+  return authorizedJSON('/api/v1/integrations/gsc/disconnect', {
     method: 'POST'
   });
 }

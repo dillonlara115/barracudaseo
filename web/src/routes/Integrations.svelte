@@ -2,15 +2,17 @@
   import { onMount } from 'svelte';
   import { push } from 'svelte-spa-router';
   import { Search, BarChart3, Zap, Globe, Slack, Sparkles } from 'lucide-svelte';
-  import { fetchProjects, saveOpenAIKey, getOpenAIKeyStatus, disconnectOpenAIKey } from '../lib/data.js';
-  import ProjectGSCSelector from '../components/ProjectGSCSelector.svelte';
-  
-  let summary = null; // Could be passed as prop or fetched if needed
-  let projects = [];
-  let selectedProjectId = null;
-  let selectedProject = null;
-  let loadingProjects = false;
-  let loadError = null;
+  import {
+    saveOpenAIKey,
+    getOpenAIKeyStatus,
+    disconnectOpenAIKey,
+    fetchGSCStatus,
+    fetchGSCConnect,
+    disconnectGSCIntegration,
+    fetchGA4Status,
+    fetchGA4Connect,
+    disconnectGA4Integration
+  } from '../lib/data.js';
   
   // OpenAI API Key state
   let openaiApiKey = '';
@@ -21,31 +23,23 @@
   let openaiError = null;
   let openaiSuccess = false;
   
-  // Integration statuses
-  let integrations = {
-    gsc: { connected: false, name: 'Google Search Console' },
-    analytics: { connected: false, name: 'Google Analytics' },
-    pagespeed: { connected: false, name: 'PageSpeed Insights' },
-    bing: { connected: false, name: 'Bing Webmaster Tools' },
-    slack: { connected: false, name: 'Slack' },
-  };
+  // Global integrations state
+  let gscConnected = false;
+  let ga4Connected = false;
+  let gscLoading = false;
+  let ga4Loading = false;
+  let gscError = null;
+  let ga4Error = null;
+  let gscConnecting = false;
+  let ga4Connecting = false;
+  let gscSuccess = false;
+  let ga4Success = false;
 
   onMount(async () => {
-    loadingProjects = true;
-    const { data, error } = await fetchProjects();
-    if (error) {
-      loadError = error.message || 'Failed to load projects';
-    } else {
-      projects = data || [];
-      if (projects.length > 0) {
-        selectedProject = projects[0];
-        selectedProjectId = selectedProject.id;
-      }
-    }
-    loadingProjects = false;
-    
     // Load OpenAI key status
     await loadOpenAIKeyStatus();
+    await loadGSCStatus();
+    await loadGA4Status();
   });
 
   async function loadOpenAIKeyStatus() {
@@ -185,11 +179,152 @@
     }
   }
 
-  $: if (selectedProjectId) {
-    selectedProject = projects.find((p) => p.id === selectedProjectId) || selectedProject;
+  async function loadGSCStatus() {
+    gscLoading = true;
+    gscError = null;
+    const { data, error } = await fetchGSCStatus();
+    if (error) {
+      gscError = error.message || 'Failed to load Google Search Console status';
+      gscConnected = false;
+    } else {
+      gscConnected = Boolean(data?.connected);
+    }
+    gscLoading = false;
   }
 
-  $: integrations.gsc.connected = Boolean(selectedProject?.settings?.gsc_property_url);
+  async function loadGA4Status() {
+    ga4Loading = true;
+    ga4Error = null;
+    const { data, error } = await fetchGA4Status();
+    if (error) {
+      ga4Error = error.message || 'Failed to load Google Analytics 4 status';
+      ga4Connected = false;
+    } else {
+      ga4Connected = Boolean(data?.connected);
+    }
+    ga4Loading = false;
+  }
+
+  function openOAuthPopup(authUrl, type) {
+    const width = 600;
+    const height = 700;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+
+    const popup = window.open(
+      authUrl,
+      `${type}-oauth`,
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+    );
+
+    if (!popup) {
+      return { error: 'Popup blocked. Please allow popups for this site.' };
+    }
+
+    const expectedOrigin = window.location.origin;
+
+    const handler = (event) => {
+      if (!event.data?.type || !event.data.type.startsWith(type)) {
+        return;
+      }
+      if (event.origin !== expectedOrigin && !event.origin.includes('localhost') && !event.origin.includes('127.0.0.1')) {
+        return;
+      }
+
+      if (event.data.type === `${type}_connected`) {
+        if (type === 'gsc') {
+          gscSuccess = true;
+          gscConnecting = false;
+          loadGSCStatus();
+          setTimeout(() => (gscSuccess = false), 5000);
+        } else if (type === 'ga4') {
+          ga4Success = true;
+          ga4Connecting = false;
+          loadGA4Status();
+          setTimeout(() => (ga4Success = false), 5000);
+        }
+      } else if (event.data.type === `${type}_error`) {
+        if (type === 'gsc') {
+          gscError = event.data.error || 'Failed to connect Google Search Console';
+          gscConnecting = false;
+        } else if (type === 'ga4') {
+          ga4Error = event.data.error || 'Failed to connect Google Analytics 4';
+          ga4Connecting = false;
+        }
+      }
+
+      window.removeEventListener('message', handler);
+    };
+
+    window.addEventListener('message', handler);
+    return { popup };
+  }
+
+  async function connectGSC() {
+    gscConnecting = true;
+    gscError = null;
+    const result = await fetchGSCConnect();
+    if (result.error) {
+      gscError = result.error.message || 'Failed to get authorization URL';
+      gscConnecting = false;
+      return;
+    }
+    const { auth_url } = result.data || {};
+    if (!auth_url) {
+      gscError = 'No authorization URL returned';
+      gscConnecting = false;
+      return;
+    }
+    const popupResult = openOAuthPopup(auth_url, 'gsc');
+    if (popupResult.error) {
+      gscError = popupResult.error;
+      gscConnecting = false;
+    }
+  }
+
+  async function connectGA4() {
+    ga4Connecting = true;
+    ga4Error = null;
+    const result = await fetchGA4Connect();
+    if (result.error) {
+      ga4Error = result.error.message || 'Failed to get authorization URL';
+      ga4Connecting = false;
+      return;
+    }
+    const { auth_url } = result.data || {};
+    if (!auth_url) {
+      ga4Error = 'No authorization URL returned';
+      ga4Connecting = false;
+      return;
+    }
+    const popupResult = openOAuthPopup(auth_url, 'ga4');
+    if (popupResult.error) {
+      ga4Error = popupResult.error;
+      ga4Connecting = false;
+    }
+  }
+
+  async function disconnectGSC() {
+    if (!confirm('Disconnect Google Search Console for your account?')) return;
+    const result = await disconnectGSCIntegration();
+    if (result.error) {
+      gscError = result.error.message || 'Failed to disconnect Google Search Console';
+      return;
+    }
+    gscConnected = false;
+    await loadGSCStatus();
+  }
+
+  async function disconnectGA4() {
+    if (!confirm('Disconnect Google Analytics 4 for your account?')) return;
+    const result = await disconnectGA4Integration();
+    if (result.error) {
+      ga4Error = result.error.message || 'Failed to disconnect Google Analytics 4';
+      return;
+    }
+    ga4Connected = false;
+    await loadGA4Status();
+  }
 </script>
 
 <div class="container mx-auto p-6 max-w-4xl">
@@ -217,43 +352,53 @@
               Google Search Console
             </h2>
             <p class="text-sm text-base-content/70 mt-1">
-              Enhance recommendations with real search performance data. Prioritize fixes based on actual traffic.
+              Connect your Google account once. Then select the appropriate property per project in Project Settings.
             </p>
-        </div>
-        <div class="badge badge-success badge-lg" class:badge-success={integrations.gsc.connected} class:badge-ghost={!integrations.gsc.connected}>
-          {integrations.gsc.connected ? 'Connected' : 'Available'}
-        </div>
-      </div>
-        {#if loadError}
-          <div class="alert alert-error mt-4">
-            <span>{loadError}</span>
           </div>
-        {:else if loadingProjects}
-          <div class="alert alert-info mt-4">
-            <span>Loading projects...</span>
+          <div class="badge badge-lg whitespace-nowrap" class:badge-success={gscConnected} class:badge-ghost={!gscConnected}>
+            {gscConnected ? 'Connected' : 'Not Connected'}
           </div>
-        {:else if projects.length === 0}
-          <div class="alert alert-warning mt-4">
-            <span>Create a project to connect Google Search Console.</span>
+        </div>
+
+        {#if gscLoading}
+          <div class="alert alert-info">
+            <span class="loading loading-spinner loading-sm"></span>
+            <span>Loading status...</span>
           </div>
         {:else}
-          {#if projects.length > 1}
-            <div class="form-control w-full mb-4">
-              <label class="label" for="gsc-project-select">
-                <span class="label-text">Project</span>
-              </label>
-              <select
-                id="gsc-project-select"
-                class="select select-bordered"
-                bind:value={selectedProjectId}
-              >
-                {#each projects as projectOption}
-                  <option value={projectOption.id}>{projectOption.name}</option>
-                {/each}
-              </select>
-            </div>
-          {/if}
-          <ProjectGSCSelector summary={summary} project={selectedProject} projectId={selectedProjectId} />
+          <div class="space-y-4">
+            {#if gscSuccess}
+              <div class="alert alert-success">
+                <span>Google Search Console connected successfully.</span>
+              </div>
+            {/if}
+            {#if gscConnected}
+              <div class="alert alert-success">
+                <span>Your Google Search Console account is connected.</span>
+              </div>
+              <button class="btn btn-error" on:click={disconnectGSC}>
+                Disconnect Google Search Console
+              </button>
+            {:else}
+              <div class="alert alert-info">
+                <span>Connect your Google Search Console account to enable property selection per project.</span>
+              </div>
+              <button class="btn btn-primary" on:click={connectGSC} disabled={gscConnecting}>
+                {#if gscConnecting}
+                  <span class="loading loading-spinner loading-sm"></span>
+                  Connecting...
+                {:else}
+                  Connect Google Search Console
+                {/if}
+              </button>
+            {/if}
+
+            {#if gscError}
+              <div class="alert alert-error">
+                <span>{gscError}</span>
+              </div>
+            {/if}
+          </div>
         {/if}
       </div>
     </div>
@@ -363,17 +508,53 @@
               Google Analytics
             </h2>
             <p class="text-sm text-base-content/70 mt-1">
-              Connect your Google Analytics account to correlate SEO issues with user behavior and conversion data.
+              Connect your Google account once. Then select the appropriate GA4 property per project in Project Settings.
             </p>
           </div>
-          <div class="badge badge-ghost badge-lg">Coming Soon</div>
+          <div class="badge badge-lg whitespace-nowrap" class:badge-success={ga4Connected} class:badge-ghost={!ga4Connected}>
+            {ga4Connected ? 'Connected' : 'Not Connected'}
+          </div>
         </div>
-        <div class="alert alert-info">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <span>This integration will allow you to see which SEO issues are affecting your most valuable pages based on conversion data.</span>
-        </div>
+        {#if ga4Loading}
+          <div class="alert alert-info">
+            <span class="loading loading-spinner loading-sm"></span>
+            <span>Loading status...</span>
+          </div>
+        {:else}
+          <div class="space-y-4">
+            {#if ga4Success}
+              <div class="alert alert-success">
+                <span>Google Analytics 4 connected successfully.</span>
+              </div>
+            {/if}
+            {#if ga4Connected}
+              <div class="alert alert-success">
+                <span>Your Google Analytics 4 account is connected.</span>
+              </div>
+              <button class="btn btn-error" on:click={disconnectGA4}>
+                Disconnect Google Analytics 4
+              </button>
+            {:else}
+              <div class="alert alert-info">
+                <span>Connect your Google Analytics 4 account to enable property selection per project.</span>
+              </div>
+              <button class="btn btn-primary" on:click={connectGA4} disabled={ga4Connecting}>
+                {#if ga4Connecting}
+                  <span class="loading loading-spinner loading-sm"></span>
+                  Connecting...
+                {:else}
+                  Connect Google Analytics 4
+                {/if}
+              </button>
+            {/if}
+
+            {#if ga4Error}
+              <div class="alert alert-error">
+                <span>{ga4Error}</span>
+              </div>
+            {/if}
+          </div>
+        {/if}
       </div>
     </div>
 

@@ -20,8 +20,8 @@ type EnrichedIssue struct {
 }
 
 // FetchPerformanceData fetches GA4 performance data for pages
-func FetchPerformanceData(projectID string, propertyID string, startDate, endDate time.Time) (map[string]*models.GA4Performance, error) {
-	service, err := GetService(projectID)
+func FetchPerformanceData(userID string, propertyID string, startDate, endDate time.Time) (map[string]*models.GA4Performance, error) {
+	service, err := GetService(userID)
 	if err != nil {
 		return nil, err
 	}

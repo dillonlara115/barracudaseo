@@ -103,21 +103,21 @@ func parseGSCIntegrationConfig(raw interface{}) (*gscIntegrationConfig, error) {
 	return &cfg, nil
 }
 
-func (s *Server) getGSCIntegration(projectID string) (*gscIntegrationConfig, string, error) {
+func (s *Server) getGSCIntegration(userID string) (*gscIntegrationConfig, string, error) {
 	data, _, err := s.serviceRole.
-		From("api_integrations").
+		From("user_api_integrations").
 		Select("*", "", false).
-		Eq("project_id", projectID).
+		Eq("user_id", userID).
 		Eq("provider", "gsc").
 		Execute()
 
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to query api_integrations: %w", err)
+		return nil, "", fmt.Errorf("failed to query user_api_integrations: %w", err)
 	}
 
 	var rows []map[string]interface{}
 	if err := json.Unmarshal(data, &rows); err != nil {
-		return nil, "", fmt.Errorf("failed to parse api_integrations data: %w", err)
+		return nil, "", fmt.Errorf("failed to parse user_api_integrations data: %w", err)
 	}
 
 	if len(rows) == 0 {
@@ -144,8 +144,8 @@ func (s *Server) getGSCIntegration(projectID string) (*gscIntegrationConfig, str
 	return cfg, id, nil
 }
 
-func (s *Server) saveGSCIntegration(projectID string, cfg *gscIntegrationConfig) error {
-	existing, recordID, err := s.getGSCIntegration(projectID)
+func (s *Server) saveGSCIntegration(userID string, cfg *gscIntegrationConfig) error {
+	existing, recordID, err := s.getGSCIntegration(userID)
 	if err != nil {
 		return err
 	}
@@ -153,21 +153,21 @@ func (s *Server) saveGSCIntegration(projectID string, cfg *gscIntegrationConfig)
 	cfg.mergeMissingFields(existing)
 
 	payload := map[string]interface{}{
-		"project_id": projectID,
-		"provider":   "gsc",
-		"config":     cfg.toMap(),
+		"user_id":  userID,
+		"provider": "gsc",
+		"config":   cfg.toMap(),
 	}
 
 	if recordID == "" {
 		_, _, err = s.serviceRole.
-			From("api_integrations").
+			From("user_api_integrations").
 			Insert(payload, false, "", "", "").
 			Execute()
 		return err
 	}
 
 	_, _, err = s.serviceRole.
-		From("api_integrations").
+		From("user_api_integrations").
 		Update(map[string]interface{}{"config": payload["config"]}, "", "").
 		Eq("id", recordID).
 		Execute()
@@ -247,23 +247,23 @@ func (s *Server) updateGSCSyncState(projectID string, status string, lastSynced 
 	return err
 }
 
-func (s *Server) loadTokenIntoMemory(projectID string) (*gscIntegrationConfig, error) {
-	cfg, _, err := s.getGSCIntegration(projectID)
+func (s *Server) loadTokenIntoMemory(userID string) (*gscIntegrationConfig, error) {
+	cfg, _, err := s.getGSCIntegration(userID)
 	if err != nil {
 		return nil, err
 	}
 	if cfg == nil {
-		return nil, fmt.Errorf("no GSC integration configured for project")
+		return nil, fmt.Errorf("no GSC integration configured for user")
 	}
 	if cfg.RefreshToken == "" && cfg.AccessToken == "" {
 		return nil, fmt.Errorf("GSC integration missing OAuth tokens")
 	}
 	token := cfg.toOAuthToken()
-	gsc.StoreToken(projectID, token)
+	gsc.StoreToken(userID, token)
 	return cfg, nil
 }
 
-func (s *Server) syncProjectGSCData(projectID string, cfg *gscIntegrationConfig, lookbackDays int, period string) error {
+func (s *Server) syncProjectGSCData(projectID, userID string, cfg *gscIntegrationConfig, lookbackDays int, period string) error {
 	if cfg.PropertyURL == "" {
 		return fmt.Errorf("GSC property not selected")
 	}
@@ -272,12 +272,12 @@ func (s *Server) syncProjectGSCData(projectID string, cfg *gscIntegrationConfig,
 	}
 
 	token := cfg.toOAuthToken()
-	gsc.StoreToken(projectID, token)
+	gsc.StoreToken(userID, token)
 
 	endDate := time.Now().UTC()
 	startDate := endDate.AddDate(0, 0, -lookbackDays)
 
-	report, err := gsc.FetchPerformanceReport(projectID, cfg.PropertyURL, startDate, endDate)
+	report, err := gsc.FetchPerformanceReport(userID, cfg.PropertyURL, startDate, endDate)
 	if err != nil {
 		return err
 	}

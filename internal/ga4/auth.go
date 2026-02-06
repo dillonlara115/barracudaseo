@@ -31,8 +31,8 @@ var (
 )
 
 type oauthState struct {
-	ProjectID string
-	Expires   time.Time
+	UserID  string
+	Expires time.Time
 }
 
 // InitializeOAuth sets up OAuth2 configuration for GA4
@@ -91,8 +91,8 @@ func InitializeOAuth(redirectURL string) error {
 	return nil
 }
 
-// GenerateAuthURL creates an OAuth2 authorization URL and binds it to a project
-func GenerateAuthURL(projectID string) (string, string, error) {
+// GenerateAuthURL creates an OAuth2 authorization URL and binds it to a user
+func GenerateAuthURL(userID string) (string, string, error) {
 	if oauthConfig == nil {
 		return "", "", fmt.Errorf("GA4 OAuth not initialized")
 	}
@@ -107,8 +107,8 @@ func GenerateAuthURL(projectID string) (string, string, error) {
 	// Store state with project ID
 	stateMu.Lock()
 	stateStore[state] = oauthState{
-		ProjectID: projectID,
-		Expires:   time.Now().Add(10 * time.Minute),
+		UserID:  userID,
+		Expires: time.Now().Add(10 * time.Minute),
 	}
 	stateMu.Unlock()
 
@@ -119,7 +119,7 @@ func GenerateAuthURL(projectID string) (string, string, error) {
 	return authURL, state, nil
 }
 
-// ConsumeState validates and consumes an OAuth state, returning the project ID
+// ConsumeState validates and consumes an OAuth state, returning the user ID
 func ConsumeState(state string) (string, bool) {
 	stateMu.Lock()
 	defer stateMu.Unlock()
@@ -136,7 +136,7 @@ func ConsumeState(state string) (string, bool) {
 
 	// Consume state (one-time use)
 	delete(stateStore, state)
-	return entry.ProjectID, true
+	return entry.UserID, true
 }
 
 // ExchangeCode exchanges an authorization code for a token
@@ -154,17 +154,17 @@ func ExchangeCode(code string) (*oauth2.Token, error) {
 	return token, nil
 }
 
-// StoreToken stores an OAuth token for a project
-func StoreToken(projectID string, token *oauth2.Token) {
+// StoreToken stores an OAuth token for a user
+func StoreToken(userID string, token *oauth2.Token) {
 	tokenMu.Lock()
 	defer tokenMu.Unlock()
-	tokenStore[projectID] = token
+	tokenStore[userID] = token
 }
 
-// GetToken retrieves a stored token for a project
-func GetToken(projectID string) (*oauth2.Token, bool) {
+// GetToken retrieves a stored token for a user
+func GetToken(userID string) (*oauth2.Token, bool) {
 	tokenMu.RLock()
-	token, exists := tokenStore[projectID]
+	token, exists := tokenStore[userID]
 	tokenMu.RUnlock()
 
 	if !exists {
@@ -180,7 +180,7 @@ func GetToken(projectID string) (*oauth2.Token, bool) {
 			newToken, err := ts.Token()
 			if err == nil {
 				tokenMu.Lock()
-				tokenStore[projectID] = newToken
+				tokenStore[userID] = newToken
 				tokenMu.Unlock()
 				return newToken, true
 			}
@@ -204,10 +204,10 @@ func cleanupExpiredStates() {
 }
 
 // GetClient creates an authenticated HTTP client
-func GetClient(projectID string) (*http.Client, error) {
-	token, exists := GetToken(projectID)
+func GetClient(userID string) (*http.Client, error) {
+	token, exists := GetToken(userID)
 	if !exists {
-		return nil, fmt.Errorf("no valid token for project")
+		return nil, fmt.Errorf("no valid token for user")
 	}
 
 	ctx := context.Background()
@@ -216,8 +216,8 @@ func GetClient(projectID string) (*http.Client, error) {
 }
 
 // GetService creates an Analytics Data API service client
-func GetService(projectID string) (*analyticsdata.Service, error) {
-	client, err := GetClient(projectID)
+func GetService(userID string) (*analyticsdata.Service, error) {
+	client, err := GetClient(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -232,8 +232,8 @@ func GetService(projectID string) (*analyticsdata.Service, error) {
 }
 
 // GetAdminService creates an Analytics Admin API service client
-func GetAdminService(projectID string) (*analyticsadmin.Service, error) {
-	client, err := GetClient(projectID)
+func GetAdminService(userID string) (*analyticsadmin.Service, error) {
+	client, err := GetClient(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -248,8 +248,8 @@ func GetAdminService(projectID string) (*analyticsadmin.Service, error) {
 }
 
 // GetProperties lists all GA4 properties for authenticated user
-func GetProperties(projectID string) ([]*models.GA4Property, error) {
-	adminService, err := GetAdminService(projectID)
+func GetProperties(userID string) ([]*models.GA4Property, error) {
+	adminService, err := GetAdminService(userID)
 	if err != nil {
 		return nil, err
 	}

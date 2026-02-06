@@ -38,13 +38,13 @@ func (s *Server) handleProjectGA4(w http.ResponseWriter, r *http.Request, projec
 
 	switch segments[0] {
 	case "connect":
-		s.handleProjectGA4Connect(w, r, projectID)
+		s.handleProjectGA4Connect(w, r, userID)
 	case "disconnect":
 		s.handleProjectGA4Disconnect(w, r, projectID)
 	case "properties":
-		s.handleProjectGA4Properties(w, r, projectID)
+		s.handleProjectGA4Properties(w, r, userID)
 	case "property":
-		s.handleProjectGA4SetProperty(w, r, projectID)
+		s.handleProjectGA4SetProperty(w, r, projectID, userID)
 	case "trigger-sync":
 		s.handleProjectGA4TriggerSync(w, r, projectID)
 	case "status":
@@ -56,20 +56,16 @@ func (s *Server) handleProjectGA4(w http.ResponseWriter, r *http.Request, projec
 	}
 }
 
-func (s *Server) handleProjectGA4Connect(w http.ResponseWriter, r *http.Request, projectID string) {
+func (s *Server) handleProjectGA4Connect(w http.ResponseWriter, r *http.Request, userID string) {
 	if r.Method != http.MethodGet {
 		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
-	authURL, state, err := ga4.GenerateAuthURL(projectID)
+	authURL, state, err := ga4.GenerateAuthURL(userID)
 	if err != nil {
 		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to generate auth URL: %v", err))
 		return
-	}
-
-	if _, err := s.ensureGA4SyncState(projectID, ""); err != nil {
-		s.logger.Warn("Failed to ensure GA4 sync state", zap.Error(err))
 	}
 
 	s.respondJSON(w, http.StatusOK, map[string]string{
@@ -78,19 +74,19 @@ func (s *Server) handleProjectGA4Connect(w http.ResponseWriter, r *http.Request,
 	})
 }
 
-func (s *Server) handleProjectGA4Properties(w http.ResponseWriter, r *http.Request, projectID string) {
+func (s *Server) handleProjectGA4Properties(w http.ResponseWriter, r *http.Request, userID string) {
 	if r.Method != http.MethodGet {
 		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
-	cfg, err := s.loadGA4TokenIntoMemory(projectID)
+	cfg, err := s.loadGA4TokenIntoMemory(userID)
 	if err != nil {
 		s.respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	properties, err := ga4.GetProperties(projectID)
+	properties, err := ga4.GetProperties(userID)
 	if err != nil {
 		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to get properties: %v", err))
 		return
@@ -107,7 +103,7 @@ func (s *Server) handleProjectGA4Properties(w http.ResponseWriter, r *http.Reque
 	})
 }
 
-func (s *Server) handleProjectGA4SetProperty(w http.ResponseWriter, r *http.Request, projectID string) {
+func (s *Server) handleProjectGA4SetProperty(w http.ResponseWriter, r *http.Request, projectID, userID string) {
 	if r.Method != http.MethodPost && r.Method != http.MethodPatch {
 		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
@@ -128,7 +124,7 @@ func (s *Server) handleProjectGA4SetProperty(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	cfg, _, err := s.getGA4Integration(projectID)
+	cfg, _, err := s.getGA4Integration(userID)
 	if err != nil {
 		s.respondError(w, http.StatusInternalServerError, "Failed to load integration")
 		return
@@ -137,12 +133,12 @@ func (s *Server) handleProjectGA4SetProperty(w http.ResponseWriter, r *http.Requ
 		s.respondError(w, http.StatusBadRequest, "Connect Google Analytics 4 before selecting a property")
 		return
 	}
-
-	cfg.PropertyID = req.PropertyID
-	cfg.PropertyName = req.PropertyName
-
-	if err := s.saveGA4Integration(projectID, cfg); err != nil {
-		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to update integration: %v", err))
+	if err := s.updateProjectSettings(projectID, map[string]interface{}{
+		"ga4_property_id":         req.PropertyID,
+		"ga4_property_name":       req.PropertyName,
+		"ga4_integration_user_id": userID,
+	}); err != nil {
+		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to update project settings: %v", err))
 		return
 	}
 
@@ -151,8 +147,8 @@ func (s *Server) handleProjectGA4SetProperty(w http.ResponseWriter, r *http.Requ
 	}
 
 	s.respondJSON(w, http.StatusOK, map[string]string{
-		"property_id":   cfg.PropertyID,
-		"property_name": cfg.PropertyName,
+		"property_id":   req.PropertyID,
+		"property_name": req.PropertyName,
 	})
 }
 
@@ -178,17 +174,34 @@ func (s *Server) handleProjectGA4TriggerSync(w http.ResponseWriter, r *http.Requ
 		req.Period = fmt.Sprintf("last_%d_days", req.LookbackDays)
 	}
 
-	cfg, err := s.loadGA4TokenIntoMemory(projectID)
+	settings, err := s.loadProjectSettings(projectID)
+	if err != nil {
+		s.respondError(w, http.StatusInternalServerError, "Failed to load project settings")
+		return
+	}
+	propertyID, _ := settings["ga4_property_id"].(string)
+	integrationUserID, _ := settings["ga4_integration_user_id"].(string)
+	if propertyID == "" {
+		s.respondError(w, http.StatusBadRequest, "GA4 property not selected for this project")
+		return
+	}
+	if integrationUserID == "" {
+		s.respondError(w, http.StatusBadRequest, "No connected GA4 account for this project")
+		return
+	}
+
+	cfg, err := s.loadGA4TokenIntoMemory(integrationUserID)
 	if err != nil {
 		s.respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	cfg.PropertyID = propertyID
 
 	if err := s.updateGA4SyncState(projectID, "running", nil, nil); err != nil {
 		s.logger.Warn("Failed to mark sync running", zap.Error(err))
 	}
 
-	if err := s.syncProjectGA4Data(projectID, cfg, req.LookbackDays, req.Period); err != nil {
+	if err := s.syncProjectGA4Data(projectID, integrationUserID, cfg, req.LookbackDays, req.Period); err != nil {
 		s.logger.Error("GA4 sync failed", zap.Error(err))
 		_ = s.updateGA4SyncState(projectID, "error", nil, map[string]interface{}{
 			"message": err.Error(),
@@ -215,14 +228,24 @@ func (s *Server) handleProjectGA4Status(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	cfg, _, err := s.getGA4Integration(projectID)
+	settings, err := s.loadProjectSettings(projectID)
 	if err != nil {
-		s.logger.Warn("Failed to load GA4 integration", zap.Error(err))
-		// Return empty response if no integration exists (not an error)
-		cfg = nil
+		s.respondError(w, http.StatusInternalServerError, "Failed to load project settings")
+		return
+	}
+	propertyID, _ := settings["ga4_property_id"].(string)
+	propertyName, _ := settings["ga4_property_name"].(string)
+	integrationUserID, _ := settings["ga4_integration_user_id"].(string)
+
+	connected := false
+	if integrationUserID != "" {
+		cfg, _, err := s.getGA4Integration(integrationUserID)
+		if err == nil && cfg != nil && (cfg.AccessToken != "" || cfg.RefreshToken != "") {
+			connected = true
+		}
 	}
 
-	state, err := s.ensureGA4SyncState(projectID, "")
+	state, err := s.ensureGA4SyncState(projectID, propertyID)
 	if err != nil {
 		s.logger.Warn("Failed to load GA4 sync state", zap.Error(err))
 		// Return empty state if table doesn't exist or other error (not fatal)
@@ -236,9 +259,14 @@ func (s *Server) handleProjectGA4Status(w http.ResponseWriter, r *http.Request, 
 	}
 
 	response := map[string]interface{}{
-		"integration": cfg,
-		"sync_state":  state,
-		"summary":     summary,
+		"integration": map[string]interface{}{
+			"property_id":         propertyID,
+			"property_name":       propertyName,
+			"integration_user_id": integrationUserID,
+			"connected":           connected,
+		},
+		"sync_state": state,
+		"summary":    summary,
 	}
 	s.respondJSON(w, http.StatusOK, response)
 }
@@ -249,20 +277,91 @@ func (s *Server) handleProjectGA4Disconnect(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Delete integration from database
-	_, _, err := s.serviceRole.From("api_integrations").
-		Delete("", "").
-		Eq("project_id", projectID).
-		Eq("provider", "ga4").
-		Execute()
-	if err != nil {
-		s.logger.Error("Failed to delete GA4 integration", zap.Error(err))
+	if err := s.updateProjectSettings(projectID, map[string]interface{}{
+		"ga4_property_id":         nil,
+		"ga4_property_name":       nil,
+		"ga4_integration_user_id": nil,
+	}); err != nil {
+		s.logger.Error("Failed to update GA4 project settings", zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, "Failed to disconnect")
 		return
 	}
 
-	// Clear token from memory
-	ga4.StoreToken(projectID, nil)
+	s.respondJSON(w, http.StatusOK, map[string]string{
+		"status": "disconnected",
+	})
+}
+
+// handleIntegrationsGA4 handles /api/v1/integrations/ga4/* endpoints
+func (s *Server) handleIntegrationsGA4(w http.ResponseWriter, r *http.Request) {
+	userID, ok := userIDFromContext(r.Context())
+	if !ok {
+		s.respondError(w, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+
+	path := strings.TrimPrefix(r.URL.Path, "/integrations/ga4")
+	path = strings.Trim(path, "/")
+	segments := []string{}
+	if path != "" {
+		segments = strings.Split(path, "/")
+	}
+
+	if len(segments) == 0 || segments[0] == "" {
+		segments = []string{"status"}
+	}
+
+	switch segments[0] {
+	case "connect":
+		s.handleProjectGA4Connect(w, r, userID)
+	case "disconnect":
+		s.handleIntegrationsGA4Disconnect(w, r, userID)
+	case "properties":
+		s.handleProjectGA4Properties(w, r, userID)
+	case "status":
+		s.handleIntegrationsGA4Status(w, r, userID)
+	default:
+		s.respondError(w, http.StatusNotFound, "Unknown GA4 integration resource")
+	}
+}
+
+func (s *Server) handleIntegrationsGA4Status(w http.ResponseWriter, r *http.Request, userID string) {
+	if r.Method != http.MethodGet {
+		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	cfg, _, err := s.getGA4Integration(userID)
+	if err != nil {
+		s.respondError(w, http.StatusInternalServerError, "Failed to load integration")
+		return
+	}
+
+	connected := cfg != nil && (cfg.AccessToken != "" || cfg.RefreshToken != "")
+
+	s.respondJSON(w, http.StatusOK, map[string]interface{}{
+		"connected": connected,
+	})
+}
+
+func (s *Server) handleIntegrationsGA4Disconnect(w http.ResponseWriter, r *http.Request, userID string) {
+	if r.Method != http.MethodPost && r.Method != http.MethodDelete {
+		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	_, _, err := s.serviceRole.
+		From("user_api_integrations").
+		Delete("", "").
+		Eq("user_id", userID).
+		Eq("provider", "ga4").
+		Execute()
+	if err != nil {
+		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to disconnect integration: %v", err))
+		return
+	}
+
+	ga4.StoreToken(userID, nil)
 
 	s.respondJSON(w, http.StatusOK, map[string]string{
 		"status": "disconnected",
@@ -314,7 +413,7 @@ func (s *Server) handleGA4Callback(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	state := r.URL.Query().Get("state")
 
-	projectID, ok := ga4.ConsumeState(state)
+	userID, ok := ga4.ConsumeState(state)
 	if !ok {
 		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusBadRequest)
@@ -402,14 +501,11 @@ func (s *Server) handleGA4Callback(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := s.saveGA4Integration(projectID, cfg); err != nil {
+	if err := s.saveGA4Integration(userID, cfg); err != nil {
 		s.logger.Error("Failed to persist GA4 token", zap.Error(err))
 	}
 
-	ga4.StoreToken(projectID, token)
-	if _, err := s.ensureGA4SyncState(projectID, ""); err != nil {
-		s.logger.Warn("Failed to ensure sync state after OAuth", zap.Error(err))
-	}
+	ga4.StoreToken(userID, token)
 
 	// Return success page that closes popup and signals parent window
 	w.Header().Set("Content-Type", "text/html")
@@ -457,7 +553,7 @@ func (s *Server) handleGA4Callback(w http.ResponseWriter, r *http.Request) {
 						try {
 							window.opener.postMessage({
 								type: 'ga4_connected',
-								project_id: '%s'
+								user_id: '%s'
 							}, '*');
 						} catch (e) {
 							console.error('Failed to post message to opener:', e);
@@ -479,5 +575,5 @@ func (s *Server) handleGA4Callback(w http.ResponseWriter, r *http.Request) {
 			</script>
 		</body>
 		</html>
-	`, projectID)
+	`, userID)
 }
