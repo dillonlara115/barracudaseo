@@ -12,6 +12,19 @@ import (
 	"go.uber.org/zap"
 )
 
+// isConnectionError checks if an error is a connection-related error
+func isConnectionError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errStr := err.Error()
+	return strings.Contains(errStr, "connection refused") ||
+		strings.Contains(errStr, "no such host") ||
+		strings.Contains(errStr, "network is unreachable") ||
+		strings.Contains(errStr, "timeout") ||
+		strings.Contains(errStr, "dial tcp")
+}
+
 // StartKeywordTaskPoller starts a background goroutine that polls for pending keyword tasks
 // This runs automatically in the background, polling every minute
 func (s *Server) StartKeywordTaskPoller(ctx context.Context, interval time.Duration) {
@@ -57,7 +70,14 @@ func (s *Server) pollKeywordTasks(ctx context.Context) {
 		Limit(50, ""). // Process up to 50 tasks per poll
 		Execute()
 	if err != nil {
-		s.logger.Error("Failed to fetch tasks for polling", zap.Error(err))
+		// If it's a connection error (e.g., Supabase not running), log at debug level
+		// This is expected in local development when Supabase isn't started
+		if isConnectionError(err) {
+			s.logger.Debug("Supabase connection unavailable for keyword task polling (this is normal if Supabase isn't running)",
+				zap.Error(err))
+		} else {
+			s.logger.Error("Failed to fetch tasks for polling", zap.Error(err))
+		}
 		return
 	}
 
@@ -299,8 +319,8 @@ func (s *Server) pollKeywordTasks(ctx context.Context) {
 					Update(map[string]interface{}{
 						"status":       "completed",
 						"completed_at": time.Now().UTC().Format(time.RFC3339),
-						"error":         fmt.Sprintf("Site is not ranking: %s", err.Error()),
-						"raw_response":  getResp,
+						"error":        fmt.Sprintf("Site is not ranking: %s", err.Error()),
+						"raw_response": getResp,
 					}, "", "").
 					Eq("id", taskID).
 					Execute()
@@ -524,8 +544,8 @@ func (s *Server) handleKeywordTaskPoll(w http.ResponseWriter, r *http.Request) {
 					Update(map[string]interface{}{
 						"status":       "completed",
 						"completed_at": time.Now().UTC().Format(time.RFC3339),
-						"error":         fmt.Sprintf("Site is not ranking: %s", err.Error()),
-						"raw_response":  getResp,
+						"error":        fmt.Sprintf("Site is not ranking: %s", err.Error()),
+						"raw_response": getResp,
 					}, "", "").
 					Eq("id", taskID).
 					Execute()

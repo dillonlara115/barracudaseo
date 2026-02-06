@@ -26,6 +26,11 @@ func (s *Server) handleProjectGSC(w http.ResponseWriter, r *http.Request, projec
 		return
 	}
 
+	// Check subscription - GSC integration requires Pro
+	if sub := s.requireProSubscription(w, userID, "Google Search Console integration"); sub == nil {
+		return
+	}
+
 	if len(segments) == 0 || segments[0] == "" {
 		s.handleProjectGSCStatus(w, r, projectID)
 		return
@@ -552,7 +557,7 @@ func (s *Server) handleProjectGSCDisconnect(w http.ResponseWriter, r *http.Reque
 			}
 			// Remove the property URL
 			delete(settings, "gsc_property_url")
-			
+
 			// Update project
 			_, _, _ = s.serviceRole.
 				From("projects").
@@ -561,9 +566,9 @@ func (s *Server) handleProjectGSCDisconnect(w http.ResponseWriter, r *http.Reque
 				Execute()
 		}
 	}
-    
-    // Clear in-memory token cache if present
-    gsc.StoreToken(projectID, nil)
+
+	// Clear in-memory token cache if present
+	gsc.StoreToken(projectID, nil)
 
 	s.respondJSON(w, http.StatusOK, map[string]string{
 		"status": "disconnected",

@@ -68,21 +68,21 @@ func (f *Fetcher) Fetch(url string) *FetchResult {
 	// CheckRedirect is called when the HTTP client encounters a redirect response
 	var redirectChain []string
 	originalCheckRedirect := f.client.CheckRedirect
-	
+
 	// Temporarily override CheckRedirect to capture redirect URLs
 	f.client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		// When CheckRedirect is called:
 		// - 'via' contains all previous requests (via[0] = original request)
 		// - 'req' is the NEW request about to be made to follow the redirect
 		// - The redirect response came from the last request in 'via'
-		// 
+		//
 		// We want to capture the redirect destinations (the URLs we're redirecting TO)
 		// Each time CheckRedirect is called, we're following a redirect, so we capture req.URL
 		if len(via) > 0 {
 			// This is a redirect - capture the destination URL
 			redirectChain = append(redirectChain, req.URL.String())
 		}
-		
+
 		// Follow redirects up to 10 times
 		if len(via) >= 10 {
 			return fmt.Errorf("stopped after 10 redirects")
@@ -106,6 +106,12 @@ func (f *Fetcher) Fetch(url string) *FetchResult {
 
 	result.PageResult.StatusCode = resp.StatusCode
 	result.PageResult.ResponseTime = responseTime.Milliseconds()
+
+	// Extract x-robots-tag header for indexability detection
+	xRobotsTag := resp.Header.Get("X-Robots-Tag")
+	if xRobotsTag != "" {
+		result.PageResult.XRobotsTag = xRobotsTag
+	}
 
 	// Only add redirect chain if we actually had redirects (status code indicates redirects were followed)
 	// If the final status is 3xx, it means we hit a redirect that wasn't followed, or

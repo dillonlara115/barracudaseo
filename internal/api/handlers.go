@@ -168,15 +168,16 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 		seenPageURLs[normalizedPageURL] = true
 
 		pageData := map[string]interface{}{
-			"crawl_id":         crawlID,
-			"url":              normalizedPageURL,
-			"status_code":      page.StatusCode,
-			"response_time_ms": page.ResponseTime,
-			"title":            page.Title,
-			"meta_description": page.MetaDesc,
-			"canonical_url":    page.Canonical,
-			"h1":               strings.Join(page.H1, ", "),
-			"word_count":       0, // TODO: calculate from content
+			"crawl_id":            crawlID,
+			"url":                 normalizedPageURL,
+			"status_code":         page.StatusCode,
+			"response_time_ms":    page.ResponseTime,
+			"title":               page.Title,
+			"meta_description":    page.MetaDesc,
+			"canonical_url":       page.Canonical,
+			"h1":                  strings.Join(page.H1, ", "),
+			"indexability_status": string(page.IndexabilityStatus),
+			"word_count":          0, // TODO: calculate from content
 			"data": map[string]interface{}{
 				"h2":             page.H2,
 				"h3":             page.H3,
@@ -269,6 +270,17 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 			issueData["page_id"] = pageID
 		} else if pageID, ok := pageURLToID[issue.URL]; ok {
 			issueData["page_id"] = pageID
+		} else {
+			// If page_id not found, log a warning but continue
+			// The URL will be stored in the value field as a fallback if value is empty
+			s.logger.Debug("Could not find page_id for issue URL",
+				zap.String("url", issue.URL),
+				zap.String("normalized_url", normalizedIssueURL),
+				zap.String("type", string(issue.Type)))
+			// Store URL in value field if value is empty (as fallback for lookup)
+			if issue.Value == "" {
+				issueData["value"] = issue.URL
+			}
 		}
 		issues = append(issues, issueData)
 	}
@@ -783,6 +795,16 @@ func (s *Server) handleTriggerCrawl(w http.ResponseWriter, r *http.Request, proj
 	if req.Workers == 0 {
 		req.Workers = 10
 	}
+	// Default respect_robots to true if not provided
+	if req.RespectRobots == nil {
+		t := true
+		req.RespectRobots = &t
+	}
+	// Default parse_sitemap to false if not provided
+	if req.ParseSitemap == nil {
+		f := false
+		req.ParseSitemap = &f
+	}
 
 	// Get effective subscription for limits
 	subscription, err := s.resolveSubscription(userID)
@@ -821,8 +843,8 @@ func (s *Server) handleTriggerCrawl(w http.ResponseWriter, r *http.Request, proj
 			"max_depth":      req.MaxDepth,
 			"max_pages":      req.MaxPages,
 			"workers":        req.Workers,
-			"respect_robots": req.RespectRobots,
-			"parse_sitemap":  req.ParseSitemap,
+			"respect_robots": *req.RespectRobots,
+			"parse_sitemap":  *req.ParseSitemap,
 		},
 	}
 
@@ -894,8 +916,8 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 		Delay:         0,
 		Timeout:       30 * time.Second,
 		UserAgent:     "barracuda/1.0.0",
-		RespectRobots: req.RespectRobots,
-		ParseSitemap:  req.ParseSitemap,
+		RespectRobots: *req.RespectRobots,
+		ParseSitemap:  *req.ParseSitemap,
 		DomainFilter:  "same",
 		ExportFormat:  "csv", // Required for validation, but not used since we store in DB
 		ExportPath:    "",    // Not used for web crawls
@@ -947,7 +969,12 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 					continue
 				}
 				if pageID, ok := row["id"].(float64); ok {
-					pageIDs[url] = int64(pageID)
+					pageIDInt := int64(pageID)
+					// Store both normalized and original URL mappings
+					pageIDs[url] = pageIDInt
+					if normalizedURL, err := utils.NormalizeURL(url); err == nil {
+						pageIDs[normalizedURL] = pageIDInt
+					}
 				}
 			}
 		}
@@ -1017,15 +1044,16 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 		}
 
 		pageData := map[string]interface{}{
-			"crawl_id":         crawlID,
-			"url":              normalizedPageURL,
-			"status_code":      page.StatusCode,
-			"response_time_ms": page.ResponseTime,
-			"title":            page.Title,
-			"meta_description": page.MetaDesc,
-			"canonical_url":    page.Canonical,
-			"h1":               strings.Join(page.H1, ", "),
-			"word_count":       0, // TODO: calculate from content
+			"crawl_id":            crawlID,
+			"url":                 normalizedPageURL,
+			"status_code":         page.StatusCode,
+			"response_time_ms":    page.ResponseTime,
+			"title":               page.Title,
+			"meta_description":    page.MetaDesc,
+			"canonical_url":       page.Canonical,
+			"h1":                  strings.Join(page.H1, ", "),
+			"indexability_status": string(page.IndexabilityStatus),
+			"word_count":          0, // TODO: calculate from content
 			"data": map[string]interface{}{
 				"h2":             h2,
 				"h3":             h3,
@@ -1167,6 +1195,36 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 	// Analyze results (only non-image URLs)
 	summary := analyzer.AnalyzeWithImages(filteredResults, config.Timeout)
 
+	// Refresh pageURLToID map before creating issues to ensure we have all pages
+	// Fetch ALL pages for this crawl to build a comprehensive map
+	allPagesData, _, err := s.serviceRole.From("pages").
+		Select("id,url", "", false).
+		Eq("crawl_id", crawlID).
+		Execute()
+	if err == nil {
+		var allPages []map[string]interface{}
+		if err := json.Unmarshal(allPagesData, &allPages); err == nil {
+			for _, page := range allPages {
+				if url, ok := page["url"].(string); ok && url != "" {
+					if pageID, ok := page["id"].(float64); ok {
+						pageIDInt := int64(pageID)
+						// Store both original and normalized URL mappings
+						pageURLToID[url] = pageIDInt
+						if normalizedURL, err := utils.NormalizeURL(url); err == nil {
+							pageURLToID[normalizedURL] = pageIDInt
+						}
+					}
+				}
+			}
+			s.logger.Debug("Refreshed pageURLToID map",
+				zap.String("crawl_id", crawlID),
+				zap.Int("total_pages", len(allPages)),
+				zap.Int("map_size", len(pageURLToID)))
+		}
+	} else {
+		s.logger.Warn("Failed to refresh pageURLToID map", zap.Error(err))
+	}
+
 	// Store issues with URL normalization and deduplication
 	issues := make([]map[string]interface{}, 0, len(summary.Issues))
 	seenIssues := make(map[string]bool) // Track (type + normalized URL) to prevent duplicates
@@ -1203,11 +1261,47 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 			"status":         "new",
 		}
 		// Try to find page ID using normalized URL first, then fallback to original
-		if pageID, ok := pageURLToID[normalizedIssueURL]; ok {
-			issueData["page_id"] = pageID
-		} else if pageID, ok := pageURLToID[issue.URL]; ok {
+		var pageID int64
+		var foundPageID bool
+		if pid, ok := pageURLToID[normalizedIssueURL]; ok {
+			pageID = pid
+			foundPageID = true
+		} else if pid, ok := pageURLToID[issue.URL]; ok {
 			// Fallback to original URL in case page was stored with different normalization
+			pageID = pid
+			foundPageID = true
+		}
+
+		// If still not found, try one more database lookup (in case page was just inserted)
+		if !foundPageID {
+			lookupURLs := []string{normalizedIssueURL, issue.URL}
+			if missingIDs, err := fetchPageIDsByURL(lookupURLs); err == nil {
+				for _, url := range lookupURLs {
+					if pid, ok := missingIDs[url]; ok {
+						pageID = pid
+						foundPageID = true
+						// Update map for future lookups
+						pageURLToID[url] = pid
+						break
+					}
+				}
+			}
+		}
+
+		if foundPageID {
 			issueData["page_id"] = pageID
+		} else {
+			// Log warning - this should be rare after the refresh
+			s.logger.Warn("Could not find page_id for issue",
+				zap.String("url", issue.URL),
+				zap.String("normalized_url", normalizedIssueURL),
+				zap.String("type", string(issue.Type)),
+				zap.String("crawl_id", crawlID),
+				zap.Int("pageURLToID_map_size", len(pageURLToID)))
+			// Store URL in value field as fallback if value is empty
+			if issue.Value == "" {
+				issueData["value"] = issue.URL
+			}
 		}
 		issues = append(issues, issueData)
 	}
@@ -1421,10 +1515,22 @@ func (s *Server) handleGSCCallback(w http.ResponseWriter, r *http.Request) {
 			<body>
 				<h1>Connection Failed</h1>
 				<p>Invalid state</p>
-				<script>
-					window.opener && window.opener.postMessage({type: 'gsc_error', error: 'Invalid state'}, '*');
-					setTimeout(() => window.close(), 2000);
-				</script>
+			<script>
+				(function() {
+					if (window.opener && !window.opener.closed) {
+						try {
+							window.opener.postMessage({type: 'gsc_error', error: 'Invalid state'}, '*');
+						} catch (e) {
+							console.error('Failed to post error message:', e);
+						}
+					}
+					setTimeout(function() {
+						if (window.opener) {
+							window.close();
+						}
+					}, 100);
+				})();
+			</script>
 			</body>
 			</html>
 		`)
@@ -1443,8 +1549,20 @@ func (s *Server) handleGSCCallback(w http.ResponseWriter, r *http.Request) {
 				<h1>Connection Failed</h1>
 				<p>%v</p>
 				<script>
-					window.opener && window.opener.postMessage({type: 'gsc_error', error: '%v'}, '*');
-					setTimeout(() => window.close(), 2000);
+					(function() {
+						if (window.opener && !window.opener.closed) {
+							try {
+								window.opener.postMessage({type: 'gsc_error', error: '%v'}, '*');
+							} catch (e) {
+								console.error('Failed to post error message:', e);
+							}
+						}
+						setTimeout(function() {
+							if (window.opener) {
+								window.close();
+							}
+						}, 100);
+					})();
 				</script>
 			</body>
 			</html>
@@ -1520,14 +1638,32 @@ func (s *Server) handleGSCCallback(w http.ResponseWriter, r *http.Request) {
 				<p>This window will close automatically...</p>
 			</div>
 			<script>
-				// Signal parent window that connection succeeded
-				if (window.opener) {
-					window.opener.postMessage({type: 'gsc_connected', project_id: '%s'}, '*');
-				}
-				// Close popup after short delay
-				setTimeout(() => {
-					window.close();
-				}, 1500);
+				(function() {
+					// Immediately signal parent window that connection succeeded
+					// Do this synchronously before any potential redirects
+					if (window.opener && !window.opener.closed) {
+						try {
+							window.opener.postMessage({
+								type: 'gsc_connected',
+								project_id: '%s'
+							}, '*');
+						} catch (e) {
+							console.error('Failed to post message to opener:', e);
+						}
+					}
+					
+					// Close popup immediately after posting message
+					// Use a small delay to ensure message is sent, but close quickly
+					setTimeout(function() {
+						try {
+							if (window.opener) {
+								window.close();
+							}
+						} catch (e) {
+							console.error('Failed to close popup:', e);
+						}
+					}, 100);
+				})();
 			</script>
 		</body>
 		</html>
@@ -2077,6 +2213,216 @@ func (s *Server) handleCrawlIssues(w http.ResponseWriter, r *http.Request, crawl
 		s.logger.Error("Failed to parse issues data", zap.String("crawl_id", crawlID), zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, "Failed to parse issues")
 		return
+	}
+
+	// Fetch pages to get indexability_status for enriching issues
+	var pages []map[string]interface{}
+	var issuesWithoutURL int
+	var issuesWithoutPageID int
+	var pageIndexabilityMap map[int64]string
+	var pageURLMap map[int64]string          // page_id to URL
+	var urlToPageIDMap map[string]int64      // URL to page_id (for reverse lookup)
+	var urlIndexabilityMap map[string]string // URL to indexability_status (fallback)
+
+	// Try to fetch pages with indexability_status, but fallback to just id,url if column doesn't exist
+	var pagesData []byte
+	pagesData, _, err = s.serviceRole.From("pages").Select("id,url,indexability_status", "", false).Eq("crawl_id", crawlID).Execute()
+	if err != nil {
+		// Check if error is due to missing indexability_status column
+		errStr := err.Error()
+		if strings.Contains(errStr, "indexability_status") || strings.Contains(errStr, "42703") || strings.Contains(errStr, "does not exist") {
+			// Column doesn't exist yet - fetch without it
+			s.logger.Debug("indexability_status column not found, fetching pages without it", zap.String("crawl_id", crawlID), zap.String("original_error", errStr))
+			var fallbackErr error
+			pagesData, _, fallbackErr = s.serviceRole.From("pages").Select("id,url", "", false).Eq("crawl_id", crawlID).Execute()
+			if fallbackErr == nil {
+				s.logger.Debug("Successfully fetched pages without indexability_status", zap.String("crawl_id", crawlID))
+				err = nil // Clear error since fallback worked
+			} else {
+				s.logger.Warn("Failed to fetch pages even without indexability_status", zap.Error(fallbackErr))
+				err = fallbackErr // Use fallback error
+			}
+		}
+	}
+	if err == nil {
+		if unmarshalErr := json.Unmarshal(pagesData, &pages); unmarshalErr == nil {
+			// Create maps for enriching issues
+			pageIndexabilityMap = make(map[int64]string)
+			pageURLMap = make(map[int64]string)          // page_id to URL
+			urlToPageIDMap = make(map[string]int64)      // URL to page_id (for reverse lookup)
+			urlIndexabilityMap = make(map[string]string) // URL to indexability_status (fallback)
+			for _, page := range pages {
+				var pageID int64
+				if id, ok := page["id"].(float64); ok {
+					pageID = int64(id)
+				}
+				if url, ok := page["url"].(string); ok && url != "" {
+					if pageID > 0 {
+						pageURLMap[pageID] = url
+						// Store normalized and original URL mappings for reverse lookup
+						if normalizedURL, err := utils.NormalizeURL(url); err == nil {
+							urlToPageIDMap[normalizedURL] = pageID
+						}
+						urlToPageIDMap[url] = pageID
+					}
+					if status, ok := page["indexability_status"].(string); ok && status != "" {
+						urlIndexabilityMap[url] = status
+						if pageID > 0 {
+							pageIndexabilityMap[pageID] = status
+						}
+					}
+				}
+			}
+			s.logger.Debug("Built page maps for enrichment",
+				zap.String("crawl_id", crawlID),
+				zap.Int("total_pages", len(pages)),
+				zap.Int("pageURLMap_size", len(pageURLMap)),
+				zap.Int("urlToPageIDMap_size", len(urlToPageIDMap)))
+		} else {
+			s.logger.Warn("Failed to unmarshal pages data", zap.Error(unmarshalErr))
+			// Initialize empty maps so enrichment code doesn't crash
+			pageIndexabilityMap = make(map[int64]string)
+			pageURLMap = make(map[int64]string)
+			urlToPageIDMap = make(map[string]int64)
+			urlIndexabilityMap = make(map[string]string)
+		}
+	} else {
+		s.logger.Warn("Failed to fetch pages for enrichment", zap.Error(err))
+		// Initialize empty maps so enrichment code doesn't crash
+		pageIndexabilityMap = make(map[int64]string)
+		pageURLMap = make(map[int64]string)
+		urlToPageIDMap = make(map[string]int64)
+		urlIndexabilityMap = make(map[string]string)
+	}
+
+	// Always run enrichment, even if pages fetch failed (we can still try direct lookups)
+	// Enrich issues with URL and indexability_status
+	enrichedCount := 0
+	for i := range issues {
+		// Add URL from page_id if not already present or if URL is empty
+		currentURL, hasURL := issues[i]["url"].(string)
+		if !hasURL || currentURL == "" {
+			if pageID, ok := issues[i]["page_id"].(float64); ok && pageID > 0 {
+				if url, found := pageURLMap[int64(pageID)]; found {
+					issues[i]["url"] = url
+					enrichedCount++
+				} else {
+					// Log when page_id exists but URL not found in map
+					s.logger.Warn("Page ID found but URL not in map - fetching page directly",
+						zap.Float64("page_id", pageID),
+						zap.String("issue_type", fmt.Sprintf("%v", issues[i]["type"])),
+						zap.String("crawl_id", crawlID))
+					// Try to fetch the page directly
+					pageData, _, err := s.serviceRole.From("pages").
+						Select("url", "", false).
+						Eq("id", fmt.Sprintf("%d", int64(pageID))).
+						Single().
+						Execute()
+					if err == nil {
+						var page map[string]interface{}
+						if err := json.Unmarshal(pageData, &page); err == nil {
+							if url, ok := page["url"].(string); ok && url != "" {
+								issues[i]["url"] = url
+								enrichedCount++
+								// Update map for future lookups
+								pageURLMap[int64(pageID)] = url
+							}
+						}
+					}
+					currentURLAfterFetch, hasURLAfterFetch := issues[i]["url"].(string)
+					if !hasURLAfterFetch || currentURLAfterFetch == "" {
+						issuesWithoutURL++
+					}
+				}
+			} else {
+				// Log when page_id is missing
+				issuesWithoutPageID++
+				s.logger.Debug("Issue missing page_id",
+					zap.String("issue_type", fmt.Sprintf("%v", issues[i]["type"])),
+					zap.String("message", fmt.Sprintf("%v", issues[i]["message"])),
+					zap.String("crawl_id", crawlID))
+			}
+		}
+		// Fallback: if URL still not found and page_id is missing, try to match by message/value
+		// This handles cases where issues were created before page_id was properly set
+		currentURLCheck, hasURLCheck := issues[i]["url"].(string)
+		if !hasURLCheck || currentURLCheck == "" {
+			// Try to extract URL from value field (we stored it there as fallback)
+			if value, ok := issues[i]["value"].(string); ok && value != "" {
+				// Check if value looks like a URL
+				if strings.HasPrefix(value, "http://") || strings.HasPrefix(value, "https://") {
+					// Try to find matching page
+					if pageID, found := urlToPageIDMap[value]; found {
+						issues[i]["url"] = pageURLMap[pageID]
+						issues[i]["page_id"] = float64(pageID)
+						enrichedCount++
+					} else {
+						// Even if page not found, use the URL from value
+						issues[i]["url"] = value
+						enrichedCount++
+					}
+				}
+			}
+			// Also try to extract URL from message (some issue messages contain URLs)
+			currentURLCheck2, hasURLCheck2 := issues[i]["url"].(string)
+			if !hasURLCheck2 || currentURLCheck2 == "" {
+				if message, ok := issues[i]["message"].(string); ok {
+					// Look for URL pattern in message
+					if strings.Contains(message, "http://") || strings.Contains(message, "https://") {
+						// Try to extract URL from message (simple regex-like extraction)
+						parts := strings.Fields(message)
+						for _, part := range parts {
+							if strings.HasPrefix(part, "http://") || strings.HasPrefix(part, "https://") {
+								// Clean up URL (remove trailing punctuation)
+								url := strings.TrimRight(part, ".,;:!)")
+								if pageID, found := urlToPageIDMap[url]; found {
+									issues[i]["url"] = pageURLMap[pageID]
+									issues[i]["page_id"] = float64(pageID)
+									enrichedCount++
+									break
+								} else if normalizedURL, err := utils.NormalizeURL(url); err == nil {
+									if pageID, found := urlToPageIDMap[normalizedURL]; found {
+										issues[i]["url"] = pageURLMap[pageID]
+										issues[i]["page_id"] = float64(pageID)
+										enrichedCount++
+										break
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		// Add indexability_status
+		if pageID, ok := issues[i]["page_id"].(float64); ok && pageID > 0 {
+			if status, found := pageIndexabilityMap[int64(pageID)]; found {
+				issues[i]["page_indexability_status"] = status
+			}
+		} else if url, ok := issues[i]["url"].(string); ok {
+			// Fallback to URL-based lookup if page_id not available
+			if status, found := urlIndexabilityMap[url]; found {
+				issues[i]["page_indexability_status"] = status
+			}
+		}
+	}
+
+	// Log enrichment statistics
+	s.logger.Info("Issues enrichment completed",
+		zap.String("crawl_id", crawlID),
+		zap.Int("total_issues", len(issues)),
+		zap.Int("enriched_with_url", enrichedCount),
+		zap.Int("issues_without_page_id", issuesWithoutPageID),
+		zap.Int("issues_without_url_after_lookup", issuesWithoutURL),
+		zap.Int("total_pages", len(pages)),
+		zap.Int("pageURLMap_size", len(pageURLMap)))
+	if issuesWithoutURL > 0 || issuesWithoutPageID > 0 {
+		s.logger.Warn("Issues enrichment statistics",
+			zap.String("crawl_id", crawlID),
+			zap.Int("total_issues", len(issues)),
+			zap.Int("issues_without_page_id", issuesWithoutPageID),
+			zap.Int("issues_without_url_after_lookup", issuesWithoutURL),
+			zap.Int("total_pages", len(pages)))
 	}
 
 	s.logger.Info("Fetched crawl issues", zap.String("crawl_id", crawlID), zap.Int("issue_count", len(issues)))

@@ -51,16 +51,28 @@
   async function loadOpenAIKeyStatus() {
     loadingOpenAIStatus = true;
     console.log('Loading OpenAI key status...');
-    const { data, error } = await getOpenAIKeyStatus();
-    console.log('OpenAI key status response:', { data, error });
-    console.log('Full data object:', JSON.stringify(data, null, 2));
-    if (!error && data) {
-      hasOpenAIKey = data.has_key || false;
-      console.log('OpenAI key status loaded:', { hasOpenAIKey, has_key: data.has_key, dataKeys: Object.keys(data) });
-    } else if (error) {
-      console.error('Failed to load OpenAI key status:', error);
+    try {
+      const { data, error } = await getOpenAIKeyStatus();
+      console.log('OpenAI key status response:', { data, error });
+      console.log('Full data object:', JSON.stringify(data, null, 2));
+      if (error) {
+        console.error('Failed to load OpenAI key status:', error);
+        // Don't update hasOpenAIKey on error - keep current state
+      } else if (data) {
+        // Handle both direct boolean and object with has_key property
+        const keyStatus = typeof data === 'boolean' ? data : (data.has_key === true);
+        hasOpenAIKey = keyStatus;
+        console.log('OpenAI key status loaded:', { hasOpenAIKey, rawData: data });
+      } else {
+        console.warn('OpenAI key status response has no data');
+        hasOpenAIKey = false;
+      }
+    } catch (err) {
+      console.error('Exception loading OpenAI key status:', err);
+      // Don't update hasOpenAIKey on exception - keep current state
+    } finally {
+      loadingOpenAIStatus = false;
     }
-    loadingOpenAIStatus = false;
   }
 
   async function handleSaveOpenAIKey() {
@@ -70,27 +82,70 @@
     
     console.log('Saving OpenAI API key...', { hasKey: !!openaiApiKey, keyLength: openaiApiKey.length });
     
-    const { data, error } = await saveOpenAIKey(openaiApiKey);
-    console.log('Save OpenAI key response:', { data, error });
-    console.log('Save response data:', JSON.stringify(data, null, 2));
-    
-    if (error) {
-      console.error('Failed to save OpenAI key:', error);
-      openaiError = error.message || 'Failed to save OpenAI API key';
-    } else {
-      console.log('OpenAI key saved successfully, waiting 500ms before reloading status...');
+    try {
+      const { data, error } = await saveOpenAIKey(openaiApiKey);
+      console.log('Save OpenAI key response:', { data, error });
+      console.log('Save response data:', JSON.stringify(data, null, 2));
+      
+      if (error) {
+        console.error('Failed to save OpenAI key:', error);
+        openaiError = error.message || 'Failed to save OpenAI API key';
+        savingOpenAIKey = false;
+        return;
+      }
+      
+      // Success - check if response includes has_key
+      console.log('OpenAI key saved successfully', data);
       openaiSuccess = true;
       openaiApiKey = ''; // Clear input after saving
-      // Small delay to ensure database write is complete
-      await new Promise(resolve => setTimeout(resolve, 500));
-      // Reload status from server to ensure it's persisted
-      await loadOpenAIKeyStatus();
-      console.log('Status reloaded, hasOpenAIKey:', hasOpenAIKey);
+      
+      // Use has_key from response if available, otherwise optimistically set to true
+      if (data && typeof data.has_key === 'boolean') {
+        hasOpenAIKey = data.has_key;
+        console.log('Status from save response:', hasOpenAIKey);
+      } else {
+        // Optimistically set status to true (will be verified by reload)
+        hasOpenAIKey = true;
+        console.log('No has_key in response, optimistically setting to true');
+      }
+      
+      // Reload status with retry logic to ensure it's persisted
+      let retries = 3;
+      let statusLoaded = false;
+      
+      while (retries > 0 && !statusLoaded) {
+        // Wait a bit longer for database write to be visible
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        await loadOpenAIKeyStatus();
+        
+        // If status confirms key exists, we're done
+        if (hasOpenAIKey) {
+          statusLoaded = true;
+          console.log('Status confirmed, hasOpenAIKey:', hasOpenAIKey);
+        } else {
+          retries--;
+          console.log(`Status check failed, retries remaining: ${retries}`);
+          if (retries > 0) {
+            console.log('Retrying status check...');
+          }
+        }
+      }
+      
+      if (!statusLoaded) {
+        console.warn('Status check failed after retries, but save was successful');
+        // Keep hasOpenAIKey as true since save succeeded
+      }
+      
       setTimeout(() => {
         openaiSuccess = false;
       }, 3000);
+    } catch (err) {
+      console.error('Exception saving OpenAI key:', err);
+      openaiError = err.message || 'Failed to save OpenAI API key';
+    } finally {
+      savingOpenAIKey = false;
     }
-    savingOpenAIKey = false;
   }
 
   async function handleDisconnectOpenAIKey() {
@@ -102,19 +157,32 @@
     openaiError = null;
     openaiSuccess = false;
     
-    const { data, error } = await disconnectOpenAIKey();
-    if (error) {
-      openaiError = error.message || 'Failed to disconnect OpenAI API key';
-    } else {
+    try {
+      const { data, error } = await disconnectOpenAIKey();
+      if (error) {
+        openaiError = error.message || 'Failed to disconnect OpenAI API key';
+        disconnectingOpenAIKey = false;
+        return;
+      }
+      
+      // Success - optimistically update status
       openaiSuccess = true;
       openaiApiKey = ''; // Clear input
-      // Reload status from server to ensure it's updated
+      hasOpenAIKey = false; // Set immediately
+      
+      // Reload status from server to confirm
+      await new Promise(resolve => setTimeout(resolve, 500));
       await loadOpenAIKeyStatus();
+      
       setTimeout(() => {
         openaiSuccess = false;
       }, 3000);
+    } catch (err) {
+      console.error('Exception disconnecting OpenAI key:', err);
+      openaiError = err.message || 'Failed to disconnect OpenAI API key';
+    } finally {
+      disconnectingOpenAIKey = false;
     }
-    disconnectingOpenAIKey = false;
   }
 
   $: if (selectedProjectId) {

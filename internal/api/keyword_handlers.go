@@ -486,6 +486,11 @@ func (s *Server) handleCheckKeyword(w http.ResponseWriter, r *http.Request, user
 		return
 	}
 
+	// Check subscription - manual keyword checks require Pro
+	if sub := s.requireProSubscription(w, userID, "Keyword Rank Checking"); sub == nil {
+		return
+	}
+
 	// Get DataForSEO client
 	client, err := dataforseo.NewClient()
 	if err != nil {
@@ -1104,6 +1109,11 @@ func (s *Server) handleDiscoverKeywords(w http.ResponseWriter, r *http.Request, 
 	}
 	if !hasAccess {
 		s.respondError(w, http.StatusForbidden, "Access denied")
+		return
+	}
+
+	// Check subscription - keyword discovery requires Pro
+	if sub := s.requireProSubscription(w, userID, "Keyword Discovery"); sub == nil {
 		return
 	}
 

@@ -2,7 +2,10 @@ package api
 
 import (
 	"fmt"
+	"net/http"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 // SubscriptionInfo captures the effective subscription context for a user.
@@ -96,6 +99,23 @@ func isSubscriptionActive(tier, status string, periodEnd *time.Time) bool {
 	}
 
 	return false
+}
+
+// requireProSubscription checks if the user has a pro or team subscription.
+// Returns the subscription info if allowed, or writes a 403 error and returns nil.
+func (s *Server) requireProSubscription(w http.ResponseWriter, userID string, featureName string) *SubscriptionInfo {
+	subscription, err := s.resolveSubscription(userID)
+	if err != nil {
+		s.logger.Error("Failed to resolve subscription", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to verify subscription")
+		return nil
+	}
+	if subscription.EffectiveTier == "free" {
+		s.respondError(w, http.StatusForbidden,
+			fmt.Sprintf("%s requires a Pro subscription. Please upgrade to access this feature.", featureName))
+		return nil
+	}
+	return subscription
 }
 
 func getMaxPagesLimit(subscriptionTier string) int {

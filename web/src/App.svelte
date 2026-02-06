@@ -55,10 +55,10 @@
       asyncComponent: () => import('./routes/GSCKeywords.svelte')
     }),
     '/project/:projectId/rank-tracker': wrap({
-      asyncComponent: () => import('./routes/RankTracker.svelte')
+      asyncComponent: () => import('./routes/RankTrackerProtected.svelte')
     }),
     '/project/:projectId/discover-keywords': wrap({
-      asyncComponent: () => import('./routes/DiscoverKeywords.svelte')
+      asyncComponent: () => import('./routes/DiscoverKeywordsProtected.svelte')
     }),
     '/project/:projectId/impact-first': wrap({
       asyncComponent: () => import('./routes/ImpactFirstView.svelte')

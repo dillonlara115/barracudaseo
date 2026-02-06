@@ -320,11 +320,19 @@
 
       // Store popup reference
       activePopup = popup;
+      let messageReceived = false;
 
       // Listen for OAuth completion message from popup
       const messageHandler = async (event) => {
         // Only handle GSC messages
         if (!event.data?.type || !event.data.type.startsWith('gsc_')) {
+          return;
+        }
+        
+        // Security: Verify origin matches expected API origin
+        const expectedOrigin = window.location.origin;
+        if (event.origin !== expectedOrigin && !event.origin.includes('localhost') && !event.origin.includes('127.0.0.1')) {
+          console.warn('Message from unexpected origin:', event.origin);
           return;
         }
         
@@ -336,14 +344,27 @@
           return;
         }
         
+        messageReceived = true;
+        
         if (event.data?.type === 'gsc_connected') {
           console.log('GSC connected via popup handler');
+          // Clean up handlers immediately
+          window.removeEventListener('message', messageHandler);
+          if (checkClosed) {
+            clearInterval(checkClosed);
+          }
+          
+          // Close popup if still open
           if (popup && !popup.closed) {
-            popup.close();
+            try {
+              popup.close();
+            } catch (e) {
+              console.warn('Could not close popup:', e);
+            }
           }
           activePopup = null;
-          window.removeEventListener('message', messageHandler);
-          clearInterval(checkClosed);
+          
+          // Update UI
           await initialize();
           connectSuccess = true;
           isConnecting = false;
@@ -353,37 +374,53 @@
           }, 5000);
         } else if (event.data?.type === 'gsc_error') {
           console.error('GSC error via popup handler', event.data.error);
+          // Clean up handlers immediately
+          window.removeEventListener('message', messageHandler);
+          if (checkClosed) {
+            clearInterval(checkClosed);
+          }
+          
+          // Close popup if still open
           if (popup && !popup.closed) {
-            popup.close();
+            try {
+              popup.close();
+            } catch (e) {
+              console.warn('Could not close popup:', e);
+            }
           }
           activePopup = null;
-          window.removeEventListener('message', messageHandler);
-          clearInterval(checkClosed);
+          
+          // Update UI
           error = event.data.error || 'Failed to connect Google Search Console';
           isConnecting = false;
           connectSuccess = false;
         }
       };
 
+      // Set up message listener BEFORE popup navigates
       window.addEventListener('message', messageHandler);
 
-      // Check if popup was closed manually
+      // Check if popup was closed manually (but give time for message to arrive)
       const checkClosed = setInterval(() => {
         if (popup.closed) {
-          console.log('Popup closed manually');
+          console.log('Popup closed', { messageReceived });
           clearInterval(checkClosed);
           window.removeEventListener('message', messageHandler);
           activePopup = null;
-          // Only reset connecting state if we haven't received a message
-          // Give it a moment in case message is still coming
-          setTimeout(() => {
-            if (isConnecting && !connectSuccess) {
-              isConnecting = false;
-              error = 'Connection cancelled or popup was closed';
-            }
-          }, 1000);
+          
+          // Only show error if we didn't receive a success/error message
+          // The callback page should have sent a message before closing
+          if (!messageReceived && isConnecting && !connectSuccess) {
+            // Wait a bit more in case message is delayed
+            setTimeout(() => {
+              if (isConnecting && !connectSuccess) {
+                isConnecting = false;
+                error = 'Connection cancelled or popup was closed';
+              }
+            }, 500);
+          }
         }
-      }, 500);
+      }, 300);
     } catch (err) {
       error = err.message || 'Failed to connect Google Search Console';
       isConnecting = false;

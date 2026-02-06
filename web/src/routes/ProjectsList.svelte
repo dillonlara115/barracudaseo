@@ -84,8 +84,19 @@
       <CreateProjectButton 
         className="ml-2 inline" 
         on:created={async (e) => {
-          await loadProjects();
-          handleProjectSelect(e.detail);
+          // Add the created project to the list immediately
+          const createdProject = e.detail;
+          projects = [...projects, createdProject];
+          
+          // Also reload projects to ensure consistency, but navigate immediately
+          // This way if there's a race condition, we still navigate to the project
+          handleProjectSelect(createdProject);
+          
+          // Reload in background to ensure everything is synced
+          loadProjects().catch(err => {
+            console.error('Error reloading projects:', err);
+            // Don't show error to user since we already navigated
+          });
         }} 
       />
     </div>

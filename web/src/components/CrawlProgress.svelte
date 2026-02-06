@@ -338,12 +338,8 @@
         </div>
         <div class="card-actions justify-end">
           <button class="btn btn-primary" on:click={() => {
-            // Clear localStorage before navigating
-            if (projectId && crawlId) {
-              localStorage.removeItem(`activeCrawl_${projectId}`);
-            }
+            // Dispatch completed event - parent will handle navigation and closing modal
             dispatch('completed', { crawlId });
-            handleViewResults();
           }}>
             View Results
           </button>

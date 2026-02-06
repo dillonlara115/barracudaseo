@@ -14,21 +14,21 @@ import (
 type IssueType string
 
 const (
-	IssueMissingH1          IssueType = "missing_h1"
-	IssueMissingMetaDesc    IssueType = "missing_meta_description"
-	IssueMissingTitle       IssueType = "missing_title"
-	IssueLongTitle          IssueType = "long_title"
-	IssueLongMetaDesc       IssueType = "long_meta_description"
-	IssueShortTitle         IssueType = "short_title"
-	IssueShortMetaDesc      IssueType = "short_meta_description"
-	IssueLargeImage         IssueType = "large_image"
-	IssueMissingImageAlt    IssueType = "missing_image_alt"
-	IssueSlowResponse       IssueType = "slow_response"
-	IssueRedirectChain      IssueType = "redirect_chain"
-	IssueNoCanonical        IssueType = "no_canonical"
-	IssueBrokenLink         IssueType = "broken_link"
-	IssueMultipleH1         IssueType = "multiple_h1"
-	IssueEmptyH1            IssueType = "empty_h1"
+	IssueMissingH1       IssueType = "missing_h1"
+	IssueMissingMetaDesc IssueType = "missing_meta_description"
+	IssueMissingTitle    IssueType = "missing_title"
+	IssueLongTitle       IssueType = "long_title"
+	IssueLongMetaDesc    IssueType = "long_meta_description"
+	IssueShortTitle      IssueType = "short_title"
+	IssueShortMetaDesc   IssueType = "short_meta_description"
+	IssueLargeImage      IssueType = "large_image"
+	IssueMissingImageAlt IssueType = "missing_image_alt"
+	IssueSlowResponse    IssueType = "slow_response"
+	IssueRedirectChain   IssueType = "redirect_chain"
+	IssueNoCanonical     IssueType = "no_canonical"
+	IssueBrokenLink      IssueType = "broken_link"
+	IssueMultipleH1      IssueType = "multiple_h1"
+	IssueEmptyH1         IssueType = "empty_h1"
 )
 
 // Issue represents a detected SEO issue
@@ -43,16 +43,16 @@ type Issue struct {
 
 // Summary contains analysis results and statistics
 type Summary struct {
-	TotalPages           int                `json:"total_pages"`
-	TotalIssues          int                `json:"total_issues"`
-	IssuesByType         map[IssueType]int   `json:"issues_by_type"`
-	Issues               []Issue            `json:"issues"`
-	AverageResponseTime  int64              `json:"average_response_time_ms"`
-	PagesWithErrors      int                `json:"pages_with_errors"`
-	PagesWithRedirects   int                `json:"pages_with_redirects"`
-	TotalInternalLinks   int                `json:"total_internal_links"`
-	TotalExternalLinks   int                `json:"total_external_links"`
-	SlowestPages         []PagePerformance  `json:"slowest_pages,omitempty"`
+	TotalPages          int               `json:"total_pages"`
+	TotalIssues         int               `json:"total_issues"`
+	IssuesByType        map[IssueType]int `json:"issues_by_type"`
+	Issues              []Issue           `json:"issues"`
+	AverageResponseTime int64             `json:"average_response_time_ms"`
+	PagesWithErrors     int               `json:"pages_with_errors"`
+	PagesWithRedirects  int               `json:"pages_with_redirects"`
+	TotalInternalLinks  int               `json:"total_internal_links"`
+	TotalExternalLinks  int               `json:"total_external_links"`
+	SlowestPages        []PagePerformance `json:"slowest_pages,omitempty"`
 }
 
 // PagePerformance tracks page performance metrics
@@ -114,7 +114,7 @@ func Analyze(results []*models.PageResult) *Summary {
 			continue
 		}
 
-		// Track redirects
+		// Track redirects (always flag - technical issue)
 		if len(result.RedirectChain) > 0 {
 			summary.PagesWithRedirects++
 			summary.Issues = append(summary.Issues, Issue{
@@ -126,6 +126,16 @@ func Analyze(results []*models.PageResult) *Summary {
 				Recommendation: "Consider using direct links instead of redirect chains",
 			})
 			summary.IssuesByType[IssueRedirectChain]++
+		}
+
+		// Count links
+		summary.TotalInternalLinks += len(result.InternalLinks)
+		summary.TotalExternalLinks += len(result.ExternalLinks)
+
+		// Skip all SEO analysis for non-indexable pages (noindex, blocked by robots.txt)
+		isIndexable := result.IndexabilityStatus == models.IndexabilityIndexable || result.IndexabilityStatus == ""
+		if !isIndexable {
+			continue
 		}
 
 		// Check title issues
@@ -240,10 +250,6 @@ func Analyze(results []*models.PageResult) *Summary {
 			})
 			summary.IssuesByType[IssueNoCanonical]++
 		}
-
-		// Count links
-		summary.TotalInternalLinks += len(result.InternalLinks)
-		summary.TotalExternalLinks += len(result.ExternalLinks)
 	}
 
 	// Calculate average response time
@@ -311,4 +317,3 @@ func (s *Summary) GetTopIssues(limit int) []IssueType {
 	}
 	return result
 }
-

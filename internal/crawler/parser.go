@@ -47,9 +47,9 @@ func (p *Parser) Parse(htmlContent []byte) (*models.PageResult, error) {
 		ExternalLinks: make([]string, 0),
 		Images:        make([]models.Image, 0),
 	}
-	
+
 	// Log HTML content size for debugging
-	utils.Debug("Parsing HTML", 
+	utils.Debug("Parsing HTML",
 		utils.NewField("url", p.baseURL),
 		utils.NewField("html_size", len(htmlContent)),
 		utils.NewField("h1_count_in_html", doc.Find("h1").Length()),
@@ -72,6 +72,13 @@ func (p *Parser) Parse(htmlContent []byte) (*models.PageResult, error) {
 		}
 	})
 
+	// Extract meta robots tag
+	doc.Find("meta[name='robots']").Each(func(i int, s *goquery.Selection) {
+		if content, exists := s.Attr("content"); exists {
+			result.MetaRobots = strings.TrimSpace(content)
+		}
+	})
+
 	// Extract headings
 	// Helper function to extract clean text from heading elements
 	// Handles nested elements (spans, divs, etc.) and normalizes whitespace
@@ -80,42 +87,42 @@ func (p *Parser) Parse(htmlContent []byte) (*models.PageResult, error) {
 		// Clone first to avoid modifying the original document
 		clone := s.Clone()
 		clone.Find("script, style").Remove()
-		
+
 		// Get text content - goquery's Text() method extracts text from all nested elements
 		// This will get text from <span>, <div>, etc. nested inside the heading
 		text := clone.Text()
-		
+
 		// Normalize whitespace: strings.Fields splits on any whitespace (spaces, tabs, newlines)
 		// and strings.Join combines them with single spaces
 		// This handles <br> tags, multiple spaces, tabs, etc.
 		text = strings.Join(strings.Fields(text), " ")
-		
+
 		// Final trim to remove leading/trailing spaces
 		return strings.TrimSpace(text)
 	}
-	
+
 	doc.Find("h1").Each(func(i int, s *goquery.Selection) {
 		// Get raw HTML for debugging
 		rawHTML, _ := s.Html()
-		
+
 		// Try multiple extraction methods
 		var text string
-		
+
 		// Method 1: Direct text extraction (should work for most cases)
 		directText := s.Text()
 		text = strings.TrimSpace(directText)
-		
+
 		// Method 2: If empty, try normalizing whitespace
 		if text == "" && len(directText) > 0 {
 			text = strings.Join(strings.Fields(directText), " ")
 			text = strings.TrimSpace(text)
 		}
-		
+
 		// Method 3: If still empty, try the helper function with cloning
 		if text == "" {
 			text = extractHeadingText(s)
 		}
-		
+
 		// Method 4: Last resort - try getting text from all child elements
 		if text == "" {
 			var parts []string
@@ -131,12 +138,12 @@ func (p *Parser) Parse(htmlContent []byte) (*models.PageResult, error) {
 				text = strings.TrimSpace(text)
 			}
 		}
-		
+
 		if text != "" {
 			result.H1 = append(result.H1, text)
 		} else {
 			// Log when H1 tag exists but text extraction returns empty
-			utils.Debug("H1 tag found but text extraction returned empty", 
+			utils.Debug("H1 tag found but text extraction returned empty",
 				utils.NewField("url", p.baseURL),
 				utils.NewField("h1_html", rawHTML),
 				utils.NewField("h1_count", doc.Find("h1").Length()),
@@ -273,9 +280,9 @@ func (p *Parser) Parse(htmlContent []byte) (*models.PageResult, error) {
 		})
 		imageCount++
 	})
-	
+
 	if imageCount > 0 {
-		utils.Debug("Extracted images from page", 
+		utils.Debug("Extracted images from page",
 			utils.NewField("url", p.baseURL),
 			utils.NewField("image_count", imageCount))
 	}
@@ -296,4 +303,3 @@ func (p *Parser) ExtractLinks(htmlContent []byte) ([]string, error) {
 
 	return links, nil
 }
-

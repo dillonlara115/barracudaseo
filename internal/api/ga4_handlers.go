@@ -24,6 +24,11 @@ func (s *Server) handleProjectGA4(w http.ResponseWriter, r *http.Request, projec
 		return
 	}
 
+	// Check subscription - GA4 integration requires Pro
+	if sub := s.requireProSubscription(w, userID, "Google Analytics integration"); sub == nil {
+		return
+	}
+
 	if len(segments) == 0 || segments[0] == "" {
 		s.handleProjectGA4Status(w, r, projectID)
 		return
@@ -320,10 +325,22 @@ func (s *Server) handleGA4Callback(w http.ResponseWriter, r *http.Request) {
 			<body>
 				<h1>Connection Failed</h1>
 				<p>Invalid state</p>
-				<script>
-					window.opener && window.opener.postMessage({type: 'ga4_error', error: 'Invalid state'}, '*');
-					setTimeout(() => window.close(), 2000);
-				</script>
+			<script>
+				(function() {
+					if (window.opener && !window.opener.closed) {
+						try {
+							window.opener.postMessage({type: 'ga4_error', error: 'Invalid state'}, '*');
+						} catch (e) {
+							console.error('Failed to post error message:', e);
+						}
+					}
+					setTimeout(function() {
+						if (window.opener) {
+							window.close();
+						}
+					}, 100);
+				})();
+			</script>
 			</body>
 			</html>
 		`)
@@ -342,8 +359,20 @@ func (s *Server) handleGA4Callback(w http.ResponseWriter, r *http.Request) {
 				<h1>Connection Failed</h1>
 				<p>%v</p>
 				<script>
-					window.opener && window.opener.postMessage({type: 'ga4_error', error: '%v'}, '*');
-					setTimeout(() => window.close(), 2000);
+					(function() {
+						if (window.opener && !window.opener.closed) {
+							try {
+								window.opener.postMessage({type: 'ga4_error', error: '%v'}, '*');
+							} catch (e) {
+								console.error('Failed to post error message:', e);
+							}
+						}
+						setTimeout(function() {
+							if (window.opener) {
+								window.close();
+							}
+						}, 100);
+					})();
 				</script>
 			</body>
 			</html>
@@ -421,10 +450,34 @@ func (s *Server) handleGA4Callback(w http.ResponseWriter, r *http.Request) {
 				<p>You can close this window.</p>
 			</div>
 			<script>
-				window.opener && window.opener.postMessage({type: 'ga4_connected'}, '*');
-				setTimeout(() => window.close(), 1500);
+				(function() {
+					// Immediately signal parent window that connection succeeded
+					// Do this synchronously before any potential redirects
+					if (window.opener && !window.opener.closed) {
+						try {
+							window.opener.postMessage({
+								type: 'ga4_connected',
+								project_id: '%s'
+							}, '*');
+						} catch (e) {
+							console.error('Failed to post message to opener:', e);
+						}
+					}
+					
+					// Close popup immediately after posting message
+					// Use a small delay to ensure message is sent, but close quickly
+					setTimeout(function() {
+						try {
+							if (window.opener) {
+								window.close();
+							}
+						} catch (e) {
+							console.error('Failed to close popup:', e);
+						}
+					}, 100);
+				})();
 			</script>
 		</body>
 		</html>
-	`)
+	`, projectID)
 }

@@ -311,6 +311,22 @@ function isCacheFresh(fetchedAt, ttlMs) {
 }
 
 // Fetch user's projects
+// Fetch a single project by ID
+export async function fetchProject(projectId) {
+  try {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', projectId)
+      .single();
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
 export async function fetchProjects() {
   try {
     if (projectsCache.inFlight) {
@@ -519,13 +535,23 @@ export async function createProject(name, domain, settings = {}) {
     if (error) throw error;
 
     // Also add the owner as a project member
-    await supabase
+    // Wait for this to complete to ensure RLS policies work correctly
+    const { error: memberError } = await supabase
       .from('project_members')
       .insert({
         project_id: data.id,
         user_id: user.id,
         role: 'owner'
       });
+
+    // Log but don't fail if member insertion fails - owner can still access via owner_id
+    if (memberError) {
+      console.warn('Failed to add owner as project member (non-fatal):', memberError);
+    }
+
+    // Invalidate projects cache so the new project appears immediately
+    projectsCache.data = null;
+    projectsCache.fetchedAt = 0;
 
     return { data, error: null };
   } catch (error) {

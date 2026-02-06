@@ -1,6 +1,9 @@
 <script>
   import IssueInsight from './AI/IssueInsight.svelte';
   import { Sparkles } from 'lucide-svelte';
+  import { userProfile, isProOrTeam } from '../lib/subscription.js';
+
+  $: isPro = isProOrTeam($userProfile);
 
   export let issues = [];
   export let filter = { severity: 'all', type: 'all', url: null };
@@ -128,17 +131,28 @@
       .map(issue => `${issue.url}|${issue.type}`) // Use URL + type as unique identifier
   );
 
-  // Filter issues based on search, severity, type, affected pages count, and URL
+  // Filter issues based on search, severity, type, affected pages count, URL, and indexability
   // Direct reactive statement - Svelte tracks all referenced variables automatically
-  $: filteredIssues = issues.filter(i => 
-    (severityFilter === 'all' || i.severity === severityFilter) &&
-    (typeFilter === 'all' || i.type === typeFilter) &&
-    (!filter.url || i.url === filter.url) &&
-      (!searchTerm || 
-        i.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        i.message?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        i.recommendation?.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  $: filteredIssues = issues.filter(i => {
+    // Filter by severity
+    if (severityFilter !== 'all' && i.severity !== severityFilter) return false;
+    
+    // Filter by type
+    if (typeFilter !== 'all' && i.type !== typeFilter) return false;
+    
+    // Filter by URL (from filter prop)
+    if (filter.url && i.url !== filter.url) return false;
+    
+    // Filter by search term
+    if (searchTerm &&
+        !i.url.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !i.message?.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !i.recommendation?.toLowerCase().includes(searchTerm.toLowerCase())) {
+      return false;
+    }
+
+    return true;
+  });
 
   // Sort filtered issues by priority if selected
   $: sortedFilteredIssues = (() => {
@@ -612,13 +626,17 @@
               
               <div class="text-sm mt-2">
                 <div class="font-semibold">URL:</div>
-                <a 
-                  href={issue.url} 
-                  target="_blank" 
-                  class="break-all underline hover:opacity-80 {issue.severity === 'info' || issue.severity === 'warning' ? '' : 'link link-primary'}"
-                >
-                  {issue.url}
-                </a>
+                {#if issue.url}
+                  <a 
+                    href={issue.url} 
+                    target="_blank" 
+                    class="break-all underline hover:opacity-80 {issue.severity === 'info' || issue.severity === 'warning' ? '' : 'link link-primary'}"
+                  >
+                    {issue.url}
+                  </a>
+                {:else}
+                  <span class="text-base-content/60 italic">URL not available</span>
+                {/if}
               </div>
               {#if issue.value}
                 <div class="text-sm mt-2">
@@ -636,16 +654,26 @@
               <!-- AI Insight Button -->
               {#if crawlId}
                 <div class="mt-3">
-                  <button
-                    class="btn btn-sm btn-outline btn-primary"
-                    on:click={() => {
-                      selectedIssueForAI = issue;
-                      showAIInsightModal = true;
-                    }}
-                  >
-                    <Sparkles class="w-4 h-4" />
-                    Generate AI Insight
-                  </button>
+                  {#if isPro}
+                    <button
+                      class="btn btn-sm btn-outline btn-primary"
+                      on:click={() => {
+                        selectedIssueForAI = issue;
+                        showAIInsightModal = true;
+                      }}
+                    >
+                      <Sparkles class="w-4 h-4" />
+                      Generate AI Insight
+                    </button>
+                  {:else}
+                    <div class="tooltip" data-tip="Upgrade to Pro to unlock AI Insights">
+                      <button class="btn btn-sm btn-outline btn-disabled" disabled>
+                        <Sparkles class="w-4 h-4" />
+                        Generate AI Insight
+                        <span class="badge badge-primary badge-sm ml-1">PRO</span>
+                      </button>
+                    </div>
+                  {/if}
                 </div>
               {/if}
             </div>

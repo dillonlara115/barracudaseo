@@ -3,6 +3,9 @@
   import { generateCrawlSummary, getCrawlSummary, deleteCrawlSummary } from '../../lib/data.js';
   import { Sparkles, Copy, Trash2 } from 'lucide-svelte';
   import { marked } from 'marked';
+  import { userProfile, isProOrTeam } from '../../lib/subscription.js';
+
+  $: isPro = isProOrTeam($userProfile);
 
   export let crawlId = null;
 
@@ -154,14 +157,24 @@
     <!-- Generate Button -->
     {#if !summary && !loading && !loadingExisting}
       <div class="mb-4">
-        <button
-          class="btn btn-primary w-full"
-          on:click={handleGenerateSummary}
-          disabled={!crawlId}
-        >
-          <Sparkles class="w-4 h-4" />
-          Generate AI Crawl Summary
-        </button>
+        {#if isPro}
+          <button
+            class="btn btn-primary w-full"
+            on:click={handleGenerateSummary}
+            disabled={!crawlId}
+          >
+            <Sparkles class="w-4 h-4" />
+            Generate AI Crawl Summary
+          </button>
+        {:else}
+          <div class="tooltip w-full" data-tip="Upgrade to Pro to unlock AI Crawl Summaries">
+            <button class="btn btn-primary btn-disabled w-full" disabled>
+              <Sparkles class="w-4 h-4" />
+              Generate AI Crawl Summary
+              <span class="badge badge-primary badge-sm ml-1">PRO</span>
+            </button>
+          </div>
+        {/if}
         {#if !crawlId}
           <p class="text-sm text-base-content/70 mt-2">Crawl ID is required to generate summary</p>
         {/if}
@@ -227,13 +240,22 @@
         </div>
       </div>
       <div class="mt-4 flex gap-2">
-        <button
-          class="btn btn-outline flex-1"
-          on:click={() => handleGenerateSummary(true)}
-          disabled={loading}
-        >
-          {loading ? 'Regenerating...' : 'Regenerate Summary'}
-        </button>
+        {#if isPro}
+          <button
+            class="btn btn-outline flex-1"
+            on:click={() => handleGenerateSummary(true)}
+            disabled={loading}
+          >
+            {loading ? 'Regenerating...' : 'Regenerate Summary'}
+          </button>
+        {:else}
+          <div class="tooltip flex-1" data-tip="Upgrade to Pro to regenerate summaries">
+            <button class="btn btn-outline btn-disabled flex-1" disabled>
+              Regenerate Summary
+              <span class="badge badge-primary badge-sm ml-1">PRO</span>
+            </button>
+          </div>
+        {/if}
         <button
           class="btn btn-error"
           on:click={handleDeleteSummary}

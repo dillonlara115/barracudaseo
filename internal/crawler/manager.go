@@ -21,22 +21,22 @@ type ProgressCallback func(page *models.PageResult, totalPages int)
 
 // Manager orchestrates the crawling process
 type Manager struct {
-	config           *utils.Config
-	fetcher          *Fetcher
-	robotsChecker    *RobotsChecker
-	sitemapParser    *SitemapParser
-	linkGraph        *graph.Graph
-	visited          sync.Map // map[string]bool for visited URLs
-	queue            chan crawlTask
-	results          []*models.PageResult
-	resultsMu        sync.Mutex
-	wg               sync.WaitGroup
-	ctx              context.Context
-	cancel           context.CancelFunc
-	pending          int32 // Track pending tasks (atomic)
-	queueClosed      int32 // Atomic flag to track if queue is closed
-	progressCallback ProgressCallback // Optional callback for progress updates
-	normalizedStartURL string // Store normalized start URL for domain comparison
+	config             *utils.Config
+	fetcher            *Fetcher
+	robotsChecker      *RobotsChecker
+	sitemapParser      *SitemapParser
+	linkGraph          *graph.Graph
+	visited            sync.Map // map[string]bool for visited URLs
+	queue              chan crawlTask
+	results            []*models.PageResult
+	resultsMu          sync.Mutex
+	wg                 sync.WaitGroup
+	ctx                context.Context
+	cancel             context.CancelFunc
+	pending            int32            // Track pending tasks (atomic)
+	queueClosed        int32            // Atomic flag to track if queue is closed
+	progressCallback   ProgressCallback // Optional callback for progress updates
+	normalizedStartURL string           // Store normalized start URL for domain comparison
 }
 
 // crawlTask represents a URL to be crawled with its depth
@@ -85,31 +85,31 @@ func (m *Manager) Crawl() ([]*models.PageResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid start URL: %w", err)
 	}
-	
+
 	// Store normalized start URL for domain comparison
 	m.normalizedStartURL = startURL
 
-		// Parse sitemap if enabled
-		var seedURLs []string
-		if m.config.ParseSitemap {
-			sitemapURL := m.sitemapParser.DiscoverSitemapURL(startURL)
-			utils.Info("Parsing sitemap", utils.NewField("url", sitemapURL))
-			
-			urls, err := m.sitemapParser.ParseSitemap(sitemapURL)
-			if err != nil {
-				utils.Debug("Failed to parse sitemap", utils.NewField("url", sitemapURL), utils.NewField("error", err.Error()))
-			} else {
-				// Filter out image URLs from sitemap
-				for _, url := range urls {
-					if !utils.IsImageURL(url) {
-						seedURLs = append(seedURLs, url)
-					} else {
-						utils.Debug("Skipping image URL from sitemap", utils.NewField("url", url))
-					}
+	// Parse sitemap if enabled
+	var seedURLs []string
+	if m.config.ParseSitemap {
+		sitemapURL := m.sitemapParser.DiscoverSitemapURL(startURL)
+		utils.Info("Parsing sitemap", utils.NewField("url", sitemapURL))
+
+		urls, err := m.sitemapParser.ParseSitemap(sitemapURL)
+		if err != nil {
+			utils.Debug("Failed to parse sitemap", utils.NewField("url", sitemapURL), utils.NewField("error", err.Error()))
+		} else {
+			// Filter out image URLs from sitemap
+			for _, url := range urls {
+				if !utils.IsImageURL(url) {
+					seedURLs = append(seedURLs, url)
+				} else {
+					utils.Debug("Skipping image URL from sitemap", utils.NewField("url", url))
 				}
-				utils.Info("Found URLs in sitemap", utils.NewField("count", len(seedURLs)), utils.NewField("filtered_images", len(urls)-len(seedURLs)))
 			}
+			utils.Info("Found URLs in sitemap", utils.NewField("count", len(seedURLs)), utils.NewField("filtered_images", len(urls)-len(seedURLs)))
 		}
+	}
 
 	// If no sitemap URLs found, use start URL
 	if len(seedURLs) == 0 {
@@ -133,7 +133,7 @@ func (m *Manager) Crawl() ([]*models.PageResult, error) {
 				utils.Debug("Failed to normalize seed URL", utils.NewField("url", url), utils.NewField("error", err.Error()))
 				continue
 			}
-			
+
 			atomic.AddInt32(&m.pending, 1)
 			m.queue <- crawlTask{
 				URL:   normalized,
@@ -218,11 +218,17 @@ func (m *Manager) worker(id int) {
 			}
 
 			// Check robots.txt before fetching
+			isBlockedByRobots := false
 			if allowed, err := m.robotsChecker.IsAllowed(task.URL); err != nil {
 				utils.Debug("Robots check error", utils.NewField("url", task.URL), utils.NewField("error", err.Error()))
 			} else if !allowed {
 				utils.Debug("URL disallowed by robots.txt", utils.NewField("url", task.URL))
-				continue
+				// If respect_robots is true, skip the page entirely
+				// If respect_robots is false, we'll crawl it but mark it as blocked
+				if m.config.RespectRobots {
+					continue
+				}
+				isBlockedByRobots = true
 			}
 
 			// Apply delay if configured
@@ -262,9 +268,13 @@ func (m *Manager) worker(id int) {
 				utils.NewField("total", resultCount),
 			)
 
+			// Determine indexability status even for non-200 pages (based on x-robots-tag and robots.txt)
+			// Meta robots will be empty for these pages since we can't parse HTML
+			result.PageResult.DetermineIndexabilityStatus(isBlockedByRobots)
+
 			// If fetch failed or not HTML, call progress callback and continue
 			if result.Error != nil || result.PageResult.StatusCode != 200 {
-				utils.Info("Skipping link discovery - fetch failed or non-200", 
+				utils.Info("Skipping link discovery - fetch failed or non-200",
 					utils.NewField("url", task.URL),
 					utils.NewField("error", result.Error),
 					utils.NewField("status", result.PageResult.StatusCode))
@@ -306,9 +316,9 @@ func (m *Manager) worker(id int) {
 				}
 				continue
 			}
-			
-			utils.Info("Parsed page", 
-				utils.NewField("url", task.URL), 
+
+			utils.Info("Parsed page",
+				utils.NewField("url", task.URL),
 				utils.NewField("depth", task.Depth),
 				utils.NewField("h1_count", len(parsedData.H1)),
 				utils.NewField("h1_values", parsedData.H1),
@@ -321,6 +331,7 @@ func (m *Manager) worker(id int) {
 			result.PageResult.Title = parsedData.Title
 			result.PageResult.MetaDesc = parsedData.MetaDesc
 			result.PageResult.Canonical = parsedData.Canonical
+			result.PageResult.MetaRobots = parsedData.MetaRobots
 			result.PageResult.H1 = parsedData.H1
 			result.PageResult.H2 = parsedData.H2
 			result.PageResult.H3 = parsedData.H3
@@ -330,6 +341,9 @@ func (m *Manager) worker(id int) {
 			result.PageResult.InternalLinks = parsedData.InternalLinks
 			result.PageResult.ExternalLinks = parsedData.ExternalLinks
 			result.PageResult.Images = parsedData.Images
+
+			// Determine indexability status based on robots.txt, x-robots-tag, and meta robots
+			result.PageResult.DetermineIndexabilityStatus(isBlockedByRobots)
 
 			// Call progress callback AFTER parsing and merging data
 			// This ensures the stored page has all the parsed SEO data (H1, links, etc.)
@@ -354,13 +368,13 @@ func (m *Manager) worker(id int) {
 				skippedCount := 0
 				domainSkippedCount := 0
 				visitedSkippedCount := 0
-				
-				utils.Info("Discovering links", 
+
+				utils.Info("Discovering links",
 					utils.NewField("url", task.URL),
 					utils.NewField("depth", task.Depth),
 					utils.NewField("max_depth", m.config.MaxDepth),
 					utils.NewField("total_internal_links", len(parsedData.InternalLinks)))
-				
+
 				for _, linkURL := range parsedData.InternalLinks {
 					// Skip image URLs - they should not be crawled as pages
 					if utils.IsImageURL(linkURL) {
@@ -368,12 +382,12 @@ func (m *Manager) worker(id int) {
 						utils.Debug("Skipping image URL", utils.NewField("link", linkURL))
 						continue
 					}
-					
+
 					// Check domain filter (use normalized start URL for comparison)
 					if m.config.DomainFilter == "same" && !utils.IsSameDomain(linkURL, m.normalizedStartURL) {
 						domainSkippedCount++
-						utils.Info("Skipping link - different domain", 
-							utils.NewField("link", linkURL), 
+						utils.Info("Skipping link - different domain",
+							utils.NewField("link", linkURL),
 							utils.NewField("start_url", m.normalizedStartURL))
 						continue
 					}
@@ -391,7 +405,7 @@ func (m *Manager) worker(id int) {
 						utils.Warn("Queue closed, stopping link discovery", utils.NewField("url", task.URL))
 						return
 					}
-					
+
 					select {
 					case <-m.ctx.Done():
 						utils.Info("Context cancelled, stopping link discovery")
@@ -407,7 +421,7 @@ func (m *Manager) worker(id int) {
 						skippedCount++
 					}
 				}
-				utils.Info("Link discovery complete", 
+				utils.Info("Link discovery complete",
 					utils.NewField("url", task.URL),
 					utils.NewField("enqueued", enqueuedCount),
 					utils.NewField("skipped_domain", domainSkippedCount),
@@ -415,7 +429,7 @@ func (m *Manager) worker(id int) {
 					utils.NewField("skipped_queue_full", skippedCount),
 					utils.NewField("total_internal", len(parsedData.InternalLinks)))
 			} else {
-				utils.Info("Max depth reached, not discovering links", 
+				utils.Info("Max depth reached, not discovering links",
 					utils.NewField("url", task.URL),
 					utils.NewField("depth", task.Depth),
 					utils.NewField("max_depth", m.config.MaxDepth))
@@ -434,8 +448,8 @@ func (m *Manager) worker(id int) {
 func (m *Manager) monitorQueue() {
 	ticker := time.NewTicker(2 * time.Second) // Check every 2 seconds (less frequent)
 	defer ticker.Stop()
-	
-	emptyCount := 0 // Count consecutive empty checks
+
+	emptyCount := 0          // Count consecutive empty checks
 	const maxEmptyChecks = 5 // Close after 5 consecutive empty checks (10 seconds total)
 	// Increased timeout to allow workers time to discover and enqueue links
 
@@ -451,14 +465,14 @@ func (m *Manager) monitorQueue() {
 			pending := atomic.LoadInt32(&m.pending)
 			queueLen := len(m.queue)
 			resultCount := len(m.results)
-			
-			utils.Info("Monitor queue check", 
+
+			utils.Info("Monitor queue check",
 				utils.NewField("pending", pending),
 				utils.NewField("queue_len", queueLen),
 				utils.NewField("results", resultCount),
 				utils.NewField("empty_count", emptyCount),
 				utils.NewField("max_pages", m.config.MaxPages))
-			
+
 			// Only close if:
 			// 1. Queue is empty AND no pending tasks
 			// 2. We haven't reached max pages (if we have, workers will cancel)
@@ -466,7 +480,7 @@ func (m *Manager) monitorQueue() {
 			if pending <= 0 && queueLen == 0 && resultCount < m.config.MaxPages {
 				emptyCount++
 				if emptyCount >= maxEmptyChecks {
-					utils.Info("Closing queue - no pending tasks after multiple checks", 
+					utils.Info("Closing queue - no pending tasks after multiple checks",
 						utils.NewField("empty_checks", emptyCount),
 						utils.NewField("total_results", resultCount),
 						utils.NewField("max_pages", m.config.MaxPages))
@@ -491,4 +505,3 @@ func (m *Manager) handleSignals() {
 	utils.Info("Received interrupt signal, shutting down gracefully...")
 	m.cancel()
 }
-

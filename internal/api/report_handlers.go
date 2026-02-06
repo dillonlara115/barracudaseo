@@ -61,6 +61,11 @@ func (s *Server) handleCreatePublicReport(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Check subscription - public reports require Pro
+	if sub := s.requireProSubscription(w, userID, "Public Report Sharing"); sub == nil {
+		return
+	}
+
 	var req CreatePublicReportRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		s.respondError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request body: %v", err))

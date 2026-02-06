@@ -1,6 +1,9 @@
 <script>
   import { createPublicReport, listPublicReports, deletePublicReport } from '../lib/data.js';
   import { Copy, ExternalLink, Trash2, Lock, Calendar, Eye } from 'lucide-svelte';
+  import { userProfile, isProOrTeam } from '../lib/subscription.js';
+
+  $: isPro = isProOrTeam($userProfile);
 
   export let crawlId = null;
   export let projectId = null;
@@ -109,14 +112,24 @@
   <div class="card-body">
     <div class="flex items-center justify-between mb-4">
       <h2 class="card-title">Public Client Reports</h2>
-      <button 
-        class="btn btn-primary btn-sm"
-        on:click={() => showCreateModal = true}
-        disabled={loading || !crawlId}
-      >
-        <ExternalLink class="w-4 h-4 mr-2" />
-        Create Public Report
-      </button>
+      {#if isPro}
+        <button
+          class="btn btn-primary btn-sm"
+          on:click={() => showCreateModal = true}
+          disabled={loading || !crawlId}
+        >
+          <ExternalLink class="w-4 h-4 mr-2" />
+          Create Public Report
+        </button>
+      {:else}
+        <div class="tooltip" data-tip="Upgrade to Pro to create public reports">
+          <button class="btn btn-primary btn-sm btn-disabled" disabled>
+            <ExternalLink class="w-4 h-4 mr-2" />
+            Create Public Report
+            <span class="badge badge-primary badge-sm ml-1">PRO</span>
+          </button>
+        </div>
+      {/if}
     </div>
 
     {#if error}

@@ -84,6 +84,10 @@ export function hasFeatureAccess(feature, profile = null) {
     case 'team_collaboration':
       return subscriptionTier === 'pro' || subscriptionTier === 'team';
     case 'priority_support':
+    case 'ai_insights':
+    case 'rank_tracker':
+    case 'discover_keywords':
+    case 'public_reports':
       return subscriptionTier === 'pro' || subscriptionTier === 'team';
     default:
       return false;

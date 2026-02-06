@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { push, params } from 'svelte-spa-router';
-  import { fetchProjects, fetchCrawls, fetchCrawl } from '../lib/data.js';
+  import { fetchProjects, fetchProject, fetchCrawls, fetchCrawl } from '../lib/data.js';
   import ProjectsView from '../components/ProjectsView.svelte';
   import CrawlSelector from '../components/CrawlSelector.svelte';
   import TriggerCrawlButton from '../components/TriggerCrawlButton.svelte';
@@ -66,18 +66,56 @@
     
     loading = true;
     try {
-      // Load projects
-      const { data: projectsData, error: projectsError } = await fetchProjects();
+      // Load projects with retry logic for newly created projects
+      let projectsData = null;
+      let projectsError = null;
+      let retries = 3;
+      
+      while (retries > 0) {
+        const result = await fetchProjects();
+        projectsData = result.data;
+        projectsError = result.error;
+        
+        if (!projectsError && projectsData) {
+          // Find current project
+          const foundProject = projectsData.find(p => p.id === projectId);
+          if (foundProject) {
+            projects = projectsData;
+            project = foundProject;
+            selectedProject = project;
+            break;
+          }
+        }
+        
+        // If project not found and we have retries left, wait a bit and retry
+        if (retries > 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          retries--;
+        } else {
+          break;
+        }
+      }
+      
       if (projectsError) throw projectsError;
       projects = projectsData || [];
       
       // Find current project
       project = projects.find(p => p.id === projectId);
       selectedProject = project;
+      
+      // If project not found in list, try fetching it directly (for newly created projects)
       if (!project) {
-        error = 'Project not found';
-        loading = false;
-        return;
+        const { data: directProject, error: directError } = await fetchProject(projectId);
+        if (directProject && !directError) {
+          project = directProject;
+          selectedProject = project;
+          // Add to projects list
+          projects = [...projects, project];
+        } else {
+          error = 'Project not found';
+          loading = false;
+          return;
+        }
       }
 
       // Load crawls for this project

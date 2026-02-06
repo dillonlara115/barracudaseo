@@ -2,7 +2,7 @@
   import { createEventDispatcher, onMount } from 'svelte';
   import { triggerCrawl, fetchProjects } from '../lib/data.js';
   import { userProfile, getSubscriptionTier } from '../lib/subscription.js';
-  import { link } from 'svelte-spa-router';
+  import { link, push } from 'svelte-spa-router';
   
   import CrawlProgress from './CrawlProgress.svelte';
   
@@ -29,7 +29,6 @@
   let url = '';
   let maxDepth = 3;
   let maxPages = 100; // Initial default, will be set when modal opens
-  let workers = 10;
   let respectRobots = true;
   let parseSitemap = true; // Enable sitemap parsing by default to discover more pages
 
@@ -144,7 +143,7 @@
       url: crawlUrl,
       max_depth: maxDepth,
       max_pages: maxPages,
-      workers,
+      workers: 10,
       respect_robots: respectRobots,
       parse_sitemap: parseSitemap
     });
@@ -193,7 +192,6 @@
     }
     maxDepth = 3;
     maxPages = maxPagesLimit;
-    workers = 10;
     respectRobots = true;
     parseSitemap = false;
   }
@@ -213,25 +211,34 @@
     }
     maxDepth = 3;
     maxPages = maxPagesLimit;
-    workers = 10;
     respectRobots = true;
     parseSitemap = false;
   }
   
-  function handleProgressComplete() {
-    // When crawl completes, dispatch both events
-    if (projectId && activeCrawlId) {
+  function handleProgressComplete(e) {
+    // When crawl completes, navigate to the crawl results
+    const completedCrawlId = e?.detail?.crawlId || activeCrawlId;
+    if (projectId && completedCrawlId) {
       // Clear localStorage when crawl completes
       localStorage.removeItem(`activeCrawl_${projectId}`);
-      console.log('Cleared active crawl from localStorage:', `activeCrawl_${projectId}`);
+      console.log('TriggerCrawlButton: Cleared active crawl from localStorage:', `activeCrawl_${projectId}`);
       
-      dispatch('created', { crawl_id: activeCrawlId });
-      dispatch('completed', { crawlId: activeCrawlId });
+      const crawlIdToNavigate = completedCrawlId;
       
-      // Close the modal so the navigation to crawl results is visible
+      // Close the modal first
       showModal = false;
       showProgress = false;
       activeCrawlId = null;
+      
+      // Navigate to the crawl results - use a small delay to ensure modal closes first
+      setTimeout(() => {
+        console.log('TriggerCrawlButton: Navigating to crawl results', { projectId, crawlId: crawlIdToNavigate });
+        push(`/project/${projectId}/crawl/${crawlIdToNavigate}`);
+        
+        // Dispatch events after navigation
+        dispatch('created', { crawl_id: crawlIdToNavigate });
+        dispatch('completed', { crawlId: crawlIdToNavigate });
+      }, 50);
     }
   }
 </script>
@@ -348,24 +355,6 @@
                 {/if}
               </span>
             </div>
-          </div>
-        </div>
-
-        <div class="form-control mb-4">
-          <label class="label" for="workers-input">
-            <span class="label-text text-base-content">Workers</span>
-          </label>
-          <input 
-            id="workers-input"
-            type="number" 
-            class="input input-bordered bg-base-100 text-base-content" 
-            min="1"
-            max="50"
-            bind:value={workers}
-            disabled={loading}
-          />
-          <div class="label">
-            <span class="label-text-alt text-base-content opacity-70">Number of concurrent workers. Higher values crawl faster but use more resources and may be blocked by servers.</span>
           </div>
         </div>
 
