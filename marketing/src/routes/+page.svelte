@@ -1,16 +1,20 @@
 <script lang="ts">
 	import Hero from '../components/sections/Hero.svelte';
-	import LazyVideoWalkthrough from '../components/sections/LazyVideoWalkthrough.svelte';
-	import Features from '../components/sections/Features.svelte';
-	import Pricing from '../components/sections/Pricing.svelte';
-	import FutureUpdates from '../components/sections/FutureUpdates.svelte';
-	import FAQ from '../components/sections/FAQ.svelte';
+	import TrustSignal from '../components/sections/TrustSignal.svelte';
+	import ProblemSection from '../components/sections/ProblemSection.svelte';
+	import TheShift from '../components/sections/TheShift.svelte';
+	import HowItWorks from '../components/sections/HowItWorks.svelte';
+	import WhyThisIsDifferent from '../components/sections/WhyThisIsDifferent.svelte';
+	import Comparison from '../components/sections/Comparison.svelte';
+	import WhoItsFor from '../components/sections/WhoItsFor.svelte';
+	import SocialProof from '../components/sections/SocialProof.svelte';
+	import FinalCTA from '../components/sections/FinalCTA.svelte';
 	import MetaTags from '../components/MetaTags.svelte';
 	import { getMetaTags, getSoftwareApplicationSchema } from '$lib/meta';
 
 	const meta = getMetaTags({
-		title: 'Barracuda SEO',
-		description: 'Barracuda is a web-based SEO crawler and auditing tool that helps you discover technical issues, prioritize fixes, and improve your site\'s performance.'
+		title: 'Barracuda SEO — Turn crawl data into decisions',
+		description: 'When SEO data gets overwhelming, Barracuda tells you what actually matters. The decision-support layer for technical SEO audits.'
 	});
 
 	const structuredData = getSoftwareApplicationSchema();
@@ -19,8 +23,12 @@
 <MetaTags config={{ ...meta, structuredData }} />
 
 <Hero />
-<LazyVideoWalkthrough />
-<Features />
-<Pricing />
-<FutureUpdates />
-<FAQ />
+<TrustSignal />
+<ProblemSection />
+<TheShift />
+<HowItWorks />
+<WhyThisIsDifferent />
+<Comparison />
+<WhoItsFor />
+<SocialProof />
+<FinalCTA />

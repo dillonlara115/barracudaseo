@@ -7,7 +7,6 @@
 	let open4 = $state(false);
 	let open5 = $state(false);
 	let open6 = $state(false);
-	let open7 = $state(false);
 
 	function toggleItem(index: number) {
 		switch (index) {
@@ -17,7 +16,6 @@
 			case 4: open4 = !open4; break;
 			case 5: open5 = !open5; break;
 			case 6: open6 = !open6; break;
-			case 7: open7 = !open7; break;
 		}
 	}
 </script>
@@ -45,7 +43,7 @@
 						onclick={() => toggleItem(1)}
 					>
 						<h3 class="text-lg font-heading font-bold text-white pr-4">
-							What makes Barracuda different from Screaming Frog?
+							Will BarracudaSEO replace my existing SEO tools?
 						</h3>
 						<svg
 							class="w-5 h-5 text-[#8ec07c] flex-shrink-0 transition-transform {open1 ? 'rotate-180' : ''}"
@@ -57,14 +55,12 @@
 						</svg>
 					</button>
 					{#if open1}
-						<div class="px-6 py-4 text-white/80 text-sm">
-							<p class="mb-2">Screaming Frog is powerful but single-device and manual. Barracuda offers:</p>
-							<ul class="list-disc list-inside space-y-1 ml-2">
-								<li>Fast cloud-based crawling via web dashboard</li>
-								<li>Team collaboration and shared projects</li>
-								<li>AI-powered issue explanations and recommendations</li>
-								<li>Built-in integrations with Google Search Console</li>
-							</ul>
+						<div class="px-6 py-4 text-white/80 text-sm space-y-4">
+							<p>In many cases, yes — and in others, it complements them.</p>
+							<p>BarracudaSEO includes its own crawler and issue detection, covering many of the same technical audit capabilities found in larger tools like SEMrush and Ahrefs.</p>
+							<p>For many consultants, agencies, and teams, Barracuda can replace those tools entirely — especially when the goal is to run audits, identify issues, and understand what to fix next without paying for enterprise-level feature bloat.</p>
+							<p>Some teams still choose to keep specialized tools for niche use cases. But Barracuda’s goal is simple:</p>
+							<p class="font-medium text-white">Replace expensive, overwhelming SEO platforms with a focused system that finds issues, prioritizes what matters, and tells you exactly what to do next.</p>
 						</div>
 					{/if}
 				</div>
@@ -76,7 +72,7 @@
 						onclick={() => toggleItem(2)}
 					>
 						<h3 class="text-lg font-heading font-bold text-white pr-4">
-							How is Barracuda different from SEMrush/Ahrefs?
+							How is this different from other SEO tools?
 						</h3>
 						<svg
 							class="w-5 h-5 text-[#8ec07c] flex-shrink-0 transition-transform {open2 ? 'rotate-180' : ''}"
@@ -88,15 +84,15 @@
 						</svg>
 					</button>
 					{#if open2}
-						<div class="px-6 py-4 text-white/80 text-sm">
-							<p class="mb-2">SEMrush and Ahrefs run crawls on their servers with limited control. Barracuda:</p>
+						<div class="px-6 py-4 text-white/80 text-sm space-y-4">
+							<p>Most SEO tools focus on surfacing issues. Barracuda focuses on helping you decide:</p>
 							<ul class="list-disc list-inside space-y-1 ml-2">
-								<li>Runs fast crawls via web dashboard</li>
-								<li>Has no credits or crawl caps</li>
-								<li>Stores complete crawl datasets</li>
-								<li>Mirrors what your site serves to real browsers</li>
-								<li>CLI for local crawling coming soon for even more control</li>
+								<li>What to fix first</li>
+								<li>What can safely wait</li>
+								<li>What doesn’t matter right now</li>
+								<li>How to explain those decisions clearly</li>
 							</ul>
+							<p>If you’re looking for more metrics, Barracuda may not be the right fit. If you’re looking for confidence and clarity, it probably is.</p>
 						</div>
 					{/if}
 				</div>
@@ -108,7 +104,7 @@
 						onclick={() => toggleItem(3)}
 					>
 						<h3 class="text-lg font-heading font-bold text-white pr-4">
-							Why choose Barracuda over Looker Studio?
+							Can I trust the prioritization and recommendations?
 						</h3>
 						<svg
 							class="w-5 h-5 text-[#8ec07c] flex-shrink-0 transition-transform {open3 ? 'rotate-180' : ''}"
@@ -120,15 +116,14 @@
 						</svg>
 					</button>
 					{#if open3}
-						<div class="px-6 py-4 text-white/80 text-sm">
-							<p class="mb-2">Looker Studio is great for reporting but can't crawl or diagnose SEO issues. Barracuda does:</p>
+						<div class="px-6 py-4 text-white/80 text-sm space-y-4">
+							<p>Barracuda doesn’t hide its reasoning. For every priority, you can see:</p>
 							<ul class="list-disc list-inside space-y-1 ml-2">
-								<li>Website crawling</li>
-								<li>SEO issue detection</li>
-								<li>Data collection from GSC, GA4, Clarity</li>
-								<li>Automatic dashboard generation</li>
-								<li>Full issue prioritization</li>
+								<li>Why it matters</li>
+								<li>What data informed it</li>
+								<li>What was deprioritized and why</li>
 							</ul>
+							<p>You’re never asked to blindly trust a score or a black box. Barracuda supports your judgment — it doesn’t replace it.</p>
 						</div>
 					{/if}
 				</div>
@@ -140,7 +135,7 @@
 						onclick={() => toggleItem(4)}
 					>
 						<h3 class="text-lg font-heading font-bold text-white pr-4">
-							Does Barracuda replace my SEO tools?
+							Do you offer refunds?
 						</h3>
 						<svg
 							class="w-5 h-5 text-[#8ec07c] flex-shrink-0 transition-transform {open4 ? 'rotate-180' : ''}"
@@ -152,24 +147,10 @@
 						</svg>
 					</button>
 					{#if open4}
-						<div class="px-6 py-4 text-white/80 text-sm">
-							<p class="mb-2">Barracuda enhances your SEO stack:</p>
-							<p class="mb-1 font-semibold text-white">Replaces:</p>
-							<ul class="list-disc list-inside space-y-1 ml-2 mb-2">
-								<li>Screaming Frog for audits</li>
-								<li>Manual CSV exports</li>
-								<li>Custom Looker Studio builds</li>
-							</ul>
-							<p class="mb-1 font-semibold text-white">Integrates with:</p>
-							<ul class="list-disc list-inside space-y-1 ml-2 mb-2">
-								<li>Google Search Console (available now)</li>
-								<li>Google Analytics 4 (coming soon)</li>
-								<li>Microsoft Clarity (coming soon)</li>
-							</ul>
-							<p class="mb-1 font-semibold text-white">Complements:</p>
-							<ul class="list-disc list-inside space-y-1 ml-2">
-								<li>SEMrush/Ahrefs for keyword research</li>
-							</ul>
+						<div class="px-6 py-4 text-white/80 text-sm space-y-4">
+							<p>Yes.</p>
+							<p>We offer a 30-day money-back guarantee. If Barracuda doesn’t reduce your audit stress or help you feel more confident in your decisions, we don’t want you stuck with it.</p>
+							<p>No hard feelings. No hoops.</p>
 						</div>
 					{/if}
 				</div>
@@ -181,7 +162,7 @@
 						onclick={() => toggleItem(5)}
 					>
 						<h3 class="text-lg font-heading font-bold text-white pr-4">
-							How fast is the Barracuda crawler?
+							Is BarracudaSEO right for beginners?
 						</h3>
 						<svg
 							class="w-5 h-5 text-[#8ec07c] flex-shrink-0 transition-transform {open5 ? 'rotate-180' : ''}"
@@ -193,20 +174,9 @@
 						</svg>
 					</button>
 					{#if open5}
-						<div class="px-6 py-4 text-white/80 text-sm">
-							<p class="mb-2">Barracuda's web-based crawler is optimized for speed:</p>
-							<ul class="list-disc list-inside space-y-1 ml-2">
-								<li>Concurrent crawling with intelligent rate limiting</li>
-								<li>Efficient robots.txt and sitemap handling</li>
-								<li>Cloud infrastructure for fast processing</li>
-								<li>Real-time progress tracking</li>
-							</ul>
-							<p class="mt-2 mb-2">For even faster local crawling, our CLI (coming soon) will offer:</p>
-							<ul class="list-disc list-inside space-y-1 ml-2">
-								<li>Go-based worker-pool engine</li>
-								<li>Direct local processing</li>
-								<li>Expected speed: 100–500 pages/min</li>
-							</ul>
+						<div class="px-6 py-4 text-white/80 text-sm space-y-4">
+							<p>Barracuda works best for people who already understand SEO basics but want help deciding what matters most.</p>
+							<p>If you’re brand new to SEO, you may want a learning-focused tool first. If you’re experienced and tired of audit overwhelm, Barracuda was built for you.</p>
 						</div>
 					{/if}
 				</div>
@@ -218,7 +188,7 @@
 						onclick={() => toggleItem(6)}
 					>
 						<h3 class="text-lg font-heading font-bold text-white pr-4">
-							What makes issue detection unique?
+							Can I try BarracudaSEO before I buy?
 						</h3>
 						<svg
 							class="w-5 h-5 text-[#8ec07c] flex-shrink-0 transition-transform {open6 ? 'rotate-180' : ''}"
@@ -230,15 +200,10 @@
 						</svg>
 					</button>
 					{#if open6}
-						<div class="px-6 py-4 text-white/80 text-sm">
-							<p class="mb-2">Most crawlers just report raw issues. Barracuda:</p>
-							<ul class="list-disc list-inside space-y-1 ml-2">
-								<li>Prioritizes by severity + impact</li>
-								<li>Groups by URL structure</li>
-								<li>Connects crawl data with GSC/GA4</li>
-								<li>Uses AI to explain root causes and provide actionable recommendations</li>
-								<li>Enriches issues with traffic data from Google Search Console</li>
-							</ul>
+						<div class="px-6 py-4 text-white/80 text-sm space-y-4">
+							<p>Yes.</p>
+							<p>The Free plan gives you access to the core crawling and analysis experience so you can see how Barracuda approaches prioritization and clarity before committing.</p>
+							<p>We want you to understand how decisions are surfaced and explained, not just click around a demo. Upgrade only when you’re ready for cloud projects, collaboration, and ongoing decision support.</p>
 						</div>
 					{/if}
 				</div>
@@ -257,4 +222,3 @@
 		</div>
 	</div>
 </section>
-
