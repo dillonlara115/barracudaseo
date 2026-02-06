@@ -12,6 +12,17 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
 	{
+		slug: 'how-to-prioritize-seo-issues',
+		title: 'How to Prioritize SEO Issues After a Technical Audit',
+		description: 'Learn how to prioritize SEO issues after a technical audit. Discover which SEO fixes matter most, what to ignore, and how to build an actionable SEO roadmap.',
+		author: 'Barracuda Team',
+		publishDate: '2026-02-06',
+		readTime: 8,
+		category: 'Guides',
+		tags: ['SEO prioritization', 'SEO audit', 'technical SEO', 'SEO strategy'],
+		featured: true
+	},
+	{
 		slug: 'complete-technical-seo-audit-guide',
 		title: 'How to Perform a Complete Technical SEO Audit: A Step-by-Step Guide',
 		description: 'Learn how to conduct a comprehensive technical SEO audit. From crawling to fixing issues, this guide covers everything you need to improve your site\'s search visibility.',
