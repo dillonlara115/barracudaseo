@@ -4,8 +4,8 @@
 	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
 
 	const meta = getMetaTags({
-		title: 'Features',
-		description: 'Discover, analyze, prioritize, and integrate with Barracuda SEO. Crawl thousands of URLs, visualize site structure, and get actionable insights.'
+		title: 'Features — Comprehensive Technical SEO Auditing & Analysis',
+		description: 'Explore Barracuda SEO features: High-speed crawling, interactive link graphs, issue prioritization, and team collaboration tools for agencies and in-house teams.'
 	});
 
 	const structuredData = getBreadcrumbSchema([

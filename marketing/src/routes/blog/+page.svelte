@@ -6,7 +6,7 @@
 	import { trackCTA } from '$lib/analytics';
 
 	const meta = getMetaTags({
-		title: 'Blog',
+		title: 'Blog — Technical SEO Guides, Tips & Best Practices',
 		description: 'Learn about technical SEO, website crawling, and SEO best practices. Tips, guides, and comparisons from the Barracuda SEO team.',
 		keywords: 'SEO blog, technical SEO, website crawling, SEO guides, SEO tips'
 	});

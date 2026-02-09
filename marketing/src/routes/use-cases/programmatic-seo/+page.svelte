@@ -6,7 +6,7 @@
 
 	const meta = getMetaTags({
 		title: 'Programmatic SEO Tool',
-		description: 'Scale your SEO content strategy with Barracuda SEO. Audit thousands of programmatic pages, identify technical issues, and optimize at scale for better search rankings.'
+		description: 'Scale your SEO content strategy with Barracuda SEO. Audit thousands of programmatic pages, identify technical issues, and optimize at scale today.'
 	});
 
 	const structuredData = getBreadcrumbSchema([

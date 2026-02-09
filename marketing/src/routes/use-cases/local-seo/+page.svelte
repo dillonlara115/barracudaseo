@@ -6,7 +6,7 @@
 
 	const meta = getMetaTags({
 		title: 'Local SEO Auditing Tool',
-		description: 'Optimize your local business website for local search with Barracuda SEO. Discover technical issues, improve Google Business Profile visibility, and dominate local search results.'
+		description: 'Optimize your local business website with Barracuda SEO. Discover technical issues, check schema markup, and improve local search visibility today.'
 	});
 
 	const structuredData = getBreadcrumbSchema([

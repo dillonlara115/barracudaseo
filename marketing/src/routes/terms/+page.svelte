@@ -3,8 +3,8 @@
 	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
 
 	const meta = getMetaTags({
-		title: 'Terms of Use',
-		description: 'Barracuda SEO Terms of Use - Read our terms and conditions for using the Service.'
+		title: 'Terms of Use & Service Agreement',
+		description: 'Read the Barracuda SEO Terms of Use. Understand your rights and responsibilities when using our website crawler, auditing tools, and team collaboration features.'
 	});
 
 	const structuredData = getBreadcrumbSchema([

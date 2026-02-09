@@ -88,10 +88,30 @@
   // Get severity badge
   function getSeverityBadge(severity) {
     switch (severity) {
-      case 'error': return 'badge-error';
-      case 'warning': return 'badge-warning';
-      case 'info': return 'badge-info';
+      case 'error': return 'badge badge-error';
+      case 'warning': return 'badge badge-warning';
+      case 'info': return 'badge badge-info';
       default: return 'badge';
+    }
+  }
+
+  // Get severity border color for issue cards
+  function getSeverityBorder(severity) {
+    switch (severity) {
+      case 'error': return 'border-error';
+      case 'warning': return 'border-warning';
+      case 'info': return 'border-info';
+      default: return 'border-base-300';
+    }
+  }
+
+  // Get severity background tint for issue cards
+  function getSeverityBg(severity) {
+    switch (severity) {
+      case 'error': return 'bg-error/10';
+      case 'warning': return 'bg-warning/10';
+      case 'info': return 'bg-info/10';
+      default: return 'bg-base-200';
     }
   }
 </script>
@@ -225,11 +245,14 @@
         <div class="bg-base-100 rounded-lg shadow-lg p-6 mb-6">
           <h2 class="text-2xl font-bold mb-4">Issues Found</h2>
           
-          {#each groupIssuesByType(reportData.issues) as group}
-            <div class="mb-6">
-              <div class="flex items-center justify-between mb-2">
+          {#each groupIssuesByType(reportData.issues) as group, i}
+            {#if i > 0}
+              <div class="divider"></div>
+            {/if}
+            <div class="mb-2">
+              <div class="flex items-center justify-between mb-3">
                 <h3 class="text-lg font-semibold flex items-center gap-2">
-                  <span class={getSeverityBadge(group.severity)}>{group.severity}</span>
+                  <span class="{getSeverityBadge(group.severity)} capitalize">{group.severity}</span>
                   {group.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </h3>
                 <span class="badge badge-outline">{group.count} {group.count === 1 ? 'issue' : 'issues'}</span>
@@ -237,13 +260,13 @@
               
               <div class="space-y-3">
                 {#each group.issues.slice(0, 10) as issue}
-                  <div class="border-l-4 border-base-300 pl-4 py-2 bg-base-50 rounded-r">
+                  <div class="border-l-4 {getSeverityBorder(group.severity)} {getSeverityBg(group.severity)} pl-4 pr-4 py-3 rounded-r-lg">
                     <div class="flex items-start justify-between">
                       <div class="flex-1">
                         {#if issue.url}
-                          <a 
-                            href={issue.url} 
-                            target="_blank" 
+                          <a
+                            href={issue.url}
+                            target="_blank"
                             rel="noopener noreferrer"
                             class="text-sm font-medium text-primary hover:underline flex items-center gap-1 mb-2"
                           >

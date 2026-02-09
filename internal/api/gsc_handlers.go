@@ -566,7 +566,7 @@ func (s *Server) handleProjectGSCDisconnect(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Delete sync state
-	_, _, err = s.serviceRole.
+	_, _, err := s.serviceRole.
 		From("gsc_sync_states").
 		Delete("", "").
 		Eq("project_id", projectID).

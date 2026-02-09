@@ -6,7 +6,7 @@
 
 	const meta = getMetaTags({
 		title: 'E-commerce SEO Auditing Tool',
-		description: 'Optimize your e-commerce website for search with Barracuda SEO. Discover technical issues, improve product page performance, and boost organic traffic and conversions.'
+		description: 'Optimize your e-commerce site for search with Barracuda SEO. Discover technical issues, improve product page performance, and boost organic traffic today.'
 	});
 
 	const structuredData = getBreadcrumbSchema([
