@@ -13,15 +13,18 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: lts/*
-    - name: Install dependencies
+    - name: Install marketing site dependencies
+      working-directory: ./marketing
       run: npm ci
     - name: Install Playwright Browsers
+      working-directory: ./marketing
       run: npx playwright install --with-deps
     - name: Run Playwright tests
+      working-directory: ./marketing
       run: npx playwright test
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
         name: playwright-report
-        path: playwright-report/
+        path: marketing/playwright-report/
         retention-days: 30

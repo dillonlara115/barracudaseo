@@ -4,7 +4,7 @@
 
 	const meta = getMetaTags({
 		title: 'Privacy Policy & Data Protection',
-		description: 'Barracuda SEO Privacy Policy. Learn how we collect, protect, and use your data when you use our SEO auditing platform.'
+		description: 'Barracuda SEO Privacy Policy. Learn how we collect, protect, and use your data when you use our SEO auditing platform. We prioritize your data security and privacy.'
 	});
 
 	const structuredData = getBreadcrumbSchema([

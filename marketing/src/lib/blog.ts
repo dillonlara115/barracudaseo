@@ -24,8 +24,8 @@ export const blogPosts: BlogPost[] = [
 	},
 	{
 		slug: 'complete-technical-seo-audit-guide',
-		title: 'How to Run a Technical SEO Audit: Complete Guide',
-		description: 'Learn how to conduct a comprehensive technical SEO audit. From crawling to fixing issues, this guide covers everything you need to improve search visibility.',
+		title: 'How to Run a Technical SEO Audit',
+		description: 'Learn how to conduct a comprehensive technical SEO audit. From crawling to fixing issues, this guide covers everything you need to improve visibility.',
 		author: 'Barracuda Team',
 		publishDate: '2025-01-20',
 		readTime: 12,
@@ -91,7 +91,7 @@ export const blogPosts: BlogPost[] = [
 	{
 		slug: 'redirect-chains-seo-killer',
 		title: 'Redirect Chains: The Hidden SEO Killer',
-		description: 'Redirect chains slow down pages and waste crawl budget. Learn how to identify and consolidate redirect chains for better site speed and SEO performance.',
+		description: 'Redirect chains slow down pages and waste crawl budget. Learn how to identify and consolidate redirect chains for better SEO performance.',
 		author: 'Barracuda Team',
 		publishDate: '2025-01-05',
 		readTime: 8,
