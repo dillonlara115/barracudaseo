@@ -12,6 +12,17 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
 	{
+		slug: 'why-seo-audits-feel-overwhelming',
+		title: 'Why SEO Audits Feel Overwhelming',
+		description: 'SEO audits surface hundreds of issues but fail at the one thing that matters: helping you know what to fix first. Learn why audits feel overwhelming and how to regain clarity.',
+		author: 'Barracuda Team',
+		publishDate: '2026-02-09',
+		readTime: 10,
+		category: 'Guides',
+		tags: ['SEO audit', 'SEO strategy', 'technical SEO', 'SEO prioritization'],
+		featured: true
+	},
+	{
 		slug: 'how-to-prioritize-seo-issues',
 		title: 'How to Prioritize SEO Issues After an Audit',
 		description: 'Learn how to prioritize SEO issues after a technical audit. Discover which SEO fixes matter most, what to ignore, and how to build an actionable SEO roadmap.',
