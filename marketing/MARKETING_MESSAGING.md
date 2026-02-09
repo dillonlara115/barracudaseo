@@ -2,138 +2,90 @@
 
 *Last updated: {{today}}*
 
-## 1. Product Overview
+> **Strategic Source:** This document is derived from `docs/JTBD_SUMMARY.md`. Refer to that file for the deep "Jobs to be Done" analysis.
 
-Barracuda is a fast, lightweight **SEO crawler and auditing platform** built for technical Agencies, agencies, and developers. It helps you uncover website issues, visualize structure, and prioritize fixes — all through a **powerful web dashboard** that also offers a **CLI interface** for automation.
+## 1. Core Positioning
 
-Unlike traditional crawlers that are bulky, expensive, or hard to scale, Barracuda gives you:
+**BarracudaSEO is the decision-support layer for technical SEO audits.**
 
-* The **flexibility of a CLI**,
-* The **usability of a web app**, and
-* The **transparency of open source**.
+It helps technical SEOs and agencies **decide what actually matters** in a site audit — and gives them the **confidence to explain why**.
 
----
-
-## 2. Updated Positioning
-
-### Old
-
-> “A fast, lightweight SEO website crawler CLI tool inspired by Screaming Frog.”
-
-### New
-
-> **“Barracuda is a web-based SEO crawler and auditing tool (with CLI support) that helps you discover, organize, and fix technical SEO issues across your entire site.”**
-
-* **Web-first Experience**: Log in, start a crawl, and view issues directly from your browser.
-* **CLI for Power Users**: Automate, integrate, and scale crawls through the command line.
-* **Open Source Core**: Transparent, developer-friendly, and extensible.
+### What we are NOT:
+* ❌ Another generic "SEO audit tool"
+* ❌ A "Screaming Frog alternative" (we are complimentary, not just a replacement)
+* ❌ A "Magic AI box" (we are transparent/opinionated)
 
 ---
 
-## 3. Core Value Propositions
+## 2. The Golden Circle (Why / How / What)
 
-### 🕵️‍♂️ Discover
-
-Crawl up to tens of thousands of URLs and identify broken links, duplicate tags, missing meta data, slow pages, and more — fast.
-
-### 📊 Analyze
-
-Visualize your site architecture, link structure, and SEO health inside a clean, intuitive dashboard.
-
-### 🤓 Prioritize
-
-Get clear issue summaries with built-in severity and impact scoring to focus on what truly matters.
-
-### 🤖 Integrate (Pro Only)
-
-Connect Google Search Console, Analytics, and Clarity to enrich your audit data and track performance over time.
-
-### ⚙️ Automate (CLI & Pro)
-
-Run scheduled or triggered crawls from the command line or CI pipelines, exporting structured data to CSV, JSON, or Supabase.
+*   **WHY**: To reduce the cognitive load and anxiety of technical audits.
+*   **HOW**: By being opinionated by design—filtering out noise and surfacing only the issues that impact revenue and visibility.
+*   **WHAT**: A web-based crawler and decision engine that prioritizes fixes and explains the *rationale* behind them.
 
 ---
 
-## 4. Updated Product Tiers
+## 3. Key Messaging Pillars
 
-### **Free Tier**
+### Pillar 1: Clarity over Chaos
+*   **Pain**: Drowning in spreadsheets, 10,000 "info" warnings, analysis paralysis.
+*   **Promise**: "You don't need more data. You need to know what matters."
+*   **Proof**: Prioritized Issue Scoring, "Why this matters" panels.
 
-* Crawl up to **100 pages per project**
-* View **detected issues and opportunities**
-* **No recommendations or integrations**
-* **Web dashboard access included**
-* Great for quick technical audits or demos
+### Pillar 2: Confidence & Defensibility
+*   **Pain**: Fear of recommending the wrong fix; inability to explain technical issues to clients.
+*   **Promise**: "Walk into client calls confident and prepared."
+*   **Proof**: Explanatory AI recommendations, Transparent logic (not a black box).
 
-### **Pro (coming soon)**
+### Pillar 3: Efficiency for Experts
+*   **Pain**: Wasting hours configuring crawls and merging CSVs.
+*   **Promise**: "Stop collecting issues. Start fixing them."
+*   **Proof**: Zero-config cloud crawling, CLI for automation, Team collaboration.
 
-* Crawl up to **10,000+ pages**
-* Full **recommendation engine** with contextual fixes
-* Integrations: **Google Search Console**, **Analytics**, **Microsoft Clarity**, and Slack notifications
-* Advanced exports and saved reports
-* Team collaboration and historical comparisons
-* Priority support and early access to AI-powered insights
+---
 
-> ⚙️ The CLI remains fully open source — but the hosted dashboard and advanced features are available via Barracuda Cloud.
+## 4. Copy Snippets (Ready to Use)
+
+### Hero Headlines
+*   "When SEO data gets overwhelming, Barracuda tells you what actually matters."
+*   "Turn crawl data into decisions."
+*   "The decision-support layer for technical SEO audits."
+
+### Subheads
+*   "BarracudaSEO turns complex site audits into clear, defensible priorities you can explain with confidence — without drowning in SEO noise."
+*   "Stop collecting SEO issues. Start making confident decisions."
+
+### Value Props (Feature-Led)
+*   **Opinionated Audits**: "We don’t show you everything. We show you what matters now."
+*   **Transparent Logic**: "Barracuda doesn’t replace your judgment. It gives you a clearer starting point — and shows its work."
+*   **Team Built**: "Share audits, assign fixes, and defend your strategy with a single URL."
 
 ---
 
 ## 5. Target Audience
 
-* **Technical Agencies** who need scalable crawl data and clean reporting
-* **Agencies** managing multiple clients and domains
-* **Developers** who prefer API/CLI automation over GUIs
-* **Website owners** who want to understand their SEO issues without enterprise pricing
+*   **The Overwhelmed Expert**: Knows SEO, but hates the manual grunt work of filtering spreadsheets.
+*   **The Agency Lead**: Needs to standardize audits across the team and present clear reports to clients.
+*   **The Developer**: Wants to fix the site, not decipher 400 pages of SEO jargon.
 
 ---
 
-## 6. Tone and Style
+## 6. Tone & Voice
 
-* **Transparent**: Open source, clear limits, and no dark patterns.
-* **Empowering**: Built by Agencies and engineers for Agencies and engineers.
-* **Actionable**: Focused on fixes, not just data.
-* **Modern**: Fast, clean UI with cloud-based performance.
-
----
-
-## 7. Example Messaging Snippets
-
-**Website Hero**
-
-> *“Find. Fix. Get Results`.”*
-> Barracuda is an open, fast, and web-based SEO crawler that helps you discover technical issues, prioritize fixes, and improve your site’s performance — without enterprise bloat.
-
-**Subheader**
-
-> “Crawl smarter. Audit faster. Collaborate easily.”
-
-**Call to Action**
-
-> “Start your free 100-page audit.”
+*   **Calm**: We reduce anxiety, not create it. Avoid alarmist warnings.
+*   **Confident**: We know technical SEO. We are opinionated.
+*   **Transparent**: We explain our logic. We admit what we don't know.
+*   **Human**: We speak to the *person* doing the job, not just the algorithm.
 
 ---
 
-## 8. Visual & Structural Suggestions
+## 7. Product Tiers (Messaging)
 
-* Replace “CLI-first” language with **“Web dashboard + CLI support”**.
-* Hero graphics: focus on the **dashboard UI** (issues table, site map, link graph).
-* Optional secondary CTA: “Download the CLI” for developers.
-* Add a **pricing comparison section** (Free vs. Pro).
-* Include “Open Source” badge to highlight transparency and community value.
+### Free Tier
+*   "See clarity in action."
+*   "Perfect for your first audit or quick spot-checks."
 
----
-
-## 9. Next Steps
-
-* Update website copy across:
-
-  * Home page (Hero + Feature section)
-  * Pricing page (Free vs. Pro)
-  * Docs intro (README / marketing repo)
-* Adjust onboarding flow:
-
-  * Emphasize “Start a free web crawl”
-  * Secondary “Install CLI” option
-* Create landing page banners reflecting the new messaging:
-
-  * “Now available as a web app.”
-  * “Crawl up to 100 pages free.”
+### Pro / Team
+*   "Scale your confidence."
+*   "For agencies who need to defend their decisions at scale."
+*   "Unlock history, integrations, and deeper crawls."
