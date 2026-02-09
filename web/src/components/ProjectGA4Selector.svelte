@@ -22,6 +22,7 @@
   let isLoadingProperties = false;
   let isSaving = false;
   let error = null;
+  let errorActivationUrl = null;
 
   let ga4Status = null;
   let ga4Loading = false;
@@ -37,6 +38,28 @@
     if (Number.isNaN(date.getTime())) return null;
     return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   };
+
+  // Parse Google API error to extract user-friendly message and activation URL
+  function parseGoogleAPIError(errorMessage) {
+    if (!errorMessage) return { message: null, activationUrl: null };
+    
+    // Try to extract activation URL from the error message
+    const urlMatch = errorMessage.match(/https:\/\/console\.developers\.google\.com\/apis\/api\/[^\s\)]+/);
+    const activationUrl = urlMatch ? urlMatch[0] : null;
+    
+    // Extract the user-friendly message (usually the LocalizedMessage)
+    let message = errorMessage;
+    
+    // If it's a SERVICE_DISABLED error, provide a cleaner message
+    // Note: This is an application configuration issue, not a user issue
+    if (errorMessage.includes('SERVICE_DISABLED') || errorMessage.includes('has not been used') || errorMessage.includes('it is disabled')) {
+      message = 'The Google Analytics Admin API is not enabled in the application\'s Google Cloud project. This is a configuration issue that needs to be fixed by the application administrator.';
+    } else if (errorMessage.includes('accessNotConfigured')) {
+      message = 'The Google Analytics Admin API is not enabled in the application\'s Google Cloud project. This is a configuration issue that needs to be fixed by the application administrator.';
+    }
+    
+    return { message, activationUrl };
+  }
 
   // Connected if a global integration exists
   $: isConnected = Boolean(globalConnected);
@@ -108,10 +131,14 @@
 
     isLoadingProperties = true;
     error = null;
+    errorActivationUrl = null;
 
     const result = await fetchGA4Properties();
     if (result.error) {
-      error = result.error.message || 'Failed to load properties';
+      const errorMsg = result.error.message || 'Failed to load properties';
+      const parsed = parseGoogleAPIError(errorMsg);
+      error = parsed.message || errorMsg;
+      errorActivationUrl = parsed.activationUrl;
       properties = [];
       isLoadingProperties = false;
       return;
@@ -261,6 +288,14 @@
       </div>
       {#if hasPropertySelected}
         <div class="flex gap-2">
+          {#if projectId}
+            <a
+              href="#/project/{projectId}?tab=ga4-dashboard"
+              class="btn btn-sm btn-ghost"
+            >
+              View Dashboard
+            </a>
+          {/if}
           <button
             class="btn btn-sm btn-outline"
             on:click={refreshGA4Data}
@@ -281,6 +316,36 @@
       <div class="alert alert-info">
         <span class="loading loading-spinner loading-sm"></span>
         <span>Loading properties...</span>
+      </div>
+    {:else if error}
+      <div class="alert alert-warning">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <div class="flex-1">
+          <div class="font-semibold mb-2">{error}</div>
+          {#if errorActivationUrl}
+            <div class="text-sm mb-2">
+              <strong>Note:</strong> This is an application configuration issue. The Google Analytics Admin API needs to be enabled in the application's Google Cloud project (the same project used for OAuth credentials), not in individual user accounts.
+            </div>
+            <div class="text-sm mb-2">
+              If you are the application administrator, enable the API here:
+            </div>
+            <a 
+              href={errorActivationUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="btn btn-sm btn-primary"
+            >
+              Enable API in Google Cloud Console
+            </a>
+            <div class="text-xs mt-2 opacity-75">
+              After enabling, wait a few minutes for the change to propagate, then refresh this page.
+            </div>
+          {:else}
+            <div class="text-sm">{error}</div>
+          {/if}
+        </div>
       </div>
     {:else if properties.length === 0}
       <div class="alert alert-warning">

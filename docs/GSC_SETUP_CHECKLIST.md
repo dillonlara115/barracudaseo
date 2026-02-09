@@ -32,7 +32,9 @@
 
 6. Review and **Back to Dashboard**
 
-## Common Issue: "Access blocked" Error
+## Common Issues
+
+### Issue: "Access blocked" Error
 
 If you see "Access blocked: Barracuda has not completed the Google verification process":
 
@@ -45,6 +47,33 @@ If you see "Access blocked: Barracuda has not completed the Google verification 
 6. Try connecting again
 
 **Note**: Test users can only access the app while it's in Testing mode. For production use, you'll need to publish the app (requires Google verification).
+
+### Issue: "Google hasn't verified this app" Warning (Even After Verification)
+
+If you've completed Google's verification process but users still see "Google hasn't verified this app":
+
+**This is normal if your app is still in "Testing" mode.** Even verified apps show this warning in Testing mode.
+
+**To remove the warning:**
+
+1. Go to **APIs & Services** → **OAuth consent screen** in Google Cloud Console
+2. Check the **Publishing status** at the top of the page
+3. If it says "Testing", click **PUBLISH APP** button
+4. Confirm the publishing action
+5. Wait a few minutes for the change to propagate
+
+**Important Notes:**
+- **Testing Mode**: Only test users (added manually) can use the app. Shows verification warning.
+- **Published Mode**: Anyone can use the app. No verification warning (if app is verified).
+- **Verification vs Publishing**: These are separate steps:
+  - **Verification** = Google reviews your app for compliance (can take days/weeks)
+  - **Publishing** = Makes your app available to all users (instant, but requires verification for sensitive scopes)
+
+**If your app is already published but still shows the warning:**
+- There may be a delay (wait 15-30 minutes)
+- Check that verification status shows "Verified" in the OAuth consent screen
+- Ensure all required scopes are approved
+- Try clearing browser cache and cookies
 
 ## Step 3: Update Authorized Redirect URI
 

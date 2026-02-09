@@ -13,7 +13,7 @@
 	import { getMetaTags, getSoftwareApplicationSchema } from '$lib/meta';
 
 	const meta = getMetaTags({
-		title: 'Barracuda SEO — Turn crawl data into decisions',
+		title: 'Turn crawl data into decisions',
 		description: 'When SEO data gets overwhelming, Barracuda tells you what actually matters. The decision-support layer for technical SEO audits.'
 	});
 

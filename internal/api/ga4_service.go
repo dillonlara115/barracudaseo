@@ -370,7 +370,8 @@ func (s *Server) syncProjectGA4Data(projectID, userID string, cfg *ga4Integratio
 		return fmt.Errorf("failed to create snapshot: %w", err)
 	}
 
-	// Insert performance rows
+	// Insert page performance rows in batches
+	var pageRowRecords []map[string]interface{}
 	for url, perf := range performanceMap {
 		metrics := map[string]interface{}{
 			"sessions":             perf.Sessions,
@@ -382,19 +383,62 @@ func (s *Server) syncProjectGA4Data(projectID, userID string, cfg *ga4Integratio
 			"revenue":              perf.Revenue,
 		}
 
+		pageRowRecords = append(pageRowRecords, map[string]interface{}{
+			"snapshot_id":     snapshotID,
+			"project_id":      projectID,
+			"row_type":        "page",
+			"dimension_value": url,
+			"metrics":         metrics,
+			"created_at":      now.Format(time.RFC3339),
+		})
+	}
+
+	// Batch insert page rows
+	batchSize := 500
+	for i := 0; i < len(pageRowRecords); i += batchSize {
+		end := i + batchSize
+		if end > len(pageRowRecords) {
+			end = len(pageRowRecords)
+		}
 		_, _, err = s.serviceRole.From("ga4_performance_rows").
-			Insert(map[string]interface{}{
-				"snapshot_id":     snapshotID,
-				"project_id":      projectID,
-				"row_type":        "page",
-				"dimension_value": url,
-				"metrics":         metrics,
-				"created_at":      now.Format(time.RFC3339),
-			}, false, "", "", "").
+			Insert(pageRowRecords[i:end], false, "", "minimal", "").
 			Execute()
 		if err != nil {
-			s.logger.Warn("Failed to insert GA4 performance row", zap.String("url", url), zap.Error(err))
-			// Continue with other rows
+			s.logger.Warn("Failed to insert GA4 page rows batch", zap.Int("batch_start", i), zap.Error(err))
+		}
+	}
+
+	// Fetch and store multi-dimension data (source, medium, device, country, date)
+	multiDimData, err := ga4.FetchMultiDimensionData(userID, cfg.PropertyID, startDate, endDate)
+	if err != nil {
+		s.logger.Warn("Failed to fetch GA4 multi-dimension data", zap.Error(err))
+		// Non-fatal: page data was already stored
+	} else {
+		for rowType, rows := range multiDimData {
+			var dimRecords []map[string]interface{}
+			for _, row := range rows {
+				dimRecords = append(dimRecords, map[string]interface{}{
+					"snapshot_id":     snapshotID,
+					"project_id":      projectID,
+					"row_type":        rowType,
+					"dimension_value": row.DimensionValue,
+					"metrics":         row.Metrics,
+					"created_at":      now.Format(time.RFC3339),
+				})
+			}
+
+			for i := 0; i < len(dimRecords); i += batchSize {
+				end := i + batchSize
+				if end > len(dimRecords) {
+					end = len(dimRecords)
+				}
+				_, _, err = s.serviceRole.From("ga4_performance_rows").
+					Insert(dimRecords[i:end], false, "", "minimal", "").
+					Execute()
+				if err != nil {
+					s.logger.Warn("Failed to insert GA4 dimension rows", zap.String("row_type", rowType), zap.Error(err))
+				}
+			}
 		}
 	}
 

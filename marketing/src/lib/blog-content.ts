@@ -1892,8 +1892,6 @@ sys.exit(0)</code></pre>
 		<p>Ready to audit your online store? <a href="https://app.barracudaseo.com" class="text-[#8ec07c] hover:text-[#a0d28c] underline font-medium">Try Barracuda SEO</a> and crawl thousands of product pages to identify e-commerce-specific SEO issues.</p>
 	`,
 	'how-to-prioritize-seo-issues': `
-		<h1>How to Prioritize SEO Issues After a Technical Audit</h1>
-
 		<p>
 			Running a technical SEO audit is easy. Deciding what to fix first is the hard part.
 		</p>

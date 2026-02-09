@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -51,6 +53,8 @@ func (s *Server) handleProjectGA4(w http.ResponseWriter, r *http.Request, projec
 		s.handleProjectGA4Status(w, r, projectID)
 	case "summary":
 		s.handleProjectGA4Status(w, r, projectID)
+	case "dimensions":
+		s.handleProjectGA4DimensionsDirect(w, r, projectID)
 	default:
 		s.respondError(w, http.StatusNotFound, fmt.Sprintf("Unknown GA4 resource: %s", segments[0]))
 	}
@@ -333,7 +337,11 @@ func (s *Server) handleIntegrationsGA4Status(w http.ResponseWriter, r *http.Requ
 
 	cfg, _, err := s.getGA4Integration(userID)
 	if err != nil {
-		s.respondError(w, http.StatusInternalServerError, "Failed to load integration")
+		s.logger.Warn("Failed to load GA4 integration status", zap.Error(err), zap.String("user_id", userID))
+		// Return disconnected rather than 500 — table may not exist or other transient issue
+		s.respondJSON(w, http.StatusOK, map[string]interface{}{
+			"connected": false,
+		})
 		return
 	}
 
@@ -406,6 +414,68 @@ func (s *Server) fetchLatestGA4Summary(projectID string) (map[string]interface{}
 	}
 
 	return latest, nil
+}
+
+func (s *Server) handleProjectGA4DimensionsDirect(w http.ResponseWriter, r *http.Request, projectID string) {
+	rowType := r.URL.Query().Get("type")
+	if rowType == "" {
+		s.respondError(w, http.StatusBadRequest, "type query parameter is required")
+		return
+	}
+
+	limit := 50
+	if v := r.URL.Query().Get("limit"); v != "" {
+		if parsed, err := strconv.Atoi(v); err == nil && parsed > 0 && parsed <= 1000 {
+			limit = parsed
+		}
+	}
+
+	offset := 0
+	if v := r.URL.Query().Get("offset"); v != "" {
+		if parsed, err := strconv.Atoi(v); err == nil && parsed >= 0 {
+			offset = parsed
+		}
+	}
+
+	data, _, err := s.serviceRole.
+		From("ga4_performance_rows").
+		Select("*", "", false).
+		Eq("project_id", projectID).
+		Eq("row_type", rowType).
+		Execute()
+	if err != nil {
+		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to query GA4 rows: %v", err))
+		return
+	}
+
+	var rows []map[string]interface{}
+	if err := json.Unmarshal(data, &rows); err != nil {
+		s.respondError(w, http.StatusInternalServerError, "Failed to parse rows")
+		return
+	}
+
+	// Sort by sessions descending if available
+	sort.Slice(rows, func(i, j int) bool {
+		metI, _ := rows[i]["metrics"].(map[string]interface{})
+		metJ, _ := rows[j]["metrics"].(map[string]interface{})
+		return getFloat(metI["sessions"]) > getFloat(metJ["sessions"])
+	})
+
+	total := len(rows)
+	if offset > total {
+		rows = []map[string]interface{}{}
+	} else {
+		end := offset + limit
+		if end > total {
+			end = total
+		}
+		rows = rows[offset:end]
+	}
+
+	s.respondJSON(w, http.StatusOK, map[string]interface{}{
+		"rows":  rows,
+		"total": total,
+	})
 }
 
 // handleGA4Callback handles GET /api/ga4/callback - OAuth callback

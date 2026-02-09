@@ -222,6 +222,8 @@ func (s *Server) Router() http.Handler {
 	v1.HandleFunc("/integrations/gsc", s.handleIntegrationsGSC)
 	v1.HandleFunc("/integrations/ga4/", s.handleIntegrationsGA4)
 	v1.HandleFunc("/integrations/ga4", s.handleIntegrationsGA4)
+	v1.HandleFunc("/integrations/clarity/", s.handleIntegrationsClarity)
+	v1.HandleFunc("/integrations/clarity", s.handleIntegrationsClarity)
 	// Public report routes (authenticated)
 	v1.HandleFunc("/reports/public/", s.handlePublicReportByID) // Handles DELETE for specific report
 	v1.HandleFunc("/reports/public", s.handlePublicReports)     // Handles GET (list) and POST (create)

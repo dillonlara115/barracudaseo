@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { push } from 'svelte-spa-router';
-  import { Search, BarChart3, Zap, Globe, Slack, Sparkles } from 'lucide-svelte';
+  import { Search, BarChart3, Zap, Globe, Slack, Sparkles, MousePointerClick } from 'lucide-svelte';
   import {
     saveOpenAIKey,
     getOpenAIKeyStatus,
@@ -555,6 +555,30 @@
             {/if}
           </div>
         {/if}
+      </div>
+    </div>
+
+    <!-- Microsoft Clarity -->
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="card-title text-xl">
+              <MousePointerClick class="w-6 h-6 mr-2" />
+              Microsoft Clarity
+            </h2>
+            <p class="text-sm text-base-content/70 mt-1">
+              Connect Microsoft Clarity for UX engagement metrics like rage clicks, dead clicks, and scroll depth. Configure per project in Project Settings.
+            </p>
+          </div>
+          <div class="badge badge-ghost badge-lg">Per Project</div>
+        </div>
+        <div class="alert alert-info">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span>Clarity uses API tokens (no OAuth). Enter your Clarity Project ID and API Token in each project's Settings page. Data covers the last 1-3 days with a 10 requests/project/day API limit.</span>
+        </div>
       </div>
     </div>
 

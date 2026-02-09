@@ -13,7 +13,7 @@ export interface BlogPost {
 export const blogPosts: BlogPost[] = [
 	{
 		slug: 'how-to-prioritize-seo-issues',
-		title: 'How to Prioritize SEO Issues After a Technical Audit',
+		title: 'How to Prioritize SEO Issues After an Audit',
 		description: 'Learn how to prioritize SEO issues after a technical audit. Discover which SEO fixes matter most, what to ignore, and how to build an actionable SEO roadmap.',
 		author: 'Barracuda Team',
 		publishDate: '2026-02-06',
@@ -24,7 +24,7 @@ export const blogPosts: BlogPost[] = [
 	},
 	{
 		slug: 'complete-technical-seo-audit-guide',
-		title: 'How to Run a Technical SEO Audit: The Complete Guide',
+		title: 'How to Run a Technical SEO Audit: Complete Guide',
 		description: 'Learn how to conduct a comprehensive technical SEO audit. From crawling to fixing issues, this guide covers everything you need to improve search visibility.',
 		author: 'Barracuda Team',
 		publishDate: '2025-01-20',
@@ -35,7 +35,7 @@ export const blogPosts: BlogPost[] = [
 	},
 	{
 		slug: 'find-fix-broken-links',
-		title: 'How to Find and Fix Broken Links Before They Hurt Rankings',
+		title: 'How to Find and Fix Broken Links',
 		description: 'Broken links damage user experience and SEO. Learn how to identify, prioritize, and fix broken links at scale using modern crawling tools.',
 		author: 'Barracuda Team',
 		publishDate: '2025-01-18',
@@ -46,7 +46,7 @@ export const blogPosts: BlogPost[] = [
 	},
 	{
 		slug: 'screaming-frog-vs-barracuda',
-		title: 'Screaming Frog vs Barracuda: Which SEO Crawler is Best?',
+		title: 'Screaming Frog vs Barracuda: Which is Best?',
 		description: 'A detailed comparison of Screaming Frog and Barracuda SEO crawlers. Discover which tool fits your workflow, budget, and team needs.',
 		author: 'Barracuda Team',
 		publishDate: '2025-01-15',
@@ -57,7 +57,7 @@ export const blogPosts: BlogPost[] = [
 	},
 	{
 		slug: 'semrush-vs-barracuda',
-		title: 'SEMrush vs Barracuda: When You Need a Dedicated SEO Crawler',
+		title: 'SEMrush vs Barracuda: When You Need a Crawler',
 		description: 'SEMrush is great for keyword research, but when do you need a dedicated crawler? Compare SEMrush\'s crawl features with Barracuda\'s specialized approach.',
 		author: 'Barracuda Team',
 		publishDate: '2025-01-12',
@@ -68,7 +68,7 @@ export const blogPosts: BlogPost[] = [
 	},
 	{
 		slug: 'automated-seo-audits-cicd',
-		title: 'How to Set Up Automated SEO Audits in Your CI/CD Pipeline',
+		title: 'Automated SEO Audits in CI/CD Pipelines',
 		description: 'Automate your technical SEO audits by integrating crawlers into your CI/CD workflow. Catch issues before they go live and maintain SEO quality at scale.',
 		author: 'Barracuda Team',
 		publishDate: '2025-01-10',
@@ -79,7 +79,7 @@ export const blogPosts: BlogPost[] = [
 	},
 	{
 		slug: 'duplicate-meta-tags-fix',
-		title: 'How to Fix Duplicate Meta Tags at Scale (And Why It Matters)',
+		title: 'How to Fix Duplicate Meta Tags at Scale',
 		description: 'Duplicate meta tags confuse search engines and hurt rankings. Learn how to identify and fix duplicate title tags and meta descriptions across your entire site.',
 		author: 'Barracuda Team',
 		publishDate: '2025-01-08',
@@ -90,7 +90,7 @@ export const blogPosts: BlogPost[] = [
 	},
 	{
 		slug: 'redirect-chains-seo-killer',
-		title: 'Redirect Chains: The Hidden SEO Killer & How to Fix Them',
+		title: 'Redirect Chains: The Hidden SEO Killer',
 		description: 'Redirect chains slow down pages and waste crawl budget. Learn how to identify and consolidate redirect chains for better site speed and SEO performance.',
 		author: 'Barracuda Team',
 		publishDate: '2025-01-05',
@@ -101,7 +101,7 @@ export const blogPosts: BlogPost[] = [
 	},
 	{
 		slug: 'prioritizing-seo-fixes',
-		title: 'Prioritizing SEO Fixes: A Data-Driven Framework',
+		title: 'Prioritizing SEO Fixes: Data-Driven Framework',
 		description: 'Not all SEO issues are created equal. Learn how to prioritize fixes based on impact, effort, and data to maximize your SEO ROI.',
 		author: 'Barracuda Team',
 		publishDate: '2025-01-03',
@@ -112,7 +112,7 @@ export const blogPosts: BlogPost[] = [
 	},
 	{
 		slug: 'audit-large-sites-10000-pages',
-		title: 'How to Audit 10,000+ Pages: The Enterprise SEO Guide',
+		title: 'How to Audit 10,000+ Pages: Enterprise Guide',
 		description: 'Auditing large websites requires different strategies than small sites. Learn how to crawl, analyze, and fix issues at scale for enterprise-level SEO.',
 		author: 'Barracuda Team',
 		publishDate: '2025-01-01',
@@ -123,7 +123,7 @@ export const blogPosts: BlogPost[] = [
 	},
 	{
 		slug: 'visualize-site-structure-link-graph',
-		title: 'How to Visualize Site Structure: Link Graph Analysis',
+		title: 'How to Visualize Site Structure: Link Graphs',
 		description: 'Understanding your site\'s internal linking structure helps identify orphaned pages, improve crawlability, and optimize information architecture.',
 		author: 'Barracuda Team',
 		publishDate: '2024-12-29',
@@ -134,7 +134,7 @@ export const blogPosts: BlogPost[] = [
 	},
 	{
 		slug: 'seo-audit-checklist',
-		title: 'The Technical SEO Audit Checklist for Agencies',
+		title: 'Technical SEO Audit Checklist for Agencies',
 		description: 'A comprehensive checklist covering all aspects of technical SEO audits. Use this framework to ensure nothing falls through the cracks.',
 		author: 'Barracuda Team',
 		publishDate: '2024-12-27',
@@ -145,7 +145,7 @@ export const blogPosts: BlogPost[] = [
 	},
 	{
 		slug: 'ecommerce-seo-audit',
-		title: 'How to Audit E-commerce Sites: Common Issues & Fixes',
+		title: 'How to Audit E-commerce Sites: Issues & Fixes',
 		description: 'E-commerce sites have unique SEO challenges. Learn how to audit product pages, category structures, and technical issues specific to online stores.',
 		author: 'Barracuda Team',
 		publishDate: '2024-12-25',

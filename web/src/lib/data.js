@@ -880,11 +880,84 @@ export async function triggerProjectGA4Sync(projectId, options = {}) {
   });
 }
 
+export async function fetchProjectGA4Dimensions(projectId, type, params = {}) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  if (!type) return { data: null, error: new Error('type is required') };
+
+  const searchParams = new URLSearchParams({ type });
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      searchParams.set(key, value.toString());
+    }
+  });
+
+  return authorizedJSON(`/api/v1/projects/${projectId}/ga4/dimensions?${searchParams.toString()}`);
+}
+
 export async function disconnectProjectGA4(projectId) {
   if (!projectId) return { data: null, error: new Error('projectId is required') };
   return authorizedJSON(`/api/v1/projects/${projectId}/ga4/disconnect`, {
     method: 'POST'
   });
+}
+
+// Clarity API functions
+export async function connectClarity(projectId, clarityProjectId, apiToken) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  return authorizedJSON(`/api/v1/projects/${projectId}/clarity/connect`, {
+    method: 'POST',
+    body: { clarity_project_id: clarityProjectId, api_token: apiToken }
+  });
+}
+
+export async function disconnectClarity(projectId) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  return authorizedJSON(`/api/v1/projects/${projectId}/clarity/disconnect`, {
+    method: 'POST'
+  });
+}
+
+export async function fetchProjectClarityStatus(projectId) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  return authorizedJSON(`/api/v1/projects/${projectId}/clarity/status`);
+}
+
+export async function triggerProjectClaritySync(projectId, options = {}) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  return authorizedJSON(`/api/v1/projects/${projectId}/clarity/trigger-sync`, {
+    method: 'POST',
+    body: options
+  });
+}
+
+export async function fetchProjectClarityDimensions(projectId, type, params = {}) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  if (!type) return { data: null, error: new Error('type is required') };
+
+  const searchParams = new URLSearchParams({ type });
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      searchParams.set(key, value.toString());
+    }
+  });
+
+  return authorizedJSON(`/api/v1/projects/${projectId}/clarity/dimensions?${searchParams.toString()}`);
+}
+
+export async function fetchClarityStatus() {
+  return authorizedJSON('/api/v1/integrations/clarity/status');
+}
+
+export async function disconnectClarityIntegration() {
+  return authorizedJSON('/api/v1/integrations/clarity/disconnect', {
+    method: 'POST'
+  });
+}
+
+// Unified Insights
+export async function fetchProjectUnifiedInsights(projectId) {
+  if (!projectId) return { data: null, error: new Error('projectId is required') };
+  return authorizedJSON(`/api/v1/projects/${projectId}/insights`);
 }
 
 // Global GSC integrations

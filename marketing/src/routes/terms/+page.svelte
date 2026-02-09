@@ -4,7 +4,7 @@
 
 	const meta = getMetaTags({
 		title: 'Terms of Use & Service Agreement',
-		description: 'Read the Barracuda SEO Terms of Use. Understand your rights and responsibilities when using our website crawler, auditing tools, and team collaboration features.'
+		description: 'Barracuda SEO Terms of Use. Understand your rights and responsibilities when using our website crawler, auditing tools, and team collaboration features.'
 	});
 
 	const structuredData = getBreadcrumbSchema([

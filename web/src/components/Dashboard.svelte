@@ -8,10 +8,13 @@
   import RecommendationsPanel from './RecommendationsPanel.svelte';
   import GSCDashboardPanel from './GSCDashboardPanel.svelte';
   import GSCKeywordsPanel from './GSCKeywordsPanel.svelte';
+  import GA4DashboardPanel from './GA4DashboardPanel.svelte';
+  import ClarityDashboardPanel from './ClarityDashboardPanel.svelte';
+  import UnifiedInsightsPanel from './UnifiedInsightsPanel.svelte';
   import CrawlSummary from './AI/CrawlSummary.svelte';
   import PublicReportGenerator from './PublicReportGenerator.svelte';
   import Logo from './Logo.svelte';
-  import { fetchProjects, fetchProjectGSCStatus, fetchProjectGSCDimensions, triggerProjectGSCSync, fetchCrawls } from '../lib/data.js';
+  import { fetchProjects, fetchProjectGSCStatus, fetchProjectGSCDimensions, triggerProjectGSCSync, fetchProjectGA4Status, triggerProjectGA4Sync, fetchProjectClarityStatus, triggerProjectClaritySync, fetchCrawls } from '../lib/data.js';
   import { buildEnrichedIssues } from '../lib/gsc.js';
   import { userProfile, isProOrTeam } from '../lib/subscription.js';
   import { 
@@ -101,6 +104,16 @@
   let gscError = null;
   let gscPageRows = [];
   let gscInitializedProjectId = null;
+  let ga4Status = null;
+  let ga4Loading = false;
+  let ga4Refreshing = false;
+  let ga4Error = null;
+  let ga4InitializedProjectId = null;
+  let clarityStatus = null;
+  let clarityLoading = false;
+  let clarityRefreshing = false;
+  let clarityError = null;
+  let clarityInitializedProjectId = null;
   let recentCrawls = [];
   let crawlsLoading = false;
 
@@ -130,7 +143,7 @@
       const params = new URLSearchParams();
       params.set('tab', tab);
       push(`/project/${projectId}/crawl/${crawlId}?${params.toString()}`);
-    } else if (projectId && (tab === 'gsc-dashboard' || tab === 'gsc-keywords')) {
+    } else if (projectId && (tab === 'gsc-dashboard' || tab === 'gsc-keywords' || tab === 'ga4-dashboard' || tab === 'clarity-dashboard' || tab === 'insights')) {
       // GSC tabs work at project level, redirect to first crawl or project view
       const params = new URLSearchParams();
       params.set('tab', tab);
@@ -205,6 +218,80 @@
   $: if (projectId && projectId !== gscInitializedProjectId) {
     gscInitializedProjectId = projectId;
     loadGSCData(projectId);
+  }
+
+  async function loadGA4Data(targetProjectId) {
+    if (!targetProjectId) return;
+    ga4Loading = true;
+    ga4Error = null;
+    ga4Status = null;
+
+    const statusResult = await fetchProjectGA4Status(targetProjectId);
+    if (statusResult.error) {
+      ga4Error = statusResult.error.message || 'Unable to load Google Analytics 4 status.';
+      ga4Loading = false;
+      return;
+    }
+    ga4Status = statusResult.data;
+    ga4Loading = false;
+  }
+
+  async function refreshGA4Data() {
+    if (!projectId || ga4Refreshing) return;
+    ga4Refreshing = true;
+    ga4Error = null;
+    ga4Loading = true;
+    const syncResult = await triggerProjectGA4Sync(projectId, { lookback_days: 30 });
+    if (syncResult.error) {
+      ga4Error = syncResult.error.message || 'Failed to refresh Google Analytics 4 data.';
+      ga4Refreshing = false;
+      ga4Loading = false;
+      return;
+    }
+    await loadGA4Data(projectId);
+    ga4Refreshing = false;
+  }
+
+  $: if (projectId && projectId !== ga4InitializedProjectId) {
+    ga4InitializedProjectId = projectId;
+    loadGA4Data(projectId);
+  }
+
+  async function loadClarityData(targetProjectId) {
+    if (!targetProjectId) return;
+    clarityLoading = true;
+    clarityError = null;
+    clarityStatus = null;
+
+    const statusResult = await fetchProjectClarityStatus(targetProjectId);
+    if (statusResult.error) {
+      clarityError = statusResult.error.message || 'Unable to load Microsoft Clarity status.';
+      clarityLoading = false;
+      return;
+    }
+    clarityStatus = statusResult.data;
+    clarityLoading = false;
+  }
+
+  async function refreshClarityData() {
+    if (!projectId || clarityRefreshing) return;
+    clarityRefreshing = true;
+    clarityError = null;
+    clarityLoading = true;
+    const syncResult = await triggerProjectClaritySync(projectId, { num_days: 3 });
+    if (syncResult.error) {
+      clarityError = syncResult.error.message || 'Failed to sync Microsoft Clarity data.';
+      clarityRefreshing = false;
+      clarityLoading = false;
+      return;
+    }
+    await loadClarityData(projectId);
+    clarityRefreshing = false;
+  }
+
+  $: if (projectId && projectId !== clarityInitializedProjectId) {
+    clarityInitializedProjectId = projectId;
+    loadClarityData(projectId);
   }
 
   $: cachedEnrichedIssues = buildEnrichedIssues(summary?.issues || [], gscPageRows);
@@ -339,26 +426,65 @@
       {/if}
       
       <!-- Google Search Console Section (only if connected) -->
-      {#if projectId && gscStatus?.integration?.property_url}
+      {#if projectId && (gscStatus?.integration?.property_url || ga4Status?.integration?.property_id || clarityStatus?.integration?.connected)}
+        <li class="hidden lg:block border-b border-base-200 my-2 pointer-events-none"></li>
+        {#if gscStatus?.integration?.property_url}
+          <li>
+            <button
+              type="button"
+              class:active={activeTab === 'gsc-dashboard'}
+              on:click={() => navigateToTab('gsc-dashboard')}
+            >
+              <BarChart class="w-5 h-5" />
+              GSC Dashboard
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              class:active={activeTab === 'gsc-keywords'}
+              on:click={() => navigateToTab('gsc-keywords')}
+            >
+              <Search class="w-5 h-5" />
+              GSC Keywords
+            </button>
+          </li>
+        {/if}
+        {#if ga4Status?.integration?.property_id}
+          <li>
+            <button
+              type="button"
+              class:active={activeTab === 'ga4-dashboard'}
+              on:click={() => navigateToTab('ga4-dashboard')}
+            >
+              <BarChart class="w-5 h-5" />
+              GA4 Dashboard
+            </button>
+          </li>
+        {/if}
+        {#if clarityStatus?.integration?.connected}
+          <li>
+            <button
+              type="button"
+              class:active={activeTab === 'clarity-dashboard'}
+              on:click={() => navigateToTab('clarity-dashboard')}
+            >
+              <AlertTriangle class="w-5 h-5" />
+              Clarity
+            </button>
+          </li>
+        {/if}
+      {/if}
+      {#if projectId}
         <li class="hidden lg:block border-b border-base-200 my-2 pointer-events-none"></li>
         <li>
-          <button 
-            type="button" 
-            class:active={activeTab === 'gsc-dashboard'}
-            on:click={() => navigateToTab('gsc-dashboard')}
+          <button
+            type="button"
+            class:active={activeTab === 'insights'}
+            on:click={() => navigateToTab('insights')}
           >
-            <BarChart class="w-5 h-5" />
-            GSC Dashboard
-          </button>
-        </li>
-        <li>
-          <button 
-            type="button" 
-            class:active={activeTab === 'gsc-keywords'}
-            on:click={() => navigateToTab('gsc-keywords')}
-          >
-            <Search class="w-5 h-5" />
-            GSC Keywords
+            <Lightbulb class="w-5 h-5" />
+            Insights
           </button>
         </li>
       {/if}
@@ -508,12 +634,32 @@
       onRefresh={refreshGSCData}
     />
   {:else if activeTab === 'gsc-keywords'}
-    <GSCKeywordsPanel 
+    <GSCKeywordsPanel
       {projectId}
       {gscStatus}
       {gscLoading}
       {gscError}
     />
+  {:else if activeTab === 'ga4-dashboard'}
+    <GA4DashboardPanel
+      {projectId}
+      {ga4Status}
+      {ga4Loading}
+      {ga4Refreshing}
+      {ga4Error}
+      onRefresh={refreshGA4Data}
+    />
+  {:else if activeTab === 'clarity-dashboard'}
+    <ClarityDashboardPanel
+      {projectId}
+      {clarityStatus}
+      {clarityLoading}
+      {clarityRefreshing}
+      {clarityError}
+      onRefresh={refreshClarityData}
+    />
+  {:else if activeTab === 'insights'}
+    <UnifiedInsightsPanel {projectId} />
   {/if}
   </main>
 </div>

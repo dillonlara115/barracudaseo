@@ -19,6 +19,13 @@ type EnrichedIssue struct {
 	RecommendationReason string                 `json:"recommendation_reason"`
 }
 
+// DimensionRow represents a single row of GA4 data with a dimension and metrics
+type DimensionRow struct {
+	RowType        string             `json:"row_type"`
+	DimensionValue string             `json:"dimension_value"`
+	Metrics        map[string]float64 `json:"metrics"`
+}
+
 // FetchPerformanceData fetches GA4 performance data for pages
 func FetchPerformanceData(userID string, propertyID string, startDate, endDate time.Time) (map[string]*models.GA4Performance, error) {
 	service, err := GetService(userID)
@@ -90,6 +97,76 @@ func FetchPerformanceData(userID string, propertyID string, startDate, endDate t
 	}
 
 	return performanceMap, nil
+}
+
+// FetchMultiDimensionData fetches GA4 data across multiple dimensions (source, medium, device, country, date)
+func FetchMultiDimensionData(userID string, propertyID string, startDate, endDate time.Time) (map[string][]DimensionRow, error) {
+	service, err := GetService(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	dateRange := &analyticsdata.DateRange{
+		StartDate: startDate.Format("2006-01-02"),
+		EndDate:   endDate.Format("2006-01-02"),
+	}
+
+	metrics := []*analyticsdata.Metric{
+		{Name: "sessions"},
+		{Name: "totalUsers"},
+		{Name: "screenPageViews"},
+		{Name: "bounceRate"},
+		{Name: "averageSessionDuration"},
+		{Name: "conversions"},
+	}
+
+	dimensions := map[string]string{
+		"source":  "sessionSource",
+		"medium":  "sessionMedium",
+		"device":  "deviceCategory",
+		"country": "country",
+		"date":    "date",
+	}
+
+	result := make(map[string][]DimensionRow)
+
+	for rowType, dimName := range dimensions {
+		request := &analyticsdata.RunReportRequest{
+			DateRanges: []*analyticsdata.DateRange{dateRange},
+			Dimensions: []*analyticsdata.Dimension{{Name: dimName}},
+			Metrics:    metrics,
+			Limit:      10000,
+		}
+
+		response, err := service.Properties.RunReport(fmt.Sprintf("properties/%s", propertyID), request).Do()
+		if err != nil {
+			return nil, fmt.Errorf("failed to run GA4 %s report: %w", rowType, err)
+		}
+
+		var rows []DimensionRow
+		for _, row := range response.Rows {
+			if len(row.DimensionValues) == 0 || len(row.MetricValues) == 0 {
+				continue
+			}
+
+			dr := DimensionRow{
+				RowType:        rowType,
+				DimensionValue: row.DimensionValues[0].Value,
+				Metrics: map[string]float64{
+					"sessions":             float64(parseMetricValue(row.MetricValues[0].Value)),
+					"users":                float64(parseMetricValue(row.MetricValues[1].Value)),
+					"page_views":           float64(parseMetricValue(row.MetricValues[2].Value)),
+					"bounce_rate":          parseFloatValue(row.MetricValues[3].Value),
+					"avg_session_duration": parseFloatValue(row.MetricValues[4].Value),
+					"conversions":          float64(parseMetricValue(row.MetricValues[5].Value)),
+				},
+			}
+			rows = append(rows, dr)
+		}
+		result[rowType] = rows
+	}
+
+	return result, nil
 }
 
 // normalizeURL normalizes URLs to match crawl results

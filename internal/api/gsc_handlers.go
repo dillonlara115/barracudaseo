@@ -623,7 +623,11 @@ func (s *Server) handleIntegrationsGSCStatus(w http.ResponseWriter, r *http.Requ
 
 	cfg, _, err := s.getGSCIntegration(userID)
 	if err != nil {
-		s.respondError(w, http.StatusInternalServerError, "Failed to load integration")
+		s.logger.Warn("Failed to load GSC integration status", zap.Error(err), zap.String("user_id", userID))
+		// Return disconnected rather than 500 — table may not exist or other transient issue
+		s.respondJSON(w, http.StatusOK, map[string]interface{}{
+			"connected": false,
+		})
 		return
 	}
 
