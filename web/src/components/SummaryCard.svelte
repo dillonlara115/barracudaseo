@@ -84,7 +84,7 @@
       </svg>
     </div>
     <div class="stat-title">Total Pages</div>
-    <div class="stat-value text-primary">{summary.total_pages}</div>
+    <div class="stat-value text-primary">{summary.page_count || summary.indexed_pages || summary.total_pages || 0}</div>
   </div>
 
   <div 

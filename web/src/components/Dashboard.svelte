@@ -574,7 +574,7 @@
                             {crawl.status}
                           </span>
                         </td>
-                        <td>{crawl.total_pages || 0}</td>
+                        <td>{crawl.page_count || crawl.indexed_pages || crawl.total_pages || 0}</td>
                         <td>
                           {#if crawl.total_issues > 0}
                             <span class="text-error font-semibold">{crawl.total_issues}</span>

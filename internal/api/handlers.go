@@ -272,14 +272,17 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 			issueData["page_id"] = pageID
 		} else {
 			// If page_id not found, log a warning but continue
-			// The URL will be stored in the value field as a fallback if value is empty
+			// Store URL in value field for fallback lookup
 			s.logger.Debug("Could not find page_id for issue URL",
 				zap.String("url", issue.URL),
 				zap.String("normalized_url", normalizedIssueURL),
 				zap.String("type", string(issue.Type)))
-			// Store URL in value field if value is empty (as fallback for lookup)
+			// Store URL in value field if value is empty, otherwise append it
 			if issue.Value == "" {
 				issueData["value"] = issue.URL
+			} else if !strings.Contains(issue.Value, issue.URL) {
+				// Append URL to value if not already present (for fallback lookup)
+				issueData["value"] = issue.Value + " | " + issue.URL
 			}
 		}
 		issues = append(issues, issueData)
@@ -749,6 +752,47 @@ func (s *Server) handleListProjectCrawls(w http.ResponseWriter, r *http.Request,
 		s.logger.Error("Failed to parse crawls data", zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, "Failed to parse crawls")
 		return
+	}
+
+	// Enrich each crawl with real-time page count from pages table
+	for i := range crawls {
+		crawlID, ok := crawls[i]["id"].(string)
+		if !ok || crawlID == "" {
+			continue
+		}
+
+		// Get page count from pages table
+		var pages []map[string]interface{}
+		pageData, _, err := s.serviceRole.From("pages").
+			Select("id", "", false).
+			Eq("crawl_id", crawlID).
+			Execute()
+		if err == nil {
+			if err := json.Unmarshal(pageData, &pages); err == nil {
+				pagesCount := len(pages)
+				// Use page_count if available, otherwise use indexed_pages, otherwise use total_pages
+				originalTotalPages := 0
+				if tp, ok := crawls[i]["total_pages"]; ok {
+					switch v := tp.(type) {
+					case float64:
+						originalTotalPages = int(v)
+					case int:
+						originalTotalPages = v
+					case int32:
+						originalTotalPages = int(v)
+					case int64:
+						originalTotalPages = int(v)
+					}
+				}
+				// Use whichever count is greater to preserve in-memory progress updates
+				effectiveCount := originalTotalPages
+				if pagesCount > effectiveCount {
+					effectiveCount = pagesCount
+				}
+				crawls[i]["page_count"] = effectiveCount
+				crawls[i]["indexed_pages"] = pagesCount
+			}
+		}
 	}
 
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{
@@ -1304,9 +1348,12 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 				zap.String("type", string(issue.Type)),
 				zap.String("crawl_id", crawlID),
 				zap.Int("pageURLToID_map_size", len(pageURLToID)))
-			// Store URL in value field as fallback if value is empty
+			// Store URL in value field as fallback if value is empty, otherwise append it
 			if issue.Value == "" {
 				issueData["value"] = issue.URL
+			} else if !strings.Contains(issue.Value, issue.URL) {
+				// Append URL to value if not already present (for fallback lookup)
+				issueData["value"] = issue.Value + " | " + issue.URL
 			}
 		}
 		issues = append(issues, issueData)
@@ -2363,6 +2410,65 @@ func (s *Server) handleCrawlIssues(w http.ResponseWriter, r *http.Request, crawl
 						// Even if page not found, use the URL from value
 						issues[i]["url"] = value
 						enrichedCount++
+					}
+				} else {
+					// Value doesn't look like a URL, but check if it contains a URL pattern
+					// Some issue values might contain URLs mixed with other text (e.g., "value | https://example.com")
+					if strings.Contains(value, "http://") || strings.Contains(value, "https://") {
+						// Try splitting by " | " separator (used when URL is appended)
+						if strings.Contains(value, " | ") {
+							parts := strings.Split(value, " | ")
+							for _, part := range parts {
+								part = strings.TrimSpace(part)
+								if strings.HasPrefix(part, "http://") || strings.HasPrefix(part, "https://") {
+									url := strings.TrimRight(part, ".,;:!)")
+									if pageID, found := urlToPageIDMap[url]; found {
+										issues[i]["url"] = pageURLMap[pageID]
+										issues[i]["page_id"] = float64(pageID)
+										enrichedCount++
+										break
+									} else if normalizedURL, err := utils.NormalizeURL(url); err == nil {
+										if pageID, found := urlToPageIDMap[normalizedURL]; found {
+											issues[i]["url"] = pageURLMap[pageID]
+											issues[i]["page_id"] = float64(pageID)
+											enrichedCount++
+											break
+										}
+									} else {
+										// Use the URL even if page not found
+										issues[i]["url"] = url
+										enrichedCount++
+										break
+									}
+								}
+							}
+						} else {
+							// No separator, try extracting URL from text
+							parts := strings.Fields(value)
+							for _, part := range parts {
+								if strings.HasPrefix(part, "http://") || strings.HasPrefix(part, "https://") {
+									url := strings.TrimRight(part, ".,;:!)")
+									if pageID, found := urlToPageIDMap[url]; found {
+										issues[i]["url"] = pageURLMap[pageID]
+										issues[i]["page_id"] = float64(pageID)
+										enrichedCount++
+										break
+									} else if normalizedURL, err := utils.NormalizeURL(url); err == nil {
+										if pageID, found := urlToPageIDMap[normalizedURL]; found {
+											issues[i]["url"] = pageURLMap[pageID]
+											issues[i]["page_id"] = float64(pageID)
+											enrichedCount++
+											break
+										}
+									} else {
+										// Use the URL even if page not found
+										issues[i]["url"] = url
+										enrichedCount++
+										break
+									}
+								}
+							}
+						}
 					}
 				}
 			}
