@@ -42,9 +42,14 @@ results.*
 *.csv
 *.json
 !marketing/package.json
+!marketing/package-lock.json
 !marketing/tsconfig.json
 !marketing/svelte.config.mjs
 !marketing/vite.config.ts
+!web/package-lock.json
+!web/package.json
+!package-lock.json
+!package.json
 !tsconfig.json
 !svelte.config.mjs
 !vite.config.ts

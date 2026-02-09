@@ -1,0 +1,26 @@
+{
+  "name": "cli-scanner",
+  "version": "1.0.0",
+  "description": "A fast, lightweight SEO website crawler CLI tool inspired by Screaming Frog.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dillonlara115/cli-scanner.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/dillonlara115/cli-scanner/issues"
+  },
+  "homepage": "https://github.com/dillonlara115/cli-scanner#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.58.0",
+    "@types/node": "^25.0.10"
+  }
+}
