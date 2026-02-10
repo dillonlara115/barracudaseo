@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -57,8 +58,9 @@ func (s *Server) handleProjectClarityConnect(w http.ResponseWriter, r *http.Requ
 	}
 
 	var req struct {
-		ClarityProjectID string `json:"clarity_project_id"`
-		APIToken         string `json:"api_token"`
+		ClarityProjectID    string `json:"clarity_project_id"`
+		APIToken            string `json:"api_token"`
+		ClarityProjectLabel string `json:"clarity_project_label"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -81,21 +83,17 @@ func (s *Server) handleProjectClarityConnect(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	cfg := &clarityIntegrationConfig{
-		ClarityProjectID: req.ClarityProjectID,
-		APIToken:         req.APIToken,
+	// Store credentials in project settings (per-project, supports different Clarity accounts)
+	updates := map[string]interface{}{
+		"clarity_project_id": req.ClarityProjectID,
+		"clarity_api_token":  req.APIToken,
+	}
+	if req.ClarityProjectLabel != "" {
+		updates["clarity_project_label"] = req.ClarityProjectLabel
 	}
 
-	if err := s.saveClarityIntegration(userID, cfg); err != nil {
+	if err := s.updateProjectSettings(projectID, updates); err != nil {
 		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to save integration: %v", err))
-		return
-	}
-
-	if err := s.updateProjectSettings(projectID, map[string]interface{}{
-		"clarity_project_id":          req.ClarityProjectID,
-		"clarity_integration_user_id": userID,
-	}); err != nil {
-		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to update project settings: %v", err))
 		return
 	}
 
@@ -103,10 +101,14 @@ func (s *Server) handleProjectClarityConnect(w http.ResponseWriter, r *http.Requ
 		s.logger.Warn("Failed to ensure clarity sync state", zap.Error(err))
 	}
 
-	s.respondJSON(w, http.StatusOK, map[string]string{
+	resp := map[string]interface{}{
 		"status":             "connected",
 		"clarity_project_id": req.ClarityProjectID,
-	})
+	}
+	if req.ClarityProjectLabel != "" {
+		resp["clarity_project_label"] = req.ClarityProjectLabel
+	}
+	s.respondJSON(w, http.StatusOK, resp)
 }
 
 func (s *Server) handleProjectClarityDisconnect(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -116,8 +118,9 @@ func (s *Server) handleProjectClarityDisconnect(w http.ResponseWriter, r *http.R
 	}
 
 	if err := s.updateProjectSettings(projectID, map[string]interface{}{
-		"clarity_project_id":          nil,
-		"clarity_integration_user_id": nil,
+		"clarity_project_id":    nil,
+		"clarity_api_token":     nil,
+		"clarity_project_label": nil,
 	}); err != nil {
 		s.logger.Error("Failed to update project settings", zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, "Failed to disconnect")
@@ -151,28 +154,15 @@ func (s *Server) handleProjectClarityTriggerSync(w http.ResponseWriter, r *http.
 		req.Period = fmt.Sprintf("last_%d_days", req.NumDays)
 	}
 
-	settings, err := s.loadProjectSettings(projectID)
+	cfg, err := s.getClarityConfigFromProject(projectID)
 	if err != nil {
 		s.respondError(w, http.StatusInternalServerError, "Failed to load project settings")
 		return
 	}
-	clarityProjectID, _ := settings["clarity_project_id"].(string)
-	integrationUserID, _ := settings["clarity_integration_user_id"].(string)
-	if clarityProjectID == "" {
+	if cfg == nil || cfg.ClarityProjectID == "" || cfg.APIToken == "" {
 		s.respondError(w, http.StatusBadRequest, "Clarity not configured for this project")
 		return
 	}
-	if integrationUserID == "" {
-		s.respondError(w, http.StatusBadRequest, "No connected Clarity account for this project")
-		return
-	}
-
-	cfg, _, err := s.getClarityIntegration(integrationUserID)
-	if err != nil || cfg == nil {
-		s.respondError(w, http.StatusBadRequest, "Clarity integration not found")
-		return
-	}
-	cfg.ClarityProjectID = clarityProjectID
 
 	if err := s.updateClaritySyncState(projectID, "running", nil, nil); err != nil {
 		s.logger.Warn("Failed to mark sync running", zap.Error(err))
@@ -180,10 +170,22 @@ func (s *Server) handleProjectClarityTriggerSync(w http.ResponseWriter, r *http.
 
 	if err := s.syncProjectClarityData(projectID, userID, cfg, req.NumDays, req.Period); err != nil {
 		s.logger.Error("Clarity sync failed", zap.Error(err))
-		_ = s.updateClaritySyncState(projectID, "error", nil, map[string]interface{}{
+		errorLog := map[string]interface{}{
 			"message": err.Error(),
 			"time":    time.Now().UTC().Format(time.RFC3339),
-		})
+		}
+		var rl *clarity.RateLimitError
+		if errors.As(err, &rl) {
+			errorLog["rate_limited"] = true
+			errorLog["retry_after"] = rl.RetryAfter.Format(time.RFC3339)
+			_ = s.updateClaritySyncState(projectID, "error", nil, errorLog)
+			s.respondJSON(w, http.StatusTooManyRequests, map[string]interface{}{
+				"error":       fmt.Sprintf("Clarity rate limit reached. Try again after %s.", rl.RetryAfter.Format("Mon Jan 2, 2006")),
+				"retry_after": rl.RetryAfter.Format(time.RFC3339),
+			})
+			return
+		}
+		_ = s.updateClaritySyncState(projectID, "error", nil, errorLog)
 		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Sync failed: %v", err))
 		return
 	}
@@ -205,20 +207,18 @@ func (s *Server) handleProjectClarityStatus(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	settings, err := s.loadProjectSettings(projectID)
+	cfg, err := s.getClarityConfigFromProject(projectID)
 	if err != nil {
 		s.respondError(w, http.StatusInternalServerError, "Failed to load project settings")
 		return
 	}
-	clarityProjectID, _ := settings["clarity_project_id"].(string)
-	integrationUserID, _ := settings["clarity_integration_user_id"].(string)
 
-	connected := false
-	if integrationUserID != "" {
-		cfg, _, err := s.getClarityIntegration(integrationUserID)
-		if err == nil && cfg != nil && cfg.APIToken != "" {
-			connected = true
-		}
+	connected := cfg != nil && cfg.ClarityProjectID != "" && cfg.APIToken != ""
+	clarityProjectID := ""
+	clarityProjectLabel := ""
+	if cfg != nil {
+		clarityProjectID = cfg.ClarityProjectID
+		clarityProjectLabel = cfg.ClarityProjectLabel
 	}
 
 	state, err := s.ensureClaritySyncState(projectID, clarityProjectID)
@@ -234,14 +234,18 @@ func (s *Server) handleProjectClarityStatus(w http.ResponseWriter, r *http.Reque
 		summary = nil
 	}
 
+	integrationData := map[string]interface{}{
+		"clarity_project_id": clarityProjectID,
+		"connected":          connected,
+	}
+	if clarityProjectLabel != "" {
+		integrationData["clarity_project_label"] = clarityProjectLabel
+	}
+
 	response := map[string]interface{}{
-		"integration": map[string]interface{}{
-			"clarity_project_id":  clarityProjectID,
-			"integration_user_id": integrationUserID,
-			"connected":           connected,
-		},
-		"sync_state": state,
-		"summary":    summary,
+		"integration": integrationData,
+		"sync_state":  state,
+		"summary":     summary,
 	}
 	s.respondJSON(w, http.StatusOK, response)
 }
@@ -389,33 +393,18 @@ func (s *Server) handleClarityGlobalSync(w http.ResponseWriter, r *http.Request)
 			break
 		}
 		projectID, _ := state["project_id"].(string)
-		clarityProjectID, _ := state["clarity_project_id"].(string)
-		if projectID == "" || clarityProjectID == "" {
+		if projectID == "" {
 			continue
 		}
 
-		// Load project settings to get integration user
-		settings, err := s.loadProjectSettings(projectID)
-		if err != nil {
-			s.logger.Warn("Clarity cron: failed to load project settings", zap.String("project_id", projectID), zap.Error(err))
-			errors++
+		cfg, err := s.getClarityConfigFromProject(projectID)
+		if err != nil || cfg == nil || cfg.APIToken == "" || cfg.ClarityProjectID == "" {
 			continue
 		}
-
-		integrationUserID, _ := settings["clarity_integration_user_id"].(string)
-		if integrationUserID == "" {
-			continue
-		}
-
-		cfg, _, err := s.getClarityIntegration(integrationUserID)
-		if err != nil || cfg == nil || cfg.APIToken == "" {
-			continue
-		}
-		cfg.ClarityProjectID = clarityProjectID
 
 		_ = s.updateClaritySyncState(projectID, "running", nil, nil)
 
-		if err := s.syncProjectClarityData(projectID, integrationUserID, cfg, 3, "last_3_days"); err != nil {
+		if err := s.syncProjectClarityData(projectID, "", cfg, 3, "last_3_days"); err != nil {
 			s.logger.Error("Clarity cron sync failed", zap.String("project_id", projectID), zap.Error(err))
 			_ = s.updateClaritySyncState(projectID, "error", nil, map[string]interface{}{
 				"message": err.Error(),

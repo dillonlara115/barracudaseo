@@ -902,11 +902,15 @@ export async function disconnectProjectGA4(projectId) {
 }
 
 // Clarity API functions
-export async function connectClarity(projectId, clarityProjectId, apiToken) {
+export async function connectClarity(projectId, clarityProjectId, apiToken, clarityProjectLabel = null) {
   if (!projectId) return { data: null, error: new Error('projectId is required') };
+  const body = { clarity_project_id: clarityProjectId, api_token: apiToken };
+  if (clarityProjectLabel && clarityProjectLabel.trim()) {
+    body.clarity_project_label = clarityProjectLabel.trim();
+  }
   return authorizedJSON(`/api/v1/projects/${projectId}/clarity/connect`, {
     method: 'POST',
-    body: { clarity_project_id: clarityProjectId, api_token: apiToken }
+    body
   });
 }
 

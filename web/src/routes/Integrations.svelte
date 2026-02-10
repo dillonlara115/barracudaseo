@@ -568,7 +568,7 @@
               Microsoft Clarity
             </h2>
             <p class="text-sm text-base-content/70 mt-1">
-              Connect Microsoft Clarity for UX engagement metrics like rage clicks, dead clicks, and scroll depth. Configure per project in Project Settings.
+              Connect Clarity for UX engagement metrics—rage clicks, dead clicks, scroll depth—to prioritize SEO fixes. Each project can connect to a different Clarity project or account.
             </p>
           </div>
           <div class="badge badge-ghost badge-lg">Per Project</div>
@@ -577,7 +577,12 @@
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
-          <span>Clarity uses API tokens (no OAuth). Enter your Clarity Project ID and API Token in each project's Settings page. Data covers the last 1-3 days with a 10 requests/project/day API limit.</span>
+          <div>
+            <p class="font-medium mb-1">Configure in Project Settings</p>
+            <p class="text-sm">
+              Clarity uses per-project API tokens (no OAuth). In each project's Settings, add your Clarity Project ID and API Token from <strong>Settings → Data Export</strong> in the Clarity dashboard. Data covers the last 1–3 days with a 10 requests/project/day limit.
+            </p>
+          </div>
         </div>
       </div>
     </div>

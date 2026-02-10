@@ -1,8 +1,10 @@
 <script>
 	import { onMount } from 'svelte';
 	import { fetchProjectUnifiedInsights } from '../lib/data.js';
+	import { HelpCircle } from 'lucide-svelte';
 
 	export let projectId = null;
+	export let onNavigateToIssues = null;
 
 	let loading = false;
 	let error = null;
@@ -12,6 +14,7 @@
 	let filterCategory = 'all';
 	let sortBy = 'priority';
 	let expandedPages = {};
+	let copyFeedback = null;
 
 	onMount(() => {
 		if (projectId) {
@@ -41,10 +44,18 @@
 		expandedPages = { ...expandedPages, [url]: !expandedPages[url] };
 	}
 
+	// Normalize raw score to 0-100 for display (percentile within current dataset)
+	function normalizeScore(rawScore, allScores) {
+		if (!allScores?.length || rawScore <= 0) return 0;
+		const maxScore = Math.max(...allScores);
+		if (maxScore <= 0) return 0;
+		return Math.round(Math.min(100, (rawScore / maxScore) * 100));
+	}
+
 	function getPriorityBadge(score) {
-		if (score >= 100) return { class: 'badge-error', label: 'Critical' };
+		if (score >= 80) return { class: 'badge-error', label: 'Critical' };
 		if (score >= 50) return { class: 'badge-warning', label: 'High' };
-		if (score >= 20) return { class: 'badge-info', label: 'Medium' };
+		if (score >= 25) return { class: 'badge-info', label: 'Medium' };
 		return { class: 'badge-ghost', label: 'Low' };
 	}
 
@@ -52,6 +63,75 @@
 		if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
 		if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
 		return Math.round(num).toLocaleString();
+	}
+
+	function getScoreBreakdown(insight) {
+		const parts = [];
+		if (insight.issues?.length) {
+			const e = insight.issue_severity_counts?.error || 0;
+			const w = insight.issue_severity_counts?.warning || 0;
+			const i = insight.issue_severity_counts?.info || 0;
+			const desc = [e && `${e} error${e > 1 ? 's' : ''}`, w && `${w} warning${w > 1 ? 's' : ''}`, i && `${i} info`].filter(Boolean).join(', ');
+			parts.push({ label: 'Crawl issues', value: desc });
+		}
+		if (insight.gsc_metrics) {
+			const imp = insight.gsc_metrics.impressions || 0;
+			const pos = insight.gsc_metrics.position;
+			let desc = formatNumber(imp) + ' impressions';
+			if (pos >= 5 && pos <= 20 && imp > 500) desc += ' (ranking opportunity)';
+			parts.push({ label: 'GSC', value: desc });
+		}
+		if (insight.ga4_metrics) {
+			const s = insight.ga4_metrics.sessions || 0;
+			const br = insight.ga4_metrics.bounce_rate;
+			let desc = formatNumber(s) + ' sessions';
+			if (br > 0.7 && s > 500) desc += ' (high bounce)';
+			parts.push({ label: 'GA4', value: desc });
+		}
+		if (insight.clarity_metrics) {
+			const r = insight.clarity_metrics.rage_click_count || 0;
+			const d = insight.clarity_metrics.dead_click_count || 0;
+			if (r > 0 || d > 0) {
+				parts.push({ label: 'Clarity', value: `${r} rage + ${d} dead clicks` });
+			}
+		}
+		return parts;
+	}
+
+	async function copyUrl(insightUrl) {
+		const fullUrl = insightUrl.startsWith('http') ? insightUrl : `https://${insightUrl}`;
+		try {
+			await navigator.clipboard.writeText(fullUrl);
+			copyFeedback = insightUrl;
+			setTimeout(() => (copyFeedback = null), 1500);
+		} catch {
+			copyFeedback = 'error';
+		}
+	}
+
+	async function copyRationale(insight) {
+		const r = insight.rationale;
+		if (!r) return;
+		const lines = [
+			`Why this page matters: ${r.why_this_matters}`,
+			r.what_informed_priority?.length
+				? `Data informed by: ${r.what_informed_priority.join('; ')}`
+				: null,
+			r.deprioritized_context || null,
+			`Risk of not fixing: ${r.risk_of_not_fixing}`
+		].filter(Boolean);
+		try {
+			await navigator.clipboard.writeText(lines.join('\n\n'));
+			copyFeedback = `rationale-${insight.url}`;
+			setTimeout(() => (copyFeedback = null), 1500);
+		} catch {
+			copyFeedback = 'error';
+		}
+	}
+
+	function handleViewIssues(url) {
+		const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+		if (onNavigateToIssues) onNavigateToIssues(fullUrl);
 	}
 
 	$: filteredInsights = (() => {
@@ -96,6 +176,8 @@
 
 		return filtered;
 	})();
+
+	$: rawScores = filteredInsights.map((i) => i.priority_score || 0);
 </script>
 
 <div class="space-y-6">
@@ -154,10 +236,16 @@
 		</div>
 	{:else if insights.length === 0}
 		<div class="alert alert-info">
-			<span
-				>No insights available. Run a crawl and connect integrations to generate cross-referenced
-				recommendations.</span
-			>
+			<span>
+				No insights available yet.
+				{#if connectedSources.length === 0}
+					Connect GSC, GA4, or Clarity in Project Settings, then sync and run a crawl to generate
+					cross-referenced recommendations.
+				{:else}
+					Sync your connected integrations (GSC/GA4 dashboards) and run a crawl to pull data.
+					Insights combine crawl issues with search traffic and UX metrics.
+				{/if}
+			</span>
 		</div>
 	{:else}
 		<!-- Summary Cards -->
@@ -184,7 +272,15 @@
 			</div>
 			<div class="card bg-base-100 shadow">
 				<div class="card-body">
-					<h2 class="card-title text-sm text-base-content/70">Opportunity Score</h2>
+					<div class="flex items-center gap-1.5">
+						<h2 class="card-title text-sm text-base-content/70">Total Priority</h2>
+						<div
+							class="tooltip tooltip-right"
+							data-tip="Sum of all page priority scores. Higher = more combined impact across your site."
+						>
+							<HelpCircle class="w-4 h-4 text-base-content/50 cursor-help" />
+						</div>
+					</div>
 					<p class="text-3xl font-bold text-primary">
 						{formatNumber(summary.opportunity_score || 0)}
 					</p>
@@ -213,7 +309,9 @@
 		<!-- Insight Cards -->
 		<div class="space-y-3">
 			{#each filteredInsights.slice(0, 50) as insight}
-				{@const priority = getPriorityBadge(insight.priority_score)}
+				{@const rawScore = insight.priority_score || 0}
+				{@const displayScore = normalizeScore(rawScore, rawScores)}
+				{@const priority = getPriorityBadge(displayScore)}
 				<div class="card bg-base-100 shadow">
 					<div class="card-body p-4">
 						<!-- Header Row -->
@@ -221,9 +319,17 @@
 							<div class="flex-1 min-w-0">
 								<div class="flex items-center gap-2 flex-wrap">
 									<span class="badge {priority.class} badge-sm">{priority.label}</span>
-									<span class="text-xs text-base-content/50">
-										Score: {Math.round(insight.priority_score)}
-									</span>
+									<div class="flex items-center gap-1">
+										<span class="text-xs text-base-content/50">
+											{displayScore}/100
+										</span>
+										<div
+											class="tooltip tooltip-right"
+											data-tip="Higher = fix sooner. Based on crawl issues, traffic (GSC/GA4), and UX signals (Clarity)."
+										>
+											<HelpCircle class="w-3.5 h-3.5 text-base-content/40 cursor-help" />
+										</div>
+									</div>
 									{#if insight.issues?.length > 0}
 										<span class="badge badge-error badge-xs badge-outline">
 											{insight.issues.length} issue{insight.issues.length > 1
@@ -290,35 +396,135 @@
 							</button>
 						</div>
 
-						<!-- Expanded Recommendations -->
+						<!-- Expanded Details -->
 						{#if expandedPages[insight.url]}
-							<div class="mt-3 pt-3 border-t border-base-200 space-y-2">
-								{#if insight.recommendations?.length > 0}
-									<h4 class="text-sm font-semibold">Recommendations</h4>
-									<ul class="space-y-1">
-										{#each insight.recommendations as rec}
-											<li class="text-sm text-base-content/80 pl-4 relative">
-												<span class="absolute left-0">-</span>
-												{rec}
-											</li>
-										{/each}
-									</ul>
+							{@const breakdown = getScoreBreakdown(insight)}
+							{@const r = insight.rationale}
+							<div class="mt-3 pt-3 border-t border-base-200 space-y-4">
+								<!-- Decision Rationale (JTBD: explainable priorities) -->
+								{#if r}
+									<div class="p-3 rounded-lg bg-primary/5 border border-primary/20">
+										<div class="flex items-center justify-between gap-2 mb-2">
+											<h4 class="text-sm font-semibold text-primary">
+												Why we're showing this
+											</h4>
+											<button
+												class="btn btn-ghost btn-xs"
+												on:click={() => copyRationale(insight)}
+											>
+												{#if copyFeedback === `rationale-${insight.url}`}
+													Copied!
+												{:else}
+													Copy for client
+												{/if}
+											</button>
+										</div>
+										<div class="space-y-2 text-sm text-base-content/80">
+											<p><strong>Why this matters:</strong> {r.why_this_matters}</p>
+											{#if r.what_informed_priority?.length > 0}
+												<p>
+													<strong>Data that informed priority:</strong>
+													{r.what_informed_priority.join('; ')}
+												</p>
+											{/if}
+											{#if r.deprioritized_context}
+												<p class="text-base-content/70 italic">
+													{r.deprioritized_context}
+												</p>
+											{/if}
+											<p><strong>Risk of not fixing:</strong> {r.risk_of_not_fixing}</p>
+										</div>
+									</div>
 								{/if}
 
+								<!-- Issues with message + recommendation (lead with actionable) -->
 								{#if insight.issues?.length > 0}
-									<h4 class="text-sm font-semibold mt-2">Issues</h4>
-									<div class="flex flex-wrap gap-1">
-										{#each insight.issues as issue}
-											<span
-												class="badge badge-xs"
-												class:badge-error={issue.severity === 'error'}
-												class:badge-warning={issue.severity === 'warning'}
-												class:badge-info={issue.severity === 'info'}
-											>
-												{issue.type}
-											</span>
-										{/each}
+									<div>
+										<h4 class="text-sm font-semibold mb-2">
+											{insight.issues.length} issue{insight.issues.length > 1 ? 's' : ''} to fix
+										</h4>
+										<div class="space-y-2">
+											{#each insight.issues as issue}
+												<div class="text-sm p-2 rounded bg-base-200/50">
+													<span
+														class="badge badge-xs mb-1"
+														class:badge-error={issue.severity === 'error'}
+														class:badge-warning={issue.severity === 'warning'}
+														class:badge-info={issue.severity === 'info'}
+													>
+														{issue.type?.replace(/_/g, ' ') || 'issue'}
+													</span>
+													{#if issue.message}
+														<p class="text-base-content/80">{issue.message}</p>
+													{/if}
+													{#if issue.recommendation}
+														<p class="text-primary font-medium mt-0.5">
+															→ {issue.recommendation}
+														</p>
+													{/if}
+												</div>
+											{/each}
+										</div>
 									</div>
+								{:else if insight.recommendations?.length > 0}
+									<!-- When no crawl issues but we have metric-based recs (GA4, Clarity, GSC) -->
+									<div>
+										<h4 class="text-sm font-semibold mb-2 text-primary">How to fix</h4>
+										<ul class="space-y-2">
+											{#each insight.recommendations as rec}
+												<li class="flex gap-2 text-sm">
+													<span class="text-success shrink-0">✓</span>
+													<span class="text-base-content/90">{rec}</span>
+												</li>
+											{/each}
+										</ul>
+									</div>
+								{:else}
+									<div class="text-sm text-base-content/60">
+										<p>No specific fixes available yet. Run a crawl to detect SEO issues on this page.</p>
+									</div>
+								{/if}
+
+								<!-- Next steps: View in Issues + Copy URL -->
+								<div>
+									<h4 class="text-sm font-semibold mb-2">Next steps</h4>
+									<div class="flex flex-wrap gap-2">
+										{#if onNavigateToIssues && insight.issues?.length > 0}
+											<button
+												class="btn btn-sm btn-primary"
+												on:click={() => handleViewIssues(insight.url)}
+											>
+												View full details in Issues tab
+											</button>
+										{/if}
+										<button
+											class="btn btn-sm btn-ghost"
+											on:click={() => copyUrl(insight.url)}
+										>
+											{#if copyFeedback === insight.url}
+												Copied!
+											{:else}
+												Copy page URL
+											{/if}
+										</button>
+									</div>
+									{#if insight.issues?.length > 0 && onNavigateToIssues}
+										<p class="text-xs text-base-content/60 mt-1">
+											The Issues tab shows each fix with context and links to the page.
+										</p>
+									{/if}
+								</div>
+
+								<!-- Score breakdown (collapsible context) -->
+								{#if breakdown.length > 0}
+									<details class="text-xs">
+										<summary class="cursor-pointer text-base-content/60">What drove this score</summary>
+										<ul class="mt-1 space-y-0.5 text-base-content/70">
+											{#each breakdown as part}
+												<li><span class="font-medium">{part.label}:</span> {part.value}</li>
+											{/each}
+										</ul>
+									</details>
 								{/if}
 							</div>
 						{/if}

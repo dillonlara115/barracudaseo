@@ -21,6 +21,15 @@ type pageInsight struct {
 	DataSources         []string                 `json:"data_sources"`
 	Recommendations     []string                 `json:"recommendations"`
 	IssueSeverityCounts map[string]int           `json:"issue_severity_counts"`
+	Rationale           *decisionRationale       `json:"rationale,omitempty"`
+}
+
+// decisionRationale surfaces why a prioritization was made (JTBD: explainable decisions)
+type decisionRationale struct {
+	WhyThisMatters       string   `json:"why_this_matters"`
+	WhatInformedPriority []string `json:"what_informed_priority"`
+	DeprioritizedContext string   `json:"deprioritized_context,omitempty"`
+	RiskOfNotFixing      string   `json:"risk_of_not_fixing"`
 }
 
 func (s *Server) handleProjectUnifiedInsights(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -114,7 +123,7 @@ func (s *Server) handleProjectUnifiedInsights(w http.ResponseWriter, r *http.Req
 		}
 	}
 
-	// Compute priority scores and generate recommendations
+	// Compute priority scores, recommendations, and rationale
 	for _, pi := range pageMap {
 		pi.PriorityScore = computePriorityScore(pi)
 		pi.Recommendations = generateRecommendations(pi)
@@ -132,6 +141,18 @@ func (s *Server) handleProjectUnifiedInsights(w http.ResponseWriter, r *http.Req
 	sort.Slice(insights, func(i, j int) bool {
 		return insights[i].PriorityScore > insights[j].PriorityScore
 	})
+
+	// Attach decision rationale to each insight (JTBD: explainable priorities)
+	totalCrawlIssues := len(crawlIssues)
+	totalPagesWithIssues := 0
+	for _, pi := range pageMap {
+		if len(pi.Issues) > 0 {
+			totalPagesWithIssues++
+		}
+	}
+	for _, pi := range insights {
+		pi.Rationale = generateDecisionRationale(pi, totalCrawlIssues, totalPagesWithIssues, len(insights))
+	}
 
 	// Compute summary
 	totalIssuePages := 0
@@ -151,17 +172,8 @@ func (s *Server) handleProjectUnifiedInsights(w http.ResponseWriter, r *http.Req
 		totalScore += pi.PriorityScore
 	}
 
-	// Determine which data sources are connected
-	connectedSources := []string{}
-	if len(gscPages) > 0 {
-		connectedSources = append(connectedSources, "gsc")
-	}
-	if len(ga4Pages) > 0 {
-		connectedSources = append(connectedSources, "ga4")
-	}
-	if len(clarityURLs) > 0 {
-		connectedSources = append(connectedSources, "clarity")
-	}
+	// Determine which data sources are connected (from project config, not just synced data)
+	connectedSources := s.getProjectConnectedSources(projectID)
 
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{
 		"insights": insights,
@@ -368,35 +380,25 @@ func generateRecommendations(pi *pageInsight) []string {
 		issueTypes[issueType]++
 	}
 
-	for issueType, count := range issueTypes {
-		rec := fmt.Sprintf("Fix %d \"%s\" issue(s) on /%s", count, issueType, pi.URL)
+	seenRec := map[string]bool{}
+	for _, issue := range pi.Issues {
+		issueType, _ := issue["type"].(string)
+		message, _ := issue["message"].(string)
+		recommendation, _ := issue["recommendation"].(string)
 
-		// Add data citations
-		citations := []string{}
-		if pi.GSCMetrics != nil {
-			impressions := getFloat(pi.GSCMetrics["impressions"])
-			if impressions > 0 {
-				citations = append(citations, fmt.Sprintf("%.0f impressions (GSC)", impressions))
-			}
+		// Prefer the issue's own recommendation (actionable fix) when available
+		var rec string
+		if recommendation != "" {
+			rec = recommendation
+		} else if message != "" {
+			rec = message + ". Check the Issues tab for fix details."
+		} else {
+			rec = fmt.Sprintf("Fix \"%s\" issue on /%s — see Issues tab", issueType, pi.URL)
 		}
-		if pi.GA4Metrics != nil {
-			sessions := getFloat(pi.GA4Metrics["sessions"])
-			if sessions > 0 {
-				citations = append(citations, fmt.Sprintf("%.0f sessions (GA4)", sessions))
-			}
+		if rec != "" && !seenRec[rec] {
+			seenRec[rec] = true
+			recs = append(recs, rec)
 		}
-		if pi.ClarityMetrics != nil {
-			rageClicks := getFloat(pi.ClarityMetrics["rage_click_count"])
-			if rageClicks > 0 {
-				citations = append(citations, fmt.Sprintf("%.0f rage clicks (Clarity)", rageClicks))
-			}
-		}
-
-		if len(citations) > 0 {
-			rec += " — " + strings.Join(citations, ", ")
-		}
-
-		recs = append(recs, rec)
 	}
 
 	// High bounce rate recommendation
@@ -427,4 +429,94 @@ func generateRecommendations(pi *pageInsight) []string {
 	}
 
 	return recs
+}
+
+// generateDecisionRationale creates JTBD-aligned rationale for why a page was prioritized.
+func generateDecisionRationale(pi *pageInsight, totalCrawlIssues, totalPagesWithIssues, shownCount int) *decisionRationale {
+	r := &decisionRationale{
+		WhatInformedPriority: []string{},
+	}
+
+	// Why this matters (impact framing)
+	var whyParts []string
+	if len(pi.Issues) > 0 {
+		whyParts = append(whyParts, fmt.Sprintf("%d fixable issue(s)", len(pi.Issues)))
+	}
+	if pi.GSCMetrics != nil {
+		imp := getFloat(pi.GSCMetrics["impressions"])
+		if imp > 0 {
+			whyParts = append(whyParts, fmt.Sprintf("%.0f search impressions", imp))
+		}
+	}
+	if pi.GA4Metrics != nil {
+		sess := getFloat(pi.GA4Metrics["sessions"])
+		if sess > 0 {
+			whyParts = append(whyParts, fmt.Sprintf("%.0f sessions", sess))
+		}
+	}
+	if pi.ClarityMetrics != nil {
+		rc := getFloat(pi.ClarityMetrics["rage_click_count"])
+		dc := getFloat(pi.ClarityMetrics["dead_click_count"])
+		if rc+dc > 0 {
+			whyParts = append(whyParts, "UX frustration signals")
+		}
+	}
+	if len(whyParts) > 0 {
+		r.WhyThisMatters = "This page matters because it combines " + strings.Join(whyParts, ", ") + "."
+	} else {
+		r.WhyThisMatters = "This page has data that indicates optimization opportunity."
+	}
+
+	// What data informed the priority
+	if pi.GSCMetrics != nil {
+		imp := getFloat(pi.GSCMetrics["impressions"])
+		pos := getFloat(pi.GSCMetrics["position"])
+		if imp > 0 {
+			r.WhatInformedPriority = append(r.WhatInformedPriority, fmt.Sprintf("GSC: %.0f impressions, position %.1f", imp, pos))
+		}
+	}
+	if pi.GA4Metrics != nil {
+		sess := getFloat(pi.GA4Metrics["sessions"])
+		if sess > 0 {
+			r.WhatInformedPriority = append(r.WhatInformedPriority, fmt.Sprintf("GA4: %.0f sessions", sess))
+		}
+	}
+	if pi.ClarityMetrics != nil {
+		rc := getFloat(pi.ClarityMetrics["rage_click_count"])
+		dc := getFloat(pi.ClarityMetrics["dead_click_count"])
+		if rc+dc > 0 {
+			r.WhatInformedPriority = append(r.WhatInformedPriority, fmt.Sprintf("Clarity: %.0f rage clicks, %.0f dead clicks", rc, dc))
+		}
+	}
+	if len(pi.Issues) > 0 {
+		r.WhatInformedPriority = append(r.WhatInformedPriority, fmt.Sprintf("Crawl: %d issue(s) detected", len(pi.Issues)))
+	}
+
+	// What was intentionally deprioritized
+	if totalCrawlIssues > 0 && totalPagesWithIssues > shownCount {
+		r.DeprioritizedContext = fmt.Sprintf("Of %d issues across %d pages, we're highlighting the top %d by impact. Other pages have lower traffic, fewer issues, or less UX friction — they can wait.", totalCrawlIssues, totalPagesWithIssues, shownCount)
+	}
+
+	// Risk of not fixing
+	var riskParts []string
+	if len(pi.Issues) > 0 {
+		riskParts = append(riskParts, "unfixed SEO issues can hurt rankings over time")
+	}
+	if pi.GSCMetrics != nil && getFloat(pi.GSCMetrics["impressions"]) > 500 {
+		riskParts = append(riskParts, "you're leaving search visibility on the table")
+	}
+	if pi.ClarityMetrics != nil {
+		rc := getFloat(pi.ClarityMetrics["rage_click_count"])
+		dc := getFloat(pi.ClarityMetrics["dead_click_count"])
+		if rc+dc > 5 {
+			riskParts = append(riskParts, "UX frustration may drive users away")
+		}
+	}
+	if len(riskParts) > 0 {
+		r.RiskOfNotFixing = "If you don't fix this: " + strings.Join(riskParts, "; ") + "."
+	} else {
+		r.RiskOfNotFixing = "Addressing this now prevents future impact as traffic grows."
+	}
+
+	return r
 }

@@ -26,7 +26,7 @@ The roadmap is organized into four main sections:
 - ⏳ Google Analytics 4 (GA4)
 - ⏳ Google Drive / Google Sheets export
 - ⏳ Slack alerts
-- ⏳ Microsoft Clarity integration
+- ✅ Microsoft Clarity integration (COMPLETE)
 - ⏳ Zapier / Make.com workflows
 
 ### 3.3 CLI → Cloud Sync Improvements
@@ -60,6 +60,22 @@ The roadmap is organized into four main sections:
 - Compares competitor keyword sets to identify gaps
 - Integrates keyword metrics for prioritization
 - AI scoring combines multiple factors for actionable insights
+
+### 3.6 Decision Support & Explainability (JTBD-Driven)
+
+*Informed by `docs/JTBD_SUMMARY.md` — turning overwhelm into defensible, explainable action plans.*
+
+- 🔄 **Decision Rationale Panel** — For every prioritized issue/fix, surface: *(IN PROGRESS)*
+  - Why this matters (impact framing)
+  - What data informed the priority (GSC impressions, traffic, Clarity frustration, etc.)
+  - What was intentionally deprioritized and why
+  - Risk of not fixing it (consequence framing)
+- ⏳ **Client-ready rationale export** — Copy/export rationale text for client calls and reports (language users can reuse)
+- ⏳ **"Focus mode" / Top N view** — "400 issues don't matter. These 10 do." — curated shortlist that hides the long tail, with explicit "the rest can wait" framing
+- ⏳ **Confident dismissal** — "Mark as low priority" or "Snooze" with optional rationale; reduces second-guessing when ignoring low-impact issues
+- ⏳ **Onboarding anxiety copy** — In-product copy: "Barracuda doesn't replace your judgment. It gives you a clearer starting point — and shows its work."
+
+**Why this matters (from JTBD):** Reduces anxiety, increases confidence, gives users language they can reuse with clients. Aligns with core positioning: "decision-support layer for SEO audits."
 
 ---
 
@@ -148,11 +164,13 @@ The roadmap is organized into four main sections:
 1. GA4 integration completion
 2. Scheduled crawls foundation
 3. CLI cloud sync improvements
+4. **Decision Rationale Panel** (JTBD High ROI) — surfaces why each priority matters and what informed it
 
 ### Medium Priority (Next Quarter)
-1. Local SEO geo-grid
-2. Keyword intelligence features
-3. Performance audits
+1. Decision Support & Explainability features (focus mode, client-ready export)
+2. Local SEO geo-grid
+3. Keyword intelligence features
+4. Performance audits
 
 ### Lower Priority (Future)
 1. Backlink monitoring
@@ -188,6 +206,7 @@ The roadmap is organized into four main sections:
 ## Notes
 
 - This roadmap is subject to change based on user feedback and business priorities
+- **JTBD alignment:** Section 3.6 and related items are derived from `docs/JTBD_SUMMARY.md` — positioning Barracuda as a decision-support layer that reduces overwhelm and gives users explainable, defensible priorities
 - Features marked with ✅ are complete
 - Features marked with ⏳ are planned/upcoming
 - Timeline estimates are approximate and may shift

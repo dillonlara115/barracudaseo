@@ -94,6 +94,15 @@
     ? new URLSearchParams($querystring).get('tab') || initialTab 
     : initialTab;
   let issuesFilter = { severity: 'all', type: 'all', url: null };
+
+  // Sync issuesFilter.url from querystring when tab=issues (e.g. deep link from Insights)
+  $: if ($querystring && activeTab === 'issues') {
+    const qs = new URLSearchParams($querystring);
+    const urlFromQs = qs.get('url');
+    if (urlFromQs && issuesFilter.url !== urlFromQs) {
+      issuesFilter = { ...issuesFilter, url: urlFromQs };
+    }
+  }
   let resultsFilter = { status: 'all', performance: false };
   let cachedEnrichedIssues = [];
   let activeEnrichedIssues = [];
@@ -139,9 +148,12 @@
     }
 
     // Update URL with tab query param (after filter update)
+    const params = new URLSearchParams();
+    params.set('tab', tab);
+    if (tab === 'issues' && url) {
+      params.set('url', url);
+    }
     if (projectId && crawlId) {
-      const params = new URLSearchParams();
-      params.set('tab', tab);
       push(`/project/${projectId}/crawl/${crawlId}?${params.toString()}`);
     } else if (projectId && (tab === 'gsc-dashboard' || tab === 'gsc-keywords' || tab === 'ga4-dashboard' || tab === 'clarity-dashboard' || tab === 'insights')) {
       // GSC tabs work at project level, redirect to first crawl or project view
@@ -155,9 +167,6 @@
       }
     } else if (projectId) {
       // Fallback: if we have projectId but no crawlId, still try to navigate
-      // This handles edge cases where crawlId might not be set yet
-      const params = new URLSearchParams();
-      params.set('tab', tab);
       push(`/project/${projectId}?${params.toString()}`);
     }
   };
@@ -281,6 +290,8 @@
     const syncResult = await triggerProjectClaritySync(projectId, { num_days: 3 });
     if (syncResult.error) {
       clarityError = syncResult.error.message || 'Failed to sync Microsoft Clarity data.';
+      // Refetch status so sync_state (e.g. rate_limit retry_after) is up to date
+      await loadClarityData(projectId);
       clarityRefreshing = false;
       clarityLoading = false;
       return;
@@ -659,7 +670,10 @@
       onRefresh={refreshClarityData}
     />
   {:else if activeTab === 'insights'}
-    <UnifiedInsightsPanel {projectId} />
+    <UnifiedInsightsPanel
+      {projectId}
+      onNavigateToIssues={(url) => navigateToTab('issues', { url })}
+    />
   {/if}
   </main>
 </div>

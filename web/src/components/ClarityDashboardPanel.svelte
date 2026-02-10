@@ -26,6 +26,7 @@
 
 	let loading = false;
 	let error = null;
+	let loadedForProject = null; // Prevent infinite loop when dimensions return empty
 
 	let urlRows = [];
 	let deviceRows = [];
@@ -34,14 +35,13 @@
 	let frustrationChartData = null;
 	let deviceChartData = null;
 
-	onMount(() => {
-		if (projectId && clarityStatus?.integration?.connected) {
-			loadData();
-		}
-	});
-
-	$: if (projectId && clarityStatus?.integration?.connected && !loading && !urlRows.length) {
+	// Load once per project when connected; reset when project changes
+	$: if (projectId && clarityStatus?.integration?.connected && loadedForProject !== projectId && !loading) {
+		loadedForProject = projectId;
 		loadData();
+	}
+	$: if (!projectId || !clarityStatus?.integration?.connected) {
+		loadedForProject = null;
 	}
 
 	async function loadData() {
@@ -157,6 +157,15 @@
 	$: totals = clarityStatus?.summary?.totals || {};
 	$: hasData = clarityStatus?.integration?.connected && (urlRows.length > 0 || deviceRows.length > 0);
 	$: clarityProjectIdDisplay = clarityStatus?.integration?.clarity_project_id || '';
+	$: rateLimitRetryAfter = (() => {
+		const el = clarityStatus?.sync_state?.error_log;
+		if (!el?.rate_limited || !el?.retry_after) return null;
+		try {
+			return new Date(el.retry_after).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+		} catch {
+			return el.retry_after;
+		}
+	})();
 </script>
 
 <div class="space-y-6">
@@ -210,6 +219,15 @@
 		</svg>
 		<span>Clarity data covers the last 1-3 days only. API limit: 10 requests/project/day.</span>
 	</div>
+
+	{#if clarityStatus?.sync_state?.status === 'error' && clarityStatus?.sync_state?.error_log?.rate_limited}
+		<div class="alert alert-warning">
+			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-5 h-5">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+			</svg>
+			<span>Clarity rate limit reached. Try again after {rateLimitRetryAfter || 'midnight UTC'}.</span>
+		</div>
+	{/if}
 
 	{#if clarityLoading || loading}
 		<div class="flex justify-center items-center py-20">

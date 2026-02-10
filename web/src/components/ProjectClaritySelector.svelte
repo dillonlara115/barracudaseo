@@ -1,5 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
+	import { ExternalLink } from 'lucide-svelte';
 	import {
 		connectClarity,
 		disconnectClarity,
@@ -12,6 +13,7 @@
 
 	let clarityProjectId = '';
 	let apiToken = '';
+	let clarityProjectLabel = '';
 	let isConnected = false;
 	let isConnecting = false;
 	let isSyncing = false;
@@ -19,6 +21,9 @@
 	let clarityStatus = null;
 	let loading = false;
 	let lastProjectId = null;
+
+	const CLARITY_SETUP_URL = 'https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-data-export-api#obtaining-access-tokens';
+	const CLARITY_DASHBOARD_URL = 'https://clarity.microsoft.com';
 
 	const formatDateTime = (value) => {
 		if (!value) return null;
@@ -31,6 +36,11 @@
 	$: lastSyncedDisplay = clarityStatus?.sync_state?.last_synced_at
 		? formatDateTime(clarityStatus.sync_state.last_synced_at)
 		: null;
+
+	// Display name: label if set, otherwise project ID
+	$: connectedDisplayName = clarityStatus?.integration?.clarity_project_label
+		|| clarityStatus?.integration?.clarity_project_id
+		|| '';
 
 	$: if (projectId && projectId !== lastProjectId && !loading) {
 		lastProjectId = projectId;
@@ -65,14 +75,14 @@
 
 	async function handleConnect() {
 		if (!clarityProjectId.trim() || !apiToken.trim()) {
-			error = 'Both Clarity Project ID and API Token are required.';
+			error = 'Clarity Project ID and API Token are required.';
 			return;
 		}
 
 		isConnecting = true;
 		error = null;
 
-		const result = await connectClarity(projectId, clarityProjectId.trim(), apiToken.trim());
+		const result = await connectClarity(projectId, clarityProjectId.trim(), apiToken.trim(), clarityProjectLabel.trim() || null);
 		if (result.error) {
 			error = result.error.message || 'Failed to connect Clarity';
 			isConnecting = false;
@@ -102,7 +112,7 @@
 
 	async function handleDisconnect() {
 		if (!projectId) return;
-		if (!confirm('Disconnect Microsoft Clarity from this project?')) return;
+		if (!confirm(`Disconnect Microsoft Clarity from ${project?.name || 'this project'}? This will remove the stored credentials.`)) return;
 
 		loading = true;
 		error = null;
@@ -117,6 +127,7 @@
 		clarityStatus = null;
 		clarityProjectId = '';
 		apiToken = '';
+		clarityProjectLabel = '';
 		await initialize();
 		loading = false;
 	}
@@ -124,6 +135,7 @@
 
 {#if loading}
 	<div class="alert alert-info">
+		<span class="loading loading-spinner loading-sm"></span>
 		<span>Loading Microsoft Clarity status...</span>
 	</div>
 {:else if !isConnected}
@@ -144,10 +156,33 @@
 			</svg>
 			<div class="flex-1">
 				<div class="font-semibold mb-1">Connect Microsoft Clarity</div>
-				<div class="text-sm">
-					Enter your Clarity Project ID and API Token to enable engagement analytics. Data
-					covers the last 1-3 days with a limit of 10 API requests per project per day.
-				</div>
+				<p class="text-sm mb-2">
+					Clarity provides UX metrics like rage clicks, dead clicks, and scroll depth to help prioritize SEO fixes. Each Barracuda project can connect to a different Clarity project—useful when sites are in different Clarity accounts.
+				</p>
+				<p class="text-sm font-medium text-base-content/80">How to get your credentials:</p>
+				<ol class="text-sm list-decimal list-inside mt-1 space-y-0.5 text-base-content/70">
+					<li>
+						<a
+							href={CLARITY_DASHBOARD_URL}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="link link-hover inline-flex items-center gap-0.5"
+						>
+							Sign in to Clarity <ExternalLink class="w-3 h-3" />
+						</a>
+						and open your project
+					</li>
+					<li>Go to <strong>Settings → Data Export → Generate new API token</strong></li>
+					<li>Copy the Project ID (from the project URL) and the generated token</li>
+				</ol>
+				<a
+					href={CLARITY_SETUP_URL}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="link link-hover text-xs mt-2 inline-flex items-center gap-1"
+				>
+					View Microsoft's setup guide <ExternalLink class="w-3 h-3" />
+				</a>
 			</div>
 		</div>
 
@@ -158,7 +193,7 @@
 			<input
 				id="clarity-project-id"
 				type="text"
-				placeholder="e.g. abc123def"
+				placeholder="e.g. abc123xyz (from the project URL in Clarity)"
 				class="input input-bordered w-full"
 				bind:value={clarityProjectId}
 				disabled={isConnecting}
@@ -172,16 +207,35 @@
 			<input
 				id="clarity-api-token"
 				type="password"
-				placeholder="Your Clarity API token"
+				placeholder="Paste the token from Settings → Data Export"
 				class="input input-bordered w-full"
 				bind:value={apiToken}
 				disabled={isConnecting}
 			/>
-			<label class="label">
-				<span class="label-text-alt text-base-content/70"
-					>Generate an API token in Clarity Settings &gt; API Access</span
-				>
+			<div class="label">
+				<span class="label-text-alt text-base-content/70">
+					Only project admins can generate tokens. Store securely—tokens cannot be viewed again after creation.
+				</span>
+			</div>
+		</div>
+
+		<div class="form-control w-full">
+			<label class="label" for="clarity-project-label">
+				<span class="label-text">Label <span class="text-base-content/50 font-normal">(optional)</span></span>
 			</label>
+			<input
+				id="clarity-project-label"
+				type="text"
+				placeholder="e.g. blog.example.com or Marketing site"
+				class="input input-bordered w-full"
+				bind:value={clarityProjectLabel}
+				disabled={isConnecting}
+			/>
+			<div class="label">
+				<span class="label-text-alt text-base-content/70">
+					Helpful when you have multiple Clarity projects. Shown in the dashboard instead of the Project ID.
+				</span>
+			</div>
 		</div>
 
 		<button
@@ -197,6 +251,10 @@
 			{/if}
 		</button>
 
+		<div class="text-xs text-base-content/50">
+			Data covers the last 1–3 days. Clarity limits Data Export API to 10 requests per project per day.
+		</div>
+
 		{#if error}
 			<div class="alert alert-error">
 				<span>{error}</span>
@@ -211,19 +269,18 @@
 			<div>
 				<div class="text-sm font-semibold text-base-content/80">Microsoft Clarity</div>
 				<div class="text-sm">
-					Connected to project <span class="font-semibold"
-						>{clarityStatus?.integration?.clarity_project_id}</span
-					>.
+					Connected to <span class="font-semibold">{connectedDisplayName}</span>
+					{#if clarityStatus?.integration?.clarity_project_label && clarityStatus?.integration?.clarity_project_id}
+						<span class="text-base-content/50">({clarityStatus.integration.clarity_project_id})</span>
+					{/if}
 				</div>
 				{#if lastSyncedDisplay}
 					<div class="text-xs text-base-content/60">Last synced {lastSyncedDisplay}</div>
 				{:else}
-					<div class="text-xs text-base-content/60">
-						No data yet. Sync to pull engagement metrics.
-					</div>
+					<div class="text-xs text-base-content/60">No data yet. Sync to pull engagement metrics.</div>
 				{/if}
 				<div class="text-xs text-base-content/40 mt-1">
-					Data covers last 1-3 days. 10 API calls/day limit.
+					Data covers last 1–3 days. 10 API calls/day limit.
 				</div>
 			</div>
 			<div class="flex gap-2">
@@ -248,7 +305,6 @@
 			</div>
 		{/if}
 
-		<!-- Disconnect -->
 		<div class="pt-4 border-t border-base-200 mt-4">
 			<h3 class="text-sm font-bold text-base-content/70 mb-2">Danger Zone</h3>
 			<button class="btn btn-error btn-sm" on:click={handleDisconnect} disabled={loading}>

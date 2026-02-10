@@ -4,6 +4,7 @@
   import { fetchProjects, updateProject, deleteProject, fetchCrawls } from '../lib/data.js';
   import ProjectGSCSelector from '../components/ProjectGSCSelector.svelte';
   import ProjectGA4Selector from '../components/ProjectGA4Selector.svelte';
+  import ProjectClaritySelector from '../components/ProjectClaritySelector.svelte';
   import CrawlManagement from '../components/CrawlManagement.svelte';
   import ProjectPageLayout from '../components/ProjectPageLayout.svelte';
   import { Loader, X, Trash2, Edit2, Check, AlertTriangle } from 'lucide-svelte';
@@ -311,6 +312,14 @@
         <div class="card-body">
           <h2 class="card-title text-xl mb-4">Google Analytics 4 Integration</h2>
           <ProjectGA4Selector {project} projectId={project.id} />
+        </div>
+      </div>
+
+      <!-- Microsoft Clarity Integration -->
+      <div class="card bg-base-100 shadow">
+        <div class="card-body">
+          <h2 class="card-title text-xl mb-4">Microsoft Clarity Integration</h2>
+          <ProjectClaritySelector {project} projectId={project.id} />
         </div>
       </div>
 

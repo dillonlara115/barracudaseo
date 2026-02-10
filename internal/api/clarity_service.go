@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -11,9 +12,13 @@ import (
 	"go.uber.org/zap"
 )
 
+// Clarity cache TTL: skip API call if we synced within this duration
+const clarityCacheTTL = 1 * time.Hour
+
 type clarityIntegrationConfig struct {
-	ClarityProjectID string `json:"clarity_project_id"`
-	APIToken         string `json:"api_token"`
+	ClarityProjectID    string `json:"clarity_project_id"`
+	APIToken            string `json:"api_token"`
+	ClarityProjectLabel string `json:"clarity_project_label"`
 }
 
 func (cfg *clarityIntegrationConfig) toMap() map[string]interface{} {
@@ -36,6 +41,27 @@ func parseClarityIntegrationConfig(raw interface{}) (*clarityIntegrationConfig, 
 		return nil, err
 	}
 	return &cfg, nil
+}
+
+// getClarityConfigFromProject loads Clarity credentials from project settings (per-project storage).
+func (s *Server) getClarityConfigFromProject(projectID string) (*clarityIntegrationConfig, error) {
+	settings, err := s.loadProjectSettings(projectID)
+	if err != nil {
+		return nil, err
+	}
+	projectIDStr, _ := settings["clarity_project_id"].(string)
+	apiToken, _ := settings["clarity_api_token"].(string)
+	label, _ := settings["clarity_project_label"].(string)
+
+	if projectIDStr == "" && apiToken == "" {
+		return nil, nil
+	}
+
+	return &clarityIntegrationConfig{
+		ClarityProjectID:    projectIDStr,
+		APIToken:            apiToken,
+		ClarityProjectLabel: label,
+	}, nil
 }
 
 func (s *Server) getClarityIntegration(userID string) (*clarityIntegrationConfig, string, error) {
@@ -183,38 +209,70 @@ func (s *Server) updateClaritySyncState(projectID, status string, lastSyncedAt *
 	return err
 }
 
+func (s *Server) getClarityLastSyncedAt(projectID string) (*time.Time, error) {
+	data, _, err := s.serviceRole.
+		From("clarity_sync_states").
+		Select("last_synced_at", "", false).
+		Eq("project_id", projectID).
+		Execute()
+	if err != nil {
+		return nil, err
+	}
+	var rows []map[string]interface{}
+	if err := json.Unmarshal(data, &rows); err != nil || len(rows) == 0 {
+		return nil, nil
+	}
+	v, _ := rows[0]["last_synced_at"].(string)
+	if v == "" {
+		return nil, nil
+	}
+	t, err := time.Parse(time.RFC3339, v)
+	if err != nil {
+		return nil, nil
+	}
+	return &t, nil
+}
+
 func (s *Server) syncProjectClarityData(projectID, userID string, cfg *clarityIntegrationConfig, numDays int, period string) error {
 	if cfg.ClarityProjectID == "" || cfg.APIToken == "" {
 		return fmt.Errorf("clarity project ID and API token are required")
+	}
+
+	// Cache: skip API if we synced recently
+	lastSynced, err := s.getClarityLastSyncedAt(projectID)
+	if err == nil && lastSynced != nil && time.Since(*lastSynced) < clarityCacheTTL {
+		s.logger.Debug("Clarity cache hit, skipping API call", zap.String("project_id", projectID), zap.Time("last_synced", *lastSynced))
+		return nil
+	}
+
+	// Single API call for all 3 dimensions (saves 2 of 10 daily requests)
+	results, err := clarity.FetchInsightsMulti(cfg.APIToken, cfg.ClarityProjectID, numDays, []string{"Url", "Device", "Source"})
+	if err != nil {
+		var rl *clarity.RateLimitError
+		if errors.As(err, &rl) {
+			return err // Pass through so handler can store retry_after
+		}
+		return fmt.Errorf("failed to fetch Clarity data: %w", err)
 	}
 
 	snapshotID := uuid.New().String()
 	now := time.Now().UTC()
 	capturedOn := now.Format("2006-01-02")
 
-	// Fetch 3 dimensions: url, device, source (uses 3 of 10 daily API calls)
-	dimensions := map[string]string{
-		"url":    "Url",
-		"device": "Device",
-		"source": "Source",
-	}
-
 	var overallSummary *clarity.InsightMetrics
 	batchSize := 500
+	dimensionOrder := []string{"url", "device", "source"}
 
-	for rowType, apiDimension := range dimensions {
-		rows, summary, err := clarity.FetchInsights(cfg.APIToken, cfg.ClarityProjectID, numDays, apiDimension)
-		if err != nil {
-			s.logger.Warn("Failed to fetch Clarity dimension", zap.String("dimension", apiDimension), zap.Error(err))
+	for _, rowType := range dimensionOrder {
+		res, ok := results[rowType]
+		if !ok || res == nil {
 			continue
 		}
-
-		if overallSummary == nil && summary != nil {
-			overallSummary = summary
+		if overallSummary == nil && res.Summary != nil {
+			overallSummary = res.Summary
 		}
-
 		var records []map[string]interface{}
-		for _, row := range rows {
+		for _, row := range res.Rows {
 			records = append(records, map[string]interface{}{
 				"snapshot_id":     snapshotID,
 				"project_id":      projectID,
@@ -224,7 +282,6 @@ func (s *Server) syncProjectClarityData(projectID, userID string, cfg *clarityIn
 				"created_at":      now.Format(time.RFC3339),
 			})
 		}
-
 		for i := 0; i < len(records); i += batchSize {
 			end := i + batchSize
 			if end > len(records) {
@@ -246,7 +303,7 @@ func (s *Server) syncProjectClarityData(projectID, userID string, cfg *clarityIn
 	}
 
 	// Insert snapshot
-	_, _, err := s.serviceRole.From("clarity_performance_snapshots").
+	_, _, err = s.serviceRole.From("clarity_performance_snapshots").
 		Insert(map[string]interface{}{
 			"id":                 snapshotID,
 			"project_id":         projectID,
