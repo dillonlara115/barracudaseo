@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/dillonlara115/barracudaseo/internal/utils"
@@ -13,6 +14,10 @@ import (
 const (
 	// MaxImageSizeKB is the threshold for considering images as "large"
 	MaxImageSizeKB = 100
+
+	// imageAnalysisWorkers is the number of concurrent image size checks.
+	// Keeps crawls fast without overwhelming target servers.
+	imageAnalysisWorkers = 16
 )
 
 // ImageSizeInfo contains image size information
@@ -103,36 +108,40 @@ func CheckImageSize(imageURL string, timeout time.Duration) ImageSizeInfo {
 	return info
 }
 
-// AnalyzeImages analyzes images from page results and detects issues
+// imageRef holds a page URL and image for building issues after parallel fetch
+type imageRef struct {
+	pageURL string
+	img     models.Image
+}
+
+// AnalyzeImages analyzes images from page results and detects issues.
+// Image size checks run in parallel (imageAnalysisWorkers) for faster analysis.
 func AnalyzeImages(results []*models.PageResult, timeout time.Duration) []Issue {
 	var issues []Issue
-	imageSizeCache := make(map[string]ImageSizeInfo)
+	var sizeCheckRefs []imageRef
+	urlsToFetch := make(map[string]bool)
 	totalImages := 0
 	imagesWithoutAlt := 0
-	largeImages := 0
 
+	// First pass: collect missing alt issues, and refs/URLs for size checks
 	for _, result := range results {
-		// Skip image URLs - they should not be analyzed as pages
 		if utils.IsImageURL(result.URL) {
 			continue
 		}
-
 		if result.StatusCode != 200 || result.Error != "" {
 			continue
 		}
-
 		if len(result.Images) == 0 {
 			continue
 		}
 
-		utils.Debug("Analyzing images from page", 
+		utils.Debug("Analyzing images from page",
 			utils.NewField("url", result.URL),
 			utils.NewField("image_count", len(result.Images)))
 
 		for _, img := range result.Images {
 			totalImages++
-			
-			// Check for missing alt text
+
 			if img.Alt == "" {
 				imagesWithoutAlt++
 				issues = append(issues, Issue{
@@ -145,40 +154,31 @@ func AnalyzeImages(results []*models.PageResult, timeout time.Duration) []Issue 
 				})
 			}
 
-			// Check image size (with caching)
-			if sizeInfo, cached := imageSizeCache[img.URL]; cached {
-				if sizeInfo.SizeKB > MaxImageSizeKB {
-					largeImages++
-					issues = append(issues, Issue{
-						Type:           IssueLargeImage,
-						Severity:       "warning",
-						URL:            result.URL,
-						Message:        fmt.Sprintf("Large image detected: %s (%d KB)", img.URL, sizeInfo.SizeKB),
-						Value:          fmt.Sprintf("%s (%d KB)", img.URL, sizeInfo.SizeKB),
-						Recommendation: fmt.Sprintf("Optimize image to reduce size below %d KB", MaxImageSizeKB),
-					})
-				}
-			} else {
-				// Fetch image size
-				sizeInfo := CheckImageSize(img.URL, timeout)
-				imageSizeCache[img.URL] = sizeInfo
-
-				if sizeInfo.Error == nil && sizeInfo.SizeKB > MaxImageSizeKB {
-					largeImages++
-					issues = append(issues, Issue{
-						Type:           IssueLargeImage,
-						Severity:       "warning",
-						URL:            result.URL,
-						Message:        fmt.Sprintf("Large image detected: %s (%d KB)", img.URL, sizeInfo.SizeKB),
-						Value:          fmt.Sprintf("%s (%d KB)", img.URL, sizeInfo.SizeKB),
-						Recommendation: fmt.Sprintf("Optimize image to reduce size below %d KB", MaxImageSizeKB),
-					})
-				}
-			}
+			sizeCheckRefs = append(sizeCheckRefs, imageRef{result.URL, img})
+			urlsToFetch[img.URL] = true
 		}
 	}
 
-	// Log summary for debugging
+	// Parallel fetch: populate cache for all unique image URLs
+	imageSizeCache := fetchImageSizesInParallel(urlsToFetch, timeout)
+
+	// Second pass: build large image issues from cache
+	largeImages := 0
+	for _, ref := range sizeCheckRefs {
+		sizeInfo := imageSizeCache[ref.img.URL]
+		if sizeInfo.Error == nil && sizeInfo.SizeKB > MaxImageSizeKB {
+			largeImages++
+			issues = append(issues, Issue{
+				Type:           IssueLargeImage,
+				Severity:       "warning",
+				URL:            ref.pageURL,
+				Message:        fmt.Sprintf("Large image detected: %s (%d KB)", ref.img.URL, sizeInfo.SizeKB),
+				Value:          fmt.Sprintf("%s (%d KB)", ref.img.URL, sizeInfo.SizeKB),
+				Recommendation: fmt.Sprintf("Optimize image to reduce size below %d KB", MaxImageSizeKB),
+			})
+		}
+	}
+
 	if totalImages > 0 {
 		utils.Debug("Image analysis complete",
 			utils.NewField("total_images", totalImages),
@@ -188,4 +188,41 @@ func AnalyzeImages(results []*models.PageResult, timeout time.Duration) []Issue 
 	}
 
 	return issues
+}
+
+// fetchImageSizesInParallel fetches sizes for the given URLs using a worker pool.
+func fetchImageSizesInParallel(urls map[string]bool, timeout time.Duration) map[string]ImageSizeInfo {
+	cache := make(map[string]ImageSizeInfo)
+	var mu sync.Mutex
+
+	work := make(chan string, len(urls))
+	for url := range urls {
+		work <- url
+	}
+	close(work)
+
+	var wg sync.WaitGroup
+	workers := imageAnalysisWorkers
+	if len(urls) < workers {
+		workers = len(urls)
+	}
+	if workers < 1 {
+		return cache
+	}
+
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for url := range work {
+				info := CheckImageSize(url, timeout)
+				mu.Lock()
+				cache[url] = info
+				mu.Unlock()
+			}
+		}()
+	}
+	wg.Wait()
+
+	return cache
 }
