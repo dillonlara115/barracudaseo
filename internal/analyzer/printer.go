@@ -78,7 +78,7 @@ func PrintSummary(summary *Summary) {
 			}
 			icon := getIssueIcon(issueType)
 			fmt.Fprintf(os.Stdout, "\n  %s %s:\n", icon, formatIssueType(issueType))
-			
+
 			// Show first 3 examples
 			for i := 0; i < 3 && i < len(issues); i++ {
 				issue := issues[i]
@@ -100,7 +100,7 @@ func PrintSummary(summary *Summary) {
 
 func getIssueIcon(issueType IssueType) string {
 	switch issueType {
-	case IssueMissingH1, IssueMissingTitle, IssueMissingMetaDesc, IssueBrokenLink, IssueEmptyH1:
+	case IssueMissingH1, IssueMissingTitle, IssueMissingMetaDesc, IssueBrokenLink, IssueBrokenImage, IssueEmptyH1:
 		return "🔴"
 	case IssueLongTitle, IssueLongMetaDesc, IssueShortTitle, IssueShortMetaDesc, IssueMultipleH1, IssueRedirectChain, IssueLargeImage, IssueMissingImageAlt:
 		return "⚠️"
@@ -139,6 +139,8 @@ func formatIssueType(issueType IssueType) string {
 		return "No Canonical"
 	case IssueBrokenLink:
 		return "Broken Links"
+	case IssueBrokenImage:
+		return "Broken Images"
 	case IssueMultipleH1:
 		return "Multiple H1 Tags"
 	case IssueEmptyH1:
@@ -147,4 +149,3 @@ func formatIssueType(issueType IssueType) string {
 		return string(issueType)
 	}
 }
-

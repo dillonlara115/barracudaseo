@@ -17,23 +17,24 @@ import (
 )
 
 var (
-	startURL       string
-	maxDepth       int
-	maxPages       int
-	workers        int
-	delay          time.Duration
-	timeout        time.Duration
-	userAgent      string
-	respectRobots  bool
-	parseSitemap   bool
-	exportFormat   string
-	exportPath     string
-	domainFilter   string
-	graphExport    string
-	interactive    bool
-	openBrowser    bool
-	cloudUpload    bool
-	cloudProjectID string
+	startURL         string
+	maxDepth         int
+	maxPages         int
+	workers          int
+	delay            time.Duration
+	timeout          time.Duration
+	userAgent        string
+	respectRobots    bool
+	parseSitemap     bool
+	crawlSitemapOnly bool
+	exportFormat     string
+	exportPath       string
+	domainFilter     string
+	graphExport      string
+	interactive      bool
+	openBrowser      bool
+	cloudUpload      bool
+	cloudProjectID   string
 )
 
 // crawlCmd represents the crawl command
@@ -61,6 +62,7 @@ func init() {
 	crawlCmd.Flags().StringVar(&userAgent, "user-agent", "barracuda/1.0.0", "User agent string")
 	crawlCmd.Flags().BoolVar(&respectRobots, "respect-robots", true, "Respect robots.txt")
 	crawlCmd.Flags().BoolVar(&parseSitemap, "parse-sitemap", false, "Parse sitemap.xml for seed URLs")
+	crawlCmd.Flags().BoolVar(&crawlSitemapOnly, "sitemap-only", false, "Crawl only sitemap URLs, no link discovery (requires --parse-sitemap)")
 	crawlCmd.Flags().StringVar(&domainFilter, "domain-filter", "same", "Domain filter: 'same' or 'all'")
 
 	// Export options
@@ -110,6 +112,7 @@ func runCrawl(cmd *cobra.Command, args []string) error {
 		exportPath = config.ExportPath
 		respectRobots = config.RespectRobots
 		parseSitemap = config.ParseSitemap
+		crawlSitemapOnly = config.CrawlSitemapOnly
 		graphExport = graphExportPath
 		crawlDir = dir
 		openBrowser = shouldOpen // Use interactive preference
@@ -133,18 +136,19 @@ func runCrawl(cmd *cobra.Command, args []string) error {
 
 	// Create config
 	config := &utils.Config{
-		StartURL:      startURL,
-		MaxDepth:      maxDepth,
-		MaxPages:      maxPages,
-		Workers:       workers,
-		Delay:         delay,
-		Timeout:       timeout,
-		UserAgent:     userAgent,
-		RespectRobots: respectRobots,
-		ParseSitemap:  parseSitemap,
-		ExportFormat:  exportFormat,
-		ExportPath:    exportPath,
-		DomainFilter:  domainFilter,
+		StartURL:         startURL,
+		MaxDepth:         maxDepth,
+		MaxPages:         maxPages,
+		Workers:          workers,
+		Delay:            delay,
+		Timeout:          timeout,
+		UserAgent:        userAgent,
+		RespectRobots:    respectRobots,
+		ParseSitemap:     parseSitemap,
+		CrawlSitemapOnly: crawlSitemapOnly,
+		ExportFormat:     exportFormat,
+		ExportPath:       exportPath,
+		DomainFilter:     domainFilter,
 	}
 
 	// Validate config

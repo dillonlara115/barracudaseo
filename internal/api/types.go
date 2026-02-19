@@ -27,10 +27,11 @@ type CreateProjectRequest struct {
 
 // TriggerCrawlRequest represents a request to trigger a new crawl
 type TriggerCrawlRequest struct {
-	URL           string `json:"url"`            // Starting URL to crawl
-	MaxDepth      int    `json:"max_depth"`      // Maximum crawl depth (default: 3)
-	MaxPages      int    `json:"max_pages"`      // Maximum pages to crawl (default: 1000)
-	Workers       int    `json:"workers"`        // Number of concurrent workers (default: 10)
-	RespectRobots *bool  `json:"respect_robots"` // Respect robots.txt (default: true)
-	ParseSitemap  *bool  `json:"parse_sitemap"`  // Parse sitemap.xml (default: false)
+	URL              string `json:"url"`                // Starting URL to crawl
+	MaxDepth         int    `json:"max_depth"`          // Maximum crawl depth (default: 3)
+	MaxPages         int    `json:"max_pages"`          // Maximum pages to crawl (default: 1000)
+	Workers          int    `json:"workers"`            // Number of concurrent workers (default: 10)
+	RespectRobots    *bool  `json:"respect_robots"`     // Respect robots.txt (default: true)
+	ParseSitemap     *bool  `json:"parse_sitemap"`      // Parse sitemap.xml (default: false)
+	CrawlSitemapOnly *bool  `json:"crawl_sitemap_only"` // Crawl only sitemap URLs, no link discovery—like indexed pages (default: false, requires parse_sitemap)
 }

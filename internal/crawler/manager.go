@@ -362,8 +362,10 @@ func (m *Manager) worker(id int) {
 			m.linkGraph.AddEdges(task.URL, parsedData.ExternalLinks)
 
 			// Enqueue discovered internal links for crawling
-			// Only discover links if we haven't reached max depth yet
-			if task.Depth < m.config.MaxDepth {
+			// Skip link discovery when CrawlSitemapOnly: crawl only sitemap URLs (like indexed pages)
+			if m.config.CrawlSitemapOnly {
+				utils.Debug("Sitemap-only mode: skipping link discovery", utils.NewField("url", task.URL))
+			} else if task.Depth < m.config.MaxDepth {
 				enqueuedCount := 0
 				skippedCount := 0
 				domainSkippedCount := 0

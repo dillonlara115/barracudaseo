@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { viewPublicReport } from '../lib/data.js';
-  import { AlertCircle, Lock, Calendar, FileText, ExternalLink } from 'lucide-svelte';
+  import { AlertCircle, Lock, Calendar, FileText, ExternalLink, ChevronDown, ChevronRight, Search } from 'lucide-svelte';
 
   let loading = true;
   let error = null;
@@ -10,6 +10,13 @@
   let passwordRequired = false;
   let passwordError = null;
   let token = '';
+
+  // UX: collapsible groups, expand-all, search
+  let expandedGroups = {}; // { typeKey: true } — which groups are expanded
+  let expandAll = true;
+  let issueSearch = '';
+  let visibleCount = {}; // { typeKey: number } — how many issues to show per group
+  const ISSUES_PER_BATCH = 25;
 
   // Extract token from route params on mount
   onMount(() => {
@@ -56,10 +63,21 @@
   }
 
 
-  // Group issues by type
-  function groupIssuesByType(issues) {
+  // Group issues by type; optionally filter by search
+  $: groupedIssues = (() => {
+    const issues = reportData?.issues ?? [];
+    const q = (issueSearch || '').trim().toLowerCase();
+    const filtered = q
+      ? issues.filter(
+          (i) =>
+            (i.message || '').toLowerCase().includes(q) ||
+            (i.url || '').toLowerCase().includes(q) ||
+            (i.type || '').toLowerCase().includes(q) ||
+            (i.recommendation || '').toLowerCase().includes(q)
+        )
+      : issues;
     const grouped = {};
-    issues.forEach(issue => {
+    filtered.forEach((issue) => {
       const type = issue.type || 'unknown';
       if (!grouped[type]) {
         grouped[type] = {
@@ -73,6 +91,45 @@
       grouped[type].issues.push(issue);
     });
     return Object.values(grouped);
+  })();
+
+  // Initialize expanded state and visible count when grouped data or search changes
+  $: {
+    if (reportData?.issues && groupedIssues.length) {
+      groupedIssues.forEach((g) => {
+        const key = g.type;
+        if (!(key in expandedGroups)) {
+          expandedGroups[key] = expandAll;
+        }
+        // Reset visible count when search changes so each filter gets fresh pagination
+        if (issueSearch.trim()) {
+          visibleCount[key] = Math.min(ISSUES_PER_BATCH, g.issues.length);
+        } else if (!(key in visibleCount)) {
+          visibleCount[key] = Math.min(ISSUES_PER_BATCH, g.issues.length);
+        }
+      });
+    }
+  }
+
+  function showMore(group) {
+    const current = visibleCount[group.type] ?? ISSUES_PER_BATCH;
+    const next = Math.min(current + ISSUES_PER_BATCH, group.issues.length);
+    visibleCount[group.type] = next;
+    visibleCount = visibleCount;
+  }
+
+  function toggleGroup(type) {
+    expandedGroups[type] = !expandedGroups[type];
+    expandedGroups = expandedGroups;
+  }
+
+  function setExpandAll(value) {
+    expandAll = value;
+    const next = {};
+    groupedIssues.forEach((g) => {
+      next[g.type] = value;
+    });
+    expandedGroups = next;
   }
 
   // Get severity color
@@ -243,50 +300,113 @@
       <!-- Issues by Type -->
       {#if reportData.issues && reportData.issues.length > 0}
         <div class="bg-base-100 rounded-lg shadow-lg p-6 mb-6">
-          <h2 class="text-2xl font-bold mb-4">Issues Found</h2>
-          
-          {#each groupIssuesByType(reportData.issues) as group, i}
-            {#if i > 0}
-              <div class="divider"></div>
-            {/if}
-            <div class="mb-2">
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-lg font-semibold flex items-center gap-2">
-                  <span class="{getSeverityBadge(group.severity)} capitalize">{group.severity}</span>
-                  {group.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                </h3>
-                <span class="badge badge-outline">{group.count} {group.count === 1 ? 'issue' : 'issues'}</span>
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <h2 class="text-2xl font-bold" id="issues-anchor">Issues Found</h2>
+            <div class="flex flex-wrap items-center gap-3">
+              <!-- Search -->
+              <label class="input input-bordered input-sm flex items-center gap-2 flex-1 min-w-[180px] sm:max-w-xs">
+                <Search class="w-4 h-4 opacity-70" />
+                <input
+                  type="text"
+                  class="grow"
+                  placeholder="Search issues, URLs..."
+                  bind:value={issueSearch}
+                />
+              </label>
+              <!-- Expand / Collapse all -->
+              <div class="join">
+                <button
+                  class="btn btn-sm btn-outline join-item"
+                  on:click={() => setExpandAll(true)}
+                  title="Expand all groups"
+                >
+                  Expand all
+                </button>
+                <button
+                  class="btn btn-sm btn-outline join-item"
+                  on:click={() => setExpandAll(false)}
+                  title="Collapse all groups"
+                >
+                  Collapse all
+                </button>
               </div>
-              
-              <div class="space-y-3">
-                {#each group.issues.slice(0, 10) as issue}
-                  <div class="border-l-4 {getSeverityBorder(group.severity)} {getSeverityBg(group.severity)} pl-4 pr-4 py-3 rounded-r-lg">
-                    <div class="flex items-start justify-between">
-                      <div class="flex-1">
-                        {#if issue.url}
-                          <a
-                            href={issue.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="text-sm font-medium text-primary hover:underline flex items-center gap-1 mb-2"
-                          >
-                            <ExternalLink class="w-4 h-4" />
-                            {issue.url}
-                          </a>
-                        {/if}
-                        <p class="font-medium text-base-content">{issue.message}</p>
-                        {#if issue.recommendation}
-                          <p class="text-sm text-base-content/70 mt-2">{issue.recommendation}</p>
-                        {/if}
+            </div>
+          </div>
+
+          {#if issueSearch.trim()}
+            <p class="text-sm text-base-content/60 mb-3">
+              Showing {groupedIssues.reduce((s, g) => s + g.count, 0)} issues matching "{issueSearch}"
+            </p>
+          {/if}
+
+          <!-- Jump nav: scroll to each issue type -->
+          <div class="flex flex-wrap gap-2 mb-4">
+            {#each groupedIssues as group}
+              <button
+                type="button"
+                class="badge badge-outline hover:badge-primary cursor-pointer transition-colors"
+                on:click={() => document.getElementById(`issue-type-${group.type}`)?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                {group.type.replace(/_/g, ' ')}
+                <span class="opacity-70">({group.count})</span>
+              </button>
+            {/each}
+          </div>
+
+          {#each groupedIssues as group (group.type)}
+            <div class="collapse collapse-arrow bg-base-200 rounded-lg mb-3" id="issue-type-{group.type}" class:collapse-open={expandedGroups[group.type] ?? true}>
+              <input
+                type="checkbox"
+                checked={expandedGroups[group.type] ?? true}
+                on:change={(e) => {
+                  const el = /** @type {HTMLInputElement} */ (e.target);
+                  expandedGroups[group.type] = el.checked;
+                  expandedGroups = expandedGroups;
+                }}
+              />
+              <div class="collapse-title flex items-center gap-2 py-4 min-h-0">
+                <span class="{getSeverityBadge(group.severity)} capitalize">{group.severity}</span>
+                <span class="font-semibold">
+                  {group.type.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                </span>
+                <span class="badge badge-ghost ml-auto">{group.count} {group.count === 1 ? 'issue' : 'issues'}</span>
+              </div>
+              <div class="collapse-content">
+                <div class="space-y-3 pt-2 pb-2">
+                  {#each (group.issues.slice(0, visibleCount[group.type] ?? Math.min(ISSUES_PER_BATCH, group.issues.length))) as issue}
+                    <div class="border-l-4 {getSeverityBorder(group.severity)} {getSeverityBg(group.severity)} pl-4 pr-4 py-3 rounded-r-lg">
+                      <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                          {#if issue.url}
+                            <a
+                              href={issue.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              class="text-sm font-medium text-primary hover:underline flex items-center gap-1 mb-2"
+                            >
+                              <ExternalLink class="w-4 h-4 shrink-0" />
+                              <span class="break-all">{issue.url}</span>
+                            </a>
+                          {/if}
+                          <p class="font-medium text-base-content">{issue.message}</p>
+                          {#if issue.recommendation}
+                            <p class="text-sm text-base-content/70 mt-2">{issue.recommendation}</p>
+                          {/if}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                {/each}
-                {#if group.issues.length > 10}
-                  <p class="text-sm text-base-content/60 italic">
-                    ... and {group.issues.length - 10} more {group.issues.length - 10 === 1 ? 'issue' : 'issues'} of this type
-                  </p>
-                {/if}
+                  {/each}
+                  {#if group.issues.length > (visibleCount[group.type] ?? ISSUES_PER_BATCH)}
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-ghost mt-2"
+                      on:click={() => showMore(group)}
+                    >
+                      Show {Math.min(ISSUES_PER_BATCH, group.issues.length - (visibleCount[group.type] ?? ISSUES_PER_BATCH))} more
+                      ({group.issues.length - (visibleCount[group.type] ?? ISSUES_PER_BATCH)} remaining)
+                    </button>
+                  {/if}
+                </div>
               </div>
             </div>
           {/each}

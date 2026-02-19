@@ -26,6 +26,23 @@ func min(a, b int) int {
 	return b
 }
 
+// parsePageID extracts int64 from JSON-unmarshaled page id (float64, int, or string)
+func parsePageID(v interface{}) (int64, bool) {
+	switch id := v.(type) {
+	case float64:
+		return int64(id), true
+	case int:
+		return int64(id), true
+	case int64:
+		return id, true
+	case string:
+		parsed, err := strconv.ParseInt(id, 10, 64)
+		return parsed, err == nil
+	default:
+		return 0, false
+	}
+}
+
 // handleHealth returns server health status
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -761,16 +778,14 @@ func (s *Server) handleListProjectCrawls(w http.ResponseWriter, r *http.Request,
 			continue
 		}
 
-		// Get page count from pages table
-		var pages []map[string]interface{}
-		pageData, _, err := s.serviceRole.From("pages").
-			Select("id", "", false).
+		// Get page count from pages table — use count=exact to avoid 1000-row limit
+		_, dbPageCount, countErr := s.serviceRole.From("pages").
+			Select("id", "exact", false).
 			Eq("crawl_id", crawlID).
 			Execute()
-		if err == nil {
-			if err := json.Unmarshal(pageData, &pages); err == nil {
-				pagesCount := len(pages)
-				// Use page_count if available, otherwise use indexed_pages, otherwise use total_pages
+		if countErr == nil {
+			pagesCount := int(dbPageCount)
+			if pagesCount > 0 {
 				originalTotalPages := 0
 				if tp, ok := crawls[i]["total_pages"]; ok {
 					switch v := tp.(type) {
@@ -784,7 +799,6 @@ func (s *Server) handleListProjectCrawls(w http.ResponseWriter, r *http.Request,
 						originalTotalPages = int(v)
 					}
 				}
-				// Use whichever count is greater to preserve in-memory progress updates
 				effectiveCount := originalTotalPages
 				if pagesCount > effectiveCount {
 					effectiveCount = pagesCount
@@ -855,6 +869,11 @@ func (s *Server) handleTriggerCrawl(w http.ResponseWriter, r *http.Request, proj
 		f := false
 		req.ParseSitemap = &f
 	}
+	// Default crawl_sitemap_only to false if not provided
+	if req.CrawlSitemapOnly == nil {
+		f := false
+		req.CrawlSitemapOnly = &f
+	}
 
 	// Get effective subscription for limits
 	subscription, err := s.resolveSubscription(userID)
@@ -889,12 +908,13 @@ func (s *Server) handleTriggerCrawl(w http.ResponseWriter, r *http.Request, proj
 		"total_pages":  0,
 		"total_issues": 0,
 		"meta": map[string]interface{}{
-			"url":            req.URL,
-			"max_depth":      req.MaxDepth,
-			"max_pages":      req.MaxPages,
-			"workers":        req.Workers,
-			"respect_robots": *req.RespectRobots,
-			"parse_sitemap":  *req.ParseSitemap,
+			"url":                req.URL,
+			"max_depth":          req.MaxDepth,
+			"max_pages":          req.MaxPages,
+			"workers":            req.Workers,
+			"respect_robots":     *req.RespectRobots,
+			"parse_sitemap":      *req.ParseSitemap,
+			"crawl_sitemap_only": *req.CrawlSitemapOnly,
 		},
 	}
 
@@ -959,18 +979,19 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 
 	// Create crawler config
 	config := &utils.Config{
-		StartURL:      req.URL,
-		MaxDepth:      req.MaxDepth,
-		MaxPages:      req.MaxPages,
-		Workers:       req.Workers,
-		Delay:         0,
-		Timeout:       30 * time.Second,
-		UserAgent:     "barracuda/1.0.0",
-		RespectRobots: *req.RespectRobots,
-		ParseSitemap:  *req.ParseSitemap,
-		DomainFilter:  "same",
-		ExportFormat:  "csv", // Required for validation, but not used since we store in DB
-		ExportPath:    "",    // Not used for web crawls
+		StartURL:         req.URL,
+		MaxDepth:         req.MaxDepth,
+		MaxPages:         req.MaxPages,
+		Workers:          req.Workers,
+		Delay:            0,
+		Timeout:          30 * time.Second,
+		UserAgent:        "barracuda/1.0.0",
+		RespectRobots:    *req.RespectRobots,
+		ParseSitemap:     *req.ParseSitemap,
+		CrawlSitemapOnly: *req.CrawlSitemapOnly,
+		DomainFilter:     "same",
+		ExportFormat:     "csv", // Required for validation, but not used since we store in DB
+		ExportPath:       "",    // Not used for web crawls
 	}
 
 	// Validate config
@@ -982,6 +1003,9 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 
 	// Create crawler manager
 	manager := crawler.NewManager(config)
+
+	// Set initial phase for UI progress feedback
+	s.updateCrawlPhase(crawlID, "scanning")
 
 	// Track pages and page URL to ID mapping for real-time storage
 	batchSize := 50 // Smaller batches for more frequent updates
@@ -1018,8 +1042,7 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 				if !ok || url == "" {
 					continue
 				}
-				if pageID, ok := row["id"].(float64); ok {
-					pageIDInt := int64(pageID)
+				if pageIDInt, ok := parsePageID(row["id"]); ok {
 					// Store both normalized and original URL mappings
 					pageIDs[url] = pageIDInt
 					if normalizedURL, err := utils.NormalizeURL(url); err == nil {
@@ -1132,26 +1155,27 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 		atomic.AddInt32(&totalPagesProcessed, 1)
 		currentTotal := int(atomic.LoadInt32(&totalPagesProcessed))
 
-		// Insert in batches and update progress
+		// Insert in batches and update progress.
+		// Use representation to get id+url from insert response (avoids separate SELECT).
 		if len(pages) >= batchSize {
-			data, _, err := s.serviceRole.From("pages").Insert(pages, false, "", "minimal", "").Execute()
+			data, _, err := s.serviceRole.From("pages").Insert(pages, false, "", "representation", "").Execute()
 			if err != nil {
 				s.logger.Error("Failed to insert pages batch", zap.Error(err))
 			} else {
-				_ = data
-				urls := make([]string, 0, len(pages))
-				for _, page := range pages {
-					if url, ok := page["url"].(string); ok {
-						urls = append(urls, url)
+				var inserted []map[string]interface{}
+				if err := json.Unmarshal(data, &inserted); err == nil {
+					for _, row := range inserted {
+						if url, ok := row["url"].(string); ok && url != "" {
+							if pageIDInt, ok := parsePageID(row["id"]); ok {
+								pageURLToID[url] = pageIDInt
+								if normalizedURL, err := utils.NormalizeURL(url); err == nil {
+									pageURLToID[normalizedURL] = pageIDInt
+								}
+							}
+						}
 					}
-				}
-				pageIDs, err := fetchPageIDsByURL(urls)
-				if err != nil {
-					s.logger.Warn("Failed to fetch page IDs after insert", zap.Error(err))
 				} else {
-					for url, pageID := range pageIDs {
-						pageURLToID[url] = pageID
-					}
+					s.logger.Warn("Failed to parse insert response for page IDs", zap.Error(err))
 				}
 
 				// Update crawl total_pages in real-time after batch insert
@@ -1194,24 +1218,24 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 	// Store any remaining pages
 	pagesMu.Lock()
 	if len(pages) > 0 {
-		data, _, err := s.serviceRole.From("pages").Insert(pages, false, "", "minimal", "").Execute()
+		data, _, err := s.serviceRole.From("pages").Insert(pages, false, "", "representation", "").Execute()
 		if err != nil {
 			s.logger.Error("Failed to insert final pages batch", zap.Error(err))
 		} else {
-			_ = data
-			urls := make([]string, 0, len(pages))
-			for _, page := range pages {
-				if url, ok := page["url"].(string); ok {
-					urls = append(urls, url)
+			var inserted []map[string]interface{}
+			if err := json.Unmarshal(data, &inserted); err == nil {
+				for _, row := range inserted {
+					if url, ok := row["url"].(string); ok && url != "" {
+						if pageIDInt, ok := parsePageID(row["id"]); ok {
+							pageURLToID[url] = pageIDInt
+							if normalizedURL, err := utils.NormalizeURL(url); err == nil {
+								pageURLToID[normalizedURL] = pageIDInt
+							}
+						}
+					}
 				}
-			}
-			pageIDs, err := fetchPageIDsByURL(urls)
-			if err != nil {
-				s.logger.Warn("Failed to fetch page IDs after final insert", zap.Error(err))
 			} else {
-				for url, pageID := range pageIDs {
-					pageURLToID[url] = pageID
-				}
+				s.logger.Warn("Failed to parse final insert response for page IDs", zap.Error(err))
 			}
 		}
 	}
@@ -1243,39 +1267,75 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 	}
 
 	// Analyze results (only non-image URLs)
-	summary := analyzer.AnalyzeWithImages(filteredResults, config.Timeout)
+	s.updateCrawlPhase(crawlID, "metadata_review")
+	summary := analyzer.Analyze(filteredResults)
+	s.updateCrawlPhase(crawlID, "image_analysis")
+	imageIssues := analyzer.AnalyzeImages(filteredResults, config.Timeout)
+	summary.Issues = append(summary.Issues, imageIssues...)
+	for _, issue := range imageIssues {
+		summary.IssuesByType[issue.Type]++
+	}
+	summary.TotalIssues = len(summary.Issues)
 
-	// Refresh pageURLToID map before creating issues to ensure we have all pages
-	// Fetch ALL pages for this crawl to build a comprehensive map
-	allPagesData, _, err := s.serviceRole.From("pages").
-		Select("id,url", "", false).
-		Eq("crawl_id", crawlID).
-		Execute()
-	if err == nil {
-		var allPages []map[string]interface{}
-		if err := json.Unmarshal(allPagesData, &allPages); err == nil {
-			for _, page := range allPages {
-				if url, ok := page["url"].(string); ok && url != "" {
-					if pageID, ok := page["id"].(float64); ok {
-						pageIDInt := int64(pageID)
-						// Store both original and normalized URL mappings
-						pageURLToID[url] = pageIDInt
-						if normalizedURL, err := utils.NormalizeURL(url); err == nil {
-							pageURLToID[normalizedURL] = pageIDInt
-						}
+	// Refresh pageURLToID map before creating issues to ensure we have all pages.
+	// PostgREST limits to 1000 rows by default—paginate to fetch all.
+	const pageChunkSize = 1000
+	totalFetched := 0
+	for offset := 0; ; offset += pageChunkSize {
+		allPagesData, _, err := s.serviceRole.From("pages").
+			Select("id,url", "", false).
+			Eq("crawl_id", crawlID).
+			Order("id", nil).
+			Range(offset, offset+pageChunkSize-1, "").
+			Execute()
+		if err != nil {
+			s.logger.Warn("Failed to refresh pageURLToID map", zap.Error(err), zap.Int("offset", offset))
+			break
+		}
+		var chunk []map[string]interface{}
+		if err := json.Unmarshal(allPagesData, &chunk); err != nil {
+			s.logger.Warn("Failed to unmarshal pages for pageURLToID", zap.Error(err), zap.String("raw_preview", string(allPagesData[:min(200, len(allPagesData))])))
+			break
+		}
+		if len(chunk) == 0 {
+			break
+		}
+		for _, page := range chunk {
+			if url, ok := page["url"].(string); ok && url != "" {
+				if pageIDInt, ok := parsePageID(page["id"]); ok {
+					pageURLToID[url] = pageIDInt
+					if normalizedURL, err := utils.NormalizeURL(url); err == nil {
+						pageURLToID[normalizedURL] = pageIDInt
 					}
+				} else {
+					s.logger.Debug("Skipped page with unparseable id", zap.Any("id", page["id"]), zap.String("url", url))
 				}
 			}
-			s.logger.Debug("Refreshed pageURLToID map",
-				zap.String("crawl_id", crawlID),
-				zap.Int("total_pages", len(allPages)),
-				zap.Int("map_size", len(pageURLToID)))
 		}
-	} else {
-		s.logger.Warn("Failed to refresh pageURLToID map", zap.Error(err))
+		totalFetched += len(chunk)
+		if len(chunk) < pageChunkSize {
+			break
+		}
+	}
+	s.logger.Info("Refreshed pageURLToID map",
+		zap.String("crawl_id", crawlID),
+		zap.Int("total_pages_fetched", totalFetched),
+		zap.Int("map_size", len(pageURLToID)))
+	if len(pageURLToID) == 0 && totalFetched == 0 {
+		// Diagnostic: fetch once without Range to see raw response
+		diagData, _, diagErr := s.serviceRole.From("pages").
+			Select("id,url", "", false).
+			Eq("crawl_id", crawlID).
+			Limit(5, "").
+			Execute()
+		s.logger.Warn("pageURLToID empty after refresh - diagnostic",
+			zap.Error(diagErr),
+			zap.Int("raw_len", len(diagData)),
+			zap.String("raw_preview", string(diagData[:min(300, len(diagData))])))
 	}
 
 	// Store issues with URL normalization and deduplication
+	s.updateCrawlPhase(crawlID, "storing")
 	issues := make([]map[string]interface{}, 0, len(summary.Issues))
 	seenIssues := make(map[string]bool) // Track (type + normalized URL) to prevent duplicates
 
@@ -1388,6 +1448,16 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 	}
 }
 
+// updateCrawlPhase sets the current phase (scanning, metadata_review, image_analysis, storing)
+func (s *Server) updateCrawlPhase(crawlID, phase string) {
+	_, _, err := s.serviceRole.From("crawls").Update(map[string]interface{}{"phase": phase}, "", "").Eq("id", crawlID).Execute()
+	if err != nil {
+		s.logger.Warn("Failed to update crawl phase", zap.String("crawl_id", crawlID), zap.String("phase", phase), zap.Error(err))
+	} else {
+		s.logger.Debug("Updated crawl phase", zap.String("crawl_id", crawlID), zap.String("phase", phase))
+	}
+}
+
 // updateCrawlStatus updates the status of a crawl
 func (s *Server) updateCrawlStatus(crawlID, status, errorMsg string) {
 	update := map[string]interface{}{
@@ -1400,6 +1470,7 @@ func (s *Server) updateCrawlStatus(crawlID, status, errorMsg string) {
 	}
 	if status == "succeeded" || status == "failed" {
 		update["completed_at"] = time.Now().UTC().Format(time.RFC3339)
+		update["phase"] = "" // Clear phase when crawl completes
 	}
 
 	_, _, err := s.serviceRole.From("crawls").Update(update, "", "").Eq("id", crawlID).Execute()
@@ -1870,29 +1941,25 @@ func (s *Server) handleGetCrawl(w http.ResponseWriter, r *http.Request, crawlID 
 		}
 	}
 
-	// Get real-time page count directly from pages table (more accurate than total_pages field)
-	var pages []map[string]interface{}
-	pageData, _, err := s.serviceRole.From("pages").
-		Select("id", "", false).
+	// Get real-time page count — use count=exact to avoid PostgREST 1000-row limit
+	_, dbPageCount, countErr := s.serviceRole.From("pages").
+		Select("id", "exact", false).
 		Eq("crawl_id", crawlID).
 		Execute()
-	pagesCount := 0
-	if err == nil {
-		if err := json.Unmarshal(pageData, &pages); err == nil {
-			// Update total_pages with actual count from database
-			pagesCount = len(pages)
-		}
+	pageCountInt := 0
+	if countErr == nil && dbPageCount > 0 {
+		pageCountInt = int(dbPageCount)
 	}
 
 	// Use whichever count is greater so we preserve in-memory progress updates while crawl is running
 	effectiveCount := originalTotalPages
-	if pagesCount > effectiveCount {
-		effectiveCount = pagesCount
+	if pageCountInt > effectiveCount {
+		effectiveCount = pageCountInt
 	}
 
 	// total_pages in the crawl row already reflects streaming updates; keep it
 	crawl["page_count"] = effectiveCount
-	crawl["indexed_pages"] = pagesCount
+	crawl["indexed_pages"] = pageCountInt
 
 	// Ensure meta field is properly structured and includes max_pages for progress calculation
 	if meta, ok := crawl["meta"].(map[string]interface{}); ok {
@@ -2185,19 +2252,34 @@ func (s *Server) handleCrawlPages(w http.ResponseWriter, r *http.Request, crawlI
 		return
 	}
 
-	// Fetch pages using service role to ensure access
+	// Fetch pages using service role — paginate to exceed PostgREST 1000-row default
 	var pages []map[string]interface{}
-	data, _, err := s.serviceRole.From("pages").Select("*", "", false).Eq("crawl_id", crawlID).Order("created_at", nil).Execute()
-	if err != nil {
-		s.logger.Error("Failed to fetch pages", zap.String("crawl_id", crawlID), zap.Error(err))
-		s.respondError(w, http.StatusInternalServerError, "Failed to fetch pages")
-		return
-	}
-
-	if err := json.Unmarshal(data, &pages); err != nil {
-		s.logger.Error("Failed to parse pages data", zap.String("crawl_id", crawlID), zap.Error(err))
-		s.respondError(w, http.StatusInternalServerError, "Failed to parse pages")
-		return
+	const chunkSize = 1000
+	for offset := 0; ; offset += chunkSize {
+		data, _, err := s.serviceRole.From("pages").
+			Select("*", "", false).
+			Eq("crawl_id", crawlID).
+			Order("id", nil).
+			Range(offset, offset+chunkSize-1, "").
+			Execute()
+		if err != nil {
+			s.logger.Error("Failed to fetch pages", zap.String("crawl_id", crawlID), zap.Int("offset", offset), zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, "Failed to fetch pages")
+			return
+		}
+		var chunk []map[string]interface{}
+		if err := json.Unmarshal(data, &chunk); err != nil {
+			s.logger.Error("Failed to parse pages data", zap.String("crawl_id", crawlID), zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, "Failed to parse pages")
+			return
+		}
+		if len(chunk) == 0 {
+			break
+		}
+		pages = append(pages, chunk...)
+		if len(chunk) < chunkSize {
+			break
+		}
 	}
 
 	// Flatten the data field - merge data.* fields into the top-level page object
@@ -2250,19 +2332,34 @@ func (s *Server) handleCrawlIssues(w http.ResponseWriter, r *http.Request, crawl
 		return
 	}
 
-	// Fetch issues using service role to ensure access
+	// Fetch issues using service role — paginate to exceed PostgREST 1000-row default
 	var issues []map[string]interface{}
-	data, _, err := s.serviceRole.From("issues").Select("*", "", false).Eq("crawl_id", crawlID).Order("created_at", nil).Execute()
-	if err != nil {
-		s.logger.Error("Failed to fetch issues", zap.String("crawl_id", crawlID), zap.Error(err))
-		s.respondError(w, http.StatusInternalServerError, "Failed to fetch issues")
-		return
-	}
-
-	if err := json.Unmarshal(data, &issues); err != nil {
-		s.logger.Error("Failed to parse issues data", zap.String("crawl_id", crawlID), zap.Error(err))
-		s.respondError(w, http.StatusInternalServerError, "Failed to parse issues")
-		return
+	const issueChunkSize = 1000
+	for offset := 0; ; offset += issueChunkSize {
+		data, _, err := s.serviceRole.From("issues").
+			Select("*", "", false).
+			Eq("crawl_id", crawlID).
+			Order("id", nil).
+			Range(offset, offset+issueChunkSize-1, "").
+			Execute()
+		if err != nil {
+			s.logger.Error("Failed to fetch issues", zap.String("crawl_id", crawlID), zap.Int("offset", offset), zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, "Failed to fetch issues")
+			return
+		}
+		var chunk []map[string]interface{}
+		if err := json.Unmarshal(data, &chunk); err != nil {
+			s.logger.Error("Failed to parse issues data", zap.String("crawl_id", crawlID), zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, "Failed to parse issues")
+			return
+		}
+		if len(chunk) == 0 {
+			break
+		}
+		issues = append(issues, chunk...)
+		if len(chunk) < issueChunkSize {
+			break
+		}
 	}
 
 	// Fetch pages to get indexability_status for enriching issues
@@ -2274,76 +2371,76 @@ func (s *Server) handleCrawlIssues(w http.ResponseWriter, r *http.Request, crawl
 	var urlToPageIDMap map[string]int64      // URL to page_id (for reverse lookup)
 	var urlIndexabilityMap map[string]string // URL to indexability_status (fallback)
 
-	// Try to fetch pages with indexability_status, but fallback to just id,url if column doesn't exist
-	var pagesData []byte
-	pagesData, _, err = s.serviceRole.From("pages").Select("id,url,indexability_status", "", false).Eq("crawl_id", crawlID).Execute()
-	if err != nil {
-		// Check if error is due to missing indexability_status column
-		errStr := err.Error()
-		if strings.Contains(errStr, "indexability_status") || strings.Contains(errStr, "42703") || strings.Contains(errStr, "does not exist") {
-			// Column doesn't exist yet - fetch without it
-			s.logger.Debug("indexability_status column not found, fetching pages without it", zap.String("crawl_id", crawlID), zap.String("original_error", errStr))
-			var fallbackErr error
-			pagesData, _, fallbackErr = s.serviceRole.From("pages").Select("id,url", "", false).Eq("crawl_id", crawlID).Execute()
-			if fallbackErr == nil {
-				s.logger.Debug("Successfully fetched pages without indexability_status", zap.String("crawl_id", crawlID))
-				err = nil // Clear error since fallback worked
-			} else {
-				s.logger.Warn("Failed to fetch pages even without indexability_status", zap.Error(fallbackErr))
-				err = fallbackErr // Use fallback error
+	// Fetch pages with pagination for enrichment (exceed 1000-row limit)
+	pages = make([]map[string]interface{}, 0)
+	pageIndexabilityMap = make(map[int64]string)
+	pageURLMap = make(map[int64]string)
+	urlToPageIDMap = make(map[string]int64)
+	urlIndexabilityMap = make(map[string]string)
+	const pageEnrichChunkSize = 1000
+	for pageOffset := 0; ; pageOffset += pageEnrichChunkSize {
+		var pagesData []byte
+		var fetchErr error
+		pagesData, _, fetchErr = s.serviceRole.From("pages").
+			Select("id,url,indexability_status", "", false).
+			Eq("crawl_id", crawlID).
+			Order("id", nil).
+			Range(pageOffset, pageOffset+pageEnrichChunkSize-1, "").
+			Execute()
+		if fetchErr != nil {
+			errStr := fetchErr.Error()
+			if strings.Contains(errStr, "indexability_status") || strings.Contains(errStr, "42703") || strings.Contains(errStr, "does not exist") {
+				pagesData, _, fetchErr = s.serviceRole.From("pages").
+					Select("id,url", "", false).
+					Eq("crawl_id", crawlID).
+					Order("id", nil).
+					Range(pageOffset, pageOffset+pageEnrichChunkSize-1, "").
+					Execute()
 			}
 		}
-	}
-	if err == nil {
-		if unmarshalErr := json.Unmarshal(pagesData, &pages); unmarshalErr == nil {
-			// Create maps for enriching issues
-			pageIndexabilityMap = make(map[int64]string)
-			pageURLMap = make(map[int64]string)          // page_id to URL
-			urlToPageIDMap = make(map[string]int64)      // URL to page_id (for reverse lookup)
-			urlIndexabilityMap = make(map[string]string) // URL to indexability_status (fallback)
-			for _, page := range pages {
-				var pageID int64
-				if id, ok := page["id"].(float64); ok {
-					pageID = int64(id)
-				}
-				if url, ok := page["url"].(string); ok && url != "" {
-					if pageID > 0 {
-						pageURLMap[pageID] = url
-						// Store normalized and original URL mappings for reverse lookup
-						if normalizedURL, err := utils.NormalizeURL(url); err == nil {
-							urlToPageIDMap[normalizedURL] = pageID
-						}
-						urlToPageIDMap[url] = pageID
-					}
-					if status, ok := page["indexability_status"].(string); ok && status != "" {
-						urlIndexabilityMap[url] = status
-						if pageID > 0 {
-							pageIndexabilityMap[pageID] = status
-						}
-					}
-				}
-			}
-			s.logger.Debug("Built page maps for enrichment",
-				zap.String("crawl_id", crawlID),
-				zap.Int("total_pages", len(pages)),
-				zap.Int("pageURLMap_size", len(pageURLMap)),
-				zap.Int("urlToPageIDMap_size", len(urlToPageIDMap)))
-		} else {
+		if fetchErr != nil {
+			s.logger.Warn("Failed to fetch pages for enrichment", zap.Error(fetchErr))
+			break
+		}
+		var pageChunk []map[string]interface{}
+		if unmarshalErr := json.Unmarshal(pagesData, &pageChunk); unmarshalErr != nil {
 			s.logger.Warn("Failed to unmarshal pages data", zap.Error(unmarshalErr))
-			// Initialize empty maps so enrichment code doesn't crash
-			pageIndexabilityMap = make(map[int64]string)
-			pageURLMap = make(map[int64]string)
-			urlToPageIDMap = make(map[string]int64)
-			urlIndexabilityMap = make(map[string]string)
+			break
 		}
-	} else {
-		s.logger.Warn("Failed to fetch pages for enrichment", zap.Error(err))
-		// Initialize empty maps so enrichment code doesn't crash
-		pageIndexabilityMap = make(map[int64]string)
-		pageURLMap = make(map[int64]string)
-		urlToPageIDMap = make(map[string]int64)
-		urlIndexabilityMap = make(map[string]string)
+		if len(pageChunk) == 0 {
+			break
+		}
+		pages = append(pages, pageChunk...)
+		for _, page := range pageChunk {
+			var pageID int64
+			if id, ok := page["id"].(float64); ok {
+				pageID = int64(id)
+			}
+			if url, ok := page["url"].(string); ok && url != "" {
+				if pageID > 0 {
+					pageURLMap[pageID] = url
+					if normalizedURL, normErr := utils.NormalizeURL(url); normErr == nil {
+						urlToPageIDMap[normalizedURL] = pageID
+					}
+					urlToPageIDMap[url] = pageID
+				}
+				if status, ok := page["indexability_status"].(string); ok && status != "" {
+					urlIndexabilityMap[url] = status
+					if pageID > 0 {
+						pageIndexabilityMap[pageID] = status
+					}
+				}
+			}
+		}
+		if len(pageChunk) < pageEnrichChunkSize {
+			break
+		}
 	}
+	s.logger.Debug("Built page maps for enrichment",
+		zap.String("crawl_id", crawlID),
+		zap.Int("total_pages", len(pages)),
+		zap.Int("pageURLMap_size", len(pageURLMap)),
+		zap.Int("urlToPageIDMap_size", len(urlToPageIDMap)))
 
 	// Always run enrichment, even if pages fetch failed (we can still try direct lookups)
 	// Enrich issues with URL and indexability_status

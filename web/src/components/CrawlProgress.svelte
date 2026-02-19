@@ -26,6 +26,16 @@
   // Progress calculation - use max_pages from crawl (limit), not total_pages (current count)
   $: maxPages = crawl?.max_pages || crawl?.meta?.max_pages || 100;
   $: status = crawl?.status || 'pending';
+  $: phase = crawl?.phase || '';
+
+  // Human-readable phase labels for the modal
+  const phaseLabels = {
+    scanning: 'Scanning pages',
+    metadata_review: 'Reviewing metadata',
+    image_analysis: 'Analyzing images',
+    storing: 'Storing results'
+  };
+  $: phaseLabel = phase ? (phaseLabels[phase] || phase) : '';
   
   // Use actual page count from DB, but fallback to crawl.total_pages if available
   $: displayPageCount = (() => {
@@ -295,6 +305,12 @@
       </div>
       
       {#if status === 'running' || status === 'pending'}
+        {#if phaseLabel}
+          <p class="text-sm text-base-content/70 mb-2">
+            <span class="loading loading-dots loading-sm"></span>
+            {phaseLabel}
+          </p>
+        {/if}
         <!-- Progress Bar -->
         <div class="mb-4">
           <div class="flex justify-between items-center mb-2">

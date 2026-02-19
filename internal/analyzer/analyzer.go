@@ -23,6 +23,7 @@ const (
 	IssueShortMetaDesc   IssueType = "short_meta_description"
 	IssueLargeImage      IssueType = "large_image"
 	IssueMissingImageAlt IssueType = "missing_image_alt"
+	IssueBrokenImage     IssueType = "broken_image"
 	IssueSlowResponse    IssueType = "slow_response"
 	IssueRedirectChain   IssueType = "redirect_chain"
 	IssueNoCanonical     IssueType = "no_canonical"

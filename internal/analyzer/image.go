@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -162,11 +163,26 @@ func AnalyzeImages(results []*models.PageResult, timeout time.Duration) []Issue 
 	// Parallel fetch: populate cache for all unique image URLs
 	imageSizeCache := fetchImageSizesInParallel(urlsToFetch, timeout)
 
-	// Second pass: build large image issues from cache
+	// Second pass: build large image and broken image issues from cache
 	largeImages := 0
+	brokenImages := 0
 	for _, ref := range sizeCheckRefs {
 		sizeInfo := imageSizeCache[ref.img.URL]
-		if sizeInfo.Error == nil && sizeInfo.SizeKB > MaxImageSizeKB {
+		if sizeInfo.Error != nil {
+			brokenImages++
+			errMsg := sizeInfo.Error.Error()
+			if idx := strings.Index(errMsg, "status "); idx >= 0 {
+				errMsg = errMsg[idx+7:] // "status 404" -> "404"
+			}
+			issues = append(issues, Issue{
+				Type:           IssueBrokenImage,
+				Severity:       "error",
+				URL:            ref.pageURL,
+				Message:        fmt.Sprintf("Broken image (HTTP %s): %s", errMsg, ref.img.URL),
+				Value:          ref.img.URL,
+				Recommendation: "Fix or replace the image URL, or remove the broken image",
+			})
+		} else if sizeInfo.SizeKB > MaxImageSizeKB {
 			largeImages++
 			issues = append(issues, Issue{
 				Type:           IssueLargeImage,
@@ -183,6 +199,7 @@ func AnalyzeImages(results []*models.PageResult, timeout time.Duration) []Issue 
 		utils.Debug("Image analysis complete",
 			utils.NewField("total_images", totalImages),
 			utils.NewField("missing_alt", imagesWithoutAlt),
+			utils.NewField("broken_images", brokenImages),
 			utils.NewField("large_images", largeImages),
 			utils.NewField("threshold_kb", MaxImageSizeKB))
 	}

@@ -31,6 +31,7 @@
   let maxPages = 100; // Initial default, will be set when modal opens
   let respectRobots = true;
   let parseSitemap = true; // Enable sitemap parsing by default to discover more pages
+  let crawlSitemapOnly = true; // When parseSitemap: crawl only sitemap URLs, no link discovery (like indexed pages)
 
   // Use loadedProject or prop project
   $: currentProject = project || loadedProject;
@@ -145,7 +146,8 @@
       max_pages: maxPages,
       workers: 10,
       respect_robots: respectRobots,
-      parse_sitemap: parseSitemap
+      parse_sitemap: parseSitemap,
+      crawl_sitemap_only: crawlSitemapOnly
     });
 
     loading = false;
@@ -194,6 +196,7 @@
     maxPages = maxPagesLimit;
     respectRobots = true;
     parseSitemap = false;
+    crawlSitemapOnly = true;
   }
 
   function handleCancel() {
@@ -213,6 +216,7 @@
     maxPages = maxPagesLimit;
     respectRobots = true;
     parseSitemap = false;
+    crawlSitemapOnly = true;
   }
   
   function handleProgressComplete(e) {
@@ -384,9 +388,26 @@
             />
           </label>
           <div class="label">
-            <span class="label-text-alt text-base-content opacity-70">If enabled, the crawler will discover and use URLs from sitemap.xml files. This can help find more pages quickly.</span>
+            <span class="label-text-alt text-base-content opacity-70">Use URLs from sitemap.xml as the crawl list. Recommended for aligning with indexed pages.</span>
           </div>
         </div>
+
+        {#if parseSitemap}
+        <div class="form-control mb-4">
+          <label class="label cursor-pointer">
+            <span class="label-text text-base-content">Crawl sitemap URLs only</span>
+            <input 
+              type="checkbox" 
+              class="toggle toggle-primary" 
+              bind:checked={crawlSitemapOnly}
+              disabled={loading}
+            />
+          </label>
+          <div class="label">
+            <span class="label-text-alt text-base-content opacity-70">When enabled, only URLs from the sitemap are crawled—no link discovery. Best for ecommerce sites to avoid crawling 6000+ product variations. Similar to Screaming Frog's list mode.</span>
+          </div>
+        </div>
+        {/if}
 
         <div class="modal-action">
           <button 

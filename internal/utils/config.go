@@ -6,18 +6,19 @@ import (
 
 // Config holds all crawl configuration settings
 type Config struct {
-	StartURL      string
-	MaxDepth      int
-	MaxPages      int
-	DomainFilter  string        // "same" or "all"
-	Workers       int
-	Delay         time.Duration
-	Timeout       time.Duration
-	UserAgent     string
-	RespectRobots bool
-	ParseSitemap  bool
-	ExportFormat  string // "csv" or "json"
-	ExportPath    string
+	StartURL         string
+	MaxDepth         int
+	MaxPages         int
+	DomainFilter     string // "same" or "all"
+	Workers          int
+	Delay            time.Duration
+	Timeout          time.Duration
+	UserAgent        string
+	RespectRobots    bool
+	ParseSitemap     bool
+	CrawlSitemapOnly bool   // When true and ParseSitemap enabled: crawl only sitemap URLs, no link discovery (like indexed pages)
+	ExportFormat     string // "csv" or "json"
+	ExportPath       string
 }
 
 // DefaultConfig returns a Config with sensible defaults
@@ -56,4 +57,3 @@ func (c *Config) Validate() error {
 	}
 	return nil
 }
-

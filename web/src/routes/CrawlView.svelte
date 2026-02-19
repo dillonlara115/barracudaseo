@@ -195,10 +195,10 @@
         }
       });
 
-      // Generate summary from data
+      // Generate summary from data — use crawl totals for stats (backend paginates, may return full datasets)
       summary = {
-        total_pages: results.length,
-        total_issues: issues.length,
+        total_pages: selectedCrawl?.page_count ?? selectedCrawl?.total_pages ?? results.length,
+        total_issues: selectedCrawl?.total_issues ?? issues.length,
         issues_by_type: {},
         issues: issues.map(issue => ({
           id: issue.id,

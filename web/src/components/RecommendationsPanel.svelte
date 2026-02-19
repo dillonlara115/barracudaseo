@@ -111,6 +111,20 @@
         { name: "Accessibility Guidelines", url: "https://www.w3.org/WAI/tutorials/images/" }
       ]
     },
+    broken_image: {
+      title: "Fix Broken Images",
+      impact: "High",
+      description: "Images that return 404 or other errors hurt user experience and may indicate missing or moved assets.",
+      codeSnippet: `<!-- Update image URL to valid path -->
+<img src="/correct-image-path.jpg" alt="Image description">
+
+<!-- Or remove broken image if no longer needed -->
+<!-- Or use placeholder while fixing -->`,
+      explanation: "Update image src to point to a valid URL, remove the image if obsolete, or replace with a working alternative.",
+      resources: [
+        { name: "Image Best Practices", url: "https://web.dev/fast/#optimize-your-images" }
+      ]
+    },
     large_image: {
       title: "Optimize Image Size",
       impact: "Medium",

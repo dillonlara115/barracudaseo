@@ -15,6 +15,23 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// totalFromCrawlOrLen returns the crawl's stored total when valid, otherwise fallback.
+func totalFromCrawlOrLen(crawl map[string]interface{}, key string, fallback int) int {
+	if v, ok := crawl[key]; ok && v != nil {
+		switch n := v.(type) {
+		case float64:
+			if n >= 0 {
+				return int(n)
+			}
+		case int:
+			if n >= 0 {
+				return n
+			}
+		}
+	}
+	return fallback
+}
+
 // CreatePublicReportRequest represents a request to create a public report
 type CreatePublicReportRequest struct {
 	CrawlID     string                 `json:"crawl_id"`
@@ -307,24 +324,60 @@ func (s *Server) handleViewPublicReport(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	// Fetch issues for this crawl
-	issuesBytes, _, err := s.serviceRole.From("issues").Select("*", "", false).Eq("crawl_id", crawlID).Execute()
+	// Fetch issues for this crawl — paginate to exceed PostgREST 1000-row limit
 	var issues []map[string]interface{}
-	if err != nil {
-		s.logger.Error("Failed to fetch issues", zap.Error(err))
-		issues = []map[string]interface{}{} // Return empty array on error
-	} else {
-		json.Unmarshal(issuesBytes, &issues)
+	const issueChunkSize = 1000
+	for issueOffset := 0; ; issueOffset += issueChunkSize {
+		issuesBytes, _, err := s.serviceRole.From("issues").
+			Select("*", "", false).
+			Eq("crawl_id", crawlID).
+			Order("id", nil).
+			Range(issueOffset, issueOffset+issueChunkSize-1, "").
+			Execute()
+		if err != nil {
+			s.logger.Error("Failed to fetch issues", zap.Error(err), zap.Int("offset", issueOffset))
+			break
+		}
+		var chunk []map[string]interface{}
+		if err := json.Unmarshal(issuesBytes, &chunk); err != nil {
+			s.logger.Error("Failed to parse issues", zap.Error(err))
+			break
+		}
+		if len(chunk) == 0 {
+			break
+		}
+		issues = append(issues, chunk...)
+		if len(chunk) < issueChunkSize {
+			break
+		}
 	}
 
-	// Fetch pages for this crawl
-	pagesBytes, _, err := s.serviceRole.From("pages").Select("*", "", false).Eq("crawl_id", crawlID).Execute()
+	// Fetch pages for this crawl — paginate to exceed PostgREST 1000-row limit
 	var pages []map[string]interface{}
-	if err != nil {
-		s.logger.Error("Failed to fetch pages", zap.Error(err))
-		pages = []map[string]interface{}{} // Return empty array on error
-	} else {
-		json.Unmarshal(pagesBytes, &pages)
+	const pageChunkSize = 1000
+	for pageOffset := 0; ; pageOffset += pageChunkSize {
+		pagesBytes, _, err := s.serviceRole.From("pages").
+			Select("*", "", false).
+			Eq("crawl_id", crawlID).
+			Order("id", nil).
+			Range(pageOffset, pageOffset+pageChunkSize-1, "").
+			Execute()
+		if err != nil {
+			s.logger.Error("Failed to fetch pages", zap.Error(err), zap.Int("offset", pageOffset))
+			break
+		}
+		var chunk []map[string]interface{}
+		if err := json.Unmarshal(pagesBytes, &chunk); err != nil {
+			s.logger.Error("Failed to parse pages", zap.Error(err))
+			break
+		}
+		if len(chunk) == 0 {
+			break
+		}
+		pages = append(pages, chunk...)
+		if len(chunk) < pageChunkSize {
+			break
+		}
 	}
 
 	// Enrich issues with page URLs
@@ -360,8 +413,8 @@ func (s *Server) handleViewPublicReport(w http.ResponseWriter, r *http.Request) 
 		"issues":  issues,
 		"pages":   pages,
 		"summary": map[string]interface{}{
-			"total_pages":  len(pages),
-			"total_issues": len(issues),
+			"total_pages":  totalFromCrawlOrLen(crawlData, "total_pages", len(pages)),
+			"total_issues": totalFromCrawlOrLen(crawlData, "total_issues", len(issues)),
 		},
 	}
 
