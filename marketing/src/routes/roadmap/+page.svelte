@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { CircleCheck, Clock, Rocket, Target, Sparkles, Zap, Github, MessageSquare, ExternalLink } from '@lucide/svelte';
+	import { CircleCheck, Clock, Rocket, Target, Sparkles, Zap, Github, MessageSquare, ExternalLink, BrainCircuit, FileText, PenTool, Link2, ChartBar } from '@lucide/svelte';
 	import MetaTags from '../../components/MetaTags.svelte';
 	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
 
 	const meta = getMetaTags({
 		title: 'Product Roadmap',
-		description: 'See what\'s coming next for Barracuda SEO. Our roadmap includes AI-powered insights, scheduled crawls, rank tracking, and more.'
+		description: 'See what\'s coming next for Barracuda SEO. AI-powered content briefs, article writing, GSC intelligence, internal link suggestions, and more — all coming soon.'
 	});
 
 	const structuredData = getBreadcrumbSchema([
@@ -302,7 +302,7 @@
 	</div>
 </section>
 
-<!-- Section 2: In Progress -->
+<!-- Section 2: In Progress — AI-Powered Feature Suite -->
 <section class="py-20 bg-[#2d2826]">
 	<div class="container mx-auto px-4">
 		<div class="max-w-6xl mx-auto">
@@ -313,9 +313,77 @@
 				<h2 class="text-4xl md:text-5xl font-heading font-bold text-white">In Progress</h2>
 			</div>
 
-			<!-- Note: Marketing Site Enhancements moved to Completed -->
-			<div class="text-center py-8 text-white/60">
-				<p>More features coming soon...</p>
+			<div class="bg-gradient-to-br from-[#3c3836] to-[#2d2826] rounded-xl p-8 border border-[#d79921]/30 mb-12">
+				<div class="flex items-center gap-3 mb-4">
+					<BrainCircuit class="w-7 h-7 text-[#d79921]" />
+					<h3 class="text-2xl md:text-3xl font-heading font-bold text-white">AI-Powered Feature Suite</h3>
+					<span class="ml-auto text-sm text-[#d79921] font-semibold bg-[#d79921]/10 px-3 py-1 rounded-full">Phase 1</span>
+				</div>
+				<p class="text-lg text-white/80 mb-8 max-w-3xl">
+					AI baked in, not bolted on. Every AI capability is contextual and action-triggered — a "Generate Brief" button on a keyword opportunity, an "Analyze Voice" button in project settings, a "Diagnose Decline" link on a declining page. Intelligence at the moment you need it.
+				</p>
+
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-[#d79921]/20">
+						<div class="flex items-center gap-3 mb-3">
+							<PenTool class="w-5 h-5 text-[#d79921]" />
+							<h4 class="text-lg font-heading font-bold text-white">Writing Voice Analysis</h4>
+						</div>
+						<p class="text-white/70 text-sm">
+							Generate a brand voice profile from your existing site content. Five structured components (tone, structure, sentence style, brand context, avoid list) that make every AI output sound like you, not generic AI.
+						</p>
+					</div>
+
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-[#d79921]/20">
+						<div class="flex items-center gap-3 mb-3">
+							<ChartBar class="w-5 h-5 text-[#d79921]" />
+							<h4 class="text-lg font-heading font-bold text-white">GSC Intelligence Dashboard</h4>
+						</div>
+						<p class="text-white/70 text-sm">
+							Quick Wins, Declining Pages, Content Gaps, and Weekly Digests — all surfaced from your GSC data with one-click AI explanations and diagnoses for every insight.
+						</p>
+					</div>
+
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-[#d79921]/20">
+						<div class="flex items-center gap-3 mb-3">
+							<FileText class="w-5 h-5 text-[#d79921]" />
+							<h4 class="text-lg font-heading font-bold text-white">Content Brief Generator</h4>
+						</div>
+						<p class="text-white/70 text-sm">
+							Data-backed content briefs with target keywords, H2 outlines, internal link opportunities, and intent classification. Generated from real GSC data and your crawled site content.
+						</p>
+					</div>
+
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-[#d79921]/20">
+						<div class="flex items-center gap-3 mb-3">
+							<Sparkles class="w-5 h-5 text-[#d79921]" />
+							<h4 class="text-lg font-heading font-bold text-white">Article Writer</h4>
+						</div>
+						<p class="text-white/70 text-sm">
+							Full article drafts from approved briefs, written in your brand voice. Markdown editor with live preview, inline internal link suggestions, and export to HTML or Markdown.
+						</p>
+					</div>
+
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-[#d79921]/20">
+						<div class="flex items-center gap-3 mb-3">
+							<Link2 class="w-5 h-5 text-[#d79921]" />
+							<h4 class="text-lg font-heading font-bold text-white">Internal Link Suggester</h4>
+						</div>
+						<p class="text-white/70 text-sm">
+							Semantic similarity across your crawled pages surfaces missing internal links. Page-level suggestions with AI anchor text, plus a site-wide audit for orphaned pages and topic clusters.
+						</p>
+					</div>
+
+					<div class="bg-[#2d2826] rounded-lg p-6 border border-[#d79921]/20">
+						<div class="flex items-center gap-3 mb-3">
+							<BrainCircuit class="w-5 h-5 text-[#d79921]" />
+							<h4 class="text-lg font-heading font-bold text-white">Site Intelligence Engine</h4>
+						</div>
+						<p class="text-white/70 text-sm">
+							Enhanced sitemap-based crawler stores clean content with AI embeddings. Every AI call is grounded in your real site data — GSC metrics, crawled pages, and project memory that improves over time.
+						</p>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -522,6 +590,37 @@
 				</div>
 				<h2 class="text-4xl md:text-5xl font-heading font-bold text-white">Mid-Term Goals</h2>
 				<span class="text-lg text-white/70">(3–6 month window)</span>
+			</div>
+
+			<!-- 4.0 AI Suite Phase 2 -->
+			<div class="mb-12">
+				<h3 class="text-2xl md:text-3xl font-heading font-bold mb-6 text-[#8ec07c]">AI Suite Phase 2: WordPress Integration</h3>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="bg-[#3c3836] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">"Send to WordPress" button on approved articles</span>
+						</div>
+					</div>
+					<div class="bg-[#3c3836] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Creates draft posts with Yoast/RankMath meta fields</span>
+						</div>
+					</div>
+					<div class="bg-[#3c3836] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Sync status between app and WordPress</span>
+						</div>
+					</div>
+					<div class="bg-[#3c3836] rounded-lg p-6 border border-white/10">
+						<div class="flex items-start gap-3">
+							<Target class="w-5 h-5 text-[#458588] flex-shrink-0 mt-0.5" />
+							<span class="text-white/90">Image placeholder support for manual media addition</span>
+						</div>
+					</div>
+				</div>
 			</div>
 
 			<!-- 4.1 Scheduled Crawls -->

@@ -231,6 +231,38 @@ func (s *Server) Router() http.Handler {
 	v1.HandleFunc("/keywords/", s.handleKeywordByID) // Handles GET, PUT, DELETE, and sub-resources
 	v1.HandleFunc("/keywords", s.handleKeywords)     // Handles GET (list) and POST (create)
 
+	// AI Suite initialization (only registered if GEMINI_API_KEY is set)
+	aiSuite := s.InitAISuite()
+	if aiSuite != nil {
+		// Internal cron endpoint for weekly digest (protected via shared secret)
+		mux.HandleFunc("/api/internal/ai/digest", s.handleWeeklyDigest(aiSuite))
+		// Voice
+		v1.HandleFunc("/ai/voice/generate", s.handleGenerateVoice(aiSuite))
+		v1.HandleFunc("/ai/voice", s.handleGetVoice)
+		v1.HandleFunc("/ai/voice/update", s.handleUpdateVoice)
+		// Briefs
+		v1.HandleFunc("/ai/briefs/generate", s.handleGenerateBrief(aiSuite))
+		v1.HandleFunc("/ai/briefs", s.handleListBriefs)
+		v1.HandleFunc("/ai/briefs/update", s.handleUpdateBrief)
+		// Articles
+		v1.HandleFunc("/ai/articles/generate", s.handleGenerateArticle(aiSuite))
+		v1.HandleFunc("/ai/articles", s.handleListArticles)
+		v1.HandleFunc("/ai/articles/update", s.handleUpdateArticle)
+		// GSC Intelligence
+		v1.HandleFunc("/ai/gsc/quick-wins", s.handleQuickWins)
+		v1.HandleFunc("/ai/gsc/declining", s.handleDecliningPages)
+		v1.HandleFunc("/ai/gsc/explain", s.handleExplainOpportunity(aiSuite))
+		v1.HandleFunc("/ai/gsc/diagnose", s.handleDiagnoseDecline(aiSuite))
+		// Internal Links
+		v1.HandleFunc("/ai/links/suggestions", s.handleInternalLinkSuggestions)
+		v1.HandleFunc("/ai/links/orphaned", s.handleOrphanedPages)
+		// Site Crawl
+		v1.HandleFunc("/ai/crawl", s.handleSiteCrawl(aiSuite))
+		// Usage
+		v1.HandleFunc("/ai/usage", s.handleUsageSummary(aiSuite))
+		s.logger.Info("AI Suite routes registered")
+	}
+
 	// Wrap v1 routes with authentication middleware
 	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", s.authMiddleware(v1)))
 

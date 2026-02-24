@@ -1,9 +1,12 @@
 <script>
   import { createEventDispatcher } from 'svelte';
+  import { collapseImageIssuesByAsset } from '../lib/issueUtils.js';
 
   export let page = null;
   export let issues = [];
   export let navigateToTab = null;
+
+  $: displayItems = collapseImageIssuesByAsset(issues);
 
   const dispatch = createEventDispatcher();
 
@@ -174,32 +177,40 @@
           {/if}
         </div>
 
-        {#if issues.length === 0}
+        {#if displayItems.length === 0}
           <div class="alert alert-success">
             <span>🎉 No issues found for this page!</span>
           </div>
         {:else}
           <div class="space-y-2">
-            {#each issues as issue}
-              <div class="alert {getSeverityBadge(issue.severity)} shadow-sm">
+            {#each displayItems as item}
+              <div class="alert {getSeverityBadge(item.severity)} shadow-sm">
                 <div class="flex-1">
                   <div class="flex items-center gap-2 mb-1">
-                    <span class="badge {getSeverityBadge(issue.severity)}">
-                      {issue.severity}
+                    <span class="badge {getSeverityBadge(item.severity)}">
+                      {item.severity}
                     </span>
                     <span class="badge badge-outline">
-                      {issue.type.replace(/_/g, ' ')}
+                      {item.type.replace(/_/g, ' ')}
                     </span>
                   </div>
-                  <h5 class="font-semibold">{issue.message}</h5>
-                  {#if issue.value}
+                  <h5 class="font-semibold">{item.message}</h5>
+                  {#if item.isAssetGroup && item.assetUrl}
                     <div class="text-sm mt-1">
-                      <span class="font-semibold">Value:</span> {issue.value}
+                      <span class="font-semibold">Image:</span>
+                      <a href={item.assetLinkUrl || item.assetUrl} target="_blank" rel="noopener noreferrer" class="link link-hover break-all">{item.assetUrl}</a>
+                    </div>
+                    {#if (item.affectedUrls?.length ?? 0) > 1}
+                      <div class="text-xs mt-1 text-base-content/70">Used on {(item.affectedUrls?.length ?? 0)} places on this page</div>
+                    {/if}
+                  {:else if item.value}
+                    <div class="text-sm mt-1">
+                      <span class="font-semibold">Value:</span> {item.value}
                     </div>
                   {/if}
-                  {#if issue.recommendation}
+                  {#if item.recommendation}
                     <div class="text-sm mt-1">
-                      <span class="font-semibold">Recommendation:</span> {issue.recommendation}
+                      <span class="font-semibold">Recommendation:</span> {item.recommendation}
                     </div>
                   {/if}
                 </div>

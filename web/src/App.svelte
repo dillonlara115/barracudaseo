@@ -66,6 +66,18 @@
     '/project/:projectId/crawls': wrap({
       asyncComponent: () => import('./routes/Crawls.svelte')
     }),
+    '/project/:projectId/content': wrap({
+      asyncComponent: () => import('./routes/ContentHub.svelte')
+    }),
+    '/project/:projectId/gsc-intelligence': wrap({
+      asyncComponent: () => import('./routes/GSCIntelligencePage.svelte')
+    }),
+    '/project/:projectId/internal-links': wrap({
+      asyncComponent: () => import('./routes/InternalLinksPage.svelte')
+    }),
+    '/project/:projectId/ai-usage': wrap({
+      asyncComponent: () => import('./routes/AIUsagePage.svelte')
+    }),
     '/team/accept': wrap({
       asyncComponent: () => import('./routes/TeamAccept.svelte')
     }),

@@ -13,13 +13,21 @@
     Settings,
     BarChart,
     FileSearch,
-    Terminal
+    Terminal,
+    BrainCircuit,
+    PenTool,
+    Link2,
+    Gauge
   } from 'lucide-svelte';
 
   export let projectId = null;
-  export let gscStatus = null; // Optional: GSC status for conditional display
+  /** @type {any} */
+  export let gscStatus = null;
+  /** @type {any} */
+  export let ga4Status = null;
+  /** @type {any} */
+  export let clarityStatus = null;
 
-  // Determine active route based on current location
   $: currentPath = $location || '';
   $: isDashboard = currentPath === `/project/${projectId}` || currentPath === `/project/${projectId}/` || (currentPath.includes(`/project/${projectId}`) && currentPath.includes('?tab=dashboard'));
   $: isResults = currentPath.includes(`/project/${projectId}`) && currentPath.includes('?tab=results');
@@ -30,13 +38,19 @@
   $: isRankTracker = currentPath.includes('/rank-tracker');
   $: isDiscoverKeywords = currentPath.includes('/discover-keywords');
   $: isImpactFirst = currentPath.includes('/impact-first');
-  $: isGSCDashboard = currentPath.includes('/gsc') && !currentPath.includes('/keywords');
+  $: isGSCDashboard = currentPath.includes('/gsc') && !currentPath.includes('/keywords') && !currentPath.includes('/gsc-intelligence');
   $: isGSCKeywords = currentPath.includes('/gsc/keywords');
+  $: isContent = currentPath.includes('/content');
+  $: isGSCIntelligence = currentPath.includes('/gsc-intelligence');
+  $: isInternalLinks = currentPath.includes('/internal-links');
+  $: isAIUsage = currentPath.includes('/ai-usage');
   $: isSettings = currentPath.includes(`/project/${projectId}/settings`) && !currentPath.includes('/settings/cli');
   $: isCLISettings = currentPath.includes('/settings/cli');
 
-  // Check if GSC is connected
-  $: gscConnected = gscStatus?.integration?.property_url ? true : false;
+  $: gscConnected = !!(gscStatus && gscStatus.integration && gscStatus.integration.property_url);
+  $: ga4Connected = !!(ga4Status && ga4Status.integration && ga4Status.integration.property_id);
+  $: clarityConnected = !!(clarityStatus && clarityStatus.integration && clarityStatus.integration.connected);
+  $: hasIntegrations = gscConnected || ga4Connected || clarityConnected;
 </script>
 
 <div class="flex flex-col lg:flex-row min-h-[calc(100vh-200px)] bg-base-100 border-t border-base-200">
@@ -143,31 +157,102 @@
         </li>
       {/if}
       
-      <!-- Google Search Console Section (only if connected) -->
-      {#if projectId && gscConnected}
+      <!-- Integrations Section (only if any connected) -->
+      {#if projectId && hasIntegrations}
+        <li class="hidden lg:block border-b border-base-200 my-2 pointer-events-none"></li>
+        {#if gscConnected}
+          <li>
+            <a
+              href="/project/{projectId}/gsc"
+              use:link
+              class:active={isGSCDashboard}
+            >
+              <BarChart class="w-5 h-5" />
+              GSC Dashboard
+            </a>
+          </li>
+          <li>
+            <a
+              href="/project/{projectId}/gsc/keywords"
+              use:link
+              class:active={isGSCKeywords}
+            >
+              <Search class="w-5 h-5" />
+              GSC Keywords
+            </a>
+          </li>
+        {/if}
+        {#if ga4Connected}
+          <li>
+            <a
+              href="/project/{projectId}?tab=ga4-dashboard"
+              use:link
+              class:active={currentPath.includes('tab=ga4-dashboard')}
+            >
+              <BarChart class="w-5 h-5" />
+              GA4 Dashboard
+            </a>
+          </li>
+        {/if}
+        {#if clarityConnected}
+          <li>
+            <a
+              href="/project/{projectId}?tab=clarity-dashboard"
+              use:link
+              class:active={currentPath.includes('tab=clarity-dashboard')}
+            >
+              <AlertTriangle class="w-5 h-5" />
+              Clarity
+            </a>
+          </li>
+        {/if}
+      {/if}
+      
+      <!-- AI Suite Section -->
+      {#if projectId}
         <li class="hidden lg:block border-b border-base-200 my-2 pointer-events-none"></li>
         <li>
           <a
-            href="/project/{projectId}/gsc"
+            href="/project/{projectId}/content"
             use:link
-            class:active={isGSCDashboard}
+            class:active={isContent}
           >
-            <BarChart class="w-5 h-5" />
-            GSC Dashboard
+            <PenTool class="w-5 h-5" />
+            Content
           </a>
         </li>
         <li>
           <a
-            href="/project/{projectId}/gsc/keywords"
+            href="/project/{projectId}/gsc-intelligence"
             use:link
-            class:active={isGSCKeywords}
+            class:active={isGSCIntelligence}
           >
-            <Search class="w-5 h-5" />
-            GSC Keywords
+            <BrainCircuit class="w-5 h-5" />
+            GSC Intelligence
+          </a>
+        </li>
+        <li>
+          <a
+            href="/project/{projectId}/internal-links"
+            use:link
+            class:active={isInternalLinks}
+          >
+            <Link2 class="w-5 h-5" />
+            Internal Links
+          </a>
+        </li>
+        <li>
+          <a
+            href="/project/{projectId}/ai-usage"
+            use:link
+            class:active={isAIUsage}
+          >
+            <Gauge class="w-5 h-5" />
+            AI Usage
           </a>
         </li>
       {/if}
-      
+
       <!-- Project Settings -->
       {#if projectId}
         <li class="hidden lg:block border-b border-base-200 my-2 pointer-events-none"></li>

@@ -7,6 +7,7 @@
   import ProjectClaritySelector from '../components/ProjectClaritySelector.svelte';
   import CrawlManagement from '../components/CrawlManagement.svelte';
   import ProjectPageLayout from '../components/ProjectPageLayout.svelte';
+  import VoiceProfile from '../components/VoiceProfile.svelte';
   import { Loader, X, Trash2, Edit2, Check, AlertTriangle } from 'lucide-svelte';
   
   let project = null;
@@ -320,6 +321,15 @@
         <div class="card-body">
           <h2 class="card-title text-xl mb-4">Microsoft Clarity Integration</h2>
           <ProjectClaritySelector {project} projectId={project.id} />
+        </div>
+      </div>
+
+      <!-- Brand Voice Profile -->
+      <div class="card bg-base-100 shadow">
+        <div class="card-body">
+          {#if projectId}
+            <VoiceProfile {projectId} />
+          {/if}
         </div>
       </div>
 

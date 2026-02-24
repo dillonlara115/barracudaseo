@@ -15,7 +15,7 @@
 			When SEO data gets overwhelming, Barracuda tells you what actually matters.
 		</h1>
 		<p class="mb-10 text-xl md:text-2xl text-white/80 font-body max-w-3xl mx-auto leading-relaxed">
-			BarracudaSEO turns complex site audits into clear, defensible priorities you can explain with confidence — without drowning in SEO noise.
+			BarracudaSEO turns complex site audits into clear, defensible priorities you can explain with confidence — powered by AI that understands your site, your voice, and your data.
 		</p>
 		<div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
 			<a

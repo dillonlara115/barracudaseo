@@ -2,6 +2,7 @@
   import IssueInsight from './AI/IssueInsight.svelte';
   import { Sparkles } from 'lucide-svelte';
   import { userProfile, isProOrTeam } from '../lib/subscription.js';
+  import { collapseImageIssuesByAsset } from '../lib/issueUtils.js';
 
   $: isPro = isProOrTeam($userProfile);
 
@@ -115,6 +116,33 @@
     const severityWeight = getSeverityWeight(issue.severity);
     const pagesAffected = affectedPagesCounts[issue.type] || 0;
     return severityWeight * pagesAffected;
+  };
+
+  // Priority for display items (supports collapsed asset groups)
+  const getDisplayItemPriority = (item) => {
+    if (item.isAssetGroup && item.affectedUrls?.length) {
+      const enrichedKey = `${item.url}|${item.type}`;
+      const enriched = enrichedIssues[enrichedKey];
+      if (enriched && enriched.enriched_priority) return enriched.enriched_priority;
+      return getSeverityWeight(item.severity) * item.affectedUrls.length;
+    }
+    return calculatePriorityScore(item);
+  };
+
+  const getDisplayItemEnriched = (item) => {
+    if (item.isAssetGroup) {
+      for (const id of item.constituentIds || []) {
+        if (enrichedIssues[id]) return enrichedIssues[id];
+      }
+    }
+    return enrichedIssues[`${item.url}|${item.type}`];
+  };
+
+  const isDisplayItemTopPriority = (item) => {
+    if (item.isAssetGroup && item.constituentIds?.length) {
+      return item.constituentIds.some((id) => top10PriorityIssues.has(id));
+    }
+    return top10PriorityIssues.has(`${item.url}|${item.type}`);
   };
 
   // Calculate priority scores for all issues (for top 10 highlighting)
@@ -525,6 +553,7 @@
 
     <div class="space-y-4">
       {#each Object.entries(groupedIssues) as [groupKey, groupIssues]}
+        {@const displayItemsForGroup = collapseImageIssuesByAsset(groupIssues)}
         {#if groupBy !== 'none'}
           <div class="border-l-4 border-primary pl-4 mb-4">
             <h3 class="font-bold text-lg mb-2">
@@ -538,24 +567,23 @@
                   {affectedPagesCounts[groupKey] || 0} page{affectedPagesCounts[groupKey] !== 1 ? 's' : ''}
                 </span>
               {/if}
-              <span class="badge badge-ghost ml-2">{groupIssues.length} issue{groupIssues.length !== 1 ? 's' : ''}</span>
+              <span class="badge badge-ghost ml-2">{displayItemsForGroup.length} item{displayItemsForGroup.length !== 1 ? 's' : ''} {displayItemsForGroup.length !== groupIssues.length ? `(${groupIssues.length} total)` : ''}</span>
             </h3>
           </div>
         {/if}
         
-        {#each groupIssues as issue}
-          {@const priorityScore = calculatePriorityScore(issue)}
-          {@const issueId = `${issue.url}|${issue.type}`}
-          {@const isTopPriority = top10PriorityIssues.has(issueId)}
-          {@const enriched = enrichedIssues[issueId]}
-          <div class="alert {getSeverityBadge(issue.severity)} shadow-lg">
+        {#each displayItemsForGroup as displayItem}
+          {@const priorityScore = getDisplayItemPriority(displayItem)}
+          {@const isTopPriority = isDisplayItemTopPriority(displayItem)}
+          {@const enriched = getDisplayItemEnriched(displayItem)}
+          <div class="alert {getSeverityBadge(displayItem.severity)} shadow-lg">
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-2 flex-wrap">
-                <span class="badge {getSeverityBadge(issue.severity)}">
-                  {issue.severity}
+                <span class="badge {getSeverityBadge(displayItem.severity)}">
+                  {displayItem.severity}
                 </span>
-                <span class="badge {issue.severity === 'warning' || issue.severity === 'info' ? 'badge-ghost' : 'badge-outline'}">
-                  {issue.type.replace(/_/g, ' ')}
+                <span class="badge {displayItem.severity === 'warning' || displayItem.severity === 'info' ? 'badge-ghost' : 'badge-outline'}">
+                  {displayItem.type.replace(/_/g, ' ')}
                 </span>
                 <span class="badge badge-primary">
                   Priority: {priorityScore.toFixed(1)}
@@ -570,13 +598,18 @@
                     🔥 Top Priority
                   </span>
                 {/if}
-                {#if groupBy === 'url' && affectedPagesCounts[issue.type]}
+                {#if groupBy === 'url' && affectedPagesCounts[displayItem.type]}
                   <span class="badge badge-ghost">
-                    {affectedPagesCounts[issue.type]} page{affectedPagesCounts[issue.type] !== 1 ? 's' : ''} affected
+                    {affectedPagesCounts[displayItem.type]} page{affectedPagesCounts[displayItem.type] !== 1 ? 's' : ''} affected
+                  </span>
+                {/if}
+                {#if displayItem.isAssetGroup && (displayItem.affectedUrls?.length ?? 0) > 1}
+                  <span class="badge badge-ghost">
+                    {(displayItem.affectedUrls?.length ?? 0)} page{(displayItem.affectedUrls?.length ?? 0) !== 1 ? 's' : ''} affected
                   </span>
                 {/if}
               </div>
-              <h3 class="font-bold">{issue.message}</h3>
+              <h3 class="font-bold">{displayItem.message}</h3>
               
               {#if enriched?.gsc_performance}
                 <div class="bg-base-200 rounded-lg p-3 mt-3 mb-2">
@@ -624,30 +657,54 @@
                 </div>
               {/if}
               
-              <div class="text-sm mt-2">
-                <div class="font-semibold">URL:</div>
-                {#if issue.url}
-                  <a 
-                    href={issue.url} 
-                    target="_blank" 
-                    class="break-all underline hover:opacity-80 {issue.severity === 'info' || issue.severity === 'warning' ? '' : 'link link-primary'}"
-                  >
-                    {issue.url}
-                  </a>
-                {:else}
-                  <span class="text-base-content/60 italic">URL not available</span>
-                {/if}
-              </div>
-              {#if issue.value}
+              {#if displayItem.isAssetGroup && displayItem.assetUrl}
                 <div class="text-sm mt-2">
-                  <div class="font-semibold">Value:</div>
-                  <div class="break-all">{issue.value}</div>
+                  <div class="font-semibold">Image URL:</div>
+                  <a
+                    href={displayItem.assetLinkUrl || displayItem.assetUrl}
+                    target="_blank"
+                    class="break-all underline hover:opacity-80 link link-primary"
+                  >
+                    {displayItem.assetUrl}
+                  </a>
                 </div>
+                <div class="text-sm mt-2">
+                  <div class="font-semibold">Affected pages ({(displayItem.affectedUrls?.length ?? 0)}):</div>
+                  <div class="flex flex-wrap gap-2 mt-1">
+                    {#each (displayItem.affectedUrls ?? []).slice(0, 5) as url}
+                      <a href={url} target="_blank" rel="noopener noreferrer" class="text-xs link link-hover break-all max-w-[220px] truncate inline-block" title={url}>{url}</a>
+                    {/each}
+                    {#if (displayItem.affectedUrls?.length ?? 0) > 5}
+                      <span class="text-xs text-base-content/60">… and {(displayItem.affectedUrls?.length ?? 0) - 5} more</span>
+                    {/if}
+                  </div>
+                </div>
+              {:else}
+                <div class="text-sm mt-2">
+                  <div class="font-semibold">URL:</div>
+                  {#if displayItem.url}
+                    <a
+                      href={displayItem.url}
+                      target="_blank"
+                      class="break-all underline hover:opacity-80 {displayItem.severity === 'info' || displayItem.severity === 'warning' ? '' : 'link link-primary'}"
+                    >
+                      {displayItem.url}
+                    </a>
+                  {:else}
+                    <span class="text-base-content/60 italic">URL not available</span>
+                  {/if}
+                </div>
+                {#if displayItem.value}
+                  <div class="text-sm mt-2">
+                    <div class="font-semibold">Value:</div>
+                    <div class="break-all">{displayItem.value}</div>
+                  </div>
+                {/if}
               {/if}
-              {#if issue.recommendation}
+              {#if displayItem.recommendation}
                 <div class="text-sm mt-2">
                   <div class="font-semibold">Recommendation:</div>
-                  <div>{issue.recommendation}</div>
+                  <div>{displayItem.recommendation}</div>
                 </div>
               {/if}
               
@@ -658,7 +715,9 @@
                     <button
                       class="btn btn-sm btn-outline btn-primary"
                       on:click={() => {
-                        selectedIssueForAI = issue;
+                        selectedIssueForAI = displayItem.isAssetGroup
+                          ? { ...displayItem, url: displayItem.affectedUrls?.[0], value: displayItem.assetUrl }
+                          : displayItem;
                         showAIInsightModal = true;
                       }}
                     >

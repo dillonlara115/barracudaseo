@@ -1329,3 +1329,113 @@ export async function redeemPromoCode(code, teamSize = 1) {
     return { data: null, error: err };
   }
 }
+
+// ---- AI Suite API Helpers ----
+
+/**
+ * Stream an AI SSE response. Calls onChunk for each text chunk, onDone when finished.
+ */
+export async function streamAIRequest(path, body, { onChunk, onDone, onError }) {
+  const token = await getValidAccessToken();
+  if (!token) {
+    onError?.(new Error('Not authenticated'));
+    return;
+  }
+
+  const res = await fetch(`${getApiUrl()}${path}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    onError?.(new Error(text || `HTTP ${res.status}`));
+    return;
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      try {
+        const evt = JSON.parse(line.slice(6));
+        if (evt.type === 'chunk') onChunk?.(evt.data);
+        else if (evt.type === 'done') onDone?.();
+        else if (evt.type === 'error') onError?.(new Error(evt.data));
+      } catch {
+        // skip malformed SSE lines
+      }
+    }
+  }
+
+  onDone?.();
+}
+
+export async function generateVoiceProfile(projectId, callbacks = {}) {
+  return streamAIRequest('/api/v1/ai/voice/generate', { project_id: projectId }, callbacks);
+}
+
+export async function fetchVoiceProfile(projectId) {
+  return authorizedJSON(`/api/v1/ai/voice?project_id=${projectId}`);
+}
+
+export async function updateVoiceProfile(profile) {
+  return authorizedJSON('/api/v1/ai/voice/update', { method: 'POST', body: profile });
+}
+
+export async function fetchBriefs(projectId) {
+  return authorizedJSON(`/api/v1/ai/briefs?project_id=${projectId}`);
+}
+
+export async function updateBrief(brief) {
+  return authorizedJSON('/api/v1/ai/briefs/update', { method: 'POST', body: brief });
+}
+
+export async function fetchArticles(projectId) {
+  return authorizedJSON(`/api/v1/ai/articles?project_id=${projectId}`);
+}
+
+export async function updateArticle(article) {
+  return authorizedJSON('/api/v1/ai/articles/update', { method: 'POST', body: article });
+}
+
+export async function fetchQuickWins(projectId) {
+  return authorizedJSON(`/api/v1/ai/gsc/quick-wins?project_id=${projectId}`);
+}
+
+export async function fetchDecliningPages(projectId) {
+  return authorizedJSON(`/api/v1/ai/gsc/declining?project_id=${projectId}`);
+}
+
+export async function fetchInternalLinkSuggestions(projectId, pageUrl) {
+  return authorizedJSON(`/api/v1/ai/links/suggestions?project_id=${projectId}&page_url=${encodeURIComponent(pageUrl)}`);
+}
+
+export async function fetchOrphanedPages(projectId) {
+  return authorizedJSON(`/api/v1/ai/links/orphaned?project_id=${projectId}`);
+}
+
+export async function fetchAIUsage(projectId) {
+  return authorizedJSON(`/api/v1/ai/usage?project_id=${projectId}`);
+}
+
+export async function triggerSiteCrawl(projectId, siteUrl, maxPages) {
+  return authorizedJSON('/api/v1/ai/crawl', {
+    method: 'POST',
+    body: { project_id: projectId, site_url: siteUrl, max_pages: maxPages }
+  });
+}

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Bolt, ChartBar, Users, Plug, Code, CircleCheck, ChevronRight, Github, Target } from '@lucide/svelte';
+	import { Bolt, ChartBar, Users, Plug, Code, CircleCheck, ChevronRight, Github, Target, BrainCircuit, PenTool, FileText, Sparkles, Link2 } from '@lucide/svelte';
 	import MetaTags from '../../components/MetaTags.svelte';
 	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
 
@@ -254,8 +254,81 @@
 	</div>
 </section>
 
-<!-- Section 5: CLI for Developers -->
-<section id="cli" class="py-20 bg-[#3c3836]">
+<!-- Section 5: AI-Powered Features Coming Soon -->
+<section id="ai" class="py-20 bg-[#3c3836]">
+	<div class="container mx-auto px-4">
+		<div class="max-w-4xl mx-auto">
+			<div class="flex items-center gap-4 mb-6">
+				<div class="p-3 bg-[#d79921]/10 rounded-lg">
+					<BrainCircuit class="w-8 h-8 text-[#d79921]" />
+				</div>
+				<div>
+					<h2 class="text-4xl md:text-5xl font-heading font-bold text-white">AI-Powered Intelligence</h2>
+					<span class="text-sm font-semibold text-[#d79921] bg-[#d79921]/10 px-3 py-1 rounded-full mt-2 inline-block">Coming Soon</span>
+				</div>
+			</div>
+			<p class="text-xl text-white/80 mb-8 max-w-3xl">
+				AI baked in, not bolted on. Every AI feature is contextual and action-triggered — intelligence at the moment you need it, grounded in your real site data and GSC metrics.
+			</p>
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+				<div class="bg-[#2d2826] rounded-lg p-6 border border-[#d79921]/20 relative">
+					<div class="flex items-center gap-3 mb-3">
+						<PenTool class="w-5 h-5 text-[#d79921]" />
+						<h3 class="text-lg font-heading font-bold text-white">Writing Voice Analysis</h3>
+					</div>
+					<p class="text-white/70 text-sm">
+						Generate a brand voice profile from your existing content. Every AI output matches your tone, structure, and style — not generic AI filler.
+					</p>
+				</div>
+				<div class="bg-[#2d2826] rounded-lg p-6 border border-[#d79921]/20 relative">
+					<div class="flex items-center gap-3 mb-3">
+						<ChartBar class="w-5 h-5 text-[#d79921]" />
+						<h3 class="text-lg font-heading font-bold text-white">GSC Intelligence Dashboard</h3>
+					</div>
+					<p class="text-white/70 text-sm">
+						Quick wins, declining pages, content gaps — all surfaced from your GSC data with one-click AI explanations and weekly digest summaries.
+					</p>
+				</div>
+				<div class="bg-[#2d2826] rounded-lg p-6 border border-[#d79921]/20 relative">
+					<div class="flex items-center gap-3 mb-3">
+						<FileText class="w-5 h-5 text-[#d79921]" />
+						<h3 class="text-lg font-heading font-bold text-white">Content Brief Generator</h3>
+					</div>
+					<p class="text-white/70 text-sm">
+						Data-backed content briefs with target keywords, outlines, internal link opportunities, and intent classification — generated from real GSC data.
+					</p>
+				</div>
+				<div class="bg-[#2d2826] rounded-lg p-6 border border-[#d79921]/20 relative">
+					<div class="flex items-center gap-3 mb-3">
+						<Sparkles class="w-5 h-5 text-[#d79921]" />
+						<h3 class="text-lg font-heading font-bold text-white">Article Writer</h3>
+					</div>
+					<p class="text-white/70 text-sm">
+						Full article drafts from approved briefs, written in your brand voice. Markdown editor with live preview, internal link highlights, and one-click export.
+					</p>
+				</div>
+				<div class="bg-[#2d2826] rounded-lg p-6 border border-[#d79921]/20 relative md:col-span-2">
+					<div class="flex items-center gap-3 mb-3">
+						<Link2 class="w-5 h-5 text-[#d79921]" />
+						<h3 class="text-lg font-heading font-bold text-white">Internal Link Suggester</h3>
+					</div>
+					<p class="text-white/70 text-sm">
+						Semantic similarity across crawled pages surfaces missing internal links. Page-level suggestions with AI anchor text, plus a site-wide audit for orphaned pages and topic clusters.
+					</p>
+				</div>
+			</div>
+			<div class="text-center">
+				<a href="/roadmap" class="inline-flex items-center gap-2 border-2 border-[#d79921]/30 hover:border-[#d79921] text-white px-6 py-3 rounded-lg font-medium transition-colors">
+					See Full Roadmap
+					<ChevronRight class="w-4 h-4" />
+				</a>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Section 6: CLI for Developers -->
+<section id="cli" class="py-20 bg-[#2d2826]">
 	<div class="container mx-auto px-4">
 		<div class="max-w-4xl mx-auto">
 			<div class="flex items-center gap-4 mb-6">
@@ -297,8 +370,8 @@
 	</div>
 </section>
 
-<!-- Section 6: Why Barracuda -->
-<section class="py-20 bg-[#2d2826]">
+<!-- Section 7: Why Barracuda -->
+<section class="py-20 bg-[#3c3836]">
 	<div class="container mx-auto px-4">
 		<div class="max-w-4xl mx-auto">
 			<h2 class="text-4xl md:text-5xl font-heading font-bold mb-12 text-center text-white">Why Agencies Choose Barracuda</h2>
@@ -357,8 +430,8 @@
 	</div>
 </section>
 
-<!-- Section 7: Pricing Preview -->
-<section class="py-20 bg-[#3c3836]">
+<!-- Section 8: Pricing Preview -->
+<section class="py-20 bg-[#2d2826]">
 	<div class="container mx-auto px-4">
 		<div class="max-w-4xl mx-auto">
 			<h2 class="text-4xl md:text-5xl font-heading font-bold mb-12 text-center text-white">Simple, Fair Pricing</h2>

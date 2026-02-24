@@ -1,7 +1,8 @@
 <script>
   import { onMount } from 'svelte';
   import { viewPublicReport } from '../lib/data.js';
-  import { AlertCircle, Lock, Calendar, FileText, ExternalLink, ChevronDown, ChevronRight, Search } from 'lucide-svelte';
+  import { collapseImageIssuesByAsset, isImageIssueType } from '../lib/issueUtils.js';
+  import { AlertCircle, Lock, Calendar, FileText, ExternalLink, Search } from 'lucide-svelte';
 
   let loading = true;
   let error = null;
@@ -64,6 +65,7 @@
 
 
   // Group issues by type; optionally filter by search
+  // For image-related types, collapse by asset URL (one row per image, list affected pages)
   $: groupedIssues = (() => {
     const issues = reportData?.issues ?? [];
     const q = (issueSearch || '').trim().toLowerCase();
@@ -72,6 +74,7 @@
           (i) =>
             (i.message || '').toLowerCase().includes(q) ||
             (i.url || '').toLowerCase().includes(q) ||
+            (i.value || '').toLowerCase().includes(q) ||
             (i.type || '').toLowerCase().includes(q) ||
             (i.recommendation || '').toLowerCase().includes(q)
         )
@@ -90,7 +93,15 @@
       grouped[type].count++;
       grouped[type].issues.push(issue);
     });
-    return Object.values(grouped);
+    return Object.values(grouped).map((g) => {
+      const isImage = isImageIssueType(g.type);
+      const displayItems = isImage ? collapseImageIssuesByAsset(g.issues) : g.issues.map((i) => ({ ...i, affectedUrls: [i.url || ''].filter(Boolean), isAssetGroup: false }));
+      return {
+        ...g,
+        displayItems,
+        isImageType: isImage
+      };
+    });
   })();
 
   // Initialize expanded state and visible count when grouped data or search changes
@@ -102,18 +113,20 @@
           expandedGroups[key] = expandAll;
         }
         // Reset visible count when search changes so each filter gets fresh pagination
+        const itemCount = g.displayItems?.length ?? g.issues.length;
         if (issueSearch.trim()) {
-          visibleCount[key] = Math.min(ISSUES_PER_BATCH, g.issues.length);
+          visibleCount[key] = Math.min(ISSUES_PER_BATCH, itemCount);
         } else if (!(key in visibleCount)) {
-          visibleCount[key] = Math.min(ISSUES_PER_BATCH, g.issues.length);
+          visibleCount[key] = Math.min(ISSUES_PER_BATCH, itemCount);
         }
       });
     }
   }
 
   function showMore(group) {
+    const items = group.displayItems ?? group.issues;
     const current = visibleCount[group.type] ?? ISSUES_PER_BATCH;
-    const next = Math.min(current + ISSUES_PER_BATCH, group.issues.length);
+    const next = Math.min(current + ISSUES_PER_BATCH, items.length);
     visibleCount[group.type] = next;
     visibleCount = visibleCount;
   }
@@ -348,7 +361,7 @@
                 on:click={() => document.getElementById(`issue-type-${group.type}`)?.scrollIntoView({ behavior: 'smooth' })}
               >
                 {group.type.replace(/_/g, ' ')}
-                <span class="opacity-70">({group.count})</span>
+                <span class="opacity-70">({group.isImageType ? (group.displayItems?.length ?? 0) : group.count})</span>
               </button>
             {/each}
           </div>
@@ -369,41 +382,72 @@
                 <span class="font-semibold">
                   {group.type.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
                 </span>
-                <span class="badge badge-ghost ml-auto">{group.count} {group.count === 1 ? 'issue' : 'issues'}</span>
+                <span class="badge badge-ghost ml-auto">
+                  {group.isImageType
+                    ? `${(group.displayItems?.length ?? 0)} image${(group.displayItems?.length ?? 0) === 1 ? '' : 's'} (${group.count} occurrence${group.count === 1 ? '' : 's'})`
+                    : `${group.count} ${group.count === 1 ? 'issue' : 'issues'}`}
+                </span>
               </div>
               <div class="collapse-content">
                 <div class="space-y-3 pt-2 pb-2">
-                  {#each (group.issues.slice(0, visibleCount[group.type] ?? Math.min(ISSUES_PER_BATCH, group.issues.length))) as issue}
+                  {#each ((group.displayItems ?? group.issues)).slice(0, visibleCount[group.type] ?? Math.min(ISSUES_PER_BATCH, (group.displayItems ?? group.issues).length)) as item}
                     <div class="border-l-4 {getSeverityBorder(group.severity)} {getSeverityBg(group.severity)} pl-4 pr-4 py-3 rounded-r-lg">
                       <div class="flex items-start justify-between">
                         <div class="flex-1">
-                          {#if issue.url}
+                          {#if item.isAssetGroup && item.assetUrl}
                             <a
-                              href={issue.url}
+                              href={item.assetLinkUrl || item.assetUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               class="text-sm font-medium text-primary hover:underline flex items-center gap-1 mb-2"
                             >
                               <ExternalLink class="w-4 h-4 shrink-0" />
-                              <span class="break-all">{issue.url}</span>
+                              <span class="break-all">{item.assetUrl}</span>
                             </a>
+                            <p class="text-sm text-base-content/70 mb-2">{item.message}</p>
+                            <div class="text-xs font-semibold uppercase tracking-wide text-base-content/60 mb-1">
+                              Affected pages ({item.affectedUrls?.length ?? 0})
+                            </div>
+                            <div class="flex flex-wrap gap-1 items-center">
+                              {#each (item.affectedUrls ?? []).slice(0, 5) as url}
+                                <a href={url} target="_blank" rel="noopener noreferrer" class="text-xs link link-hover break-all max-w-[200px] truncate inline-block" title={url}>{url}</a>
+                              {/each}
+                              {#if (item.affectedUrls?.length ?? 0) > 5}
+                                <span class="text-xs text-base-content/60">… and {(item.affectedUrls?.length ?? 0) - 5} more</span>
+                              {/if}
+                            </div>
+                          {:else}
+                            {#if item.url}
+                              <a
+                                href={item.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="text-sm font-medium text-primary hover:underline flex items-center gap-1 mb-2"
+                              >
+                                <ExternalLink class="w-4 h-4 shrink-0" />
+                                <span class="break-all">{item.url}</span>
+                              </a>
+                            {/if}
+                            <p class="font-medium text-base-content">{item.message}</p>
+                            {#if item.value}
+                              <p class="text-sm text-base-content/70 mt-1 break-all">{item.value}</p>
+                            {/if}
                           {/if}
-                          <p class="font-medium text-base-content">{issue.message}</p>
-                          {#if issue.recommendation}
-                            <p class="text-sm text-base-content/70 mt-2">{issue.recommendation}</p>
+                          {#if item.recommendation}
+                            <p class="text-sm text-base-content/70 mt-2">{item.recommendation}</p>
                           {/if}
                         </div>
                       </div>
                     </div>
                   {/each}
-                  {#if group.issues.length > (visibleCount[group.type] ?? ISSUES_PER_BATCH)}
+                  {#if ((group.displayItems ?? group.issues).length) > (visibleCount[group.type] ?? ISSUES_PER_BATCH)}
                     <button
                       type="button"
                       class="btn btn-sm btn-ghost mt-2"
                       on:click={() => showMore(group)}
                     >
-                      Show {Math.min(ISSUES_PER_BATCH, group.issues.length - (visibleCount[group.type] ?? ISSUES_PER_BATCH))} more
-                      ({group.issues.length - (visibleCount[group.type] ?? ISSUES_PER_BATCH)} remaining)
+                      Show {Math.min(ISSUES_PER_BATCH, (group.displayItems ?? group.issues).length - (visibleCount[group.type] ?? ISSUES_PER_BATCH))} more
+                      ({(group.displayItems ?? group.issues).length - (visibleCount[group.type] ?? ISSUES_PER_BATCH)} remaining)
                     </button>
                   {/if}
                 </div>
