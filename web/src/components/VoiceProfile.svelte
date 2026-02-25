@@ -1,6 +1,9 @@
 <script>
   import { onMount } from 'svelte';
   import { fetchVoiceProfile, updateVoiceProfile, streamAIRequest } from '../lib/data.js';
+  import { marked } from 'marked';
+
+  marked.setOptions({ breaks: true, gfm: true });
 
   export let projectId;
 
@@ -93,7 +96,7 @@
     <div class="card bg-base-200">
       <div class="card-body">
         <p class="text-sm opacity-60 mb-2">Analyzing your site content...</p>
-        <div class="prose prose-sm max-w-none whitespace-pre-wrap">{streamText}</div>
+        <div class="ai-summary-content">{@html marked.parse(streamText || '')}</div>
       </div>
     </div>
   {:else if loading}

@@ -257,18 +257,35 @@ func (s *Server) handleGenerateBrief(ai *AISuiteServices) http.HandlerFunc {
 
 		messages = append(messages, providers.Message{
 			Role: "user",
-			Content: fmt.Sprintf(`Generate a content brief for the keyword: "%s"
+			Content: fmt.Sprintf(`Generate a comprehensive content brief for the keyword: "%s"
 
-Output as JSON with these fields:
-- target_keyword (string)
-- secondary_keywords (array of 3-5 strings)
-- recommended_title (string)
-- meta_description (string, under 160 chars)
-- recommended_word_count (number)
-- outline (array of objects: {heading: string, description: string})
-- internal_links (array of objects: {url: string, anchor_text: string})
-- content_angle (string)
-- intent (string: informational/navigational/commercial/transactional)`, req.Keyword),
+Format the brief as a well-structured markdown document with these sections:
+
+## Target Keyword
+The primary keyword and search intent (informational / navigational / commercial / transactional).
+
+## Secondary Keywords
+A bullet list of 3-5 related keywords to weave into the content.
+
+## Recommended Title
+A compelling, SEO-optimized title tag (under 60 characters).
+
+## Meta Description
+A click-worthy meta description (under 160 characters).
+
+## Content Angle
+One sentence describing the unique angle or hook for this piece.
+
+## Recommended Word Count
+A target word count with brief justification.
+
+## Article Outline
+A numbered list of H2 headings, each with a 1-2 sentence description of what to cover.
+
+## Internal Link Opportunities
+Based on the crawled site content provided, suggest specific pages to link to with recommended anchor text. Format as a bullet list: [anchor text](url).
+
+Ground every recommendation in the GSC data and crawled site content provided. Be specific, not generic.`, req.Keyword),
 		})
 
 		fullText, err := ai.StreamHandler.StreamResponse(r.Context(), w, ai.FlashProvider, messages)
@@ -277,12 +294,11 @@ Output as JSON with these fields:
 			return
 		}
 
-		// Store the brief
 		brief := map[string]interface{}{
 			"id":         uuid.New().String(),
 			"project_id": req.ProjectID,
 			"keyword":    req.Keyword,
-			"brief_data": extractJSON(fullText),
+			"brief_data": fullText,
 			"status":     "draft",
 			"created_by": userID,
 			"created_at": time.Now().UTC().Format(time.RFC3339),
@@ -656,6 +672,144 @@ func (s *Server) handleDecliningPages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.respondJSON(w, http.StatusOK, results)
+}
+
+func (s *Server) handleKeywordSuggestions(w http.ResponseWriter, r *http.Request) {
+	userID, ok := userIDFromContext(r.Context())
+	if !ok {
+		s.respondError(w, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+
+	projectID := r.URL.Query().Get("project_id")
+	if ok, err := s.verifyProjectAccess(userID, projectID); !ok || err != nil {
+		s.respondError(w, http.StatusForbidden, "Access denied")
+		return
+	}
+
+	// Load GSC query rows
+	data, _, err := s.serviceRole.From("gsc_performance_rows").
+		Select("*", "", false).
+		Eq("project_id", projectID).
+		Eq("row_type", "query").
+		Execute()
+	if err != nil {
+		s.logger.Warn("Failed to fetch GSC rows for keyword suggestions", zap.Error(err))
+		s.respondJSON(w, http.StatusOK, []interface{}{})
+		return
+	}
+
+	var rawRows []map[string]interface{}
+	json.Unmarshal(data, &rawRows)
+
+	// Load crawled page URLs to detect content gaps
+	pageData, _, _ := s.serviceRole.From("crawled_pages").
+		Select("url,title", "", false).
+		Eq("project_id", projectID).
+		Execute()
+
+	crawledURLs := make(map[string]bool)
+	var crawledPages []struct {
+		URL   string `json:"url"`
+		Title string `json:"title"`
+	}
+	json.Unmarshal(pageData, &crawledPages)
+	for _, p := range crawledPages {
+		crawledURLs[p.URL] = true
+	}
+
+	// Also load existing brief keywords to exclude them
+	briefData, _, _ := s.serviceRole.From("content_briefs").
+		Select("keyword", "", false).
+		Eq("project_id", projectID).
+		Execute()
+
+	existingKeywords := make(map[string]bool)
+	var briefs []struct {
+		Keyword string `json:"keyword"`
+	}
+	json.Unmarshal(briefData, &briefs)
+	for _, b := range briefs {
+		existingKeywords[strings.ToLower(b.Keyword)] = true
+	}
+
+	// Load GSC page rows to check which queries have ranking pages
+	pageRowData, _, _ := s.serviceRole.From("gsc_performance_rows").
+		Select("*", "", false).
+		Eq("project_id", projectID).
+		Eq("row_type", "page").
+		Execute()
+
+	var pageRows []map[string]interface{}
+	json.Unmarshal(pageRowData, &pageRows)
+
+	rankedPages := make(map[string]bool)
+	for _, row := range pageRows {
+		dimVal, _ := row["dimension_value"].(string)
+		if dimVal != "" {
+			rankedPages[dimVal] = true
+		}
+	}
+
+	var suggestions []map[string]interface{}
+	for _, raw := range rawRows {
+		flat := gscRowToFlat(raw)
+		query, _ := flat["query"].(string)
+		position, _ := flat["position"].(float64)
+		impressions, _ := flat["impressions"].(float64)
+		ctr, _ := flat["ctr"].(float64)
+		clicks, _ := flat["clicks"].(float64)
+
+		if query == "" || existingKeywords[strings.ToLower(query)] {
+			continue
+		}
+
+		// Skip very short or branded-looking queries
+		if len(query) < 3 {
+			continue
+		}
+
+		var reason string
+		var score float64
+
+		if position >= 5 && position <= 20 && impressions >= 50 {
+			// Quick Win: ranking but underperforming
+			score = impressions * (1 - ctr) * (1 / position)
+			reason = "quick_win"
+		} else if impressions >= 100 && position > 20 {
+			// Content Gap: high impressions but ranking poorly
+			score = impressions * (1 / position)
+			reason = "content_gap"
+		} else if impressions >= 200 && clicks < 5 {
+			// High visibility, low engagement
+			score = impressions * 0.5
+			reason = "low_engagement"
+		} else {
+			continue
+		}
+
+		suggestions = append(suggestions, map[string]interface{}{
+			"query":       query,
+			"position":    position,
+			"impressions": impressions,
+			"ctr":         ctr,
+			"clicks":      clicks,
+			"score":       score,
+			"reason":      reason,
+		})
+	}
+
+	sort.Slice(suggestions, func(i, j int) bool {
+		si, _ := suggestions[i]["score"].(float64)
+		sj, _ := suggestions[j]["score"].(float64)
+		return si > sj
+	})
+
+	if len(suggestions) > 15 {
+		suggestions = suggestions[:15]
+	}
+
+	s.respondJSON(w, http.StatusOK, suggestions)
 }
 
 func (s *Server) handleExplainOpportunity(ai *AISuiteServices) http.HandlerFunc {

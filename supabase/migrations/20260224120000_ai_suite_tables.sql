@@ -117,14 +117,12 @@ CREATE TABLE IF NOT EXISTS digests (
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_crawled_pages_embedding
-    ON crawled_pages USING ivfflat (embedding vector_cosine_ops)
-    WITH (lists = 100);
+    ON crawled_pages USING hnsw (embedding vector_cosine_ops);
 
 CREATE INDEX IF NOT EXISTS idx_crawled_pages_project_url
     ON crawled_pages (project_id, url);
 
-CREATE INDEX IF NOT EXISTS idx_gsc_data_project_date
-    ON gsc_data (project_id, date);
+-- gsc_performance_rows already has indexes from its original migration
 
 CREATE INDEX IF NOT EXISTS idx_content_briefs_project_status
     ON content_briefs (project_id, status);

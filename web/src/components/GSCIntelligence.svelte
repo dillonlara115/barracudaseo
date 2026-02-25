@@ -1,6 +1,9 @@
 <script>
   import { onMount } from 'svelte';
   import { fetchQuickWins, fetchDecliningPages, streamAIRequest } from '../lib/data.js';
+  import { marked } from 'marked';
+
+  marked.setOptions({ breaks: true, gfm: true });
 
   export let projectId;
 
@@ -176,7 +179,7 @@
         {#if explaining}
           <span class="loading loading-dots loading-sm"></span>
         {/if}
-        <div class="prose prose-sm max-w-none whitespace-pre-wrap">{explainText}</div>
+        <div class="ai-summary-content">{@html marked.parse(explainText || '')}</div>
       </div>
     </div>
   {/if}

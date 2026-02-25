@@ -1,15 +1,15 @@
 <script>
   import { onMount } from 'svelte';
   import { push, params } from 'svelte-spa-router';
-  import { fetchProjects, fetchCrawls, fetchCrawl, fetchProjectGSCStatus } from '../lib/data.js';
+  import { fetchProjects, fetchCrawls, fetchCrawl, fetchProjectGSCStatus, fetchProjectGA4Status, fetchProjectClarityStatus } from '../lib/data.js';
   import ProjectsView from './ProjectsView.svelte';
   import CrawlSelector from './CrawlSelector.svelte';
   import TriggerCrawlButton from './TriggerCrawlButton.svelte';
   import ProjectLayout from './ProjectLayout.svelte';
 
   export let projectId = null;
-  export let gscStatus = null; // Optional: can be passed in, otherwise will be loaded
-  export let showCrawlSection = false; // Default to false - crawl section removed from most pages
+  export let gscStatus = null;
+  export let showCrawlSection = false;
 
   let projects = [];
   let project = null;
@@ -20,6 +20,8 @@
   let showActiveCrawlNotification = false;
   let activeCrawl = null;
   let gscStatusLoaded = null;
+  let ga4StatusLoaded = null;
+  let clarityStatusLoaded = null;
 
   $: currentProjectId = projectId;
 
@@ -27,29 +29,49 @@
     if (projectId) {
       await loadData();
       await checkActiveCrawl();
-      await loadGSCStatus();
+      await loadIntegrationStatuses();
     }
   });
 
   $: if (projectId && projectId !== currentProjectId) {
     loadData();
     checkActiveCrawl();
-    loadGSCStatus();
+    loadIntegrationStatuses();
   }
 
-  async function loadGSCStatus() {
-    if (!projectId || gscStatus !== null) return; // Don't load if already provided
+  async function loadIntegrationStatuses() {
+    if (!projectId) return;
+
+    if (gscStatus === null) {
+      try {
+        const result = await fetchProjectGSCStatus(projectId);
+        if (!result.error && result.data) {
+          gscStatusLoaded = result.data;
+        }
+      } catch (err) {
+        console.error('Failed to load GSC status:', err);
+      }
+    }
+
     try {
-      const result = await fetchProjectGSCStatus(projectId);
+      const result = await fetchProjectGA4Status(projectId);
       if (!result.error && result.data) {
-        gscStatusLoaded = result.data;
+        ga4StatusLoaded = result.data;
       }
     } catch (err) {
-      console.error('Failed to load GSC status:', err);
+      console.error('Failed to load GA4 status:', err);
+    }
+
+    try {
+      const result = await fetchProjectClarityStatus(projectId);
+      if (!result.error && result.data) {
+        clarityStatusLoaded = result.data;
+      }
+    } catch (err) {
+      console.error('Failed to load Clarity status:', err);
     }
   }
 
-  // Use provided gscStatus or loaded one
   $: finalGSCStatus = gscStatus !== null ? gscStatus : gscStatusLoaded;
 
   async function checkActiveCrawl() {
@@ -198,7 +220,7 @@
   {/if}
 
   <!-- Project Layout with Sidebar -->
-  <ProjectLayout {projectId} gscStatus={finalGSCStatus}>
+  <ProjectLayout {projectId} gscStatus={finalGSCStatus} ga4Status={ga4StatusLoaded} clarityStatus={clarityStatusLoaded}>
     <slot></slot>
   </ProjectLayout>
 {/if}

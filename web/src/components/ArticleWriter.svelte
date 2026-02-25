@@ -1,6 +1,9 @@
 <script>
   import { onMount } from 'svelte';
   import { fetchArticles, fetchBriefs, updateArticle, streamAIRequest } from '../lib/data.js';
+  import { marked } from 'marked';
+
+  marked.setOptions({ breaks: true, gfm: true });
 
   export let projectId;
 
@@ -15,6 +18,7 @@
 
   let activeArticle = null;
   let editContent = '';
+  let previewMode = false;
 
   onMount(loadData);
 
@@ -60,6 +64,7 @@
   function openArticle(article) {
     activeArticle = article;
     editContent = article.content || '';
+    previewMode = false;
   }
 
   async function saveArticle() {
@@ -136,7 +141,7 @@
       <div class="card bg-base-200">
         <div class="card-body">
           <p class="text-sm opacity-60 mb-2">Writing article...</p>
-          <div class="prose prose-sm max-w-none whitespace-pre-wrap">{streamText}</div>
+          <div class="ai-summary-content">{@html marked.parse(streamText || '')}</div>
         </div>
       </div>
     {/if}
@@ -169,6 +174,10 @@
       <button class="btn btn-ghost btn-sm" on:click={() => { activeArticle = null; }}>← Back</button>
       <div class="flex-1"></div>
       <span class="text-sm opacity-60">{wordCount(editContent)} words · {readTime(editContent)} min</span>
+      <div class="tabs tabs-boxed tabs-sm">
+        <button class="tab" class:tab-active={!previewMode} on:click={() => previewMode = false}>Edit</button>
+        <button class="tab" class:tab-active={previewMode} on:click={() => previewMode = true}>Preview</button>
+      </div>
       <div class="dropdown dropdown-end">
         <label tabindex="0" class="btn btn-ghost btn-sm">Export</label>
         <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-200 rounded-box w-40">
@@ -184,9 +193,15 @@
       <button class="btn btn-primary btn-sm" on:click={saveArticle}>Save</button>
     </div>
 
-    <textarea
-      class="textarea textarea-bordered w-full h-[60vh] font-mono text-sm"
-      bind:value={editContent}
-    ></textarea>
+    {#if previewMode}
+      <div class="ai-summary-content border border-base-300 rounded-lg min-h-[60vh] overflow-auto">
+        {@html marked.parse(editContent || '')}
+      </div>
+    {:else}
+      <textarea
+        class="textarea textarea-bordered w-full h-[60vh] font-mono text-sm"
+        bind:value={editContent}
+      ></textarea>
+    {/if}
   {/if}
 </div>

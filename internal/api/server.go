@@ -244,6 +244,7 @@ func (s *Server) Router() http.Handler {
 		v1.HandleFunc("/ai/briefs/generate", s.handleGenerateBrief(aiSuite))
 		v1.HandleFunc("/ai/briefs", s.handleListBriefs)
 		v1.HandleFunc("/ai/briefs/update", s.handleUpdateBrief)
+		v1.HandleFunc("/ai/briefs/suggestions", s.handleKeywordSuggestions)
 		// Articles
 		v1.HandleFunc("/ai/articles/generate", s.handleGenerateArticle(aiSuite))
 		v1.HandleFunc("/ai/articles", s.handleListArticles)
@@ -578,6 +579,16 @@ type responseWriter struct {
 func (rw *responseWriter) WriteHeader(code int) {
 	rw.statusCode = code
 	rw.ResponseWriter.WriteHeader(code)
+}
+
+func (rw *responseWriter) Flush() {
+	if f, ok := rw.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
+func (rw *responseWriter) Unwrap() http.ResponseWriter {
+	return rw.ResponseWriter
 }
 
 // respondError sends a JSON error response

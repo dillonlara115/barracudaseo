@@ -188,10 +188,8 @@
               {copied ? 'Copied!' : 'Copy'}
             </button>
           </div>
-          <div class="bg-primary/10 border border-primary/20 p-4 rounded-lg">
-            <div class="prose prose-sm max-w-none">
-              {@html renderedRecommendation}
-            </div>
+          <div class="ai-summary-content border border-primary/20">
+            {@html renderedRecommendation}
           </div>
         </div>
       {/if}
@@ -210,7 +208,7 @@
               {copied ? 'Copied!' : 'Copy'}
             </button>
           </div>
-          <div class="prose prose-sm max-w-none bg-base-200 p-4 rounded-lg">
+          <div class="ai-summary-content">
             {@html renderedInsight}
           </div>
         </div>
@@ -230,7 +228,7 @@
               {copied ? 'Copied!' : 'Copy'}
             </button>
           </div>
-          <div class="prose prose-sm max-w-none bg-base-200 p-4 rounded-lg">
+          <div class="ai-summary-content">
             {@html marked.parse(insight)}
           </div>
         </div>

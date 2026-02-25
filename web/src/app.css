@@ -121,23 +121,44 @@ html, body {
 }
 
 /* Lists */
-.ai-summary-content ul,
+.ai-summary-content ul {
+  margin-top: 0.75em !important;
+  margin-bottom: 0.75em !important;
+  padding-left: 1.75em !important;
+  color: hsl(var(--bc) / 0.9) !important;
+  list-style-type: disc !important;
+}
+
 .ai-summary-content ol {
   margin-top: 0.75em !important;
   margin-bottom: 0.75em !important;
   padding-left: 1.75em !important;
   color: hsl(var(--bc) / 0.9) !important;
+  list-style-type: decimal !important;
+}
+
+.ai-summary-content ul ul {
+  list-style-type: circle !important;
+}
+
+.ai-summary-content ul ul ul {
+  list-style-type: square !important;
 }
 
 .ai-summary-content li {
   margin-top: 0.5em !important;
   margin-bottom: 0.5em !important;
   line-height: 1.6 !important;
+  display: list-item !important;
 }
 
 .ai-summary-content li > p {
   margin-top: 0.5em !important;
   margin-bottom: 0.5em !important;
+}
+
+.ai-summary-content li::marker {
+  color: hsl(var(--p) / 0.7) !important;
 }
 
 /* Strong and emphasis */
@@ -202,5 +223,42 @@ html, body {
   border: none !important;
   border-top: 1px solid hsl(var(--bc) / 0.2) !important;
   margin: 2rem 0 !important;
+}
+
+/* Tables */
+.ai-summary-content table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+  font-size: 0.875rem !important;
+}
+
+.ai-summary-content th {
+  background-color: hsl(var(--b3)) !important;
+  font-weight: 600 !important;
+  text-align: left !important;
+  padding: 0.625rem 0.75rem !important;
+  border-bottom: 2px solid hsl(var(--bc) / 0.2) !important;
+  color: hsl(var(--bc)) !important;
+}
+
+.ai-summary-content td {
+  padding: 0.5rem 0.75rem !important;
+  border-bottom: 1px solid hsl(var(--bc) / 0.1) !important;
+  color: hsl(var(--bc) / 0.9) !important;
+}
+
+.ai-summary-content tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* First/last child margin cleanup */
+.ai-summary-content > *:first-child {
+  margin-top: 0 !important;
+}
+
+.ai-summary-content > *:last-child {
+  margin-bottom: 0 !important;
 }
 

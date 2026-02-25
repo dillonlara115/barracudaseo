@@ -1405,6 +1405,10 @@ export async function updateBrief(brief) {
   return authorizedJSON('/api/v1/ai/briefs/update', { method: 'POST', body: brief });
 }
 
+export async function fetchKeywordSuggestions(projectId) {
+  return authorizedJSON(`/api/v1/ai/briefs/suggestions?project_id=${projectId}`);
+}
+
 export async function fetchArticles(projectId) {
   return authorizedJSON(`/api/v1/ai/articles?project_id=${projectId}`);
 }
