@@ -42,24 +42,29 @@ func NewAIClient(supabaseClient, serviceRoleClient *supabase.Client, logger *zap
 
 // GetAPIKey retrieves the OpenAI API key for a user, falling back to app-wide key
 func (c *AIClient) GetAPIKey(ctx context.Context, userID string) (string, error) {
-	// First, try to get user's own key
+	// First, try to get user's own key from user_ai_settings.
+	// Use serviceRole: the backend runs server-side and has no user JWT; anon client + RLS
+	// would block the read. We filter by user_id (from the authenticated request).
 	var result struct {
 		OpenAIAPIKey *string `json:"openai_api_key"`
 	}
 
-	_, err := c.supabase.From("user_ai_settings").
+	_, err := c.serviceRole.From("user_ai_settings").
 		Select("openai_api_key", "", false).
 		Eq("user_id", userID).
 		Single().
 		ExecuteTo(&result)
 
 	if err == nil && result.OpenAIAPIKey != nil && *result.OpenAIAPIKey != "" {
-		c.logger.Debug("Using user-provided OpenAI API key", zap.String("user_id", userID))
-		return *result.OpenAIAPIKey, nil
+		key := strings.TrimSpace(*result.OpenAIAPIKey)
+		if key != "" {
+			c.logger.Debug("Using user-provided OpenAI API key", zap.String("user_id", userID))
+			return key, nil
+		}
 	}
 
 	// Fallback to app-wide key from environment
-	appKey := os.Getenv("OPENAI_API_KEY")
+	appKey := strings.TrimSpace(os.Getenv("OPENAI_API_KEY"))
 	if appKey == "" {
 		return "", fmt.Errorf("no OpenAI API key found (neither user key nor OPENAI_API_KEY env var)")
 	}
@@ -110,7 +115,7 @@ func (c *AIClient) GenerateIssueInsight(ctx context.Context, userID string, issu
 	promptBuilder.WriteString(fmt.Sprintf("Message: %s\n", getString(issue, "message")))
 	promptBuilder.WriteString(fmt.Sprintf("Type: %s\n", getString(issue, "type")))
 	promptBuilder.WriteString(fmt.Sprintf("Severity: %s\n", getString(issue, "severity")))
-	
+
 	if val := getString(issue, "value"); val != "" {
 		promptBuilder.WriteString(fmt.Sprintf("Value: %s\n", val))
 	}
@@ -124,7 +129,7 @@ func (c *AIClient) GenerateIssueInsight(ctx context.Context, userID string, issu
 	promptBuilder.WriteString(fmt.Sprintf("Meta Description: %s\n", getString(page, "meta_description")))
 	promptBuilder.WriteString(fmt.Sprintf("Status Code: %v\n", getValue(page, "status_code")))
 	promptBuilder.WriteString(fmt.Sprintf("H1: %s\n", getString(page, "h1")))
-	
+
 	// Add word count if available
 	if wordCount := getValue(page, "word_count"); wordCount != nil {
 		promptBuilder.WriteString(fmt.Sprintf("Word Count: %v\n", wordCount))
@@ -149,7 +154,7 @@ func (c *AIClient) GenerateIssueInsight(ctx context.Context, userID string, issu
 				}
 			}
 		}
-		
+
 		// Count links if available
 		if internalLinks, ok := data["internal_links"].([]interface{}); ok {
 			promptBuilder.WriteString(fmt.Sprintf("\nInternal Links: %d\n", len(internalLinks)))
@@ -189,7 +194,7 @@ func (c *AIClient) GenerateIssueInsight(ctx context.Context, userID string, issu
 
 	// Determine issue type and generate focused solution
 	issueType := getString(issue, "type")
-	
+
 	// For content-generation issues, format response with recommendation first, then insight
 	switch issueType {
 	case "missing_meta_description":
@@ -317,16 +322,16 @@ func (c *AIClient) GenerateIssueInsight(ctx context.Context, userID string, issu
 	// Add system message for content-generation issues to enforce format
 	var messages []Message
 	// issueType is already declared above, so we reuse it here
-	
+
 	// For content-generation issues, add a system message to enforce strict formatting
-	if issueType == "missing_meta_description" || issueType == "missing_title" || 
-	   issueType == "missing_h1" || issueType == "empty_h1" ||
-	   issueType == "long_title" || issueType == "short_title" ||
-	   issueType == "long_meta_description" || issueType == "short_meta_description" ||
-	   issueType == "missing_image_alt" {
+	if issueType == "missing_meta_description" || issueType == "missing_title" ||
+		issueType == "missing_h1" || issueType == "empty_h1" ||
+		issueType == "long_title" || issueType == "short_title" ||
+		issueType == "long_meta_description" || issueType == "short_meta_description" ||
+		issueType == "missing_image_alt" {
 		messages = []Message{
 			{
-				Role: "system",
+				Role:    "system",
 				Content: "You are an SEO expert. When asked to generate recommendations, you MUST format your response EXACTLY as: RECOMMENDATION: [text]\n\nINSIGHT: [brief explanation]. Do NOT include numbered sections, headers, or any other formatting. Only output the RECOMMENDATION and INSIGHT sections.",
 			},
 			{Role: "user", Content: promptBuilder.String()},
@@ -430,4 +435,3 @@ func getValue(m map[string]interface{}, key string) interface{} {
 	}
 	return nil
 }
-

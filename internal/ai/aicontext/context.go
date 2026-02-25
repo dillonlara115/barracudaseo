@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/dillonlara115/barracudaseo/internal/ai/providers"
 	"github.com/supabase-community/supabase-go"
@@ -67,12 +69,13 @@ type VoiceProfile struct {
 
 // GSCRow represents a row of GSC data
 type GSCRow struct {
-	Query       string  `json:"query"`
-	Page        string  `json:"page"`
-	Clicks      int     `json:"clicks"`
-	Impressions int     `json:"impressions"`
-	CTR         float64 `json:"ctr"`
-	Position    float64 `json:"position"`
+	Query       string   `json:"query"`
+	Page        string   `json:"page"`
+	Clicks      int      `json:"clicks"`
+	Impressions int      `json:"impressions"`
+	CTR         float64  `json:"ctr"`
+	Position    float64  `json:"position"`
+	TopQueries  []string `json:"top_queries,omitempty"` // For page rows: queries driving this page
 }
 
 // MemoryEntry represents a project memory fact
@@ -112,7 +115,7 @@ func (b *Builder) BuildMessages(ctx context.Context, projectID string, ctxType C
 	}
 
 	// Load GSC data snapshot
-	gscRows, err := b.loadGSCData(ctx, projectID, params.PageURL)
+	gscRows, keywordFound, err := b.loadGSCData(ctx, projectID, params.PageURL, params.Keyword)
 	if err != nil {
 		b.logger.Warn("Failed to load GSC data for context", zap.Error(err))
 	} else if len(gscRows) > 0 {
@@ -120,8 +123,14 @@ func (b *Builder) BuildMessages(ctx context.Context, projectID string, ctxType C
 		for _, row := range gscRows {
 			prompt.WriteString(fmt.Sprintf("- Query: \"%s\" | Page: %s | Clicks: %d | Impressions: %d | CTR: %.2f%% | Pos: %.1f\n",
 				row.Query, row.Page, row.Clicks, row.Impressions, row.CTR*100, row.Position))
+			if len(row.TopQueries) > 0 {
+				prompt.WriteString(fmt.Sprintf("  Top queries for this page: %s\n", strings.Join(row.TopQueries, ", ")))
+			}
 		}
 		prompt.WriteString("\n")
+		if ctxType == ContextExplain && params.Keyword != "" && !keywordFound {
+			prompt.WriteString(fmt.Sprintf("Note: The keyword \"%s\" was not found in the cached GSC snapshot. It may have very low impressions, be outside the sync date range, or not yet be synced. Suggest the user re-sync GSC or verify the keyword appears in Search Console for the selected period.\n", params.Keyword))
+		}
 	}
 
 	// Load voice profile (for content generation contexts)
@@ -209,60 +218,153 @@ func (b *Builder) loadCrawledPages(ctx context.Context, projectID string, limit 
 	return pages, nil
 }
 
-func (b *Builder) loadGSCData(ctx context.Context, projectID string, pageURL string) ([]GSCRow, error) {
+func (b *Builder) loadGSCData(ctx context.Context, projectID string, pageURL string, keyword string) ([]GSCRow, bool, error) {
 	rowType := "query"
 	if pageURL != "" {
 		rowType = "page"
 	}
 
+	snapshotID := b.loadLatestSnapshotID(ctx, projectID)
+	if snapshotID == "" {
+		return nil, false, nil
+	}
+
+	// For Explain flow: ensure the requested keyword is included in the snapshot.
+	var keywordRow *GSCRow
+	if keyword != "" && rowType == "query" {
+		kwData, _, err := b.serviceRole.From("gsc_performance_rows").
+			Select("*", "", false).
+			Eq("snapshot_id", snapshotID).
+			Eq("project_id", projectID).
+			Eq("row_type", "query").
+			Eq("dimension_value", keyword).
+			Limit(1, "").
+			Execute()
+		if err == nil {
+			var kwRaw []map[string]interface{}
+			if json.Unmarshal(kwData, &kwRaw) == nil && len(kwRaw) > 0 {
+				keywordRow = rawToGSCRow(kwRaw[0], "query")
+			}
+		}
+	}
+
 	data, _, err := b.serviceRole.From("gsc_performance_rows").
 		Select("*", "", false).
+		Eq("snapshot_id", snapshotID).
 		Eq("project_id", projectID).
 		Eq("row_type", rowType).
 		Execute()
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	var rawRows []map[string]interface{}
 	if err := json.Unmarshal(data, &rawRows); err != nil {
-		return nil, fmt.Errorf("failed to parse GSC rows: %w", err)
+		return nil, false, fmt.Errorf("failed to parse GSC rows: %w", err)
 	}
 
+	seen := make(map[string]bool)
 	var rows []GSCRow
+
+	if keywordRow != nil {
+		rows = append(rows, *keywordRow)
+		seen[keywordRow.Query] = true
+	}
+
 	for _, raw := range rawRows {
-		metrics, _ := raw["metrics"].(map[string]interface{})
-		if metrics == nil {
-			continue
-		}
-
-		dimVal, _ := raw["dimension_value"].(string)
 		rt, _ := raw["row_type"].(string)
-
-		row := GSCRow{
-			Clicks:      int(getFloat64(metrics["clicks"])),
-			Impressions: int(getFloat64(metrics["impressions"])),
-			CTR:         getFloat64(metrics["ctr"]),
-			Position:    getFloat64(metrics["position"]),
-		}
-
-		if rt == "page" {
-			row.Page = dimVal
-		} else {
-			row.Query = dimVal
+		row := rawToGSCRow(raw, rt)
+		if row == nil {
+			continue
 		}
 
 		if pageURL != "" && row.Page != pageURL {
 			continue
 		}
 
-		rows = append(rows, row)
+		key := row.Query
+		if key == "" {
+			key = row.Page
+		}
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+
+		rows = append(rows, *row)
 		if len(rows) >= 20 {
 			break
 		}
 	}
 
-	return rows, nil
+	return rows, keywordRow != nil, nil
+}
+
+// loadLatestSnapshotID returns the ID of the most recent GSC snapshot for the project.
+func (b *Builder) loadLatestSnapshotID(ctx context.Context, projectID string) string {
+	data, _, err := b.serviceRole.From("gsc_performance_snapshots").
+		Select("id,captured_on", "", false).
+		Eq("project_id", projectID).
+		Execute()
+	if err != nil {
+		return ""
+	}
+	var snapshots []map[string]interface{}
+	if json.Unmarshal(data, &snapshots) != nil || len(snapshots) == 0 {
+		return ""
+	}
+	type snapWithTime struct {
+		id   string
+		time time.Time
+	}
+	var withTime []snapWithTime
+	for _, s := range snapshots {
+		id, _ := s["id"].(string)
+		if id == "" {
+			id = fmt.Sprintf("%v", s["id"])
+		}
+		captured, _ := s["captured_on"].(string)
+		t, _ := time.Parse("2006-01-02", captured)
+		withTime = append(withTime, snapWithTime{id: id, time: t})
+	}
+	sort.Slice(withTime, func(i, j int) bool {
+		return withTime[i].time.After(withTime[j].time)
+	})
+	return withTime[0].id
+}
+
+func rawToGSCRow(raw map[string]interface{}, rt string) *GSCRow {
+	metrics, _ := raw["metrics"].(map[string]interface{})
+	if metrics == nil {
+		return nil
+	}
+	dimVal, _ := raw["dimension_value"].(string)
+	row := &GSCRow{
+		Clicks:      int(getFloat64(metrics["clicks"])),
+		Impressions: int(getFloat64(metrics["impressions"])),
+		CTR:         getFloat64(metrics["ctr"]),
+		Position:    getFloat64(metrics["position"]),
+	}
+	if rt == "page" {
+		row.Page = dimVal
+		// Parse top_queries for page rows (helps Diagnose flow with keyword cannibalization)
+		if tq, ok := raw["top_queries"].([]interface{}); ok && len(tq) > 0 {
+			maxQ := 5
+			if len(tq) < maxQ {
+				maxQ = len(tq)
+			}
+			for i := 0; i < maxQ; i++ {
+				if qm, ok := tq[i].(map[string]interface{}); ok {
+					if q, ok := qm["query"].(string); ok && q != "" {
+						row.TopQueries = append(row.TopQueries, q)
+					}
+				}
+			}
+		}
+	} else {
+		row.Query = dimVal
+	}
+	return row
 }
 
 func getFloat64(v interface{}) float64 {

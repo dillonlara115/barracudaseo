@@ -52,8 +52,9 @@ func (s *Server) handleProjectUnifiedInsights(w http.ResponseWriter, r *http.Req
 	// 1. Load latest crawl issues
 	crawlIssues := s.loadLatestCrawlIssues(projectID)
 
-	// 2. Load GSC page rows
-	gscPages := s.loadDimensionRows("gsc_performance_rows", projectID, "page")
+	// 2. Load GSC page rows (latest snapshot only)
+	gscSnapshotID := s.loadLatestGSCSnapshotID(projectID)
+	gscPages := s.loadDimensionRowsWithSnapshot("gsc_performance_rows", projectID, "page", gscSnapshotID)
 
 	// 3. Load GA4 page rows
 	ga4Pages := s.loadDimensionRows("ga4_performance_rows", projectID, "page")
@@ -229,12 +230,19 @@ func (s *Server) loadLatestCrawlIssues(projectID string) []map[string]interface{
 }
 
 func (s *Server) loadDimensionRows(table, projectID, rowType string) []map[string]interface{} {
-	data, _, err := s.serviceRole.
+	return s.loadDimensionRowsWithSnapshot(table, projectID, rowType, "")
+}
+
+func (s *Server) loadDimensionRowsWithSnapshot(table, projectID, rowType, snapshotID string) []map[string]interface{} {
+	query := s.serviceRole.
 		From(table).
 		Select("*", "", false).
 		Eq("project_id", projectID).
-		Eq("row_type", rowType).
-		Execute()
+		Eq("row_type", rowType)
+	if snapshotID != "" {
+		query = query.Eq("snapshot_id", snapshotID)
+	}
+	data, _, err := query.Execute()
 	if err != nil {
 		errStr := err.Error()
 		if !strings.Contains(errStr, "does not exist") && !strings.Contains(errStr, "relation") {

@@ -308,6 +308,20 @@ func (s *Server) fetchLatestGSCSummary(projectID string) (map[string]interface{}
 	return latest, nil
 }
 
+// loadLatestGSCSnapshotID returns the ID of the most recent GSC snapshot for the project.
+// Returns "" if no snapshots exist.
+func (s *Server) loadLatestGSCSnapshotID(projectID string) string {
+	latest, err := s.fetchLatestGSCSummary(projectID)
+	if err != nil || latest == nil {
+		return ""
+	}
+	id, ok := latest["id"].(string)
+	if !ok {
+		return fmt.Sprintf("%v", latest["id"])
+	}
+	return id
+}
+
 func parseDateField(value interface{}) time.Time {
 	switch v := value.(type) {
 	case time.Time:
@@ -330,6 +344,15 @@ func (s *Server) handleProjectGSCDimensionsDirect(w http.ResponseWriter, r *http
 		return
 	}
 
+	snapshotID := s.loadLatestGSCSnapshotID(projectID)
+	if snapshotID == "" {
+		s.respondJSON(w, http.StatusOK, map[string]interface{}{
+			"rows":  []map[string]interface{}{},
+			"total": 0,
+		})
+		return
+	}
+
 	limit := 50
 	if v := r.URL.Query().Get("limit"); v != "" {
 		if parsed, err := strconv.Atoi(v); err == nil && parsed > 0 && parsed <= 1000 {
@@ -347,6 +370,7 @@ func (s *Server) handleProjectGSCDimensionsDirect(w http.ResponseWriter, r *http
 	data, _, err := s.serviceRole.
 		From("gsc_performance_rows").
 		Select("*", "", false).
+		Eq("snapshot_id", snapshotID).
 		Eq("project_id", projectID).
 		Eq("row_type", rowType).
 		Execute()

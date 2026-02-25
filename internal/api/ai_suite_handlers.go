@@ -581,9 +581,16 @@ func (s *Server) handleQuickWins(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Load GSC rows with query dimension data
+	snapshotID := s.loadLatestGSCSnapshotID(projectID)
+	if snapshotID == "" {
+		s.respondJSON(w, http.StatusOK, []interface{}{})
+		return
+	}
+
+	// Load GSC rows with query dimension data (latest snapshot only)
 	data, _, err := s.serviceRole.From("gsc_performance_rows").
 		Select("*", "", false).
+		Eq("snapshot_id", snapshotID).
 		Eq("project_id", projectID).
 		Eq("row_type", "query").
 		Execute()
@@ -639,9 +646,16 @@ func (s *Server) handleDecliningPages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Load GSC rows with page dimension data
+	snapshotID := s.loadLatestGSCSnapshotID(projectID)
+	if snapshotID == "" {
+		s.respondJSON(w, http.StatusOK, []interface{}{})
+		return
+	}
+
+	// Load GSC rows with page dimension data (latest snapshot only)
 	data, _, err := s.serviceRole.From("gsc_performance_rows").
 		Select("*", "", false).
+		Eq("snapshot_id", snapshotID).
 		Eq("project_id", projectID).
 		Eq("row_type", "page").
 		Execute()
@@ -687,9 +701,16 @@ func (s *Server) handleKeywordSuggestions(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Load GSC query rows
+	snapshotID := s.loadLatestGSCSnapshotID(projectID)
+	if snapshotID == "" {
+		s.respondJSON(w, http.StatusOK, []interface{}{})
+		return
+	}
+
+	// Load GSC query rows (latest snapshot only)
 	data, _, err := s.serviceRole.From("gsc_performance_rows").
 		Select("*", "", false).
+		Eq("snapshot_id", snapshotID).
 		Eq("project_id", projectID).
 		Eq("row_type", "query").
 		Execute()
@@ -733,9 +754,10 @@ func (s *Server) handleKeywordSuggestions(w http.ResponseWriter, r *http.Request
 		existingKeywords[strings.ToLower(b.Keyword)] = true
 	}
 
-	// Load GSC page rows to check which queries have ranking pages
+	// Load GSC page rows to check which queries have ranking pages (latest snapshot only)
 	pageRowData, _, _ := s.serviceRole.From("gsc_performance_rows").
 		Select("*", "", false).
+		Eq("snapshot_id", snapshotID).
 		Eq("project_id", projectID).
 		Eq("row_type", "page").
 		Execute()
