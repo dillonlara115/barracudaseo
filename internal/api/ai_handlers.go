@@ -26,287 +26,52 @@ type CrawlSummaryRequest struct {
 	ForceRefresh bool   `json:"force_refresh,omitempty"` // If true, bypass cache and regenerate
 }
 
-// OpenAIKeyRequest represents a request to save OpenAI API key
-type OpenAIKeyRequest struct {
-	OpenAIAPIKey string `json:"openai_api_key"`
-}
-
-// handleIssueInsight handles POST /api/v1/ai/issue-insight
-func (s *Server) handleIssueInsight(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID, ok := userIDFromContext(r.Context())
-	if !ok {
-		s.respondError(w, http.StatusUnauthorized, "User not authenticated")
-		return
-	}
-
-	// Check subscription - AI insights require Pro
-	if sub := s.requireProSubscription(w, userID, "AI Issue Insights"); sub == nil {
-		return
-	}
-
-	var req IssueInsightRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request body: %v", err))
-		return
-	}
-
-	if req.IssueID == "" || req.CrawlID == "" {
-		s.respondError(w, http.StatusBadRequest, "issue_id and crawl_id are required")
-		return
-	}
-
-	// Check if insight already exists (caching)
-	// Use serviceRole and filter by user_id to check cache
-	var existingInsights []map[string]interface{}
-	issueIDInt, err := strconv.ParseInt(req.IssueID, 10, 64)
-	if err == nil {
-		data, _, err := s.serviceRole.From("ai_issue_insights").
-			Select("*", "", false).
-			Eq("issue_id", strconv.FormatInt(issueIDInt, 10)).
-			Eq("user_id", userID).
-			Execute()
-		if err == nil {
-			json.Unmarshal(data, &existingInsights)
-			if len(existingInsights) > 0 {
-				// Return cached insight
-				s.respondJSON(w, http.StatusOK, map[string]interface{}{
-					"insight": existingInsights[0]["insight_text"],
-					"cached":  true,
-				})
-				return
-			}
+// handleIssueInsight returns a handler for POST /api/v1/ai/issue-insight. Requires aiSuite (Gemini).
+func (s *Server) handleIssueInsight(aiSuite *AISuiteServices) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			return
 		}
-	}
 
-	// Load issue data using serviceRole (we'll verify access after)
-	var issues []map[string]interface{}
-	issueData, _, err := s.serviceRole.From("issues").
-		Select("*", "", false).
-		Eq("id", req.IssueID).
-		Execute()
-	if err != nil {
-		s.logger.Error("Failed to load issue", zap.Error(err))
-		s.respondError(w, http.StatusInternalServerError, "Failed to load issue")
-		return
-	}
-	if err := json.Unmarshal(issueData, &issues); err != nil || len(issues) == 0 {
-		s.respondError(w, http.StatusNotFound, "Issue not found")
-		return
-	}
-	issue := issues[0]
-
-	// Verify user has access to the project
-	projectID, ok := issue["project_id"].(string)
-	if !ok {
-		s.respondError(w, http.StatusInternalServerError, "Invalid issue data")
-		return
-	}
-	hasAccess, err := s.verifyProjectAccess(userID, projectID)
-	if err != nil {
-		s.logger.Error("Failed to verify project access", zap.Error(err))
-		s.respondError(w, http.StatusInternalServerError, "Failed to verify access")
-		return
-	}
-	if !hasAccess {
-		s.logger.Warn("User does not have access to issue", zap.String("issue_id", req.IssueID), zap.String("user_id", userID), zap.String("project_id", projectID))
-		s.respondError(w, http.StatusForbidden, "You don't have access to this issue")
-		return
-	}
-
-	// Load page data if available (using serviceRole since we've verified access)
-	var page map[string]interface{}
-	if pageID, ok := issue["page_id"].(float64); ok && pageID > 0 {
-		var pages []map[string]interface{}
-		pageData, _, err := s.serviceRole.From("pages").
-			Select("*", "", false).
-			Eq("id", strconv.FormatInt(int64(pageID), 10)).
-			Execute()
-		if err == nil {
-			json.Unmarshal(pageData, &pages)
-			if len(pages) > 0 {
-				page = pages[0]
-			}
-		}
-	}
-
-	// If no page found, create minimal page data from issue URL
-	if page == nil {
-		page = map[string]interface{}{
-			"url": getString(issue, "url"),
-		}
-	}
-
-	// Load GSC data if available (optional)
-	gscData := s.loadGSCDataForPage(projectID, getString(page, "url"))
-
-	// Initialize AI client
-	aiClient := ai.NewAIClient(s.supabase, s.serviceRole, s.logger)
-
-	// Generate insight
-	insight, err := aiClient.GenerateIssueInsight(r.Context(), userID, issue, page, gscData)
-	if err != nil {
-		s.logger.Error("Failed to generate issue insight", zap.Error(err))
-		s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to generate insight: %v", err))
-		return
-	}
-
-	// Save to cache
-	crawlID := getString(issue, "crawl_id")
-	if crawlID == "" {
-		crawlID = req.CrawlID
-	}
-	insightRecord := map[string]interface{}{
-		"id":           uuid.New().String(),
-		"issue_id":     issueIDInt, // Use numeric value for bigint column
-		"user_id":      userID,
-		"project_id":   projectID,
-		"crawl_id":     crawlID,
-		"insight_text": insight,
-	}
-	_, _, err = s.serviceRole.From("ai_issue_insights").Insert(insightRecord, false, "", "", "").Execute()
-	if err != nil {
-		s.logger.Warn("Failed to cache insight", zap.Error(err))
-		// Continue anyway
-	}
-
-	s.respondJSON(w, http.StatusOK, map[string]interface{}{
-		"insight": insight,
-		"cached":  false,
-	})
-}
-
-// handleCrawlSummary handles GET/POST/DELETE /api/v1/ai/crawl-summary
-func (s *Server) handleCrawlSummary(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		// Get existing summary for a crawl
 		userID, ok := userIDFromContext(r.Context())
 		if !ok {
 			s.respondError(w, http.StatusUnauthorized, "User not authenticated")
 			return
 		}
 
-		crawlID := r.URL.Query().Get("crawl_id")
-		if crawlID == "" {
-			s.respondError(w, http.StatusBadRequest, "crawl_id query parameter is required")
+		// Check subscription - AI insights require Pro
+		if sub := s.requireProSubscription(w, userID, "AI Issue Insights"); sub == nil {
 			return
 		}
 
-		// Get the most recent summary for this crawl and user
-		var summaries []map[string]interface{}
-		data, _, err := s.serviceRole.From("ai_crawl_summaries").
-			Select("*", "", false).
-			Eq("crawl_id", crawlID).
-			Eq("user_id", userID).
-			Order("created_at", nil). // Most recent first
-			Limit(1, "").
-			Execute()
-		if err != nil {
-			s.logger.Error("Failed to load crawl summary", zap.String("crawl_id", crawlID), zap.Error(err))
-			s.respondJSON(w, http.StatusOK, map[string]interface{}{
-				"summary": nil,
-				"cached":  false,
-			})
-			return
-		}
-
-		if err := json.Unmarshal(data, &summaries); err != nil {
-			s.logger.Error("Failed to parse crawl summary data", zap.String("crawl_id", crawlID), zap.Error(err))
-			s.respondJSON(w, http.StatusOK, map[string]interface{}{
-				"summary": nil,
-				"cached":  false,
-			})
-			return
-		}
-
-		if len(summaries) > 0 {
-			s.respondJSON(w, http.StatusOK, map[string]interface{}{
-				"summary":    summaries[0]["summary_text"],
-				"cached":     true,
-				"created_at": summaries[0]["created_at"],
-			})
-		} else {
-			s.respondJSON(w, http.StatusOK, map[string]interface{}{
-				"summary": nil,
-				"cached":  false,
-			})
-		}
-		return
-
-	case http.MethodDelete:
-		// Delete summary for a crawl
-		userID, ok := userIDFromContext(r.Context())
-		if !ok {
-			s.respondError(w, http.StatusUnauthorized, "User not authenticated")
-			return
-		}
-
-		crawlID := r.URL.Query().Get("crawl_id")
-		if crawlID == "" {
-			s.respondError(w, http.StatusBadRequest, "crawl_id query parameter is required")
-			return
-		}
-
-		// Delete all summaries for this crawl and user
-		_, _, err := s.serviceRole.From("ai_crawl_summaries").
-			Delete("", "").
-			Eq("crawl_id", crawlID).
-			Eq("user_id", userID).
-			Execute()
-		if err != nil {
-			s.logger.Error("Failed to delete crawl summary", zap.String("crawl_id", crawlID), zap.Error(err))
-			s.respondError(w, http.StatusInternalServerError, "Failed to delete summary")
-			return
-		}
-
-		s.respondJSON(w, http.StatusOK, map[string]interface{}{
-			"success": true,
-		})
-		return
-
-	case http.MethodPost:
-		// Generate or regenerate summary (existing logic)
-		userID, ok := userIDFromContext(r.Context())
-		if !ok {
-			s.respondError(w, http.StatusUnauthorized, "User not authenticated")
-			return
-		}
-
-		// Check subscription - AI crawl summaries require Pro
-		if sub := s.requireProSubscription(w, userID, "AI Crawl Summaries"); sub == nil {
-			return
-		}
-
-		var req CrawlSummaryRequest
+		var req IssueInsightRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			s.respondError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request body: %v", err))
 			return
 		}
 
-		if req.CrawlID == "" {
-			s.respondError(w, http.StatusBadRequest, "crawl_id is required")
+		if req.IssueID == "" || req.CrawlID == "" {
+			s.respondError(w, http.StatusBadRequest, "issue_id and crawl_id are required")
 			return
 		}
 
-		// Check if summary already exists (caching) - skip if force_refresh is true
-		if !req.ForceRefresh {
-			var existingSummaries []map[string]interface{}
-			data, _, err := s.serviceRole.From("ai_crawl_summaries").
+		// Check if insight already exists (caching)
+		// Use serviceRole and filter by user_id to check cache
+		var existingInsights []map[string]interface{}
+		issueIDInt, err := strconv.ParseInt(req.IssueID, 10, 64)
+		if err == nil {
+			data, _, err := s.serviceRole.From("ai_issue_insights").
 				Select("*", "", false).
-				Eq("crawl_id", req.CrawlID).
+				Eq("issue_id", strconv.FormatInt(issueIDInt, 10)).
 				Eq("user_id", userID).
 				Execute()
 			if err == nil {
-				json.Unmarshal(data, &existingSummaries)
-				if len(existingSummaries) > 0 {
-					// Return cached summary
+				json.Unmarshal(data, &existingInsights)
+				if len(existingInsights) > 0 {
+					// Return cached insight
 					s.respondJSON(w, http.StatusOK, map[string]interface{}{
-						"summary": existingSummaries[0]["summary_text"],
+						"insight": existingInsights[0]["insight_text"],
 						"cached":  true,
 					})
 					return
@@ -314,33 +79,27 @@ func (s *Server) handleCrawlSummary(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		// Load crawl data using service role (bypasses RLS)
-		var crawls []map[string]interface{}
-		crawlData, _, err := s.serviceRole.From("crawls").
+		// Load issue data using serviceRole (we'll verify access after)
+		var issues []map[string]interface{}
+		issueData, _, err := s.serviceRole.From("issues").
 			Select("*", "", false).
-			Eq("id", req.CrawlID).
+			Eq("id", req.IssueID).
 			Execute()
 		if err != nil {
-			s.logger.Error("Failed to load crawl", zap.String("crawl_id", req.CrawlID), zap.Error(err))
-			s.respondError(w, http.StatusInternalServerError, "Failed to load crawl")
+			s.logger.Error("Failed to load issue", zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, "Failed to load issue")
 			return
 		}
-		if err := json.Unmarshal(crawlData, &crawls); err != nil {
-			s.logger.Error("Failed to parse crawl data", zap.String("crawl_id", req.CrawlID), zap.Error(err))
-			s.respondError(w, http.StatusInternalServerError, "Failed to parse crawl data")
+		if err := json.Unmarshal(issueData, &issues); err != nil || len(issues) == 0 {
+			s.respondError(w, http.StatusNotFound, "Issue not found")
 			return
 		}
-		if len(crawls) == 0 {
-			s.logger.Warn("Crawl not found", zap.String("crawl_id", req.CrawlID))
-			s.respondError(w, http.StatusNotFound, "Crawl not found")
-			return
-		}
-		crawl := crawls[0]
+		issue := issues[0]
 
 		// Verify user has access to the project
-		projectID, ok := crawl["project_id"].(string)
+		projectID, ok := issue["project_id"].(string)
 		if !ok {
-			s.respondError(w, http.StatusInternalServerError, "Invalid crawl data")
+			s.respondError(w, http.StatusInternalServerError, "Invalid issue data")
 			return
 		}
 		hasAccess, err := s.verifyProjectAccess(userID, projectID)
@@ -350,371 +109,386 @@ func (s *Server) handleCrawlSummary(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if !hasAccess {
-			s.logger.Warn("User does not have access to crawl", zap.String("crawl_id", req.CrawlID), zap.String("user_id", userID), zap.String("project_id", projectID))
-			s.respondError(w, http.StatusForbidden, "You don't have access to this crawl")
+			s.logger.Warn("User does not have access to issue", zap.String("issue_id", req.IssueID), zap.String("user_id", userID), zap.String("project_id", projectID))
+			s.respondError(w, http.StatusForbidden, "You don't have access to this issue")
 			return
 		}
 
-		// Load issues for this crawl (using serviceRole since we've verified access)
-		var issues []map[string]interface{}
-		issuesData, _, err := s.serviceRole.From("issues").
-			Select("*", "", false).
-			Eq("crawl_id", req.CrawlID).
-			Execute()
-		if err == nil {
-			json.Unmarshal(issuesData, &issues)
-		}
-
-		// Load pages for this crawl (using serviceRole since we've verified access)
-		var pages []map[string]interface{}
-		pagesData, _, err := s.serviceRole.From("pages").
-			Select("*", "", false).
-			Eq("crawl_id", req.CrawlID).
-			Execute()
-		if err == nil {
-			json.Unmarshal(pagesData, &pages)
-		}
-
-		// Build crawl data summary
-		crawlSummaryData := map[string]interface{}{
-			"total_pages":        getValue(crawl, "total_pages"),
-			"total_issues":       getValue(crawl, "total_issues"),
-			"issues_by_type":     make(map[string]int),
-			"issues_by_severity": make(map[string]int),
-			"slow_pages":         []interface{}{},
-			"redirect_chains":    0,
-			"metadata_issues":    0,
-		}
-
-		// Count issues by type and severity
-		issuesByType := make(map[string]int)
-		issuesBySeverity := make(map[string]int)
-		for _, issue := range issues {
-			if issueType, ok := issue["type"].(string); ok {
-				issuesByType[issueType]++
-			}
-			if severity, ok := issue["severity"].(string); ok {
-				issuesBySeverity[severity]++
-			}
-		}
-		crawlSummaryData["issues_by_type"] = issuesByType
-		crawlSummaryData["issues_by_severity"] = issuesBySeverity
-
-		// Count slow pages (>3000ms)
-		var slowPages []interface{}
-		for _, page := range pages {
-			if rt, ok := page["response_time_ms"].(float64); ok && rt > 3000 {
-				slowPages = append(slowPages, page)
-			}
-		}
-		crawlSummaryData["slow_pages"] = slowPages
-
-		// Count redirect chains
-		redirectCount := 0
-		for _, page := range pages {
-			if data, ok := page["data"].(map[string]interface{}); ok {
-				if redirectChain, ok := data["redirect_chain"].([]interface{}); ok && len(redirectChain) > 0 {
-					redirectCount++
+		// Load page data if available (using serviceRole since we've verified access)
+		var page map[string]interface{}
+		if pageID, ok := issue["page_id"].(float64); ok && pageID > 0 {
+			var pages []map[string]interface{}
+			pageData, _, err := s.serviceRole.From("pages").
+				Select("*", "", false).
+				Eq("id", strconv.FormatInt(int64(pageID), 10)).
+				Execute()
+			if err == nil {
+				json.Unmarshal(pageData, &pages)
+				if len(pages) > 0 {
+					page = pages[0]
 				}
 			}
 		}
-		crawlSummaryData["redirect_chains"] = redirectCount
 
-		// Count metadata issues
-		metadataCount := 0
-		for _, page := range pages {
-			if getString(page, "title") == "" || getString(page, "meta_description") == "" {
-				metadataCount++
+		// If no page found, create minimal page data from issue URL
+		if page == nil {
+			page = map[string]interface{}{
+				"url": getString(issue, "url"),
 			}
 		}
-		crawlSummaryData["metadata_issues"] = metadataCount
 
-		// Load GSC summary data if available (optional)
-		gscSummaryData := s.loadGSCSummaryData(projectID)
-		if gscSummaryData != nil {
-			crawlSummaryData["gsc_summary"] = gscSummaryData
-		}
+		// Load GSC data if available (optional)
+		gscData := s.loadGSCDataForPage(projectID, getString(page, "url"))
 
-		// Initialize AI client
-		aiClient := ai.NewAIClient(s.supabase, s.serviceRole, s.logger)
+		// Initialize AI client (uses Gemini from aiSuite)
+		aiClient := ai.NewAIClientWithProvider(aiSuite.FlashProvider, s.serviceRole, s.logger)
 
-		// Generate summary
-		summary, err := aiClient.GenerateCrawlSummary(r.Context(), userID, crawlSummaryData)
+		// Generate insight
+		insight, err := aiClient.GenerateIssueInsight(r.Context(), userID, issue, page, gscData)
 		if err != nil {
-			s.logger.Error("Failed to generate crawl summary", zap.Error(err))
-			s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to generate summary: %v", err))
+			s.logger.Error("Failed to generate issue insight", zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to generate insight: %v", err))
 			return
 		}
 
-		// Save to cache (using serviceRole since we've verified access)
-		// If force_refresh is true, delete old cached summaries first
-		if req.ForceRefresh {
-			// Delete old cached summaries - wrap in recover to prevent panic
-			func() {
-				defer func() {
-					if r := recover(); r != nil {
-						s.logger.Warn("Panic during delete of old cached summary", zap.Any("panic", r), zap.String("crawl_id", req.CrawlID), zap.String("user_id", userID))
-					}
-				}()
-				_, _, delErr := s.serviceRole.From("ai_crawl_summaries").
-					Delete("", "").
-					Eq("crawl_id", req.CrawlID).
-					Eq("user_id", userID).
-					Execute()
-				if delErr != nil {
-					s.logger.Debug("Failed to delete old cached summary (non-fatal)", zap.Error(delErr))
-				}
-			}()
+		// Save to cache
+		crawlID := getString(issue, "crawl_id")
+		if crawlID == "" {
+			crawlID = req.CrawlID
 		}
-
-		// Always insert new summary (table allows multiple summaries per crawl/user)
-		summaryRecord := map[string]interface{}{
+		insightRecord := map[string]interface{}{
 			"id":           uuid.New().String(),
-			"crawl_id":     req.CrawlID,
+			"issue_id":     issueIDInt, // Use numeric value for bigint column
 			"user_id":      userID,
 			"project_id":   projectID,
-			"summary_text": summary,
+			"crawl_id":     crawlID,
+			"insight_text": insight,
 		}
-
-		// Insert new summary - if this fails, log but don't fail the request
-		_, _, err = s.serviceRole.From("ai_crawl_summaries").Insert(summaryRecord, false, "", "", "").Execute()
+		_, _, err = s.serviceRole.From("ai_issue_insights").Insert(insightRecord, false, "", "", "").Execute()
 		if err != nil {
-			s.logger.Warn("Failed to cache summary", zap.Error(err))
-			// Continue anyway - the summary was generated successfully
+			s.logger.Warn("Failed to cache insight", zap.Error(err))
+			// Continue anyway
 		}
 
 		s.respondJSON(w, http.StatusOK, map[string]interface{}{
-			"summary": summary,
+			"insight": insight,
 			"cached":  false,
 		})
-
-	default:
-		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
 }
 
-// handleOpenAIKey handles POST/GET /api/v1/integrations/openai-key
-func (s *Server) handleOpenAIKey(w http.ResponseWriter, r *http.Request) {
-	userID, ok := userIDFromContext(r.Context())
-	if !ok {
-		s.respondError(w, http.StatusUnauthorized, "User not authenticated")
-		return
-	}
-
-	switch r.Method {
-	case http.MethodPost:
-		// Save OpenAI API key
-		var req OpenAIKeyRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			s.logger.Error("Failed to decode OpenAI key request", zap.Error(err))
-			s.respondError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request body: %v", err))
-			return
-		}
-
-		// Validate that key is not empty
-		if req.OpenAIAPIKey == "" {
-			s.logger.Warn("Attempted to save empty OpenAI key", zap.String("user_id", userID))
-			s.respondError(w, http.StatusBadRequest, "OpenAI API key cannot be empty")
-			return
-		}
-
-		s.logger.Info("Saving OpenAI API key", zap.String("user_id", userID), zap.Bool("has_key", req.OpenAIAPIKey != ""), zap.Int("key_length", len(req.OpenAIAPIKey)))
-
-		// Upsert user AI settings
-		settings := map[string]interface{}{
-			"user_id":        userID,
-			"openai_api_key": req.OpenAIAPIKey,
-			"updated_at":     time.Now().UTC().Format(time.RFC3339),
-		}
-
-		// Check if record exists first and use Upsert to handle both cases atomically
-		// This avoids race conditions and simplifies the logic
-		s.logger.Info("Upserting OpenAI API key", zap.String("user_id", userID))
-
-		upsertData, upsertCount, err := s.serviceRole.From("user_ai_settings").
-			Insert(settings, true, "user_id", "", "").
-			Execute()
-
-		if err != nil {
-			s.logger.Error("Failed to upsert OpenAI key",
-				zap.Error(err),
-				zap.String("user_id", userID))
-			s.respondError(w, http.StatusInternalServerError, "Failed to save OpenAI key")
-			return
-		}
-
-		// Parse response to check if upsert actually succeeded
-		var upsertResult []map[string]interface{}
-		upsertSucceeded := false
-		if len(upsertData) > 0 {
-			if err := json.Unmarshal(upsertData, &upsertResult); err == nil {
-				upsertSucceeded = len(upsertResult) > 0
-				s.logger.Info("Successfully upserted OpenAI key",
-					zap.String("user_id", userID),
-					zap.Bool("upsert_succeeded", upsertSucceeded),
-					zap.Int("upsert_result_count", len(upsertResult)),
-					zap.Int64("upsert_count", upsertCount),
-					zap.String("upsert_response_preview", func() string {
-						if len(upsertData) > 500 {
-							return string(upsertData[:500]) + "..."
-						}
-						return string(upsertData)
-					}()))
-			} else {
-				s.logger.Warn("Failed to parse upsert response",
-					zap.String("user_id", userID),
-					zap.Error(err),
-					zap.String("upsert_data", string(upsertData)))
+// handleCrawlSummary returns a handler for GET/POST/DELETE /api/v1/ai/crawl-summary. Requires aiSuite (Gemini).
+func (s *Server) handleCrawlSummary(aiSuite *AISuiteServices) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			// Get existing summary for a crawl
+			userID, ok := userIDFromContext(r.Context())
+			if !ok {
+				s.respondError(w, http.StatusUnauthorized, "User not authenticated")
+				return
 			}
-		} else {
-			// If count > 0 but data is empty, it might still be successful if we didn't ask for returning data
-			// But default Supabase client usually returns data.
-			s.logger.Info("Upsert completed (no data returned)",
-				zap.String("user_id", userID),
-				zap.Int64("upsert_count", upsertCount))
-		}
 
-		// Verify the save worked by querying after a short delay
-		// This accounts for any potential replication lag or transaction commit delay
-		time.Sleep(100 * time.Millisecond)
+			crawlID := r.URL.Query().Get("crawl_id")
+			if crawlID == "" {
+				s.respondError(w, http.StatusBadRequest, "crawl_id query parameter is required")
+				return
+			}
 
-		var verifySettings []map[string]interface{}
-		verifyData, verifyCount, verifyErr := s.serviceRole.From("user_ai_settings").
-			Select("openai_api_key", "", false).
-			Eq("user_id", userID).
-			Execute()
+			// Get the most recent summary for this crawl and user
+			var summaries []map[string]interface{}
+			data, _, err := s.serviceRole.From("ai_crawl_summaries").
+				Select("*", "", false).
+				Eq("crawl_id", crawlID).
+				Eq("user_id", userID).
+				Order("created_at", nil). // Most recent first
+				Limit(1, "").
+				Execute()
+			if err != nil {
+				s.logger.Error("Failed to load crawl summary", zap.String("crawl_id", crawlID), zap.Error(err))
+				s.respondJSON(w, http.StatusOK, map[string]interface{}{
+					"summary": nil,
+					"cached":  false,
+				})
+				return
+			}
 
-		verificationStatus := "unknown"
-		savedKeyLength := 0
+			if err := json.Unmarshal(data, &summaries); err != nil {
+				s.logger.Error("Failed to parse crawl summary data", zap.String("crawl_id", crawlID), zap.Error(err))
+				s.respondJSON(w, http.StatusOK, map[string]interface{}{
+					"summary": nil,
+					"cached":  false,
+				})
+				return
+			}
 
-		if verifyErr != nil {
-			verificationStatus = "verification_failed"
-			s.logger.Warn("Failed to verify OpenAI key save",
-				zap.String("user_id", userID),
-				zap.Error(verifyErr),
-				zap.Int64("verify_count", verifyCount))
-		} else if verifyData == nil || len(verifyData) == 0 {
-			verificationStatus = "record_not_found"
-			s.logger.Warn("OpenAI key save completed but verification found no record",
-				zap.String("user_id", userID),
-				zap.Int64("verify_count", verifyCount))
-		} else {
-			if err := json.Unmarshal(verifyData, &verifySettings); err != nil {
-				verificationStatus = "verification_failed"
-				s.logger.Warn("Failed to unmarshal verification response",
-					zap.String("user_id", userID),
-					zap.Error(err),
-					zap.String("verify_data_preview", func() string {
-						if len(verifyData) > 200 {
-							return string(verifyData[:200]) + "..."
-						}
-						return string(verifyData)
-					}()))
-			} else if len(verifySettings) == 0 {
-				verificationStatus = "record_not_found"
-				s.logger.Warn("OpenAI key save completed but verification found no record (empty array)",
-					zap.String("user_id", userID),
-					zap.Int64("verify_count", verifyCount))
+			if len(summaries) > 0 {
+				s.respondJSON(w, http.StatusOK, map[string]interface{}{
+					"summary":    summaries[0]["summary_text"],
+					"cached":     true,
+					"created_at": summaries[0]["created_at"],
+				})
 			} else {
-				if key, ok := verifySettings[0]["openai_api_key"].(string); ok && key != "" {
-					verificationStatus = "verified_saved"
-					savedKeyLength = len(key)
-					s.logger.Info("OpenAI key save verified successfully",
-						zap.String("user_id", userID),
-						zap.Int("key_length", len(key)))
-				} else {
-					verificationStatus = "verified_empty"
-					s.logger.Warn("OpenAI key save completed but verification shows empty key",
-						zap.String("user_id", userID),
-						zap.Any("verify_settings", verifySettings[0]))
+				s.respondJSON(w, http.StatusOK, map[string]interface{}{
+					"summary": nil,
+					"cached":  false,
+				})
+			}
+			return
+
+		case http.MethodDelete:
+			// Delete summary for a crawl
+			userID, ok := userIDFromContext(r.Context())
+			if !ok {
+				s.respondError(w, http.StatusUnauthorized, "User not authenticated")
+				return
+			}
+
+			crawlID := r.URL.Query().Get("crawl_id")
+			if crawlID == "" {
+				s.respondError(w, http.StatusBadRequest, "crawl_id query parameter is required")
+				return
+			}
+
+			// Delete all summaries for this crawl and user
+			_, _, err := s.serviceRole.From("ai_crawl_summaries").
+				Delete("", "").
+				Eq("crawl_id", crawlID).
+				Eq("user_id", userID).
+				Execute()
+			if err != nil {
+				s.logger.Error("Failed to delete crawl summary", zap.String("crawl_id", crawlID), zap.Error(err))
+				s.respondError(w, http.StatusInternalServerError, "Failed to delete summary")
+				return
+			}
+
+			s.respondJSON(w, http.StatusOK, map[string]interface{}{
+				"success": true,
+			})
+			return
+
+		case http.MethodPost:
+			// Generate or regenerate summary (existing logic)
+			userID, ok := userIDFromContext(r.Context())
+			if !ok {
+				s.respondError(w, http.StatusUnauthorized, "User not authenticated")
+				return
+			}
+
+			// Check subscription - AI crawl summaries require Pro
+			if sub := s.requireProSubscription(w, userID, "AI Crawl Summaries"); sub == nil {
+				return
+			}
+
+			var req CrawlSummaryRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				s.respondError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request body: %v", err))
+				return
+			}
+
+			if req.CrawlID == "" {
+				s.respondError(w, http.StatusBadRequest, "crawl_id is required")
+				return
+			}
+
+			// Check if summary already exists (caching) - skip if force_refresh is true
+			if !req.ForceRefresh {
+				var existingSummaries []map[string]interface{}
+				data, _, err := s.serviceRole.From("ai_crawl_summaries").
+					Select("*", "", false).
+					Eq("crawl_id", req.CrawlID).
+					Eq("user_id", userID).
+					Execute()
+				if err == nil {
+					json.Unmarshal(data, &existingSummaries)
+					if len(existingSummaries) > 0 {
+						// Return cached summary
+						s.respondJSON(w, http.StatusOK, map[string]interface{}{
+							"summary": existingSummaries[0]["summary_text"],
+							"cached":  true,
+						})
+						return
+					}
 				}
 			}
-		}
 
-		s.logger.Info("OpenAI key save completed",
-			zap.String("user_id", userID),
-			zap.String("verification_status", verificationStatus),
-			zap.Int("saved_key_length", savedKeyLength))
-
-		// Return has_key based on verification status so frontend can update immediately
-		hasKey := verificationStatus == "verified_saved"
-		s.respondJSON(w, http.StatusOK, map[string]interface{}{
-			"success": true,
-			"has_key": hasKey, // Include has_key in response
-			"debug": map[string]interface{}{
-				"verification_status": verificationStatus,
-				"saved_key_length":    savedKeyLength,
-				"user_id_prefix":      userID[:8], // Safe to log prefix
-			},
-		})
-
-	case http.MethodGet:
-		// Get OpenAI key status (don't return the actual key)
-		// Use serviceRole since we're filtering by user_id (user can only access their own)
-		s.logger.Info("Loading OpenAI key status", zap.String("user_id", userID))
-		var settings []map[string]interface{}
-		data, _, err := s.serviceRole.From("user_ai_settings").
-			Select("openai_api_key", "", false).
-			Eq("user_id", userID).
-			Execute()
-		if err != nil {
-			s.logger.Error("Failed to load OpenAI key status", zap.Error(err), zap.String("user_id", userID))
-			s.respondJSON(w, http.StatusOK, map[string]interface{}{
-				"has_key": false,
-			})
-			return
-		}
-
-		if err := json.Unmarshal(data, &settings); err != nil {
-			s.logger.Error("Failed to unmarshal OpenAI key status", zap.Error(err), zap.String("user_id", userID))
-			s.respondJSON(w, http.StatusOK, map[string]interface{}{
-				"has_key": false,
-			})
-			return
-		}
-
-		hasKey := false
-		if len(settings) > 0 {
-			if key, ok := settings[0]["openai_api_key"].(string); ok && key != "" {
-				hasKey = true
-				s.logger.Info("OpenAI key found", zap.String("user_id", userID), zap.Int("key_length", len(key)))
-			} else {
-				s.logger.Info("OpenAI key field exists but is empty", zap.String("user_id", userID))
+			// Load crawl data using service role (bypasses RLS)
+			var crawls []map[string]interface{}
+			crawlData, _, err := s.serviceRole.From("crawls").
+				Select("*", "", false).
+				Eq("id", req.CrawlID).
+				Execute()
+			if err != nil {
+				s.logger.Error("Failed to load crawl", zap.String("crawl_id", req.CrawlID), zap.Error(err))
+				s.respondError(w, http.StatusInternalServerError, "Failed to load crawl")
+				return
 			}
-		} else {
-			s.logger.Info("No OpenAI key record found", zap.String("user_id", userID))
+			if err := json.Unmarshal(crawlData, &crawls); err != nil {
+				s.logger.Error("Failed to parse crawl data", zap.String("crawl_id", req.CrawlID), zap.Error(err))
+				s.respondError(w, http.StatusInternalServerError, "Failed to parse crawl data")
+				return
+			}
+			if len(crawls) == 0 {
+				s.logger.Warn("Crawl not found", zap.String("crawl_id", req.CrawlID))
+				s.respondError(w, http.StatusNotFound, "Crawl not found")
+				return
+			}
+			crawl := crawls[0]
+
+			// Verify user has access to the project
+			projectID, ok := crawl["project_id"].(string)
+			if !ok {
+				s.respondError(w, http.StatusInternalServerError, "Invalid crawl data")
+				return
+			}
+			hasAccess, err := s.verifyProjectAccess(userID, projectID)
+			if err != nil {
+				s.logger.Error("Failed to verify project access", zap.Error(err))
+				s.respondError(w, http.StatusInternalServerError, "Failed to verify access")
+				return
+			}
+			if !hasAccess {
+				s.logger.Warn("User does not have access to crawl", zap.String("crawl_id", req.CrawlID), zap.String("user_id", userID), zap.String("project_id", projectID))
+				s.respondError(w, http.StatusForbidden, "You don't have access to this crawl")
+				return
+			}
+
+			// Load issues for this crawl (using serviceRole since we've verified access)
+			var issues []map[string]interface{}
+			issuesData, _, err := s.serviceRole.From("issues").
+				Select("*", "", false).
+				Eq("crawl_id", req.CrawlID).
+				Execute()
+			if err == nil {
+				json.Unmarshal(issuesData, &issues)
+			}
+
+			// Load pages for this crawl (using serviceRole since we've verified access)
+			var pages []map[string]interface{}
+			pagesData, _, err := s.serviceRole.From("pages").
+				Select("*", "", false).
+				Eq("crawl_id", req.CrawlID).
+				Execute()
+			if err == nil {
+				json.Unmarshal(pagesData, &pages)
+			}
+
+			// Build crawl data summary
+			crawlSummaryData := map[string]interface{}{
+				"total_pages":        getValue(crawl, "total_pages"),
+				"total_issues":       getValue(crawl, "total_issues"),
+				"issues_by_type":     make(map[string]int),
+				"issues_by_severity": make(map[string]int),
+				"slow_pages":         []interface{}{},
+				"redirect_chains":    0,
+				"metadata_issues":    0,
+			}
+
+			// Count issues by type and severity
+			issuesByType := make(map[string]int)
+			issuesBySeverity := make(map[string]int)
+			for _, issue := range issues {
+				if issueType, ok := issue["type"].(string); ok {
+					issuesByType[issueType]++
+				}
+				if severity, ok := issue["severity"].(string); ok {
+					issuesBySeverity[severity]++
+				}
+			}
+			crawlSummaryData["issues_by_type"] = issuesByType
+			crawlSummaryData["issues_by_severity"] = issuesBySeverity
+
+			// Count slow pages (>3000ms)
+			var slowPages []interface{}
+			for _, page := range pages {
+				if rt, ok := page["response_time_ms"].(float64); ok && rt > 3000 {
+					slowPages = append(slowPages, page)
+				}
+			}
+			crawlSummaryData["slow_pages"] = slowPages
+
+			// Count redirect chains
+			redirectCount := 0
+			for _, page := range pages {
+				if data, ok := page["data"].(map[string]interface{}); ok {
+					if redirectChain, ok := data["redirect_chain"].([]interface{}); ok && len(redirectChain) > 0 {
+						redirectCount++
+					}
+				}
+			}
+			crawlSummaryData["redirect_chains"] = redirectCount
+
+			// Count metadata issues
+			metadataCount := 0
+			for _, page := range pages {
+				if getString(page, "title") == "" || getString(page, "meta_description") == "" {
+					metadataCount++
+				}
+			}
+			crawlSummaryData["metadata_issues"] = metadataCount
+
+			// Load GSC summary data if available (optional)
+			gscSummaryData := s.loadGSCSummaryData(projectID)
+			if gscSummaryData != nil {
+				crawlSummaryData["gsc_summary"] = gscSummaryData
+			}
+
+			// Initialize AI client (uses Gemini from aiSuite)
+			aiClient := ai.NewAIClientWithProvider(aiSuite.FlashProvider, s.serviceRole, s.logger)
+
+			// Generate summary
+			summary, err := aiClient.GenerateCrawlSummary(r.Context(), "", crawlSummaryData)
+			if err != nil {
+				s.logger.Error("Failed to generate crawl summary", zap.Error(err))
+				s.respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to generate summary: %v", err))
+				return
+			}
+
+			// Save to cache (using serviceRole since we've verified access)
+			// If force_refresh is true, delete old cached summaries first
+			if req.ForceRefresh {
+				// Delete old cached summaries - wrap in recover to prevent panic
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							s.logger.Warn("Panic during delete of old cached summary", zap.Any("panic", r), zap.String("crawl_id", req.CrawlID), zap.String("user_id", userID))
+						}
+					}()
+					_, _, delErr := s.serviceRole.From("ai_crawl_summaries").
+						Delete("", "").
+						Eq("crawl_id", req.CrawlID).
+						Eq("user_id", userID).
+						Execute()
+					if delErr != nil {
+						s.logger.Debug("Failed to delete old cached summary (non-fatal)", zap.Error(delErr))
+					}
+				}()
+			}
+
+			// Always insert new summary (table allows multiple summaries per crawl/user)
+			summaryRecord := map[string]interface{}{
+				"id":           uuid.New().String(),
+				"crawl_id":     req.CrawlID,
+				"user_id":      userID,
+				"project_id":   projectID,
+				"summary_text": summary,
+			}
+
+			// Insert new summary - if this fails, log but don't fail the request
+			_, _, err = s.serviceRole.From("ai_crawl_summaries").Insert(summaryRecord, false, "", "", "").Execute()
+			if err != nil {
+				s.logger.Warn("Failed to cache summary", zap.Error(err))
+				// Continue anyway - the summary was generated successfully
+			}
+
+			s.respondJSON(w, http.StatusOK, map[string]interface{}{
+				"summary": summary,
+				"cached":  false,
+			})
+
+		default:
+			s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		}
-
-		s.logger.Info("Returning OpenAI key status", zap.String("user_id", userID), zap.Bool("has_key", hasKey))
-		s.respondJSON(w, http.StatusOK, map[string]interface{}{
-			"has_key": hasKey,
-		})
-
-	case http.MethodDelete:
-		// Delete OpenAI API key (set to empty string)
-		settings := map[string]interface{}{
-			"user_id":        userID,
-			"openai_api_key": "",
-			"updated_at":     time.Now().UTC().Format(time.RFC3339),
-		}
-
-		// Try to update first
-		_, _, err := s.serviceRole.From("user_ai_settings").
-			Update(settings, "", "").
-			Eq("user_id", userID).
-			Execute()
-
-		if err != nil {
-			// If update fails, it might mean no record exists, which is fine
-			s.logger.Debug("Failed to delete OpenAI key (may not exist)", zap.Error(err))
-		}
-
-		s.respondJSON(w, http.StatusOK, map[string]interface{}{
-			"success": true,
-		})
-
-	default:
-		s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
 }
 

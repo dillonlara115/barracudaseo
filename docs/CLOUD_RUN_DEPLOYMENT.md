@@ -61,10 +61,7 @@ echo -n "your-service-role-key" | gcloud secrets create supabase-service-role-ke
   --data-file=- \
   --replication-policy="automatic"
 
-# If you have OpenAI API key (optional)
-# echo -n "your-openai-key" | gcloud secrets create openai-api-key \
-#   --data-file=- \
-#   --replication-policy="automatic"
+# AI uses Gemini (GEMINI_API_KEY) - see make deploy-backend for required env vars
 ```
 
 ## Step 5: Build and Push Docker Image
@@ -88,7 +85,7 @@ gcloud run deploy barracuda-api \
   --platform managed \
   --region $GCP_REGION \
   --allow-unauthenticated \
-  --set-env-vars="APP_ENV=production,PUBLIC_SUPABASE_URL=https://your-project.supabase.co,PUBLIC_SUPABASE_ANON_KEY=your-anon-key,OPENAI_API_KEY=sk-...,STRIPE_SECRET_KEY=sk_live_...,STRIPE_WEBHOOK_SECRET=whsec_...,STRIPE_PRICE_ID_PRO=price_...,STRIPE_PRICE_ID_PRO_ANNUAL=price_...,STRIPE_SUCCESS_URL=https://app.barracudaseo.com/billing?success=true,STRIPE_CANCEL_URL=https://app.barracudaseo.com/billing?canceled=true" \
+  --set-env-vars="APP_ENV=production,PUBLIC_SUPABASE_URL=https://your-project.supabase.co,PUBLIC_SUPABASE_ANON_KEY=your-anon-key,GEMINI_API_KEY=...,STRIPE_SECRET_KEY=sk_live_...,STRIPE_WEBHOOK_SECRET=whsec_...,STRIPE_PRICE_ID_PRO=price_...,STRIPE_PRICE_ID_PRO_ANNUAL=price_...,STRIPE_SUCCESS_URL=https://app.barracudaseo.com/billing?success=true,STRIPE_CANCEL_URL=https://app.barracudaseo.com/billing?canceled=true" \
   --set-secrets="SUPABASE_SERVICE_ROLE_KEY=supabase-service-role-key:latest" \
   --memory=512Mi \
   --cpu=1 \
@@ -129,7 +126,7 @@ curl $API_URL/health
 - `PUBLIC_SUPABASE_URL` - Your Supabase project URL
 - `PUBLIC_SUPABASE_ANON_KEY` - Supabase anon key (safe to expose)
 - `SUPABASE_SERVICE_ROLE_KEY` - Service role key (from Secret Manager)
-- `OPENAI_API_KEY` - App-wide OpenAI key for AI features (users can still supply their own)
+- `GEMINI_API_KEY` - Google Gemini API key for AI features (Issue Insights, Crawl Summaries)
 - `APP_ENV` - Set to `production` in Cloud Run so `.env.local` is never loaded
 - `PORT` - Automatically set by Cloud Run (default: 8080)
 

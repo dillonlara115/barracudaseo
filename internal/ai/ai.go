@@ -3,7 +3,6 @@ package ai
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/dillonlara115/barracudaseo/internal/ai/providers"
@@ -17,78 +16,25 @@ type Message struct {
 	Content string
 }
 
-// AIClient handles AI operations with provider abstraction
+// AIClient handles AI operations using an injected provider (Gemini).
+// All AI features use the app's provider; no user API keys.
 type AIClient struct {
-	supabase     *supabase.Client
-	serviceRole  *supabase.Client
-	logger       *zap.Logger
-	defaultModel string
+	provider    providers.AIProvider
+	serviceRole *supabase.Client
+	logger      *zap.Logger
 }
 
-// NewAIClient creates a new AI client
-func NewAIClient(supabaseClient, serviceRoleClient *supabase.Client, logger *zap.Logger) *AIClient {
-	model := os.Getenv("OPENAI_MODEL")
-	if model == "" {
-		model = "gpt-4o-mini" // Default model
-	}
-
+// NewAIClientWithProvider creates an AI client that uses the given provider.
+func NewAIClientWithProvider(provider providers.AIProvider, serviceRoleClient *supabase.Client, logger *zap.Logger) *AIClient {
 	return &AIClient{
-		supabase:     supabaseClient,
-		serviceRole:  serviceRoleClient,
-		logger:       logger,
-		defaultModel: model,
+		provider:    provider,
+		serviceRole: serviceRoleClient,
+		logger:      logger,
 	}
 }
 
-// GetAPIKey retrieves the OpenAI API key for a user, falling back to app-wide key
-func (c *AIClient) GetAPIKey(ctx context.Context, userID string) (string, error) {
-	// First, try to get user's own key from user_ai_settings.
-	// Use serviceRole: the backend runs server-side and has no user JWT; anon client + RLS
-	// would block the read. We filter by user_id (from the authenticated request).
-	var result struct {
-		OpenAIAPIKey *string `json:"openai_api_key"`
-	}
-
-	_, err := c.serviceRole.From("user_ai_settings").
-		Select("openai_api_key", "", false).
-		Eq("user_id", userID).
-		Single().
-		ExecuteTo(&result)
-
-	if err == nil && result.OpenAIAPIKey != nil && *result.OpenAIAPIKey != "" {
-		key := strings.TrimSpace(*result.OpenAIAPIKey)
-		if key != "" {
-			c.logger.Debug("Using user-provided OpenAI API key", zap.String("user_id", userID))
-			return key, nil
-		}
-	}
-
-	// Fallback to app-wide key from environment
-	appKey := strings.TrimSpace(os.Getenv("OPENAI_API_KEY"))
-	if appKey == "" {
-		return "", fmt.Errorf("no OpenAI API key found (neither user key nor OPENAI_API_KEY env var)")
-	}
-
-	c.logger.Debug("Using app-wide OpenAI API key", zap.String("user_id", userID))
-	return appKey, nil
-}
-
-// CreateChatCompletion creates a chat completion using the appropriate provider
-func (c *AIClient) CreateChatCompletion(ctx context.Context, userID string, model string, messages []Message) (string, error) {
-	if model == "" {
-		model = c.defaultModel
-	}
-
-	// Get API key
-	apiKey, err := c.GetAPIKey(ctx, userID)
-	if err != nil {
-		return "", fmt.Errorf("failed to get API key: %w", err)
-	}
-
-	// Create OpenAI provider
-	provider := providers.NewOpenAIProvider(apiKey, c.logger)
-
-	// Convert messages to provider format
+// CreateChatCompletion creates a chat completion using the injected provider
+func (c *AIClient) CreateChatCompletion(ctx context.Context, _ string, _ string, messages []Message) (string, error) {
 	providerMessages := make([]providers.Message, len(messages))
 	for i, msg := range messages {
 		providerMessages[i] = providers.Message{
@@ -97,8 +43,7 @@ func (c *AIClient) CreateChatCompletion(ctx context.Context, userID string, mode
 		}
 	}
 
-	// Call provider
-	response, err := provider.Completion(ctx, providerMessages)
+	response, err := c.provider.Completion(ctx, providerMessages)
 	if err != nil {
 		return "", fmt.Errorf("AI completion failed: %w", err)
 	}
@@ -342,7 +287,7 @@ func (c *AIClient) GenerateIssueInsight(ctx context.Context, userID string, issu
 		}
 	}
 
-	return c.CreateChatCompletion(ctx, userID, "", messages)
+	return c.CreateChatCompletion(ctx, "", "", messages)
 }
 
 // GenerateCrawlSummary generates an AI summary for an entire crawl
@@ -415,7 +360,7 @@ func (c *AIClient) GenerateCrawlSummary(ctx context.Context, userID string, craw
 		{Role: "user", Content: promptBuilder.String()},
 	}
 
-	return c.CreateChatCompletion(ctx, userID, "", messages)
+	return c.CreateChatCompletion(ctx, "", "", messages)
 }
 
 // Helper functions

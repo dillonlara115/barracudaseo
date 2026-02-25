@@ -9,7 +9,7 @@ This document captures the target hosted architecture for Barracuda when splitti
 - **Cloud Run (Backend API)**
   - Containerized Go service handling crawl ingestion, analysis orchestration, and authenticated REST/gRPC endpoints.
   - Triggered by CLI uploads, scheduled tasks, or UI actions.
-  - Uses Google Secret Manager for third-party API keys (OpenAI, Search Console, etc.).
+  - Uses Google Secret Manager for third-party API keys (Gemini, Search Console, etc.).
 
 - **Supabase (Data Platform)**
   - Managed Postgres storing crawls, issues, pages, user preferences, and job history.
@@ -27,7 +27,7 @@ This document captures the target hosted architecture for Barracuda when splitti
 
 | Component | Responsibilities | Key Integrations |
 |-----------|------------------|------------------|
-| Cloud Run service | - Receive crawl results from CLI or scheduled jobs<br>- Write normalized data into Supabase<br>- Expose authenticated APIs for dashboard actions<br>- Run background analysis (OpenAI summaries, recommendations)<br>- Fan-out to Google APIs (Search Console) | Supabase service role key, Secret Manager, Pub/Sub (optional) |
+| Cloud Run service | - Receive crawl results from CLI or scheduled jobs<br>- Write normalized data into Supabase<br>- Expose authenticated APIs for dashboard actions<br>- Run background analysis (Gemini summaries, recommendations)<br>- Fan-out to Google APIs (Search Console) | Supabase service role key, Secret Manager, Pub/Sub (optional) |
 | Supabase | - Primary relational datastore<br>- Auth provider (email/OAuth)<br>- Realtime subscriptions for dashboard updates<br>- Row-level security enforcement | Supabase client in web app, Go Supabase client (via PostgREST) |
 | Vercel dashboard | - SPA for viewing issues, managing filters, triggering re-crawls<br>- Uses Supabase auth to sign in users<br>- Calls Cloud Run APIs with JWT from Supabase | Supabase `anon` key, Cloud Run public endpoint |
 
@@ -44,7 +44,7 @@ This document captures the target hosted architecture for Barracuda when splitti
    - UI fetches filtered data directly from Supabase using row-level policies, or via Cloud Run endpoints for derived metrics (aggregations, AI-generated insights).
 
 3. **Recommendations and Integrations**
-   - Cloud Run workers call OpenAI or Google Search Console APIs using secrets stored in Secret Manager.
+   - Cloud Run workers call Gemini or Google Search Console APIs using secrets stored in Secret Manager.
    - Outputs are persisted back into Supabase and streamed to clients via Supabase realtime.
 
 4. **Exports**

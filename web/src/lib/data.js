@@ -983,29 +983,7 @@ export async function disconnectGSCIntegration() {
   });
 }
 
-// AI-related API functions
-
-// Save OpenAI API key
-export async function saveOpenAIKey(openaiApiKey) {
-  return authorizedJSON('/api/v1/integrations/openai-key', {
-    method: 'POST',
-    body: { openai_api_key: openaiApiKey }
-  });
-}
-
-// Get OpenAI API key status (doesn't return the actual key)
-export async function getOpenAIKeyStatus() {
-  return authorizedJSON('/api/v1/integrations/openai-key', {
-    method: 'GET'
-  });
-}
-
-// Disconnect/remove OpenAI API key
-export async function disconnectOpenAIKey() {
-  return authorizedJSON('/api/v1/integrations/openai-key', {
-    method: 'DELETE'
-  });
-}
+// AI-related API functions (Gemini-backed, no user API keys)
 
 // Generate AI insight for an issue
 export async function generateIssueInsight(issueId, crawlId) {

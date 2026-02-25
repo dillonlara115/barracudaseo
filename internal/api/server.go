@@ -213,11 +213,7 @@ func (s *Server) Router() http.Handler {
 	v1.HandleFunc("/billing/", s.handleBilling)
 	v1.HandleFunc("/team/", s.handleTeam)
 	v1.HandleFunc("/team", s.handleTeam)
-	// AI routes
-	v1.HandleFunc("/ai/issue-insight", s.handleIssueInsight)
-	v1.HandleFunc("/ai/crawl-summary", s.handleCrawlSummary)
-	// Integrations routes
-	v1.HandleFunc("/integrations/openai-key", s.handleOpenAIKey)
+	// Integrations routes (OpenAI key removed - AI now uses Gemini as core feature)
 	v1.HandleFunc("/integrations/gsc/", s.handleIntegrationsGSC)
 	v1.HandleFunc("/integrations/gsc", s.handleIntegrationsGSC)
 	v1.HandleFunc("/integrations/ga4/", s.handleIntegrationsGA4)
@@ -234,6 +230,9 @@ func (s *Server) Router() http.Handler {
 	// AI Suite initialization (only registered if GEMINI_API_KEY is set)
 	aiSuite := s.InitAISuite()
 	if aiSuite != nil {
+		// AI Issue Insights & Crawl Summaries (migrated from OpenAI to Gemini)
+		v1.HandleFunc("/ai/issue-insight", s.handleIssueInsight(aiSuite))
+		v1.HandleFunc("/ai/crawl-summary", s.handleCrawlSummary(aiSuite))
 		// Internal cron endpoint for weekly digest (protected via shared secret)
 		mux.HandleFunc("/api/internal/ai/digest", s.handleWeeklyDigest(aiSuite))
 		// Voice

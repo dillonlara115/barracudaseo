@@ -3,9 +3,6 @@
   import { push } from 'svelte-spa-router';
   import { Search, BarChart3, Zap, Globe, Slack, Sparkles, MousePointerClick } from 'lucide-svelte';
   import {
-    saveOpenAIKey,
-    getOpenAIKeyStatus,
-    disconnectOpenAIKey,
     fetchGSCStatus,
     fetchGSCConnect,
     disconnectGSCIntegration,
@@ -13,15 +10,6 @@
     fetchGA4Connect,
     disconnectGA4Integration
   } from '../lib/data.js';
-  
-  // OpenAI API Key state
-  let openaiApiKey = '';
-  let hasOpenAIKey = false;
-  let loadingOpenAIStatus = false;
-  let savingOpenAIKey = false;
-  let disconnectingOpenAIKey = false;
-  let openaiError = null;
-  let openaiSuccess = false;
   
   // Global integrations state
   let gscConnected = false;
@@ -36,148 +24,9 @@
   let ga4Success = false;
 
   onMount(async () => {
-    // Load OpenAI key status
-    await loadOpenAIKeyStatus();
     await loadGSCStatus();
     await loadGA4Status();
   });
-
-  async function loadOpenAIKeyStatus() {
-    loadingOpenAIStatus = true;
-    console.log('Loading OpenAI key status...');
-    try {
-      const { data, error } = await getOpenAIKeyStatus();
-      console.log('OpenAI key status response:', { data, error });
-      console.log('Full data object:', JSON.stringify(data, null, 2));
-      if (error) {
-        console.error('Failed to load OpenAI key status:', error);
-        // Don't update hasOpenAIKey on error - keep current state
-      } else if (data) {
-        // Handle both direct boolean and object with has_key property
-        const keyStatus = typeof data === 'boolean' ? data : (data.has_key === true);
-        hasOpenAIKey = keyStatus;
-        console.log('OpenAI key status loaded:', { hasOpenAIKey, rawData: data });
-      } else {
-        console.warn('OpenAI key status response has no data');
-        hasOpenAIKey = false;
-      }
-    } catch (err) {
-      console.error('Exception loading OpenAI key status:', err);
-      // Don't update hasOpenAIKey on exception - keep current state
-    } finally {
-      loadingOpenAIStatus = false;
-    }
-  }
-
-  async function handleSaveOpenAIKey() {
-    savingOpenAIKey = true;
-    openaiError = null;
-    openaiSuccess = false;
-    
-    console.log('Saving OpenAI API key...', { hasKey: !!openaiApiKey, keyLength: openaiApiKey.length });
-    
-    try {
-      const { data, error } = await saveOpenAIKey(openaiApiKey);
-      console.log('Save OpenAI key response:', { data, error });
-      console.log('Save response data:', JSON.stringify(data, null, 2));
-      
-      if (error) {
-        console.error('Failed to save OpenAI key:', error);
-        openaiError = error.message || 'Failed to save OpenAI API key';
-        savingOpenAIKey = false;
-        return;
-      }
-      
-      // Success - check if response includes has_key
-      console.log('OpenAI key saved successfully', data);
-      openaiSuccess = true;
-      openaiApiKey = ''; // Clear input after saving
-      
-      // Use has_key from response if available, otherwise optimistically set to true
-      if (data && typeof data.has_key === 'boolean') {
-        hasOpenAIKey = data.has_key;
-        console.log('Status from save response:', hasOpenAIKey);
-      } else {
-        // Optimistically set status to true (will be verified by reload)
-        hasOpenAIKey = true;
-        console.log('No has_key in response, optimistically setting to true');
-      }
-      
-      // Reload status with retry logic to ensure it's persisted
-      let retries = 3;
-      let statusLoaded = false;
-      
-      while (retries > 0 && !statusLoaded) {
-        // Wait a bit longer for database write to be visible
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        await loadOpenAIKeyStatus();
-        
-        // If status confirms key exists, we're done
-        if (hasOpenAIKey) {
-          statusLoaded = true;
-          console.log('Status confirmed, hasOpenAIKey:', hasOpenAIKey);
-        } else {
-          retries--;
-          console.log(`Status check failed, retries remaining: ${retries}`);
-          if (retries > 0) {
-            console.log('Retrying status check...');
-          }
-        }
-      }
-      
-      if (!statusLoaded) {
-        console.warn('Status check failed after retries, but save was successful');
-        // Keep hasOpenAIKey as true since save succeeded
-      }
-      
-      setTimeout(() => {
-        openaiSuccess = false;
-      }, 3000);
-    } catch (err) {
-      console.error('Exception saving OpenAI key:', err);
-      openaiError = err.message || 'Failed to save OpenAI API key';
-    } finally {
-      savingOpenAIKey = false;
-    }
-  }
-
-  async function handleDisconnectOpenAIKey() {
-    if (!confirm('Are you sure you want to disconnect your OpenAI API key? You can reconnect it later.')) {
-      return;
-    }
-    
-    disconnectingOpenAIKey = true;
-    openaiError = null;
-    openaiSuccess = false;
-    
-    try {
-      const { data, error } = await disconnectOpenAIKey();
-      if (error) {
-        openaiError = error.message || 'Failed to disconnect OpenAI API key';
-        disconnectingOpenAIKey = false;
-        return;
-      }
-      
-      // Success - optimistically update status
-      openaiSuccess = true;
-      openaiApiKey = ''; // Clear input
-      hasOpenAIKey = false; // Set immediately
-      
-      // Reload status from server to confirm
-      await new Promise(resolve => setTimeout(resolve, 500));
-      await loadOpenAIKeyStatus();
-      
-      setTimeout(() => {
-        openaiSuccess = false;
-      }, 3000);
-    } catch (err) {
-      console.error('Exception disconnecting OpenAI key:', err);
-      openaiError = err.message || 'Failed to disconnect OpenAI API key';
-    } finally {
-      disconnectingOpenAIKey = false;
-    }
-  }
 
   async function loadGSCStatus() {
     gscLoading = true;
@@ -398,101 +247,6 @@
                 <span>{gscError}</span>
               </div>
             {/if}
-          </div>
-        {/if}
-      </div>
-    </div>
-
-    <!-- OpenAI API Key -->
-    <div class="card bg-base-100 shadow">
-      <div class="card-body">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h2 class="card-title text-xl">
-              <Sparkles class="w-6 h-6 mr-2" />
-              OpenAI API Key
-            </h2>
-            <p class="text-sm text-base-content/70 mt-1">
-              Connect your own OpenAI API key to use AI features. If provided, Barracuda will use YOUR OpenAI key for AI features to reduce cost and increase privacy.
-            </p>
-          </div>
-          <div class="badge badge-lg whitespace-nowrap" class:badge-success={hasOpenAIKey} class:badge-ghost={!hasOpenAIKey}>
-            {hasOpenAIKey ? 'Connected' : 'Not Connected'}
-          </div>
-        </div>
-        
-        {#if loadingOpenAIStatus}
-          <div class="alert alert-info">
-            <span class="loading loading-spinner loading-sm"></span>
-            <span>Loading status...</span>
-          </div>
-        {:else}
-          <div class="space-y-4">
-            <div class="form-control">
-              <label class="label" for="openai-api-key">
-                <span class="label-text">Your OpenAI API Key</span>
-              </label>
-              <input
-                id="openai-api-key"
-                type="password"
-                placeholder="sk-..."
-                class="input input-bordered"
-                bind:value={openaiApiKey}
-                disabled={savingOpenAIKey}
-              />
-              <div class="label">
-                <span class="label-text-alt">Your key is encrypted and stored securely. Leave empty to use the app-wide key.</span>
-              </div>
-            </div>
-            
-            {#if openaiError}
-              <div class="alert alert-error">
-                <span>{openaiError}</span>
-              </div>
-            {/if}
-            
-            {#if openaiSuccess}
-              <div class="alert alert-success">
-                <span>OpenAI API key saved successfully!</span>
-              </div>
-            {/if}
-            
-            <div class="alert alert-info">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <span>If provided, Barracuda will use YOUR OpenAI key for AI features to reduce cost and increase privacy. If not provided, the app-wide key will be used.</span>
-            </div>
-            
-            <div class="flex gap-2">
-              {#if hasOpenAIKey}
-                <button
-                  class="btn btn-error"
-                  on:click={handleDisconnectOpenAIKey}
-                  disabled={disconnectingOpenAIKey}
-                >
-                  {#if disconnectingOpenAIKey}
-                    <span class="loading loading-spinner loading-sm"></span>
-                    Disconnecting...
-                  {:else}
-                    Disconnect OpenAI API Key
-                  {/if}
-                </button>
-              {/if}
-              
-              <button
-                class="btn btn-primary"
-                on:click={handleSaveOpenAIKey}
-                disabled={savingOpenAIKey || !openaiApiKey.trim()}
-              >
-                {#if savingOpenAIKey}
-                  <span class="loading loading-spinner loading-sm"></span>
-                  Saving...
-                {:else}
-                  {hasOpenAIKey ? 'Update OpenAI API Key' : 'Save OpenAI API Key'}
-                {/if}
-              </button>
-            </div>
           </div>
         {/if}
       </div>
