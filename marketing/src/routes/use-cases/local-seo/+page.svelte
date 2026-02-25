@@ -2,18 +2,40 @@
 	import { MapPin, Search, Target, TrendingUp, CircleCheck, CircleQuestionMark, ArrowRight } from '@lucide/svelte';
 	import MetaTags from '../../../components/MetaTags.svelte';
 	import OptimizedImage from '../../../components/OptimizedImage.svelte';
-	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
+	import { getMetaTags, getBreadcrumbSchema, getFAQPageSchema } from '$lib/meta';
 
 	const meta = getMetaTags({
 		title: 'Local SEO Auditing Tool',
 		description: 'Optimize your local business website with Barracuda SEO. Discover technical issues, check schema markup, and improve local search visibility today.'
 	});
 
-	const structuredData = getBreadcrumbSchema([
-		{ name: 'Home', url: '/' },
-		{ name: 'Use Cases', url: '/use-cases' },
-		{ name: 'Local SEO', url: '/use-cases/local-seo' }
-	]);
+	const faqs = [
+		{
+			question: 'How does Barracuda help with local SEO specifically?',
+			answer: 'Barracuda identifies technical SEO issues that impact local search rankings, such as missing location schema, inconsistent NAP information, mobile usability problems, and slow page speeds. By fixing these technical issues, you improve your site\'s ability to rank for local searches and support your Google Business Profile visibility.'
+		},
+		{
+			question: 'Can Barracuda check my Google Business Profile?',
+			answer: 'Barracuda focuses on technical SEO audits of your website. While we don\'t directly audit your Google Business Profile, fixing technical issues on your site (like schema markup, NAP consistency, and mobile performance) helps improve your overall local search visibility and supports your GBP performance.'
+		},
+		{
+			question: 'What local SEO issues does Barracuda detect?',
+			answer: 'Barracuda detects missing or incorrect local business schema, inconsistent name/address/phone information across pages, duplicate location pages, mobile usability issues, slow-loading pages that hurt mobile search, and broken links that impact user experience for local searchers.'
+		},
+		{
+			question: 'How often should I audit my local business website?',
+			answer: 'We recommend running a technical SEO audit monthly or whenever you make significant changes to your website, add new location pages, or update your business information. Regular audits help you catch issues before they impact your local search rankings.'
+		}
+	];
+
+	const structuredData = [
+		getBreadcrumbSchema([
+			{ name: 'Home', url: '/' },
+			{ name: 'Use Cases', url: '/use-cases' },
+			{ name: 'Local SEO', url: '/use-cases/local-seo' }
+		]),
+		getFAQPageSchema(faqs)
+	];
 </script>
 
 <MetaTags config={{ ...meta, structuredData }} />

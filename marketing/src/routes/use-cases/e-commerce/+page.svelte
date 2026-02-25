@@ -2,18 +2,40 @@
 	import { ShoppingCart, Package, TrendingUp, ChartBar, CircleCheck, CircleQuestionMark, ArrowRight } from '@lucide/svelte';
 	import MetaTags from '../../../components/MetaTags.svelte';
 	import OptimizedImage from '../../../components/OptimizedImage.svelte';
-	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
+	import { getMetaTags, getBreadcrumbSchema, getFAQPageSchema } from '$lib/meta';
 
 	const meta = getMetaTags({
 		title: 'E-commerce SEO Auditing Tool',
 		description: 'Optimize your e-commerce site for search with Barracuda SEO. Discover technical issues, improve product page performance, and boost organic traffic today.'
 	});
 
-	const structuredData = getBreadcrumbSchema([
-		{ name: 'Home', url: '/' },
-		{ name: 'Use Cases', url: '/use-cases' },
-		{ name: 'E-commerce', url: '/use-cases/e-commerce' }
-	]);
+	const faqs = [
+		{
+			question: 'How does Barracuda help with e-commerce SEO?',
+			answer: 'Barracuda identifies technical SEO issues specific to e-commerce sites, including missing product schema, duplicate content, broken category links, slow-loading product pages, and navigation problems. By fixing these issues, you improve product page rankings, organic traffic, and conversion rates.'
+		},
+		{
+			question: 'Can Barracuda handle large e-commerce catalogs?',
+			answer: 'Yes. Barracuda\'s Pro plan supports crawling 10,000+ pages, making it ideal for large e-commerce sites. The fast crawling engine efficiently audits product catalogs, and you can use sitemap seeding to ensure comprehensive coverage.'
+		},
+		{
+			question: 'What e-commerce SEO issues does Barracuda detect?',
+			answer: 'Barracuda detects missing product schema markup, duplicate product content, thin product pages, broken category and filter links, orphaned products, slow-loading pages, mobile usability issues, and internal linking problems that impact e-commerce SEO performance.'
+		},
+		{
+			question: 'How can I prioritize fixes for my product pages?',
+			answer: 'Connect Google Search Console and Analytics to see which product pages drive traffic and conversions. Barracuda\'s integration helps you prioritize fixes on high-value pages that impact revenue, ensuring you focus your SEO efforts where they matter most.'
+		}
+	];
+
+	const structuredData = [
+		getBreadcrumbSchema([
+			{ name: 'Home', url: '/' },
+			{ name: 'Use Cases', url: '/use-cases' },
+			{ name: 'E-commerce', url: '/use-cases/e-commerce' }
+		]),
+		getFAQPageSchema(faqs)
+	];
 </script>
 
 <MetaTags config={{ ...meta, structuredData }} />

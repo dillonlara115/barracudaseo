@@ -2,18 +2,40 @@
 	import { Zap, Layers, TrendingUp, ChartBar, CircleCheck, CircleQuestionMark, ArrowRight } from '@lucide/svelte';
 	import MetaTags from '../../../components/MetaTags.svelte';
 	import OptimizedImage from '../../../components/OptimizedImage.svelte';
-	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
+	import { getMetaTags, getBreadcrumbSchema, getFAQPageSchema } from '$lib/meta';
 
 	const meta = getMetaTags({
 		title: 'Programmatic SEO Tool',
 		description: 'Scale your SEO content strategy with Barracuda SEO. Audit thousands of programmatic pages, identify technical issues, and optimize at scale today.'
 	});
 
-	const structuredData = getBreadcrumbSchema([
-		{ name: 'Home', url: '/' },
-		{ name: 'Use Cases', url: '/use-cases' },
-		{ name: 'Programmatic SEO', url: '/use-cases/programmatic-seo' }
-	]);
+	const faqs = [
+		{
+			question: 'How does Barracuda help with programmatic SEO?',
+			answer: 'Barracuda audits thousands of programmatic pages efficiently, identifying technical SEO issues at scale. It groups issues by URL pattern to help you fix template-level problems, connects with Google Search Console to prioritize fixes based on performance, and provides bulk export capabilities for analysis.'
+		},
+		{
+			question: 'Can Barracuda handle large-scale programmatic sites?',
+			answer: 'Yes. Barracuda\'s Pro plan supports crawling 10,000+ pages, making it ideal for programmatic SEO sites. The fast, concurrent crawling engine handles large-scale audits efficiently, and you can export results for bulk analysis.'
+		},
+		{
+			question: 'How does Barracuda identify template-level issues?',
+			answer: 'Barracuda groups issues by URL pattern, helping you identify problems that affect multiple programmatic pages. This makes it easy to fix template-level issues like duplicate meta tags, missing schema markup, or inconsistent content structure across your programmatic pages.'
+		},
+		{
+			question: 'Can I export programmatic SEO audit results?',
+			answer: 'Yes. Barracuda supports CSV and JSON export, making it easy to analyze programmatic page issues in bulk. You can also track improvements over time with historical crawl comparisons.'
+		}
+	];
+
+	const structuredData = [
+		getBreadcrumbSchema([
+			{ name: 'Home', url: '/' },
+			{ name: 'Use Cases', url: '/use-cases' },
+			{ name: 'Programmatic SEO', url: '/use-cases/programmatic-seo' }
+		]),
+		getFAQPageSchema(faqs)
+	];
 </script>
 
 <MetaTags config={{ ...meta, structuredData }} />

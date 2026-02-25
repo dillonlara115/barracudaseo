@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import Pricing from '../../components/sections/Pricing.svelte';
 	import MetaTags from '../../components/MetaTags.svelte';
-	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
+	import { getMetaTags, getBreadcrumbSchema, getFAQPageSchema } from '$lib/meta';
 	import { trackPricingAction } from '$lib/analytics';
 	import { CircleQuestionMark } from '@lucide/svelte';
 
@@ -11,10 +11,32 @@
 		description: 'Most SEO tools charge more for complexity. Barracuda charges for clarity. Simple, transparent pricing for decision support.'
 	});
 
-	const structuredData = getBreadcrumbSchema([
-		{ name: 'Home', url: '/' },
-		{ name: 'Pricing', url: '/pricing' }
-	]);
+	const faqs = [
+		{
+			question: 'What am I actually paying for when I upgrade?',
+			answer: 'You\'re paying for clarity at scale. As you move to paid plans, you\'re not unlocking more noise or extra dashboards. You\'re getting: deeper prioritization and recommendations, cloud-based projects and history, and the ability to collaborate and explain decisions across teams or clients. Every plan is designed to reduce the mental overhead of SEO audits — especially when accountability is high.'
+		},
+		{
+			question: 'How does team collaboration work?',
+			answer: 'Barracuda is built for shared decision-making, not just shared access. Pro includes one user, with the option to add teammates for $5/user/month. Each team member can see the same prioritized issues, reasoning, and context — so everyone stays aligned on what matters and why. This works especially well for agencies and in-house teams that need consistent explanations across people and projects.'
+		},
+		{
+			question: 'What are the different team roles?',
+			answer: 'Roles are designed around responsibility and trust: Owner has full control including billing, invitations, and project management; Editor can run crawls, review priorities, manage issues, and see recommendations; Viewer has read-only access for stakeholders who need visibility without risk. The goal is clarity without chaos — everyone sees the same story, with the right level of control.'
+		},
+		{
+			question: 'Do I need a Team plan for multiple users?',
+			answer: 'Not necessarily. The Pro plan includes one user and lets you add additional team members as needed. This keeps things flexible as your responsibility grows. If you\'re managing larger teams or have specific requirements, we offer custom Team plans to match how you actually work.'
+		}
+	];
+
+	const structuredData = [
+		getBreadcrumbSchema([
+			{ name: 'Home', url: '/' },
+			{ name: 'Pricing', url: '/pricing' }
+		]),
+		getFAQPageSchema(faqs)
+	];
 
 	// Track pricing page view
 	onMount(() => {
