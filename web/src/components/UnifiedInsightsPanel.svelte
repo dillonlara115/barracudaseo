@@ -44,18 +44,22 @@
 		expandedPages = { ...expandedPages, [url]: !expandedPages[url] };
 	}
 
-	// Normalize raw score to 0-100 for display (percentile within current dataset)
-	function normalizeScore(rawScore, allScores) {
-		if (!allScores?.length || rawScore <= 0) return 0;
-		const maxScore = Math.max(...allScores);
-		if (maxScore <= 0) return 0;
-		return Math.round(Math.min(100, (rawScore / maxScore) * 100));
+	// Map raw priority score to a 0-100 display scale using absolute thresholds.
+	// Raw scores: issues contribute 1-10 per issue, then multiplied by traffic/UX factors.
+	// Typical ranges: 0-5 = trivial, 5-20 = low, 20-60 = moderate, 60-150 = high, 150+ = critical.
+	function normalizeScore(rawScore) {
+		if (rawScore <= 0) return 0;
+		if (rawScore >= 150) return 100;
+		if (rawScore >= 60) return 60 + Math.round(((rawScore - 60) / 90) * 40);
+		if (rawScore >= 20) return 25 + Math.round(((rawScore - 20) / 40) * 35);
+		if (rawScore >= 5) return 5 + Math.round(((rawScore - 5) / 15) * 20);
+		return Math.round((rawScore / 5) * 5);
 	}
 
-	function getPriorityBadge(score) {
-		if (score >= 80) return { class: 'badge-error', label: 'Critical' };
-		if (score >= 50) return { class: 'badge-warning', label: 'High' };
-		if (score >= 25) return { class: 'badge-info', label: 'Medium' };
+	function getPriorityBadge(rawScore) {
+		if (rawScore >= 100) return { class: 'badge-error', label: 'Critical' };
+		if (rawScore >= 40) return { class: 'badge-warning', label: 'High' };
+		if (rawScore >= 15) return { class: 'badge-info', label: 'Medium' };
 		return { class: 'badge-ghost', label: 'Low' };
 	}
 
@@ -138,7 +142,7 @@
 		let filtered = insights;
 
 		if (filterCategory === 'high-priority') {
-			filtered = filtered.filter((i) => i.priority_score >= 50);
+			filtered = filtered.filter((i) => i.priority_score >= 40);
 		} else if (filterCategory === 'frustration') {
 			filtered = filtered.filter(
 				(i) =>
@@ -177,6 +181,7 @@
 		return filtered;
 	})();
 
+	// rawScores kept for backward compat but no longer used in normalizeScore
 	$: rawScores = filteredInsights.map((i) => i.priority_score || 0);
 </script>
 
@@ -310,8 +315,8 @@
 		<div class="space-y-3">
 			{#each filteredInsights.slice(0, 50) as insight}
 				{@const rawScore = insight.priority_score || 0}
-				{@const displayScore = normalizeScore(rawScore, rawScores)}
-				{@const priority = getPriorityBadge(displayScore)}
+				{@const displayScore = normalizeScore(rawScore)}
+				{@const priority = getPriorityBadge(rawScore)}
 				<div class="card bg-base-100 shadow">
 					<div class="card-body p-4">
 						<!-- Header Row -->

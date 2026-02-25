@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Bolt, ChartBar, Users, Plug, Code, CircleCheck, ChevronRight, Github, Target, BrainCircuit, PenTool, FileText, Sparkles, Link2 } from '@lucide/svelte';
+	import { Bolt, ChartBar, Users, Plug, Code, CircleCheck, ChevronRight, Target, BrainCircuit, PenTool, FileText, Sparkles, Link2 } from '@lucide/svelte';
 	import MetaTags from '../../components/MetaTags.svelte';
 	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
 
@@ -361,9 +361,8 @@
 				</ul>
 			</div>
 			<div class="text-center">
-				<a href="https://github.com/dillonlara115/barracudaseo" class="inline-flex items-center gap-2 border-2 border-white/20 hover:border-[#8ec07c] text-white px-6 py-3 rounded-lg font-medium transition-colors" target="_blank" rel="noopener noreferrer">
-					<Github class="w-5 h-5" />
-					Download the CLI on GitHub
+				<a href="https://app.barracudaseo.com" class="inline-flex items-center gap-2 border-2 border-white/20 hover:border-[#8ec07c] text-white px-6 py-3 rounded-lg font-medium transition-colors" target="_blank" rel="noopener noreferrer">
+					Get Started
 				</a>
 			</div>
 		</div>

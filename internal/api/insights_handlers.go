@@ -163,7 +163,7 @@ func (s *Server) handleProjectUnifiedInsights(w http.ResponseWriter, r *http.Req
 		if len(pi.Issues) > 0 {
 			totalIssuePages++
 		}
-		if pi.PriorityScore >= 50 {
+		if pi.PriorityScore >= 40 {
 			highPriority++
 		}
 		if pi.ClarityMetrics != nil {
@@ -362,9 +362,15 @@ func computePriorityScore(pi *pageInsight) float64 {
 		}
 	}
 
-	// Ensure minimum score of 1 for base if there are data sources but no issues
-	if base == 0 && len(pi.DataSources) > 0 {
-		base = 1
+	// Pages with no crawl issues get a much lower ceiling.
+	// Data-only pages (GSC/GA4/Clarity without issues) should surface as informational, not critical.
+	if base == 0 {
+		if len(pi.DataSources) == 0 {
+			return 0
+		}
+		// Data-only pages: score reflects traffic opportunity but capped low
+		dataScore := (searchFactor - 1) + (trafficFactor - 1) + (uxFactor - 1)
+		return math.Min(dataScore*5, 15)
 	}
 
 	return base * searchFactor * trafficFactor * uxFactor

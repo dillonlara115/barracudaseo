@@ -1,6 +1,6 @@
 <script>
   import { link } from 'svelte-spa-router';
-  import { TrendingUp, Hash } from 'lucide-svelte';
+  import { TrendingUp, Hash, FileText, AlertTriangle, Zap, AlertCircle, Link2, ExternalLink, ArrowRight } from 'lucide-svelte';
   
   export let summary = null;
   export let navigateToTab = () => {};
@@ -74,114 +74,101 @@
 
   $: lastSyncedDisplay = gscSyncState?.last_synced_at ? formatLastSynced(gscSyncState.last_synced_at) : null;
   $: isGSCConnected = Boolean(gscIntegration?.property_url);
+  $: errorCount = getSeverityCount('error');
+  $: warningCount = getSeverityCount('warning');
+  $: infoCount = getSeverityCount('info');
 </script>
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-  <div class="stat bg-base-100 rounded-box shadow">
-    <div class="stat-figure text-primary">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-      </svg>
+<!-- Primary Stats Row -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+  <div class="bg-base-200 rounded-xl p-4">
+    <div class="flex items-center gap-2 mb-2">
+      <FileText class="w-4 h-4 text-base-content/40" />
+      <p class="text-xs text-base-content/50 font-medium">Pages Crawled</p>
     </div>
-    <div class="stat-title">Total Pages</div>
-    <div class="stat-value text-primary">{summary.page_count || summary.indexed_pages || summary.total_pages || 0}</div>
+    <p class="text-2xl font-bold text-primary font-mono">{formatNumber(summary.page_count || summary.indexed_pages || summary.total_pages || 0)}</p>
   </div>
 
-  <div 
-    class="stat bg-base-100 rounded-box shadow cursor-pointer hover:shadow-lg transition-shadow"
-    role="button"
-    tabindex="0"
+  <button
+    class="bg-base-200 rounded-xl p-4 text-left hover:bg-base-300 transition-colors cursor-pointer"
     on:click={handleTotalIssuesClick}
-    on:keydown={(e) => e.key === 'Enter' && handleTotalIssuesClick()}
   >
-    <div class="stat-figure text-error">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-      </svg>
+    <div class="flex items-center gap-2 mb-2">
+      <AlertTriangle class="w-4 h-4 text-base-content/40" />
+      <p class="text-xs text-base-content/50 font-medium">Issues Found</p>
     </div>
-    <div class="stat-title">Total Issues</div>
-    <div class="stat-value text-error">{summary.total_issues}</div>
+    <p class="text-2xl font-bold text-warning font-mono">{formatNumber(summary.total_issues)}</p>
     {#if summary.total_issues > 0}
-      <div class="stat-desc text-xs mt-1">Click to view all issues</div>
+      <p class="text-xs text-base-content/40 mt-1">Click to view</p>
     {/if}
+  </button>
+
+  <div class="bg-base-200 rounded-xl p-4">
+    <div class="flex items-center gap-2 mb-2">
+      <Zap class="w-4 h-4 text-base-content/40" />
+      <p class="text-xs text-base-content/50 font-medium">Avg Response</p>
+    </div>
+    <p class="text-2xl font-bold text-info font-mono">{summary.average_response_time_ms}<span class="text-sm text-base-content/40 ml-0.5">ms</span></p>
   </div>
 
-  <div class="stat bg-base-100 rounded-box shadow">
-    <div class="stat-figure text-info">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-      </svg>
+  <div class="bg-base-200 rounded-xl p-4">
+    <div class="flex items-center gap-2 mb-2">
+      <AlertCircle class="w-4 h-4 text-base-content/40" />
+      <p class="text-xs text-base-content/50 font-medium">Pages with Errors</p>
     </div>
-    <div class="stat-title">Avg Response Time</div>
-    <div class="stat-value text-info">{summary.average_response_time_ms}ms</div>
-  </div>
-
-  <div class="stat bg-base-100 rounded-box shadow">
-    <div class="stat-figure text-warning">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-      </svg>
-    </div>
-    <div class="stat-title">Pages with Errors</div>
-    <div class="stat-value text-warning">{summary.pages_with_errors}</div>
+    <p class="text-2xl font-bold text-error font-mono">{formatNumber(summary.pages_with_errors)}</p>
   </div>
 </div>
 
+<!-- GSC Stats Row -->
 {#if gscTotals}
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-2">
-    <div class="stat bg-base-100 rounded-box shadow">
-      <div class="stat-figure text-primary">
-        <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-8 h-8 stroke-current" fill="none" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h2l1 2 1-6 1 12 1-8 1 4h3" />
-        </svg>
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+    <div class="bg-base-200 rounded-xl p-4">
+      <div class="flex items-center gap-2 mb-2">
+        <TrendingUp class="w-4 h-4 text-base-content/40" />
+        <p class="text-xs text-base-content/50 font-medium">Impressions</p>
       </div>
-      <div class="stat-title">Impressions</div>
-      <div class="stat-value text-primary">{formatNumber(gscTotals.impressions)}</div>
+      <p class="text-2xl font-bold text-primary font-mono">{formatNumber(gscTotals.impressions)}</p>
     </div>
 
-    <div class="stat bg-base-100 rounded-box shadow">
-      <div class="stat-figure text-success">
-        <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-8 h-8 stroke-current" fill="none" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
+    <div class="bg-base-200 rounded-xl p-4">
+      <div class="flex items-center gap-2 mb-2">
+        <ArrowRight class="w-4 h-4 text-base-content/40" />
+        <p class="text-xs text-base-content/50 font-medium">Clicks</p>
       </div>
-      <div class="stat-title">Clicks</div>
-      <div class="stat-value text-success">{formatNumber(gscTotals.clicks)}</div>
+      <p class="text-2xl font-bold text-success font-mono">{formatNumber(gscTotals.clicks)}</p>
     </div>
 
-    <div class="stat bg-base-100 rounded-box shadow">
-      <div class="stat-figure text-info">
-        <TrendingUp class="w-8 h-8" />
+    <div class="bg-base-200 rounded-xl p-4">
+      <div class="flex items-center gap-2 mb-2">
+        <TrendingUp class="w-4 h-4 text-base-content/40" />
+        <p class="text-xs text-base-content/50 font-medium">CTR</p>
       </div>
-      <div class="stat-title">CTR</div>
-      <div class="stat-value text-info">{formatCTR(gscTotals.ctr)}</div>
+      <p class="text-2xl font-bold text-info font-mono">{formatCTR(gscTotals.ctr)}</p>
     </div>
 
-    <div class="stat bg-base-100 rounded-box shadow">
-      <div class="stat-figure text-warning">
-        <Hash class="w-8 h-8" />
+    <div class="bg-base-200 rounded-xl p-4">
+      <div class="flex items-center gap-2 mb-2">
+        <Hash class="w-4 h-4 text-base-content/40" />
+        <p class="text-xs text-base-content/50 font-medium">Avg Position</p>
       </div>
-      <div class="stat-title">Avg Position</div>
-      <div class="stat-value text-warning">{formatPosition(gscTotals.position)}</div>
+      <p class="text-2xl font-bold text-warning font-mono">{formatPosition(gscTotals.position)}</p>
     </div>
   </div>
 
   {#if lastSyncedDisplay}
-    <div class="text-xs text-base-content/60 mb-4">
+    <p class="text-xs text-base-content/40 mb-4">
       Search Console data last synced {lastSyncedDisplay}.
-    </div>
+    </p>
   {/if}
   
-  {#if gscTotals && projectId}
+  {#if projectId}
     <div class="mb-6">
       <a
         href="/project/{projectId}/gsc"
         use:link
         class="btn btn-primary btn-sm"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-        </svg>
         View GSC Dashboard
       </a>
     </div>
@@ -192,103 +179,92 @@
   </div>
 {/if}
 
+<!-- Severity + Links + Issue Types -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-  <div class="card bg-base-100 shadow">
-    <div class="card-body">
-      <h2 class="card-title">Severity Breakdown</h2>
-      <div class="space-y-2">
-        <div class="flex justify-between">
-          <span class="text-error">Errors:</span>
-          <span class="font-bold">{getSeverityCount('error')}</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-warning">Warnings:</span>
-          <span class="font-bold">{getSeverityCount('warning')}</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-info">Info:</span>
-          <span class="font-bold">{getSeverityCount('info')}</span>
-        </div>
-        {#if getSeverityCount('error') > 0}
-          <div class="card-actions justify-end mt-4">
-            <button class="btn btn-error btn-sm" on:click={handleFixCriticalIssues}>
-              Fix Critical Issues
-            </button>
-          </div>
-        {/if}
+  <!-- Severity Breakdown -->
+  <div class="bg-base-200 rounded-xl p-5">
+    <h3 class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-4">Severity Breakdown</h3>
+    <div class="space-y-3">
+      <div class="flex items-center gap-3">
+        <div class="w-2 h-2 rounded-full bg-error shrink-0"></div>
+        <span class="text-sm text-base-content/70 flex-1">Errors</span>
+        <span class="font-bold font-mono text-sm">{errorCount}</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="w-2 h-2 rounded-full bg-warning shrink-0"></div>
+        <span class="text-sm text-base-content/70 flex-1">Warnings</span>
+        <span class="font-bold font-mono text-sm">{warningCount}</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="w-2 h-2 rounded-full bg-info shrink-0"></div>
+        <span class="text-sm text-base-content/70 flex-1">Info</span>
+        <span class="font-bold font-mono text-sm">{infoCount}</span>
+      </div>
+    </div>
+    {#if errorCount > 0}
+      <button class="btn btn-error btn-sm w-full mt-4" on:click={handleFixCriticalIssues}>
+        Fix Critical Issues
+      </button>
+    {/if}
+  </div>
+
+  <!-- Link Statistics -->
+  <div class="bg-base-200 rounded-xl p-5">
+    <h3 class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-4">Link Statistics</h3>
+    <div class="space-y-3">
+      <div class="flex items-center gap-3">
+        <Link2 class="w-4 h-4 text-base-content/30 shrink-0" />
+        <span class="text-sm text-base-content/70 flex-1">Internal Links</span>
+        <span class="font-bold font-mono text-sm">{formatNumber(summary.total_internal_links)}</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <ExternalLink class="w-4 h-4 text-base-content/30 shrink-0" />
+        <span class="text-sm text-base-content/70 flex-1">External Links</span>
+        <span class="font-bold font-mono text-sm">{formatNumber(summary.total_external_links)}</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <ArrowRight class="w-4 h-4 text-base-content/30 shrink-0" />
+        <span class="text-sm text-base-content/70 flex-1">Redirects</span>
+        <span class="font-bold font-mono text-sm">{formatNumber(summary.pages_with_redirects)}</span>
       </div>
     </div>
   </div>
 
-  <div class="card bg-base-100 shadow">
-    <div class="card-body">
-      <h2 class="card-title">Link Statistics</h2>
-      <div class="space-y-2">
-        <div class="flex justify-between">
-          <span>Internal Links:</span>
-          <span class="font-bold">{formatNumber(summary.total_internal_links)}</span>
-        </div>
-        <div class="flex justify-between">
-          <span>External Links:</span>
-          <span class="font-bold">{formatNumber(summary.total_external_links)}</span>
-        </div>
-        <div class="flex justify-between">
-          <span>Pages with Redirects:</span>
-          <span class="font-bold">{formatNumber(summary.pages_with_redirects)}</span>
-        </div>
-      </div>
+  <!-- Issue Types as Pill Grid -->
+  <div class="bg-base-200 rounded-xl p-5">
+    <h3 class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-4">Issue Types</h3>
+    <div class="flex flex-wrap gap-2">
+      {#each Object.entries(summary.issues_by_type || {}) as [type, count]}
+        <span class="bg-base-300 text-base-content/70 text-xs px-3 py-1.5 rounded-lg font-medium">
+          {type.replace(/_/g, ' ')}
+          <span class="text-primary ml-1 font-bold">{count}</span>
+        </span>
+      {/each}
     </div>
-  </div>
-
-  <div class="card bg-base-100 shadow">
-    <div class="card-body">
-      <h2 class="card-title">Issue Types</h2>
-      <div class="space-y-1">
-        {#each Object.entries(summary.issues_by_type || {}) as [type, count]}
-          <div class="flex justify-between text-sm">
-            <span class="truncate">{type.replace(/_/g, ' ')}</span>
-            <span class="badge badge-primary">{count}</span>
-          </div>
-        {/each}
-      </div>
-      {#if summary.total_issues > 0}
-        <div class="card-actions justify-end mt-4">
-          <button class="btn btn-primary btn-sm" on:click={() => navigateToTab('issues')}>
-            View All Issues
-          </button>
-        </div>
-      {/if}
-    </div>
+    {#if summary.total_issues > 0}
+      <button class="btn btn-primary btn-sm w-full mt-4" on:click={() => navigateToTab('issues')}>
+        View All Issues
+      </button>
+    {/if}
   </div>
 </div>
 
+<!-- Slowest Pages -->
 {#if summary.slowest_pages && summary.slowest_pages.length > 0}
-  <div class="card bg-base-100 shadow">
-    <div class="card-body">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="card-title">Slowest Pages</h2>
-        <button class="btn btn-outline btn-sm" on:click={handleViewSlowPages}>
-          View All Slow Pages
-        </button>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="table table-zebra">
-          <thead>
-            <tr>
-              <th>URL</th>
-              <th>Response Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each summary.slowest_pages.slice(0, 10) as page}
-              <tr>
-                <td class="max-w-md truncate">{page.url}</td>
-                <td>{page.response_time_ms}ms</td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
-      </div>
+  <div class="bg-base-200 rounded-xl p-5">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-base-content/40">Slowest Pages</h3>
+      <button class="btn btn-outline btn-xs" on:click={handleViewSlowPages}>
+        View All
+      </button>
+    </div>
+    <div class="space-y-2">
+      {#each summary.slowest_pages.slice(0, 5) as page}
+        <div class="flex items-center gap-3 bg-base-300 rounded-lg px-3 py-2">
+          <span class="text-sm text-base-content/60 truncate flex-1">{page.url}</span>
+          <span class="text-xs font-mono font-bold text-warning whitespace-nowrap">{page.response_time_ms}ms</span>
+        </div>
+      {/each}
     </div>
   </div>
 {/if}

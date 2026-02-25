@@ -60,39 +60,39 @@
       <span class="loading loading-spinner loading-lg"></span>
     </div>
   {:else if activeTab === 'suggestions'}
-    <div class="space-y-3">
+    <div class="space-y-2">
       {#each suggestions as page}
-        <div class="card bg-base-200">
-          <div class="card-body py-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <h4 class="font-semibold text-sm">{page.title || 'Untitled'}</h4>
-                <p class="text-xs opacity-60 truncate max-w-md">{page.url}</p>
-              </div>
-              <span class="badge badge-ghost badge-sm">{page.word_count || 0} words</span>
+        <div class="bg-base-200 rounded-xl px-4 py-3">
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <h4 class="font-semibold text-sm truncate">{page.title || 'Untitled'}</h4>
+              <p class="text-xs text-base-content/40 truncate">{page.url}</p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="bg-base-300 text-base-content/60 text-xs px-2.5 py-1 rounded-lg font-mono">
+                {page.inbound_links ?? 0} inbound
+              </span>
             </div>
           </div>
         </div>
       {:else}
-        <div class="text-center py-8 opacity-60">No link suggestions available. Run a site crawl first.</div>
+        <div class="text-center py-8 text-base-content/40">No crawl data available. Run a crawl from the dashboard first.</div>
       {/each}
     </div>
   {:else if activeTab === 'orphaned'}
-    <div class="space-y-3">
+    <div class="space-y-2">
       {#each orphaned as page}
-        <div class="card bg-base-200 border-l-4 border-warning">
-          <div class="card-body py-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <h4 class="font-semibold text-sm">{page.title || 'Untitled'}</h4>
-                <p class="text-xs opacity-60 truncate max-w-md">{page.url}</p>
-              </div>
-              <span class="badge badge-warning badge-sm">No inbound links</span>
+        <div class="bg-base-200 rounded-xl px-4 py-3 border-l-4 border-warning">
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <h4 class="font-semibold text-sm truncate">{page.title || 'Untitled'}</h4>
+              <p class="text-xs text-base-content/40 truncate">{page.url}</p>
             </div>
+            <span class="text-xs font-medium text-warning whitespace-nowrap">No inbound links</span>
           </div>
         </div>
       {:else}
-        <div class="text-center py-8 opacity-60">No orphaned pages detected.</div>
+        <div class="text-center py-8 text-base-content/40">No orphaned pages detected.</div>
       {/each}
     </div>
   {/if}

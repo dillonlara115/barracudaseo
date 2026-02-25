@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CircleCheck, Clock, Rocket, Target, Sparkles, Zap, Github, MessageSquare, ExternalLink, BrainCircuit, FileText, PenTool, Link2, ChartBar } from '@lucide/svelte';
+	import { CircleCheck, Clock, Rocket, Target, Sparkles, Zap, MessageSquare, ExternalLink, BrainCircuit, FileText, PenTool, Link2, ChartBar } from '@lucide/svelte';
 	import MetaTags from '../../components/MetaTags.svelte';
 	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
 

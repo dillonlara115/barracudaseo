@@ -915,6 +915,28 @@ Include a recommended next action.`, req.PageURL),
 
 // ---- Internal Link Suggester Handlers ----
 
+// latestCrawlID returns the most recent succeeded crawl ID for a project, or "" if none.
+func (s *Server) latestCrawlID(projectID string) string {
+	crawlData, _, err := s.serviceRole.
+		From("crawls").
+		Select("id", "", false).
+		Eq("project_id", projectID).
+		Eq("status", "succeeded").
+		Order("created_at", nil).
+		Limit(1, "").
+		Execute()
+	if err != nil {
+		s.logger.Warn("Failed to find latest crawl", zap.Error(err))
+		return ""
+	}
+	var crawls []map[string]interface{}
+	if err := json.Unmarshal(crawlData, &crawls); err != nil || len(crawls) == 0 {
+		return ""
+	}
+	id, _ := crawls[0]["id"].(string)
+	return id
+}
+
 func (s *Server) handleInternalLinkSuggestions(w http.ResponseWriter, r *http.Request) {
 	userID, ok := userIDFromContext(r.Context())
 	if !ok {
@@ -929,22 +951,73 @@ func (s *Server) handleInternalLinkSuggestions(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	data, _, err := s.serviceRole.From("crawled_pages").
-		Select("url,title,meta_description,word_count", "", false).
-		Eq("project_id", projectID).
-		Neq("url", pageURL).
-		Order("word_count", nil).
-		Limit(20, "").
-		Execute()
+	crawlID := s.latestCrawlID(projectID)
+	if crawlID == "" {
+		s.respondJSON(w, http.StatusOK, []interface{}{})
+		return
+	}
+
+	query := s.serviceRole.From("pages").
+		Select("url,title,meta_description,internal_links", "", false).
+		Eq("crawl_id", crawlID).
+		Limit(50, "")
+
+	if pageURL != "" {
+		query = query.Neq("url", pageURL)
+	}
+
+	data, _, err := query.Execute()
 	if err != nil {
-		s.logger.Warn("Failed to fetch link suggestions (crawled_pages may lack columns)", zap.Error(err))
+		s.logger.Warn("Failed to fetch pages for link suggestions", zap.Error(err))
 		s.respondJSON(w, http.StatusOK, []interface{}{})
 		return
 	}
 
 	var pages []map[string]interface{}
 	json.Unmarshal(data, &pages)
-	s.respondJSON(w, http.StatusOK, pages)
+
+	// Build link counts: how many other pages link to each page
+	inboundCounts := make(map[string]int)
+	for _, p := range pages {
+		if links, ok := p["internal_links"].([]interface{}); ok {
+			for _, l := range links {
+				if linkURL, ok := l.(string); ok {
+					inboundCounts[linkURL]++
+				}
+			}
+		}
+	}
+
+	// Return pages sorted by fewest inbound links (best candidates for more internal links)
+	type suggestion struct {
+		URL             string `json:"url"`
+		Title           string `json:"title"`
+		MetaDescription string `json:"meta_description"`
+		InboundLinks    int    `json:"inbound_links"`
+	}
+
+	var suggestions []suggestion
+	for _, p := range pages {
+		url, _ := p["url"].(string)
+		title, _ := p["title"].(string)
+		meta, _ := p["meta_description"].(string)
+		suggestions = append(suggestions, suggestion{
+			URL:             url,
+			Title:           title,
+			MetaDescription: meta,
+			InboundLinks:    inboundCounts[url],
+		})
+	}
+
+	sort.Slice(suggestions, func(i, j int) bool {
+		return suggestions[i].InboundLinks < suggestions[j].InboundLinks
+	})
+
+	if len(suggestions) > 20 {
+		suggestions = suggestions[:20]
+	}
+
+	s.respondJSON(w, http.StatusOK, suggestions)
 }
 
 func (s *Server) handleOrphanedPages(w http.ResponseWriter, r *http.Request) {
@@ -960,9 +1033,15 @@ func (s *Server) handleOrphanedPages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, _, err := s.serviceRole.From("crawled_pages").
-		Select("url,title,word_count", "", false).
-		Eq("project_id", projectID).
+	crawlID := s.latestCrawlID(projectID)
+	if crawlID == "" {
+		s.respondJSON(w, http.StatusOK, []interface{}{})
+		return
+	}
+
+	data, _, err := s.serviceRole.From("pages").
+		Select("url,title,internal_links", "", false).
+		Eq("crawl_id", crawlID).
 		Execute()
 	if err != nil {
 		s.logger.Warn("Failed to fetch pages for orphan check", zap.Error(err))
@@ -975,27 +1054,26 @@ func (s *Server) handleOrphanedPages(w http.ResponseWriter, r *http.Request) {
 
 	// Build set of all internally linked URLs
 	linkedURLs := make(map[string]bool)
-	allLinksData, _, _ := s.serviceRole.From("crawled_pages").
-		Select("internal_links", "", false).
-		Eq("project_id", projectID).
-		Execute()
-
-	var allLinks []struct {
-		InternalLinks []string `json:"internal_links"`
-	}
-	json.Unmarshal(allLinksData, &allLinks)
-	for _, page := range allLinks {
-		for _, link := range page.InternalLinks {
-			linkedURLs[link] = true
+	for _, page := range pages {
+		if links, ok := page["internal_links"].([]interface{}); ok {
+			for _, l := range links {
+				if linkURL, ok := l.(string); ok {
+					linkedURLs[linkURL] = true
+				}
+			}
 		}
 	}
 
-	// Filter to orphaned pages
+	// Filter to orphaned pages (not linked to by any other page)
 	var orphaned []map[string]interface{}
 	for _, page := range pages {
 		url, _ := page["url"].(string)
-		if !linkedURLs[url] {
-			orphaned = append(orphaned, page)
+		if url != "" && !linkedURLs[url] {
+			title, _ := page["title"].(string)
+			orphaned = append(orphaned, map[string]interface{}{
+				"url":   url,
+				"title": title,
+			})
 		}
 	}
 

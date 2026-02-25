@@ -1,42 +1,50 @@
-<section class="bg-[#282828] py-20 px-4">
-	<div class="max-w-4xl mx-auto">
-		<h2 class="text-3xl md:text-4xl font-heading font-bold text-white text-center mb-12">
-			What Barracuda replaces
-		</h2>
-		
-		<div class="overflow-hidden rounded-xl border border-white/10 mb-12">
-			<table class="w-full text-left border-collapse">
-				<thead>
-					<tr class="bg-[#3c3836] border-b border-white/10">
-						<th class="p-4 md:p-6 text-white/60 font-medium w-1/2">Instead of…</th>
-						<th class="p-4 md:p-6 text-[#8ec07c] font-medium w-1/2">Barracuda gives you…</th>
-					</tr>
-				</thead>
-				<tbody class="divide-y divide-white/5 bg-[#3c3836]/50">
-					<tr>
-						<td class="p-4 md:p-6 text-white/80">Spreadsheets and gut feel</td>
-						<td class="p-4 md:p-6 text-white font-medium">Clear, explainable priorities</td>
-					</tr>
-					<tr>
-						<td class="p-4 md:p-6 text-white/80">Endless issue lists</td>
-						<td class="p-4 md:p-6 text-white font-medium">Focus on what actually matters</td>
-					</tr>
-					<tr>
-						<td class="p-4 md:p-6 text-white/80">Tool overload</td>
-						<td class="p-4 md:p-6 text-white font-medium">One place to decide, then act</td>
-					</tr>
-					<tr>
-						<td class="p-4 md:p-6 text-white/80">Audit anxiety</td>
-						<td class="p-4 md:p-6 text-white font-medium">Confidence and clarity</td>
-					</tr>
-				</tbody>
-			</table>
+<script lang="ts">
+	import { X, Check } from '@lucide/svelte';
+
+	const comparisons = [
+		{ before: 'Spreadsheets and gut feel', after: 'Clear, explainable priorities' },
+		{ before: 'Endless issue lists', after: 'Focus on what actually matters' },
+		{ before: 'Tool overload', after: 'One place to decide, then act' },
+		{ before: 'Audit anxiety', after: 'Confidence and clarity' }
+	];
+</script>
+
+<section class="bg-[#1d1d1d] py-24 px-4">
+	<div class="container mx-auto max-w-5xl">
+		<div class="text-center mb-16">
+			<p class="text-sm uppercase tracking-widest text-[#d79921] font-medium mb-4">Before & after</p>
+			<h2 class="text-3xl md:text-4xl lg:text-5xl font-heading font-bold text-white mb-4">
+				What Barracuda replaces
+			</h2>
+			<p class="text-lg text-white/50 max-w-2xl mx-auto">
+				You're not replacing tools like SEMrush or Ahrefs. You're replacing the stress of interpreting them alone.
+			</p>
 		</div>
 
-		<p class="text-center text-lg text-white/70 max-w-2xl mx-auto">
-			You’re not replacing tools like <strong class="text-white">SEMrush</strong> or <strong class="text-white">Ahrefs</strong>.
-			<br />
-			You’re replacing the <em class="text-white">stress of interpreting them alone</em>.
-		</p>
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+			{#each comparisons as item}
+				<div class="flex items-stretch gap-4 bg-[#282828] border border-white/5 rounded-2xl p-5 overflow-hidden">
+					<div class="flex-1 flex items-start gap-3">
+						<div class="w-7 h-7 rounded-lg bg-[#cc241d]/10 flex items-center justify-center shrink-0 mt-0.5">
+							<X class="w-4 h-4 text-[#cc241d]/60" />
+						</div>
+						<div>
+							<p class="text-xs text-white/30 uppercase tracking-wider mb-1">Instead of</p>
+							<p class="text-sm text-white/60">{item.before}</p>
+						</div>
+					</div>
+					<div class="w-px bg-white/5 shrink-0"></div>
+					<div class="flex-1 flex items-start gap-3">
+						<div class="w-7 h-7 rounded-lg bg-[#8ec07c]/10 flex items-center justify-center shrink-0 mt-0.5">
+							<Check class="w-4 h-4 text-[#8ec07c]" />
+						</div>
+						<div>
+							<p class="text-xs text-[#8ec07c]/60 uppercase tracking-wider mb-1">You get</p>
+							<p class="text-sm text-white font-medium">{item.after}</p>
+						</div>
+					</div>
+				</div>
+			{/each}
+		</div>
 	</div>
 </section>

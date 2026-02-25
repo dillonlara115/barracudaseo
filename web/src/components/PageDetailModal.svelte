@@ -30,6 +30,33 @@
     }
   };
 
+  const getSeverityDot = (severity) => {
+    switch (severity) {
+      case 'error': return 'bg-error';
+      case 'warning': return 'bg-warning';
+      case 'info': return 'bg-info';
+      default: return 'bg-base-content/30';
+    }
+  };
+
+  const getSeverityLabel = (severity) => {
+    switch (severity) {
+      case 'error': return 'Critical';
+      case 'warning': return 'Warning';
+      case 'info': return 'Info';
+      default: return severity;
+    }
+  };
+
+  const getSeverityTextColor = (severity) => {
+    switch (severity) {
+      case 'error': return 'text-error';
+      case 'warning': return 'text-warning';
+      case 'info': return 'text-info';
+      default: return 'text-base-content/50';
+    }
+  };
+
   const formatHeadingList = (headings) => {
     if (!headings || headings.length === 0) return 'None';
     return headings.join(', ');
@@ -178,40 +205,35 @@
         </div>
 
         {#if displayItems.length === 0}
-          <div class="alert alert-success">
-            <span>🎉 No issues found for this page!</span>
+          <div class="bg-success/10 border border-success/20 rounded-xl px-5 py-4 text-center">
+            <p class="text-success font-medium">No issues found for this page!</p>
           </div>
         {:else}
           <div class="space-y-2">
             {#each displayItems as item}
-              <div class="alert {getSeverityBadge(item.severity)} shadow-sm">
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="badge {getSeverityBadge(item.severity)}">
-                      {item.severity}
-                    </span>
-                    <span class="badge badge-outline">
-                      {item.type.replace(/_/g, ' ')}
-                    </span>
-                  </div>
-                  <h5 class="font-semibold">{item.message}</h5>
+              <div class="bg-base-200 rounded-xl px-4 py-3">
+                <div class="flex items-center gap-3 mb-2">
+                  <div class="w-2.5 h-2.5 rounded-full {getSeverityDot(item.severity)} shrink-0"></div>
+                  <span class="text-sm text-base-content/80 flex-1">{item.message}</span>
+                  <span class="text-xs font-medium whitespace-nowrap {getSeverityTextColor(item.severity)}">{getSeverityLabel(item.severity)}</span>
+                </div>
+                <div class="pl-5 space-y-1">
+                  <span class="bg-base-300 text-base-content/60 text-xs px-2.5 py-1 rounded-lg inline-block">
+                    {item.type.replace(/_/g, ' ')}
+                  </span>
                   {#if item.isAssetGroup && item.assetUrl}
                     <div class="text-sm mt-1">
-                      <span class="font-semibold">Image:</span>
-                      <a href={item.assetLinkUrl || item.assetUrl} target="_blank" rel="noopener noreferrer" class="link link-hover break-all">{item.assetUrl}</a>
+                      <span class="text-xs text-base-content/40">Image:</span>
+                      <a href={item.assetLinkUrl || item.assetUrl} target="_blank" rel="noopener noreferrer" class="text-primary text-sm break-all hover:underline ml-1">{item.assetUrl}</a>
                     </div>
                     {#if (item.affectedUrls?.length ?? 0) > 1}
-                      <div class="text-xs mt-1 text-base-content/70">Used on {(item.affectedUrls?.length ?? 0)} places on this page</div>
+                      <p class="text-xs text-base-content/40">Used on {(item.affectedUrls?.length ?? 0)} places on this page</p>
                     {/if}
                   {:else if item.value}
-                    <div class="text-sm mt-1">
-                      <span class="font-semibold">Value:</span> {item.value}
-                    </div>
+                    <p class="text-sm text-base-content/60 break-all">{item.value}</p>
                   {/if}
                   {#if item.recommendation}
-                    <div class="text-sm mt-1">
-                      <span class="font-semibold">Recommendation:</span> {item.recommendation}
-                    </div>
+                    <p class="text-sm text-base-content/60 mt-1">{item.recommendation}</p>
                   {/if}
                 </div>
               </div>

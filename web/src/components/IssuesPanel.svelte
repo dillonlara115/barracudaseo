@@ -1,6 +1,6 @@
 <script>
   import IssueInsight from './AI/IssueInsight.svelte';
-  import { Sparkles } from 'lucide-svelte';
+  import { Sparkles, ChevronDown, ChevronUp, Download } from 'lucide-svelte';
   import { userProfile, isProOrTeam } from '../lib/subscription.js';
   import { collapseImageIssuesByAsset } from '../lib/issueUtils.js';
 
@@ -8,14 +8,15 @@
 
   export let issues = [];
   export let filter = { severity: 'all', type: 'all', url: null };
-  export let enrichedIssues = {}; // Map of enriched issue data: { "url|type": { issue, gsc_performance, enriched_priority, recommendation_reason } }
+  export let enrichedIssues = {};
   export let gscStatus = null;
   export let gscLoading = false;
   export let gscError = null;
-  export let crawlId = null; // Required for AI insights
+  export let crawlId = null;
 
   let selectedIssueForAI = null;
   let showAIInsightModal = false;
+  let expandedIssues = new Set();
 
   const formatNumber = (value) => {
     if (value === null || value === undefined) return '0';
@@ -62,16 +63,14 @@
     searchTerm = normalizeUrl(incoming.url);
   };
 
-  // Initialize filters - user can change these locally
   let severityFilter = normalizeSeverity(filter?.severity);
   let typeFilter = normalizeType(filter?.type);
   let searchTerm = normalizeUrl(filter?.url);
-  let groupBy = 'none'; // 'none', 'url', 'type', 'severity'
-  let sortBy = 'none'; // 'none', 'priority', 'enriched_priority'
+  let groupBy = 'none';
+  let sortBy = 'none';
 
   let lastAppliedFilterSignature = computeFilterSignature(filter);
 
-  // Sync local filters when parent provides a new filter object (e.g., via navigation)
   $: {
     const nextSignature = computeFilterSignature(filter);
     if (nextSignature !== lastAppliedFilterSignature) {
@@ -80,22 +79,17 @@
     }
   }
 
-  // Calculate affected pages count for each issue type
   $: affectedPagesByType = issues.reduce((acc, issue) => {
-    if (!acc[issue.type]) {
-      acc[issue.type] = new Set();
-    }
+    if (!acc[issue.type]) acc[issue.type] = new Set();
     acc[issue.type].add(issue.url);
     return acc;
   }, {});
 
-  // Convert Sets to counts
   $: affectedPagesCounts = Object.entries(affectedPagesByType).reduce((acc, [type, urlSet]) => {
     acc[type] = urlSet.size;
     return acc;
   }, {});
 
-  // Calculate priority score for each issue: severity_weight * pages_affected
   const getSeverityWeight = (severity) => {
     switch (severity) {
       case 'error': return 10;
@@ -106,19 +100,14 @@
   };
 
   const calculatePriorityScore = (issue) => {
-    // Use enriched priority if available, otherwise calculate base priority
     const enrichedKey = `${issue.url}|${issue.type}`;
     const enriched = enrichedIssues[enrichedKey];
-    if (enriched && enriched.enriched_priority) {
-      return enriched.enriched_priority;
-    }
-    
+    if (enriched && enriched.enriched_priority) return enriched.enriched_priority;
     const severityWeight = getSeverityWeight(issue.severity);
     const pagesAffected = affectedPagesCounts[issue.type] || 0;
     return severityWeight * pagesAffected;
   };
 
-  // Priority for display items (supports collapsed asset groups)
   const getDisplayItemPriority = (item) => {
     if (item.isAssetGroup && item.affectedUrls?.length) {
       const enrichedKey = `${item.url}|${item.type}`;
@@ -145,88 +134,47 @@
     return top10PriorityIssues.has(`${item.url}|${item.type}`);
   };
 
-  // Calculate priority scores for all issues (for top 10 highlighting)
   $: issuesWithPriority = issues.map(issue => ({
     ...issue,
     priorityScore: calculatePriorityScore(issue)
   }));
 
-  // Get top 10 priority issues (for highlighting) - create a Set of issue identifiers
   $: top10PriorityIssues = new Set(
     issuesWithPriority
       .sort((a, b) => b.priorityScore - a.priorityScore)
       .slice(0, 10)
-      .map(issue => `${issue.url}|${issue.type}`) // Use URL + type as unique identifier
+      .map(issue => `${issue.url}|${issue.type}`)
   );
 
-  // Filter issues based on search, severity, type, affected pages count, URL, and indexability
-  // Direct reactive statement - Svelte tracks all referenced variables automatically
   $: filteredIssues = issues.filter(i => {
-    // Filter by severity
     if (severityFilter !== 'all' && i.severity !== severityFilter) return false;
-    
-    // Filter by type
     if (typeFilter !== 'all' && i.type !== typeFilter) return false;
-    
-    // Filter by URL (from filter prop)
     if (filter.url && i.url !== filter.url) return false;
-    
-    // Filter by search term
     if (searchTerm &&
         !i.url.toLowerCase().includes(searchTerm.toLowerCase()) &&
         !i.message?.toLowerCase().includes(searchTerm.toLowerCase()) &&
         !i.recommendation?.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
     }
-
     return true;
   });
 
-  // Sort filtered issues by priority if selected
   $: sortedFilteredIssues = (() => {
     if (sortBy === 'priority' || sortBy === 'enriched_priority') {
-      return [...filteredIssues].sort((a, b) => {
-        const scoreA = calculatePriorityScore(a);
-        const scoreB = calculatePriorityScore(b);
-        return scoreB - scoreA; // Descending order (highest priority first)
-      });
+      return [...filteredIssues].sort((a, b) => calculatePriorityScore(b) - calculatePriorityScore(a));
     }
     return filteredIssues;
   })();
 
-  // Group filtered issues
   $: groupedIssues = (() => {
-    if (groupBy === 'none') {
-      return { 'All Issues': sortedFilteredIssues };
-    } else if (groupBy === 'url') {
-      const grouped = {};
-      sortedFilteredIssues.forEach(issue => {
-        if (!grouped[issue.url]) {
-          grouped[issue.url] = [];
-        }
-        grouped[issue.url].push(issue);
-      });
-      return grouped;
-    } else if (groupBy === 'type') {
-      const grouped = {};
-      sortedFilteredIssues.forEach(issue => {
-        if (!grouped[issue.type]) {
-          grouped[issue.type] = [];
-        }
-        grouped[issue.type].push(issue);
-      });
-      return grouped;
-    } else if (groupBy === 'severity') {
-      const grouped = {};
-      sortedFilteredIssues.forEach(issue => {
-        if (!grouped[issue.severity]) {
-          grouped[issue.severity] = [];
-        }
-        grouped[issue.severity].push(issue);
-      });
-      return grouped;
-    }
-    return {};
+    if (groupBy === 'none') return { 'All Issues': sortedFilteredIssues };
+    const grouped = {};
+    sortedFilteredIssues.forEach(issue => {
+      const key = groupBy === 'url' ? issue.url : groupBy === 'type' ? issue.type : issue.severity;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(issue);
+    });
+    return grouped;
   })();
 
   $: uniqueTypes = [...new Set(issues.map(i => i.type))];
@@ -257,23 +205,41 @@
   $: gscSyncState = gscStatus?.sync_state || null;
   $: gscLastSynced = gscSyncState?.last_synced_at ? formatDateTime(gscSyncState.last_synced_at) : null;
   $: hasGSCEnrichment = enrichedIssues && Object.keys(enrichedIssues).length > 0;
-  
-  const getSeverityColor = (severity) => {
+
+  const getSeverityDot = (severity) => {
+    switch (severity) {
+      case 'error': return 'bg-error';
+      case 'warning': return 'bg-warning';
+      case 'info': return 'bg-info';
+      default: return 'bg-base-content/30';
+    }
+  };
+
+  const getSeverityLabel = (severity) => {
+    switch (severity) {
+      case 'error': return 'Critical';
+      case 'warning': return 'Warning';
+      case 'info': return 'Info';
+      default: return severity;
+    }
+  };
+
+  const getSeverityTextColor = (severity) => {
     switch (severity) {
       case 'error': return 'text-error';
       case 'warning': return 'text-warning';
       case 'info': return 'text-info';
-      default: return '';
+      default: return 'text-base-content/50';
     }
   };
 
-  const getSeverityBadge = (severity) => {
-    switch (severity) {
-      case 'error': return 'badge-error';
-      case 'warning': return 'badge-warning';
-      case 'info': return 'badge-info';
-      default: return 'badge-ghost';
+  const toggleExpanded = (key) => {
+    if (expandedIssues.has(key)) {
+      expandedIssues.delete(key);
+    } else {
+      expandedIssues.add(key);
     }
+    expandedIssues = new Set(expandedIssues);
   };
 
   const timestamp = () => {
@@ -285,478 +251,364 @@
   const downloadFile = (content, fileName, mimeType) => {
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
   const exportAsJson = () => {
-    const fileName = `issues-${timestamp()}.json`;
-    // Include priority scores in export
-    const issuesWithPriority = filteredIssues.map(issue => ({
-      ...issue,
-      priorityScore: calculatePriorityScore(issue)
-    }));
-    const content = JSON.stringify(issuesWithPriority, null, 2);
-    downloadFile(content, fileName, 'application/json');
+    const data = filteredIssues.map(issue => ({ ...issue, priorityScore: calculatePriorityScore(issue) }));
+    downloadFile(JSON.stringify(data, null, 2), `issues-${timestamp()}.json`, 'application/json');
   };
 
   const toCsv = (rows) => {
     const escapeValue = (value) => {
       if (value === null || value === undefined) return '';
-      const stringValue = String(value);
-      return /[",\n]/.test(stringValue) ? `"${stringValue.replace(/"/g, '""')}"` : stringValue;
+      const s = String(value);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
-
     const headers = ['url', 'type', 'severity', 'priority_score', 'message', 'recommendation', 'value'];
     const dataRows = rows.map(issue => [
-      issue.url || '',
-      issue.type || '',
-      issue.severity || '',
-      calculatePriorityScore(issue).toString(),
-      issue.message || '',
-      issue.recommendation || '',
-      issue.value || ''
+      issue.url || '', issue.type || '', issue.severity || '',
+      calculatePriorityScore(issue).toString(), issue.message || '',
+      issue.recommendation || '', issue.value || ''
     ]);
-
-    return [headers, ...dataRows]
-      .map(row => row.map(escapeValue).join(','))
-      .join('\n');
+    return [headers, ...dataRows].map(row => row.map(escapeValue).join(',')).join('\n');
   };
 
   const exportAsCsv = () => {
-    const fileName = `issues-${timestamp()}.csv`;
-    const content = toCsv(filteredIssues);
-    downloadFile(content, fileName, 'text/csv');
+    downloadFile(toCsv(filteredIssues), `issues-${timestamp()}.csv`, 'text/csv');
   };
 
   const closeDropdown = (event) => {
     const details = event?.currentTarget?.closest('details');
-    if (details) {
-      details.removeAttribute('open');
-    }
+    if (details) details.removeAttribute('open');
   };
 
-  const handleExportCsv = (event) => {
-    exportAsCsv();
-    closeDropdown(event);
-  };
-
-  const handleExportJson = (event) => {
-    exportAsJson();
-    closeDropdown(event);
-  };
+  const handleExportCsv = (event) => { exportAsCsv(); closeDropdown(event); };
+  const handleExportJson = (event) => { exportAsJson(); closeDropdown(event); };
 </script>
 
-<style>
-  /* Responsive grid for the filters at different breakpoints */
-  .filter-group-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-  @media (min-width: 768px) {
-    .filter-group-wrap {
-      flex-direction: row;
-      align-items: flex-start;
-    }
-  }
-  .scrolling-inline-form {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    gap: 0.5rem;
-    scrollbar-width: thin;
-    scrollbar-color: var(--fallback-bc, #d1d5db) transparent;
-    width: 100%;
-    max-width: 100%;
-  }
-  .scrolling-inline-form::-webkit-scrollbar {
-    height: 6px;
-    background: transparent;
-  }
-  .scrolling-inline-form::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 4px;
-  }
-  .scrolling-inline-form .btn {
-    min-width: max-content;
-    white-space: nowrap;
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
-    font-size: 0.85rem;
-    flex-shrink: 0;
-  }
-  .search-sort-bar {
-    display: flex;
-    flex-direction: row;
-    gap: 0.5rem;
-    width: 100%;
-  }
-  @media (max-width: 767px) {
-    .search-sort-bar {
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-  }
-  .longer-search {
-    flex: 1 1 0%;
-    min-width: 0;
-  }
-  .sort-dropdown-sm {
-    flex: 0 0 auto;
-    width: 150px;
-    min-width: 110px;
-    max-width: 180px;
-  }
-</style>
-
-<div class="card bg-base-100 shadow">
-  <div class="card-body">
-    <h2 class="card-title mb-4">SEO Issues</h2>
-
-    <div class="flex flex-col gap-4 mb-4">
-      <!-- Search and grouping controls (search longer, sort smaller, both in row on desktop)-->
-      <div class="search-sort-bar">
+<div class="space-y-4">
+  <!-- Filters Card -->
+  <div class="bg-base-200 rounded-xl p-5">
+    <div class="flex flex-col gap-4">
+      <!-- Search + Sort -->
+      <div class="flex flex-col md:flex-row gap-3">
         <input
           type="text"
           placeholder="Search by URL, message, or recommendation..."
-          class="input input-bordered longer-search"
+          class="input input-bordered flex-1 bg-base-300 border-base-content/10"
           bind:value={searchTerm}
         />
-
-        <select class="select select-bordered sort-dropdown-sm" bind:value={sortBy}>
+        <select class="select select-bordered bg-base-300 border-base-content/10 w-full md:w-44" bind:value={sortBy}>
           <option value="none">Sort by...</option>
-          <option value="priority">Sort by Priority</option>
+          <option value="priority">Priority</option>
         </select>
       </div>
 
-      <!-- Severity filter on its own line -->
-      <div class="space-y-2 w-full">
-        <div class="text-xs font-semibold uppercase tracking-wide text-base-content/70">Severity</div>
-        <!-- Horizontally scrolling form for overflow, especially on mobile -->
-        <form class="filter filter-sm scrolling-inline-form" autocomplete="off">
-          {#each severityOptions as option}
-            <input
-              class="btn"
-              type="radio"
-              name="severity-filter"
-              value={option.value}
-              aria-label={option.label}
-              data-title={option.label}
-              bind:group={severityFilter}
-            />
-          {/each}
-        </form>
+      <!-- Filter Pills -->
+      <div class="flex flex-col sm:flex-row gap-4">
+        <div class="flex-1">
+          <p class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-2">Severity</p>
+          <div class="flex flex-wrap gap-1.5">
+            {#each severityOptions as option}
+              <button
+                class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors {severityFilter === option.value ? 'bg-primary text-primary-content' : 'bg-base-300 text-base-content/60 hover:text-base-content'}"
+                on:click={() => severityFilter = option.value}
+              >
+                {option.label}
+              </button>
+            {/each}
+          </div>
+        </div>
+
+        <div class="flex-1">
+          <p class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-2">Group By</p>
+          <div class="flex flex-wrap gap-1.5">
+            {#each groupByOptions as option}
+              <button
+                class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors {groupBy === option.value ? 'bg-primary text-primary-content' : 'bg-base-300 text-base-content/60 hover:text-base-content'}"
+                on:click={() => groupBy = option.value}
+              >
+                {option.label}
+              </button>
+            {/each}
+          </div>
+        </div>
       </div>
-      
-      <!-- Type filter on its own line -->
-      <div class="space-y-2 w-full">
-        <div class="text-xs font-semibold uppercase tracking-wide text-base-content/70">Type</div>
-        <form class="filter filter-sm scrolling-inline-form" autocomplete="off">
-          {#each typeFilterOptions as option}
-            <input
-              class="btn"
-              type="radio"
-              name="type-filter"
-              value={option.value}
-              aria-label={option.label}
-              data-title={option.label}
-              bind:group={typeFilter}
-            />
-          {/each}
-        </form>
-      </div>
-      
-      <!-- Group By filter on separate line -->
-      <div class="space-y-2 w-full">
-        <div class="text-xs font-semibold uppercase tracking-wide text-base-content/70">Group By</div>
-        <form class="filter filter-sm scrolling-inline-form" autocomplete="off">
-          {#each groupByOptions as option}
-            <input
-              class="btn"
-              type="radio"
-              name="group-by-filter"
-              value={option.value}
-              aria-label={option.label}
-              data-title={option.label}
-              bind:group={groupBy}
-            />
-          {/each}
-        </form>
-      </div>
+
+      <!-- Type filter -->
+      {#if uniqueTypes.length > 1}
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-2">Type</p>
+          <div class="flex flex-wrap gap-1.5">
+            {#each typeFilterOptions as option}
+              <button
+                class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors {typeFilter === option.value ? 'bg-primary text-primary-content' : 'bg-base-300 text-base-content/60 hover:text-base-content'}"
+                on:click={() => typeFilter = option.value}
+              >
+                {option.label}
+              </button>
+            {/each}
+          </div>
+        </div>
+      {/if}
 
       {#if gscError}
-        <div class="alert alert-warning">
-          <span>{gscError}</span>
-        </div>
+        <div class="alert alert-warning"><span>{gscError}</span></div>
       {:else if gscLoading}
-        <div class="alert alert-info">
-          <span>Loading Google Search Console metrics...</span>
-        </div>
+        <div class="alert alert-info"><span>Loading Google Search Console metrics...</span></div>
       {:else if gscIntegration && hasGSCEnrichment}
-        <div class="alert alert-success">
-          <span>
-            Enriched with Google Search Console data from {gscIntegration.property_url}.
-            {#if gscLastSynced}
-              Last synced {gscLastSynced}.
-            {/if}
-          </span>
+        <div class="bg-success/10 border border-success/20 rounded-lg px-4 py-2.5 text-sm text-base-content/70">
+          Enriched with GSC data from {gscIntegration.property_url}.
+          {#if gscLastSynced} Last synced {gscLastSynced}.{/if}
         </div>
       {:else if gscIntegration}
-        <div class="alert alert-info">
-          <span>
-            Google Search Console is connected for {gscIntegration.property_url}. Refresh the cache to populate metrics.
-          </span>
+        <div class="bg-info/10 border border-info/20 rounded-lg px-4 py-2.5 text-sm text-base-content/70">
+          GSC connected for {gscIntegration.property_url}. Refresh to populate metrics.
         </div>
       {/if}
-
-      <!-- Export button -->
-      <div class="flex justify-end">
-        <details class="dropdown dropdown-end">
-          <summary class="btn btn-primary select-none">Export Issues</summary>
-          <ul class="dropdown-content menu bg-base-200 rounded-box w-52 shadow mt-2">
-            <li>
-              <button type="button" on:click={handleExportCsv}>
-                Export as CSV
-              </button>
-            </li>
-            <li>
-              <button type="button" on:click={handleExportJson}>
-                Export as JSON
-              </button>
-            </li>
-          </ul>
-        </details>
-      </div>
     </div>
+  </div>
 
-    <div class="text-sm text-base-content/70 mb-4">
+  <!-- Results Header -->
+  <div class="flex items-center justify-between">
+    <p class="text-sm text-base-content/50">
       Showing {filteredIssues.length} of {issues.length} issues
       {#if filter.url}
-        <span class="badge badge-info ml-2">Filtered by URL: {filter.url}</span>
-      {/if}
-      {#if groupBy !== 'none'}
-        | Grouped by {groupBy === 'url' ? 'URL' : groupBy === 'type' ? 'Type' : 'Severity'}
+        <span class="bg-info/20 text-info text-xs px-2 py-0.5 rounded-full ml-2">URL: {filter.url}</span>
       {/if}
       {#if sortBy === 'priority'}
-        | Sorted by {enrichedIssues && Object.keys(enrichedIssues).length > 0 ? 'Enriched ' : ''}Priority (highest first)
+        <span class="text-base-content/30 ml-1">· Sorted by priority</span>
       {/if}
-    </div>
+    </p>
+    <details class="dropdown dropdown-end">
+      <summary class="btn btn-sm btn-ghost gap-1">
+        <Download class="w-4 h-4" />
+        Export
+      </summary>
+      <ul class="dropdown-content menu bg-base-200 rounded-xl w-44 shadow-lg mt-2 border border-base-content/5">
+        <li><button type="button" on:click={handleExportCsv}>Export CSV</button></li>
+        <li><button type="button" on:click={handleExportJson}>Export JSON</button></li>
+      </ul>
+    </details>
+  </div>
 
-    <div class="space-y-4">
-      {#each Object.entries(groupedIssues) as [groupKey, groupIssues]}
-        {@const displayItemsForGroup = collapseImageIssuesByAsset(groupIssues)}
-        {#if groupBy !== 'none'}
-          <div class="border-l-4 border-primary pl-4 mb-4">
-            <h3 class="font-bold text-lg mb-2">
-              {#if groupBy === 'url'}
-                {groupKey}
-              {:else if groupBy === 'severity'}
-                {groupKey.charAt(0).toUpperCase() + groupKey.slice(1)} Issues
-              {:else}
-                {groupKey.replace(/_/g, ' ')}
-                <span class="badge badge-primary ml-2">
-                  {affectedPagesCounts[groupKey] || 0} page{affectedPagesCounts[groupKey] !== 1 ? 's' : ''}
-                </span>
+  <!-- Issues List -->
+  {#each Object.entries(groupedIssues) as [groupKey, groupIssues]}
+    {@const displayItemsForGroup = collapseImageIssuesByAsset(groupIssues)}
+    {#if groupBy !== 'none'}
+      <div class="flex items-center gap-3 mt-6 mb-2">
+        <div class="h-px bg-base-content/10 flex-1"></div>
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-base-content/40">
+          {#if groupBy === 'severity'}
+            {groupKey.charAt(0).toUpperCase() + groupKey.slice(1)} Issues
+          {:else}
+            {groupKey.replace(/_/g, ' ')}
+          {/if}
+          <span class="text-base-content/20 ml-1">({displayItemsForGroup.length})</span>
+        </h3>
+        <div class="h-px bg-base-content/10 flex-1"></div>
+      </div>
+    {/if}
+    
+    <div class="space-y-2">
+      {#each displayItemsForGroup as displayItem, idx}
+        {@const priorityScore = getDisplayItemPriority(displayItem)}
+        {@const isTopPriority = isDisplayItemTopPriority(displayItem)}
+        {@const enriched = getDisplayItemEnriched(displayItem)}
+        {@const itemKey = `${groupKey}-${idx}`}
+        {@const isExpanded = expandedIssues.has(itemKey)}
+
+        <!-- Issue Row -->
+        <div class="bg-base-200 rounded-xl overflow-hidden transition-colors hover:bg-base-300/50">
+          <!-- Compact Row (always visible) -->
+          <button
+            class="w-full flex items-center gap-3 px-4 py-3 text-left"
+            on:click={() => toggleExpanded(itemKey)}
+          >
+            <div class="w-2.5 h-2.5 rounded-full {getSeverityDot(displayItem.severity)} shrink-0"></div>
+            <span class="text-sm text-base-content/80 flex-1 truncate">{displayItem.message}</span>
+            <div class="flex items-center gap-2 shrink-0">
+              {#if isTopPriority}
+                <span class="bg-warning/15 text-warning text-xs px-2 py-0.5 rounded-full font-medium">Top Priority</span>
               {/if}
-              <span class="badge badge-ghost ml-2">{displayItemsForGroup.length} item{displayItemsForGroup.length !== 1 ? 's' : ''} {displayItemsForGroup.length !== groupIssues.length ? `(${groupIssues.length} total)` : ''}</span>
-            </h3>
-          </div>
-        {/if}
-        
-        {#each displayItemsForGroup as displayItem}
-          {@const priorityScore = getDisplayItemPriority(displayItem)}
-          {@const isTopPriority = isDisplayItemTopPriority(displayItem)}
-          {@const enriched = getDisplayItemEnriched(displayItem)}
-          <div class="alert {getSeverityBadge(displayItem.severity)} shadow-lg">
-            <div class="flex-1">
-              <div class="flex items-center gap-2 mb-2 flex-wrap">
-                <span class="badge {getSeverityBadge(displayItem.severity)}">
-                  {displayItem.severity}
-                </span>
-                <span class="badge {displayItem.severity === 'warning' || displayItem.severity === 'info' ? 'badge-ghost' : 'badge-outline'}">
+              {#if enriched?.enriched_priority}
+                <span class="bg-success/15 text-success text-xs px-2 py-0.5 rounded-full font-medium">GSC</span>
+              {/if}
+              {#if affectedPagesCounts[displayItem.type] > 1}
+                <span class="text-xs text-base-content/30 font-mono">{affectedPagesCounts[displayItem.type]}pg</span>
+              {/if}
+              <span class="text-xs font-medium whitespace-nowrap {getSeverityTextColor(displayItem.severity)}">{getSeverityLabel(displayItem.severity)}</span>
+              {#if isExpanded}
+                <ChevronUp class="w-4 h-4 text-base-content/30" />
+              {:else}
+                <ChevronDown class="w-4 h-4 text-base-content/30" />
+              {/if}
+            </div>
+          </button>
+
+          <!-- Expanded Detail -->
+          {#if isExpanded}
+            <div class="px-4 pb-4 pt-1 border-t border-base-content/5">
+              <!-- Badges Row -->
+              <div class="flex flex-wrap gap-1.5 mb-3">
+                <span class="bg-base-300 text-base-content/60 text-xs px-2.5 py-1 rounded-lg">
                   {displayItem.type.replace(/_/g, ' ')}
                 </span>
-                <span class="badge badge-primary">
+                <span class="bg-primary/15 text-primary text-xs px-2.5 py-1 rounded-lg font-mono">
                   Priority: {priorityScore.toFixed(1)}
                 </span>
-                {#if enriched?.enriched_priority && enriched.enriched_priority !== priorityScore}
-                  <span class="badge badge-success" title="Enhanced with GSC data">
-                    📊 GSC Enhanced
-                  </span>
-                {/if}
-                {#if isTopPriority}
-                  <span class="badge badge-warning">
-                    🔥 Top Priority
-                  </span>
-                {/if}
-                {#if groupBy === 'url' && affectedPagesCounts[displayItem.type]}
-                  <span class="badge badge-ghost">
-                    {affectedPagesCounts[displayItem.type]} page{affectedPagesCounts[displayItem.type] !== 1 ? 's' : ''} affected
-                  </span>
-                {/if}
                 {#if displayItem.isAssetGroup && (displayItem.affectedUrls?.length ?? 0) > 1}
-                  <span class="badge badge-ghost">
-                    {(displayItem.affectedUrls?.length ?? 0)} page{(displayItem.affectedUrls?.length ?? 0) !== 1 ? 's' : ''} affected
+                  <span class="bg-base-300 text-base-content/50 text-xs px-2.5 py-1 rounded-lg">
+                    {displayItem.affectedUrls?.length ?? 0} pages affected
                   </span>
                 {/if}
               </div>
-              <h3 class="font-bold">{displayItem.message}</h3>
-              
-              {#if enriched?.gsc_performance}
-                <div class="bg-base-200 rounded-lg p-3 mt-3 mb-2">
-                  <div class="text-xs font-semibold uppercase tracking-wide text-base-content/70 mb-2">Google Search Console Data</div>
-                  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                    <div>
-                      <div class="text-base-content/70">Impressions</div>
-                      <div class="font-bold">{formatNumber(enriched.gsc_performance.impressions)}</div>
-                    </div>
-                    <div>
-                      <div class="text-base-content/70">Clicks</div>
-                      <div class="font-bold">{formatNumber(enriched.gsc_performance.clicks)}</div>
-                    </div>
-                    <div>
-                      <div class="text-base-content/70">CTR</div>
-                      <div class="font-bold">{formatCTR(enriched.gsc_performance.ctr)}</div>
-                    </div>
-                    <div>
-                      <div class="text-base-content/70">Position</div>
-                      <div class="font-bold">{formatPosition(enriched.gsc_performance.position)}</div>
-                    </div>
-                  </div>
-                  {#if enriched.gsc_performance.top_queries && enriched.gsc_performance.top_queries.length > 0}
-                    <div class="mt-3">
-                      <div class="text-xs font-semibold uppercase tracking-wide text-base-content/70 mb-1">Top Queries</div>
-                      <ul class="text-sm space-y-1">
-                        {#each enriched.gsc_performance.top_queries.slice(0, 5) as query}
-                          <li class="flex flex-wrap gap-2">
-                            <span class="font-semibold">{query.query}</span>
-                            <span class="text-base-content/60">
-                              {formatNumber(query.impressions)} impressions · {formatNumber(query.clicks)} clicks · {formatCTR(query.ctr)}
-                            </span>
-                          </li>
-                        {/each}
-                      </ul>
-                    </div>
-                  {/if}
-                </div>
-              {/if}
-              
-              {#if enriched?.recommendation_reason}
-                <div class="bg-info/20 rounded-lg p-3 mt-2 mb-2">
-                  <div class="text-sm font-semibold mb-1">💡 GSC Insight:</div>
-                  <div class="text-sm">{enriched.recommendation_reason}</div>
-                </div>
-              {/if}
-              
+
+              <!-- URL -->
               {#if displayItem.isAssetGroup && displayItem.assetUrl}
-                <div class="text-sm mt-2">
-                  <div class="font-semibold">Image URL:</div>
-                  <a
-                    href={displayItem.assetLinkUrl || displayItem.assetUrl}
-                    target="_blank"
-                    class="break-all underline hover:opacity-80 link link-primary"
-                  >
+                <div class="mb-3">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-1">Image URL</p>
+                  <a href={displayItem.assetLinkUrl || displayItem.assetUrl} target="_blank" class="text-sm text-primary break-all hover:underline">
                     {displayItem.assetUrl}
                   </a>
                 </div>
-                <div class="text-sm mt-2">
-                  <div class="font-semibold">Affected pages ({(displayItem.affectedUrls?.length ?? 0)}):</div>
-                  <div class="flex flex-wrap gap-2 mt-1">
+                <div class="mb-3">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-1">Affected Pages ({displayItem.affectedUrls?.length ?? 0})</p>
+                  <div class="flex flex-wrap gap-1.5">
                     {#each (displayItem.affectedUrls ?? []).slice(0, 5) as url}
-                      <a href={url} target="_blank" rel="noopener noreferrer" class="text-xs link link-hover break-all max-w-[220px] truncate inline-block" title={url}>{url}</a>
+                      <a href={url} target="_blank" rel="noopener noreferrer" class="bg-base-300 text-xs text-base-content/60 px-2.5 py-1 rounded-lg hover:text-primary truncate max-w-[200px]" title={url}>{url}</a>
                     {/each}
                     {#if (displayItem.affectedUrls?.length ?? 0) > 5}
-                      <span class="text-xs text-base-content/60">… and {(displayItem.affectedUrls?.length ?? 0) - 5} more</span>
+                      <span class="text-xs text-base-content/30 px-2.5 py-1">+{(displayItem.affectedUrls?.length ?? 0) - 5} more</span>
                     {/if}
                   </div>
                 </div>
               {:else}
-                <div class="text-sm mt-2">
-                  <div class="font-semibold">URL:</div>
+                <div class="mb-3">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-1">URL</p>
                   {#if displayItem.url}
-                    <a
-                      href={displayItem.url}
-                      target="_blank"
-                      class="break-all underline hover:opacity-80 {displayItem.severity === 'info' || displayItem.severity === 'warning' ? '' : 'link link-primary'}"
-                    >
-                      {displayItem.url}
-                    </a>
+                    <a href={displayItem.url} target="_blank" class="text-sm text-primary break-all hover:underline">{displayItem.url}</a>
                   {:else}
-                    <span class="text-base-content/60 italic">URL not available</span>
+                    <span class="text-sm text-base-content/30 italic">URL not available</span>
                   {/if}
                 </div>
                 {#if displayItem.value}
-                  <div class="text-sm mt-2">
-                    <div class="font-semibold">Value:</div>
-                    <div class="break-all">{displayItem.value}</div>
+                  <div class="mb-3">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-1">Value</p>
+                    <p class="text-sm text-base-content/70 break-all">{displayItem.value}</p>
                   </div>
                 {/if}
               {/if}
+
+              <!-- Recommendation -->
               {#if displayItem.recommendation}
-                <div class="text-sm mt-2">
-                  <div class="font-semibold">Recommendation:</div>
-                  <div>{displayItem.recommendation}</div>
+                <div class="mb-3">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-1">Recommendation</p>
+                  <p class="text-sm text-base-content/70">{displayItem.recommendation}</p>
                 </div>
               {/if}
-              
+
+              <!-- GSC Performance -->
+              {#if enriched?.gsc_performance}
+                <div class="bg-base-300 rounded-lg p-3 mb-3">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-2">Google Search Console</p>
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div>
+                      <p class="text-xs text-base-content/40">Impressions</p>
+                      <p class="font-bold font-mono text-sm">{formatNumber(enriched.gsc_performance.impressions)}</p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-base-content/40">Clicks</p>
+                      <p class="font-bold font-mono text-sm">{formatNumber(enriched.gsc_performance.clicks)}</p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-base-content/40">CTR</p>
+                      <p class="font-bold font-mono text-sm">{formatCTR(enriched.gsc_performance.ctr)}</p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-base-content/40">Position</p>
+                      <p class="font-bold font-mono text-sm">{formatPosition(enriched.gsc_performance.position)}</p>
+                    </div>
+                  </div>
+                  {#if enriched.gsc_performance.top_queries?.length > 0}
+                    <div class="mt-3">
+                      <p class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-1">Top Queries</p>
+                      <div class="flex flex-wrap gap-1.5">
+                        {#each enriched.gsc_performance.top_queries.slice(0, 5) as query}
+                          <span class="bg-base-200 text-xs text-base-content/60 px-2.5 py-1 rounded-lg">
+                            {query.query} <span class="text-base-content/30">· {formatNumber(query.impressions)} imp</span>
+                          </span>
+                        {/each}
+                      </div>
+                    </div>
+                  {/if}
+                </div>
+              {/if}
+
+              <!-- GSC Insight -->
+              {#if enriched?.recommendation_reason}
+                <div class="bg-info/10 border border-info/20 rounded-lg px-3 py-2.5 mb-3">
+                  <p class="text-xs font-semibold text-info mb-1">GSC Insight</p>
+                  <p class="text-sm text-base-content/70">{enriched.recommendation_reason}</p>
+                </div>
+              {/if}
+
               <!-- AI Insight Button -->
               {#if crawlId}
-                <div class="mt-3">
+                <div class="pt-1">
                   {#if isPro}
                     <button
-                      class="btn btn-sm btn-outline btn-primary"
-                      on:click={() => {
+                      class="btn btn-sm btn-ghost text-primary gap-1.5"
+                      on:click|stopPropagation={() => {
                         selectedIssueForAI = displayItem.isAssetGroup
                           ? { ...displayItem, url: displayItem.affectedUrls?.[0], value: displayItem.assetUrl }
                           : displayItem;
                         showAIInsightModal = true;
                       }}
                     >
-                      <Sparkles class="w-4 h-4" />
+                      <Sparkles class="w-3.5 h-3.5" />
                       Generate AI Insight
                     </button>
                   {:else}
-                    <div class="tooltip" data-tip="Upgrade to Pro to unlock AI Insights">
-                      <button class="btn btn-sm btn-outline btn-disabled" disabled>
-                        <Sparkles class="w-4 h-4" />
-                        Generate AI Insight
-                        <span class="badge badge-primary badge-sm ml-1">PRO</span>
+                    <div class="tooltip" data-tip="Upgrade to Pro for AI Insights">
+                      <button class="btn btn-sm btn-ghost btn-disabled gap-1.5" disabled>
+                        <Sparkles class="w-3.5 h-3.5" />
+                        AI Insight
+                        <span class="bg-primary/15 text-primary text-xs px-1.5 py-0.5 rounded font-medium">PRO</span>
                       </button>
                     </div>
                   {/if}
                 </div>
               {/if}
             </div>
-          </div>
-        {/each}
+          {/if}
+        </div>
       {/each}
     </div>
+  {/each}
 
-    <!-- AI Insight Modal -->
-    {#if showAIInsightModal && selectedIssueForAI && crawlId}
-      <IssueInsight
-        issue={selectedIssueForAI}
-        {crawlId}
-        on:close={() => {
-          showAIInsightModal = false;
-          selectedIssueForAI = null;
-        }}
-      />
-    {/if}
+  <!-- AI Insight Modal -->
+  {#if showAIInsightModal && selectedIssueForAI && crawlId}
+    <IssueInsight
+      issue={selectedIssueForAI}
+      {crawlId}
+      on:close={() => {
+        showAIInsightModal = false;
+        selectedIssueForAI = null;
+      }}
+    />
+  {/if}
 
-    {#if filteredIssues.length === 0}
-      <div class="alert alert-success">
-        <span>🎉 No issues found!</span>
-      </div>
-    {/if}
-  </div>
+  {#if filteredIssues.length === 0}
+    <div class="bg-success/10 border border-success/20 rounded-xl px-5 py-4 text-center">
+      <p class="text-success font-medium">No issues found!</p>
+    </div>
+  {/if}
 </div>

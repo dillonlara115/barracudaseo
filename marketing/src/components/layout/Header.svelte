@@ -33,7 +33,7 @@
 	}
 </script>
 
-<header class="bg-[#3c3836] border-b border-white/10 sticky top-0 z-50 backdrop-blur-sm bg-[#3c3836]/80">
+<header class="border-b border-white/5 sticky top-0 z-50 backdrop-blur-md bg-[#1d1d1d]/90">
 	<div class="container mx-auto px-4">
 		<nav class="flex items-center justify-between h-16">
 			<div class="flex-1">
@@ -69,17 +69,17 @@
 						</button>
 						{#if useCasesDropdownOpen}
 							<div class="absolute top-full left-0 pt-1 w-48 z-50">
-								<div class="bg-[#2d2826] border border-white/10 rounded-lg shadow-lg py-2">
-									<a href="/use-cases/local-seo" class="block px-4 py-2 text-white/70 hover:text-[#8ec07c] hover:bg-[#3c3836] transition-colors">
-										Local SEO
-									</a>
-									<a href="/use-cases/programmatic-seo" class="block px-4 py-2 text-white/70 hover:text-[#8ec07c] hover:bg-[#3c3836] transition-colors">
-										Programmatic SEO
-									</a>
-									<a href="/use-cases/e-commerce" class="block px-4 py-2 text-white/70 hover:text-[#8ec07c] hover:bg-[#3c3836] transition-colors">
-										E-commerce
-									</a>
-								</div>
+							<div class="bg-[#282828] border border-white/10 rounded-xl shadow-2xl shadow-black/40 py-2">
+								<a href="/use-cases/local-seo" class="block px-4 py-2 text-white/60 hover:text-[#8ec07c] hover:bg-white/5 transition-colors">
+									Local SEO
+								</a>
+								<a href="/use-cases/programmatic-seo" class="block px-4 py-2 text-white/60 hover:text-[#8ec07c] hover:bg-white/5 transition-colors">
+									Programmatic SEO
+								</a>
+								<a href="/use-cases/e-commerce" class="block px-4 py-2 text-white/60 hover:text-[#8ec07c] hover:bg-white/5 transition-colors">
+									E-commerce
+								</a>
+							</div>
 							</div>
 						{/if}
 					</li>
@@ -101,7 +101,7 @@
 					<li>
 						<a
 							href="https://app.barracudaseo.com"
-							class="bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-4 py-2 rounded-lg font-medium transition-colors"
+							class="bg-[#8ec07c] hover:bg-[#a0d28c] text-[#1d1d1d] px-4 py-2 rounded-xl font-medium transition-colors"
 							target="_blank"
 							rel="noopener noreferrer"
 							onclick={handleHeaderSignupClick}
