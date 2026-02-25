@@ -580,3 +580,45 @@ make release          # Cross-platform builds
 
 **Last Updated:** 2025-01-01  
 **Maintainer:** Maintain this file as the codebase evolves
+
+---
+
+## Cursor Cloud specific instructions
+
+### Services Overview
+
+| Service | Port | Start Command | Notes |
+|---------|------|---------------|-------|
+| Go CLI (crawl) | N/A | `./bin/barracuda crawl <URL>` | Build first with `make build` |
+| Crawl Dashboard (serve) | 8080 | `./bin/barracuda serve --results results.json --graph graph.json` | Requires a prior JSON crawl export |
+| Web App (Vite dev) | 5173 | `cd web && npm run dev` | Hot-reload; requires Supabase env vars for auth flows |
+| Marketing Site (SvelteKit) | 5174 | `cd marketing && npm run dev` | Fully standalone, no external deps |
+| API Server | 8080 | `go run . api --port 8080` | Requires Supabase env vars |
+
+### Go Version
+
+The project requires **Go 1.25**. The VM update script installs it automatically. Verify with `go version`.
+
+### Running Go Tests
+
+`make test` uses `go test ./... -v` which fails because `web/node_modules/@vercel/fun/dist/src/runtimes/go1.x` is detected as a Go directory outside the module. Use this instead:
+
+```bash
+go test ./cmd/... ./internal/... ./pkg/... -v
+```
+
+### Frontend Build Order
+
+The Svelte frontend in `web/` **must** be built before the Go binary, as it is embedded via `go:embed web/dist/`. `make build` handles this automatically.
+
+### Frontend Lint
+
+`cd web && npm run lint` reports ~100 pre-existing errors (unused vars, a11y warnings). These are not regressions.
+
+### Marketing Site
+
+The marketing site (`marketing/`) is an independent SvelteKit app (Svelte 5, Vite 7). `npm run lint` reports formatting warnings (run `npm run format` to fix). `npm run check` reports `$lib/*` module resolution errors that do not prevent the dev server from running.
+
+### Cloud API / Supabase
+
+The web app and API server require Supabase credentials (`PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`). Without these, the web dashboard shows a login screen but cannot authenticate. The CLI crawl and serve commands work fully without Supabase. The marketing site also works independently.
