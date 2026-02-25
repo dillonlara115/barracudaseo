@@ -61,6 +61,9 @@ export function collapseImageIssuesByAsset(issues) {
 					// For priority/enrichment: use first page as representative; keep all constituent ids
 					url: issue.url || '',
 					constituentIds: [],
+					// Preserve first issue's DB id for AI insight (API requires issue_id)
+					id: issue.id,
+					issue_id: issue.issue_id,
 					isAssetGroup: true
 				});
 			}
@@ -71,6 +74,11 @@ export function collapseImageIssuesByAsset(issues) {
 			}
 			entry.constituentIds.push(`${pageUrl}|${type}`);
 			if (!entry.url) entry.url = pageUrl;
+			// Keep id if we don't have one yet (first issue in group)
+			if (entry.id == null && (issue.id != null || issue.issue_id != null)) {
+				entry.id = issue.id ?? issue.issue_id;
+				entry.issue_id = issue.issue_id ?? issue.id;
+			}
 		} else {
 			nonImageItems.push({
 				...issue,

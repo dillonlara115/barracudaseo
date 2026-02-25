@@ -492,7 +492,9 @@
                 </div>
               {:else}
                 <div class="mb-3">
-                  <p class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-1">URL</p>
+                  <p class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-1">
+                    {displayItem.type === 'redirect_chain' ? 'Source URL (test this)' : 'URL'}
+                  </p>
                   {#if displayItem.url}
                     <a href={displayItem.url} target="_blank" class="text-sm text-primary break-all hover:underline">{displayItem.url}</a>
                   {:else}
@@ -501,7 +503,9 @@
                 </div>
                 {#if displayItem.value}
                   <div class="mb-3">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-1">Value</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-1">
+                      {displayItem.type === 'redirect_chain' ? 'Redirects to' : 'Value'}
+                    </p>
                     <p class="text-sm text-base-content/70 break-all">{displayItem.value}</p>
                   </div>
                 {/if}

@@ -158,7 +158,7 @@
     redirect_chain: {
       title: "Simplify Redirect Chains",
       impact: "Medium",
-      description: "Redirect chains waste crawl budget and slow down page loads.",
+      description: "Redirect chains waste crawl budget and slow down page loads. The issue URL is the source (the one that redirects)—test that URL with curl -I -L to verify; the destination URL will not redirect.",
       codeSnippet: `<!-- Update links to point directly to final destination -->
 <a href="https://example.com/final-page">Link Text</a>
 

@@ -116,15 +116,17 @@ func Analyze(results []*models.PageResult) *Summary {
 		}
 
 		// Track redirects (always flag - technical issue)
+		// Note: result.URL is the REQUESTED URL (source that redirects); RedirectChain holds destinations
 		if len(result.RedirectChain) > 0 {
 			summary.PagesWithRedirects++
+			fullChain := result.URL + " -> " + strings.Join(result.RedirectChain, " -> ")
 			summary.Issues = append(summary.Issues, Issue{
 				Type:           IssueRedirectChain,
 				Severity:       "warning",
 				URL:            result.URL,
-				Message:        fmt.Sprintf("Redirect chain: %s", strings.Join(result.RedirectChain, " -> ")),
+				Message:        fmt.Sprintf("Redirect chain: %s", fullChain),
 				Value:          strings.Join(result.RedirectChain, " -> "),
-				Recommendation: "Consider using direct links instead of redirect chains",
+				Recommendation: "Consider using direct links instead of redirect chains. Test the source URL (first in chain) with curl -I -L to verify.",
 			})
 			summary.IssuesByType[IssueRedirectChain]++
 		}
