@@ -636,6 +636,25 @@ BARRACUDA_LOAD_ENV=1 go run . api --port 8080
 ### Port Assignments for Parallel Development
 
 When running all services simultaneously, use these ports to avoid conflicts:
-- `:8080` — `barracuda serve` or `barracuda api`
+- `:8080` — `barracuda serve` or `barracuda api` (the web app defaults to calling `:8080` for API requests)
 - `:5173` — `cd web && npm run dev`
 - `:5174` — `cd marketing && npm run dev`
+
+**Important:** The web app frontend (`getApiUrl()` in `web/src/lib/data.js`) falls back to `http://localhost:8080` when `VITE_CLOUD_RUN_API_URL` is not set. For full-stack local development, start the API server on `:8080` (not `barracuda serve`) so the frontend can fetch project/crawl data from the API.
+
+### Full-Stack Local Dev Startup
+
+```bash
+# Terminal 1: API server (port 8080)
+BARRACUDA_LOAD_ENV=1 go run . api --port 8080
+
+# Terminal 2: Web app dev server (port 5173)
+cd web && npm run dev
+
+# Terminal 3 (optional): Marketing site (port 5174)
+cd marketing && npm run dev
+```
+
+### Test Login
+
+Test credentials are available via `TEST_LOGIN_EMAIL` and `TEST_LOGIN_PASSWORD` Cursor Secrets. The login page supports both magic link and password-based authentication — use "Use password instead" to switch to password mode.
