@@ -17,7 +17,7 @@
 <GoogleAnalytics />
 <PageTransitionLoader />
 
-<div class="min-h-screen flex flex-col" data-theme="barracuda">
+<div class="flex min-h-screen flex-col" data-theme="barracuda">
 	<Header />
 	<main class="flex-grow">
 		{@render children()}
