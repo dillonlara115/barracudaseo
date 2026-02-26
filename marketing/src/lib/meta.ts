@@ -27,10 +27,10 @@ export interface MetaTags {
 }
 
 export function getMetaTags(meta: MetaTags = {}): MetaTagsConfig {
-	const title = meta.title 
+	const title = meta.title
 		? `${meta.title} - ${SITE_NAME}`
 		: `${SITE_NAME} - Web-Based SEO Crawler & Auditing Tool`;
-	
+
 	const description = meta.description || SITE_DESCRIPTION;
 
 	return {
@@ -104,7 +104,7 @@ export function getFAQPageSchema(faqs: Array<{ question: string; answer: string 
 	return {
 		'@context': 'https://schema.org',
 		'@type': 'FAQPage',
-		mainEntity: faqs.map(faq => ({
+		mainEntity: faqs.map((faq) => ({
 			'@type': 'Question',
 			name: faq.question,
 			acceptedAnswer: {
@@ -157,5 +157,30 @@ export function getArticleSchema(article: {
 				url: `${SITE_URL}/favicon.svg`
 			}
 		}
+	};
+}
+
+export function getHowToSchema(howTo: {
+	name: string;
+	description: string;
+	steps: Array<{ name: string; text: string; url?: string }>;
+}) {
+	return {
+		'@context': 'https://schema.org',
+		'@type': 'HowTo',
+		name: howTo.name,
+		description: howTo.description,
+		step: howTo.steps.map((step, index) => ({
+			'@type': 'HowToStep',
+			position: index + 1,
+			name: step.name,
+			itemListElement: [
+				{
+					'@type': 'HowToDirection',
+					text: step.text
+				}
+			],
+			...(step.url && { url: step.url })
+		}))
 	};
 }

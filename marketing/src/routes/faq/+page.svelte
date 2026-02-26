@@ -24,29 +24,35 @@
 
 	const meta = getMetaTags({
 		title: 'Frequently Asked Questions',
-		description: 'Get answers to common questions about Barracuda SEO, including how it compares to other tools, pricing, features, and more.'
+		description:
+			'Get answers to common questions about Barracuda SEO, including how it compares to other tools, pricing, features, and more.'
 	});
 
 	const faqs = [
 		{
 			question: 'What makes Barracuda different from tools like Screaming Frog?',
-			answer: 'Screaming Frog is a powerful desktop crawler—but it\'s single-device, manual, and lacks team collaboration unless you export CSVs and spreadsheets. Barracuda offers a cloud-first approach with fast cloud-based crawling via web dashboard, cloud-based dashboard for teams, AI-powered issue explanations and recommendations, built-in integrations with Google Search Console, and CLI for local crawling coming soon for advanced users.'
+			answer:
+				"Screaming Frog is a powerful desktop crawler—but it's single-device, manual, and lacks team collaboration unless you export CSVs and spreadsheets. Barracuda offers a cloud-first approach with fast cloud-based crawling via web dashboard, cloud-based dashboard for teams, AI-powered issue explanations and recommendations, built-in integrations with Google Search Console, and CLI for local crawling coming soon for advanced users."
 		},
 		{
 			question: 'How is Barracuda different from SEMrush and Ahrefs?',
-			answer: 'SEMrush and Ahrefs run crawls on their servers, which means you have limited control over crawl behavior, crawl speeds are throttled, you don\'t get raw crawl data, pricing is tied to credits, and they may miss pages blocked to outside IPs. Barracuda runs fast crawls via web dashboard, stores complete crawl datasets in the cloud, has no credits or crawl caps, mirrors what your site serves to real browsers, and includes CLI for local crawling coming soon for even more control.'
+			answer:
+				"SEMrush and Ahrefs run crawls on their servers, which means you have limited control over crawl behavior, crawl speeds are throttled, you don't get raw crawl data, pricing is tied to credits, and they may miss pages blocked to outside IPs. Barracuda runs fast crawls via web dashboard, stores complete crawl datasets in the cloud, has no credits or crawl caps, mirrors what your site serves to real browsers, and includes CLI for local crawling coming soon for even more control."
 		},
 		{
 			question: 'How fast is the Barracuda crawler?',
-			answer: 'Barracuda\'s web-based crawler is optimized for speed with concurrent crawling with intelligent rate limiting, efficient robots.txt and sitemap handling, cloud infrastructure for fast processing, and real-time progress tracking. For even faster local crawling, our CLI (coming soon) will offer Go-based worker-pool engine, direct local processing, with expected speed of 100–500 pages/min, depending on target site performance.'
+			answer:
+				"Barracuda's web-based crawler is optimized for speed with concurrent crawling with intelligent rate limiting, efficient robots.txt and sitemap handling, cloud infrastructure for fast processing, and real-time progress tracking. For even faster local crawling, our CLI (coming soon) will offer Go-based worker-pool engine, direct local processing, with expected speed of 100–500 pages/min, depending on target site performance."
 		},
 		{
 			question: 'How does billing work?',
-			answer: 'No credits. No crawl caps. Free tier includes 100 pages per crawl. Pro plan is $29/month for 10,000+ pages with team collaboration, integrations, and recommendations. Team add-ons available at $5/user/month. Custom Team plans available for organizations with 5+ members.'
+			answer:
+				'No credits. No crawl caps. Free tier includes 100 pages per crawl. Pro plan is $29/month for 10,000+ pages with team collaboration, integrations, and recommendations. Team add-ons available at $5/user/month. Custom Team plans available for organizations with 5+ members.'
 		},
 		{
 			question: 'Who is Barracuda designed for?',
-			answer: 'Barracuda is ideal for technical SEO professionals who need scalable crawl data and clean reporting, agencies managing multiple clients and domains, developers who prefer API/CLI automation over GUIs, and website owners who want to understand their SEO issues without enterprise pricing.'
+			answer:
+				'Barracuda is ideal for technical SEO professionals who need scalable crawl data and clean reporting, agencies managing multiple clients and domains, developers who prefer API/CLI automation over GUIs, and website owners who want to understand their SEO issues without enterprise pricing.'
 		}
 	];
 
@@ -62,87 +68,128 @@
 <MetaTags config={{ ...meta, structuredData }} />
 
 <!-- Hero Section -->
-<section class="py-20 bg-gradient-to-b from-[#3c3836] to-[#2d2826]">
+<section class="bg-gradient-to-b from-[#3c3836] to-[#2d2826] py-20">
 	<div class="container mx-auto px-4">
-		<div class="text-center max-w-4xl mx-auto">
-			<div class="flex items-center justify-center gap-4 mb-6">
-				<div class="p-3 bg-[#8ec07c]/10 rounded-lg">
-					<CircleQuestionMark class="w-8 h-8 text-[#8ec07c]" />
+		<div class="mx-auto max-w-4xl text-center">
+			<div class="mb-6 flex items-center justify-center gap-4">
+				<div class="rounded-lg bg-[#8ec07c]/10 p-3">
+					<CircleQuestionMark class="h-8 w-8 text-[#8ec07c]" />
 				</div>
-				<h1 class="text-5xl md:text-6xl font-heading font-bold text-white">
+				<h1 class="font-heading text-5xl font-bold text-white md:text-6xl">
 					Frequently Asked Questions
 				</h1>
 			</div>
-			<p class="text-xl md:text-2xl text-white/80 mb-10 max-w-3xl mx-auto">
-				Everything you need to know about Barracuda SEO, from how it compares to other tools to pricing and features.
+			<p class="mx-auto mb-10 max-w-3xl text-xl text-white/80 md:text-2xl">
+				Everything you need to know about Barracuda SEO, from how it compares to other tools to
+				pricing and features.
 			</p>
 		</div>
 	</div>
 </section>
 
 <!-- FAQ Content -->
-<section class="py-20 bg-[#3c3836]">
+<section class="bg-[#3c3836] py-20">
 	<div class="container mx-auto px-4">
-		<div class="max-w-4xl mx-auto">
+		<div class="mx-auto max-w-4xl">
 			<div class="space-y-4">
 				<!-- FAQ 1 -->
-				<div class="bg-[#2d2826] rounded-lg border border-white/10 overflow-hidden">
+				<div class="overflow-hidden rounded-lg border border-white/10 bg-[#2d2826]">
 					<button
-						class="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-[#3c3836] transition-colors"
+						class="flex w-full items-center justify-between px-6 py-5 text-left transition-colors hover:bg-[#3c3836]"
 						onclick={() => toggleItem(1)}
 					>
-						<h2 class="text-xl font-heading font-bold text-white pr-4">
+						<h2 class="pr-4 font-heading text-xl font-bold text-white">
 							What makes Barracuda different from tools like Screaming Frog?
 						</h2>
 						<svg
-							class="w-5 h-5 text-[#8ec07c] flex-shrink-0 transition-transform {openItems[1] ? 'rotate-180' : ''}"
+							class="h-5 w-5 flex-shrink-0 text-[#8ec07c] transition-transform {openItems[1]
+								? 'rotate-180'
+								: ''}"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
 						>
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 9l-7 7-7-7"
+							/>
 						</svg>
 					</button>
 					{#if openItems[1]}
 						<div class="px-6 pb-5 text-white/80">
 							<p class="mb-4">
-								Screaming Frog is a powerful desktop crawler—but it's single-device, manual, and lacks team collaboration unless you export CSVs and spreadsheets.
+								<a
+									href="/blog/screaming-frog-vs-barracuda"
+									class="text-[#8ec07c] underline hover:text-[#a0d28c]">Screaming Frog</a
+								> is a powerful desktop crawler—but it's single-device, manual, and lacks team collaboration
+								unless you export CSVs and spreadsheets.
 							</p>
 							<p class="mb-4">Barracuda offers a cloud-first approach:</p>
-							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
-								<li><strong class="text-white">Fast cloud-based crawling</strong> via web dashboard</li>
+							<ul class="mb-4 ml-4 list-inside list-disc space-y-2">
+								<li>
+									<strong class="text-white">Fast cloud-based crawling</strong> via web dashboard
+								</li>
 								<li><strong class="text-white">Cloud-based dashboard for teams</strong></li>
-								<li><strong class="text-white">AI-powered issue explanations</strong> and recommendations</li>
-								<li><strong class="text-white">Built-in integrations</strong> with Google Search Console (available now), GA4 and Microsoft Clarity (coming soon)</li>
-								<li><strong class="text-white">CLI for local crawling</strong> coming soon for advanced users</li>
+								<li>
+									<strong class="text-white">AI-powered issue explanations</strong> and recommendations
+								</li>
+								<li>
+									<strong class="text-white">Built-in integrations</strong> with Google Search Console
+									(available now), GA4 and Microsoft Clarity (coming soon)
+								</li>
+								<li>
+									<strong class="text-white">CLI for local crawling</strong> coming soon for advanced
+									users
+								</li>
 							</ul>
-							<p class="italic">Think of Barracuda as <em>Screaming Frog + team dashboard + automation layer</em>.</p>
+							<p class="italic">
+								Think of Barracuda as <em>Screaming Frog + team dashboard + automation layer</em>.
+							</p>
 						</div>
 					{/if}
 				</div>
 
 				<!-- FAQ 2 -->
-				<div class="bg-[#2d2826] rounded-lg border border-white/10 overflow-hidden">
+				<div class="overflow-hidden rounded-lg border border-white/10 bg-[#2d2826]">
 					<button
-						class="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-[#3c3836] transition-colors"
+						class="flex w-full items-center justify-between px-6 py-5 text-left transition-colors hover:bg-[#3c3836]"
 						onclick={() => toggleItem(2)}
 					>
-						<h2 class="text-xl font-heading font-bold text-white pr-4">
+						<h2 class="pr-4 font-heading text-xl font-bold text-white">
 							How is Barracuda different from SEMrush and Ahrefs?
 						</h2>
 						<svg
-							class="w-5 h-5 text-[#8ec07c] flex-shrink-0 transition-transform {openItems[2] ? 'rotate-180' : ''}"
+							class="h-5 w-5 flex-shrink-0 text-[#8ec07c] transition-transform {openItems[2]
+								? 'rotate-180'
+								: ''}"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
 						>
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 9l-7 7-7-7"
+							/>
 						</svg>
 					</button>
 					{#if openItems[2]}
 						<div class="px-6 pb-5 text-white/80">
-							<p class="mb-4">SEMrush and Ahrefs run crawls on their servers, which means:</p>
-							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
+							<p class="mb-4">
+								<a
+									href="/blog/best-semrush-alternatives-2026"
+									class="text-[#8ec07c] underline hover:text-[#a0d28c]">SEMrush</a
+								>
+								and
+								<a
+									href="/blog/alternatives-to-ahrefs"
+									class="text-[#8ec07c] underline hover:text-[#a0d28c]">Ahrefs</a
+								> run crawls on their servers, which means:
+							</p>
+							<ul class="mb-4 ml-4 list-inside list-disc space-y-2">
 								<li>You have limited control over crawl behavior</li>
 								<li>Crawl speeds are throttled</li>
 								<li>You don't get raw crawl data</li>
@@ -150,156 +197,202 @@
 								<li>They may miss pages blocked to outside IPs</li>
 							</ul>
 							<p class="mb-4">Barracuda:</p>
-							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
+							<ul class="mb-4 ml-4 list-inside list-disc space-y-2">
 								<li>Runs <strong class="text-white">fast crawls via web dashboard</strong></li>
 								<li>Stores complete crawl datasets in the cloud</li>
 								<li>Has <strong class="text-white">no credits or crawl caps</strong></li>
 								<li>Mirrors what your site serves to <em>real browsers</em></li>
-								<li><strong class="text-white">CLI for local crawling</strong> coming soon for even more control</li>
+								<li>
+									<strong class="text-white">CLI for local crawling</strong> coming soon for even more
+									control
+								</li>
 							</ul>
-							<p class="font-semibold text-white">Barracuda is <em>your own crawler, your own infrastructure</em>.</p>
+							<p class="font-semibold text-white">
+								Barracuda is <em>your own crawler, your own infrastructure</em>.
+							</p>
 						</div>
 					{/if}
 				</div>
 
 				<!-- FAQ 3 -->
-				<div class="bg-[#2d2826] rounded-lg border border-white/10 overflow-hidden">
+				<div class="overflow-hidden rounded-lg border border-white/10 bg-[#2d2826]">
 					<button
-						class="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-[#3c3836] transition-colors"
+						class="flex w-full items-center justify-between px-6 py-5 text-left transition-colors hover:bg-[#3c3836]"
 						onclick={() => toggleItem(3)}
 					>
-						<h2 class="text-xl font-heading font-bold text-white pr-4">
+						<h2 class="pr-4 font-heading text-xl font-bold text-white">
 							Why choose Barracuda over Looker Studio dashboards?
 						</h2>
 						<svg
-							class="w-5 h-5 text-[#8ec07c] flex-shrink-0 transition-transform {openItems[3] ? 'rotate-180' : ''}"
+							class="h-5 w-5 flex-shrink-0 text-[#8ec07c] transition-transform {openItems[3]
+								? 'rotate-180'
+								: ''}"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
 						>
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 9l-7 7-7-7"
+							/>
 						</svg>
 					</button>
 					{#if openItems[3]}
 						<div class="px-6 pb-5 text-white/80">
-							<p class="mb-4">Looker Studio is excellent for reporting—but it can't crawl your site or diagnose SEO issues.</p>
+							<p class="mb-4">
+								Looker Studio is excellent for reporting—but it can't crawl your site or diagnose
+								SEO issues.
+							</p>
 							<p class="mb-4">Barracuda does:</p>
-							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
+							<ul class="mb-4 ml-4 list-inside list-disc space-y-2">
 								<li>Website crawling via web dashboard</li>
 								<li>SEO issue detection</li>
-								<li>Data collection from Google Search Console (available now), GA4 and Clarity (coming soon)</li>
+								<li>
+									Data collection from Google Search Console (available now), GA4 and Clarity
+									(coming soon)
+								</li>
 								<li>Dashboard generation automatically</li>
 								<li>Full issue prioritization and insights</li>
 							</ul>
 							<p class="mb-2">Looker Studio = reporting</p>
-							<p class="font-semibold text-white">Barracuda = crawling + diagnosing + reporting + recommendations</p>
+							<p class="font-semibold text-white">
+								Barracuda = crawling + diagnosing + reporting + recommendations
+							</p>
 						</div>
 					{/if}
 				</div>
 
 				<!-- FAQ 4 -->
-				<div class="bg-[#2d2826] rounded-lg border border-white/10 overflow-hidden">
+				<div class="overflow-hidden rounded-lg border border-white/10 bg-[#2d2826]">
 					<button
-						class="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-[#3c3836] transition-colors"
+						class="flex w-full items-center justify-between px-6 py-5 text-left transition-colors hover:bg-[#3c3836]"
 						onclick={() => toggleItem(4)}
 					>
-						<h2 class="text-xl font-heading font-bold text-white pr-4">
+						<h2 class="pr-4 font-heading text-xl font-bold text-white">
 							Does Barracuda replace my current SEO tools?
 						</h2>
 						<svg
-							class="w-5 h-5 text-[#8ec07c] flex-shrink-0 transition-transform {openItems[4] ? 'rotate-180' : ''}"
+							class="h-5 w-5 flex-shrink-0 text-[#8ec07c] transition-transform {openItems[4]
+								? 'rotate-180'
+								: ''}"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
 						>
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 9l-7 7-7-7"
+							/>
 						</svg>
 					</button>
 					{#if openItems[4]}
 						<div class="px-6 pb-5 text-white/80">
 							<p class="mb-4">Barracuda enhances your SEO stack without replacing everything.</p>
 							<p class="mb-2 font-semibold text-white">Replaces:</p>
-							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
+							<ul class="mb-4 ml-4 list-inside list-disc space-y-2">
 								<li>Screaming Frog for most audits (CLI coming soon)</li>
 								<li>Manual CSV exports</li>
 								<li>Custom Looker Studio builds</li>
 								<li>GA4/GSC spreadsheet workflows</li>
 							</ul>
 							<p class="mb-2 font-semibold text-white">Integrates with:</p>
-							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
+							<ul class="mb-4 ml-4 list-inside list-disc space-y-2">
 								<li>Google Search Console (available now)</li>
 								<li>Google Analytics 4 (coming soon)</li>
 								<li>Microsoft Clarity (coming soon)</li>
 							</ul>
 							<p class="mb-2 font-semibold text-white">Complements:</p>
-							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
+							<ul class="mb-4 ml-4 list-inside list-disc space-y-2">
 								<li>SEMrush/Ahrefs for keyword research</li>
 							</ul>
-							<p class="font-semibold text-white">Barracuda becomes your <em>technical SEO command center</em>.</p>
+							<p class="font-semibold text-white">
+								Barracuda becomes your <em>technical SEO command center</em>.
+							</p>
 						</div>
 					{/if}
 				</div>
 
 				<!-- FAQ 5 -->
-				<div class="bg-[#2d2826] rounded-lg border border-white/10 overflow-hidden">
+				<div class="overflow-hidden rounded-lg border border-white/10 bg-[#2d2826]">
 					<button
-						class="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-[#3c3836] transition-colors"
+						class="flex w-full items-center justify-between px-6 py-5 text-left transition-colors hover:bg-[#3c3836]"
 						onclick={() => toggleItem(5)}
 					>
-						<h2 class="text-xl font-heading font-bold text-white pr-4">
+						<h2 class="pr-4 font-heading text-xl font-bold text-white">
 							How fast is the Barracuda crawler?
 						</h2>
 						<svg
-							class="w-5 h-5 text-[#8ec07c] flex-shrink-0 transition-transform {openItems[5] ? 'rotate-180' : ''}"
+							class="h-5 w-5 flex-shrink-0 text-[#8ec07c] transition-transform {openItems[5]
+								? 'rotate-180'
+								: ''}"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
 						>
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 9l-7 7-7-7"
+							/>
 						</svg>
 					</button>
 					{#if openItems[5]}
 						<div class="px-6 pb-5 text-white/80">
 							<p class="mb-4">Barracuda's web-based crawler is optimized for speed:</p>
-							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
+							<ul class="mb-4 ml-4 list-inside list-disc space-y-2">
 								<li>Concurrent crawling with intelligent rate limiting</li>
 								<li>Efficient robots.txt and sitemap handling</li>
 								<li>Cloud infrastructure for fast processing</li>
 								<li>Real-time progress tracking</li>
 							</ul>
 							<p class="mb-2">For even faster local crawling, our CLI (coming soon) will offer:</p>
-							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
+							<ul class="mb-4 ml-4 list-inside list-disc space-y-2">
 								<li>Go-based worker-pool engine</li>
 								<li>Direct local processing</li>
-								<li>Expected speed: <strong class="text-white">100–500 pages/min</strong>, depending on target site performance</li>
+								<li>
+									Expected speed: <strong class="text-white">100–500 pages/min</strong>, depending
+									on target site performance
+								</li>
 							</ul>
 						</div>
 					{/if}
 				</div>
 
 				<!-- FAQ 6 -->
-				<div class="bg-[#2d2826] rounded-lg border border-white/10 overflow-hidden">
+				<div class="overflow-hidden rounded-lg border border-white/10 bg-[#2d2826]">
 					<button
-						class="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-[#3c3836] transition-colors"
+						class="flex w-full items-center justify-between px-6 py-5 text-left transition-colors hover:bg-[#3c3836]"
 						onclick={() => toggleItem(6)}
 					>
-						<h2 class="text-xl font-heading font-bold text-white pr-4">
+						<h2 class="pr-4 font-heading text-xl font-bold text-white">
 							What makes Barracuda's issue detection unique?
 						</h2>
 						<svg
-							class="w-5 h-5 text-[#8ec07c] flex-shrink-0 transition-transform {openItems[6] ? 'rotate-180' : ''}"
+							class="h-5 w-5 flex-shrink-0 text-[#8ec07c] transition-transform {openItems[6]
+								? 'rotate-180'
+								: ''}"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
 						>
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 9l-7 7-7-7"
+							/>
 						</svg>
 					</button>
 					{#if openItems[6]}
 						<div class="px-6 pb-5 text-white/80">
 							<p class="mb-4">Most crawlers simply report raw issues.</p>
 							<p class="mb-4">Barracuda:</p>
-							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
+							<ul class="mb-4 ml-4 list-inside list-disc space-y-2">
 								<li>Detects issues</li>
 								<li>Prioritizes them by severity + impact</li>
 								<li>Groups them by URL structure</li>
@@ -312,27 +405,34 @@
 				</div>
 
 				<!-- FAQ 7 -->
-				<div class="bg-[#2d2826] rounded-lg border border-white/10 overflow-hidden">
+				<div class="overflow-hidden rounded-lg border border-white/10 bg-[#2d2826]">
 					<button
-						class="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-[#3c3836] transition-colors"
+						class="flex w-full items-center justify-between px-6 py-5 text-left transition-colors hover:bg-[#3c3836]"
 						onclick={() => toggleItem(7)}
 					>
-						<h2 class="text-xl font-heading font-bold text-white pr-4">
+						<h2 class="pr-4 font-heading text-xl font-bold text-white">
 							What can I do in the Barracuda Cloud Workspace?
 						</h2>
 						<svg
-							class="w-5 h-5 text-[#8ec07c] flex-shrink-0 transition-transform {openItems[7] ? 'rotate-180' : ''}"
+							class="h-5 w-5 flex-shrink-0 text-[#8ec07c] transition-transform {openItems[7]
+								? 'rotate-180'
+								: ''}"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
 						>
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 9l-7 7-7-7"
+							/>
 						</svg>
 					</button>
 					{#if openItems[7]}
 						<div class="px-6 pb-5 text-white/80">
 							<p class="mb-4">The dashboard lets you:</p>
-							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
+							<ul class="mb-4 ml-4 list-inside list-disc space-y-2">
 								<li>Save historical crawls</li>
 								<li>Compare issues over time</li>
 								<li>Invite team members</li>
@@ -348,41 +448,46 @@
 				</div>
 
 				<!-- FAQ 9 -->
-				<div class="bg-[#2d2826] rounded-lg border border-white/10 overflow-hidden">
+				<div class="overflow-hidden rounded-lg border border-white/10 bg-[#2d2826]">
 					<button
-						class="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-[#3c3836] transition-colors"
+						class="flex w-full items-center justify-between px-6 py-5 text-left transition-colors hover:bg-[#3c3836]"
 						onclick={() => toggleItem(9)}
 					>
-						<h2 class="text-xl font-heading font-bold text-white pr-4">
-							How does billing work?
-						</h2>
+						<h2 class="pr-4 font-heading text-xl font-bold text-white">How does billing work?</h2>
 						<svg
-							class="w-5 h-5 text-[#8ec07c] flex-shrink-0 transition-transform {openItems[9] ? 'rotate-180' : ''}"
+							class="h-5 w-5 flex-shrink-0 text-[#8ec07c] transition-transform {openItems[9]
+								? 'rotate-180'
+								: ''}"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
 						>
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 9l-7 7-7-7"
+							/>
 						</svg>
 					</button>
 					{#if openItems[9]}
 						<div class="px-6 pb-5 text-white/80">
 							<p class="mb-4 font-semibold text-white">No credits. No crawl caps.</p>
 							<p class="mb-2 font-semibold text-white">Free tier:</p>
-							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
+							<ul class="mb-4 ml-4 list-inside list-disc space-y-2">
 								<li>100-page crawl limit</li>
 								<li>Issues only (no recommendations)</li>
 								<li>No integrations</li>
 							</ul>
 							<p class="mb-2 font-semibold text-white">Pro tier:</p>
-							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
+							<ul class="mb-4 ml-4 list-inside list-disc space-y-2">
 								<li>Unlimited crawls (via CLI—coming soon)</li>
 								<li>Full recommendations</li>
 								<li>All integrations</li>
 								<li>Priority scoring</li>
 							</ul>
 							<p class="mb-2 font-semibold text-white">Team add-ons:</p>
-							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
+							<ul class="mb-4 ml-4 list-inside list-disc space-y-2">
 								<li>Multi-user support for agencies and in-house teams</li>
 							</ul>
 							<p>Billing uses secure Stripe subscriptions.</p>
@@ -391,27 +496,34 @@
 				</div>
 
 				<!-- FAQ 10 -->
-				<div class="bg-[#2d2826] rounded-lg border border-white/10 overflow-hidden">
+				<div class="overflow-hidden rounded-lg border border-white/10 bg-[#2d2826]">
 					<button
-						class="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-[#3c3836] transition-colors"
+						class="flex w-full items-center justify-between px-6 py-5 text-left transition-colors hover:bg-[#3c3836]"
 						onclick={() => toggleItem(10)}
 					>
-						<h2 class="text-xl font-heading font-bold text-white pr-4">
+						<h2 class="pr-4 font-heading text-xl font-bold text-white">
 							Who is Barracuda designed for?
 						</h2>
 						<svg
-							class="w-5 h-5 text-[#8ec07c] flex-shrink-0 transition-transform {openItems[10] ? 'rotate-180' : ''}"
+							class="h-5 w-5 flex-shrink-0 text-[#8ec07c] transition-transform {openItems[10]
+								? 'rotate-180'
+								: ''}"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
 						>
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 9l-7 7-7-7"
+							/>
 						</svg>
 					</button>
 					{#if openItems[10]}
 						<div class="px-6 pb-5 text-white/80">
 							<p class="mb-4">Barracuda is ideal for:</p>
-							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
+							<ul class="mb-4 ml-4 list-inside list-disc space-y-2">
 								<li>SEO agencies</li>
 								<li>Freelancers</li>
 								<li>In-house SEO teams</li>
@@ -426,27 +538,34 @@
 				</div>
 
 				<!-- FAQ 11 -->
-				<div class="bg-[#2d2826] rounded-lg border border-white/10 overflow-hidden">
+				<div class="overflow-hidden rounded-lg border border-white/10 bg-[#2d2826]">
 					<button
-						class="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-[#3c3836] transition-colors"
+						class="flex w-full items-center justify-between px-6 py-5 text-left transition-colors hover:bg-[#3c3836]"
 						onclick={() => toggleItem(11)}
 					>
-						<h2 class="text-xl font-heading font-bold text-white pr-4">
+						<h2 class="pr-4 font-heading text-xl font-bold text-white">
 							Does Barracuda support team accounts?
 						</h2>
 						<svg
-							class="w-5 h-5 text-[#8ec07c] flex-shrink-0 transition-transform {openItems[11] ? 'rotate-180' : ''}"
+							class="h-5 w-5 flex-shrink-0 text-[#8ec07c] transition-transform {openItems[11]
+								? 'rotate-180'
+								: ''}"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
 						>
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 9l-7 7-7-7"
+							/>
 						</svg>
 					</button>
 					{#if openItems[11]}
 						<div class="px-6 pb-5 text-white/80">
 							<p class="mb-4">Yes. You can:</p>
-							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
+							<ul class="mb-4 ml-4 list-inside list-disc space-y-2">
 								<li>Invite collaborators</li>
 								<li>Assign roles</li>
 								<li>Share projects</li>
@@ -459,34 +578,49 @@
 				</div>
 
 				<!-- FAQ 12 -->
-				<div class="bg-[#2d2826] rounded-lg border border-white/10 overflow-hidden">
+				<div class="overflow-hidden rounded-lg border border-white/10 bg-[#2d2826]">
 					<button
-						class="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-[#3c3836] transition-colors"
+						class="flex w-full items-center justify-between px-6 py-5 text-left transition-colors hover:bg-[#3c3836]"
 						onclick={() => toggleItem(12)}
 					>
-						<h2 class="text-xl font-heading font-bold text-white pr-4">
+						<h2 class="pr-4 font-heading text-xl font-bold text-white">
 							What features are coming soon?
 						</h2>
 						<svg
-							class="w-5 h-5 text-[#8ec07c] flex-shrink-0 transition-transform {openItems[12] ? 'rotate-180' : ''}"
+							class="h-5 w-5 flex-shrink-0 text-[#8ec07c] transition-transform {openItems[12]
+								? 'rotate-180'
+								: ''}"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
 						>
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 9l-7 7-7-7"
+							/>
 						</svg>
 					</button>
 					{#if openItems[12]}
 						<div class="px-6 pb-5 text-white/80">
 							<p class="mb-4">Our roadmap includes:</p>
-							<ul class="list-disc list-inside space-y-2 mb-4 ml-4">
+							<ul class="mb-4 ml-4 list-inside list-disc space-y-2">
 								<li><strong class="text-white">Full CLI release</strong> for local crawls</li>
-								<li><strong class="text-white">AI-powered issue explanations & fix recommendations</strong></li>
+								<li>
+									<strong class="text-white"
+										>AI-powered issue explanations & fix recommendations</strong
+									>
+								</li>
 								<li><strong class="text-white">Slack + email audit summaries</strong></li>
 								<li><strong class="text-white">Google Drive auto-sync</strong></li>
 								<li><strong class="text-white">GA4/GSC blended insights</strong></li>
 								<li><strong class="text-white">Template-level issue clustering</strong></li>
-								<li><strong class="text-white">Automated priority scoring using traffic + crawl data</strong></li>
+								<li>
+									<strong class="text-white"
+										>Automated priority scoring using traffic + crawl data</strong
+									>
+								</li>
 							</ul>
 							<p>Barracuda is rapidly evolving to give you an end-to-end technical SEO workflow.</p>
 						</div>
@@ -496,12 +630,15 @@
 
 			<!-- CTA Section -->
 			<div class="mt-12 text-center">
-				<p class="text-lg text-white/80 mb-6">
-					Still have questions? Check out our <a href="/roadmap" class="text-[#8ec07c] hover:text-[#a0d28c] underline">product roadmap</a>.
+				<p class="mb-6 text-lg text-white/80">
+					Still have questions? Check out our <a
+						href="/roadmap"
+						class="text-[#8ec07c] underline hover:text-[#a0d28c]">product roadmap</a
+					>.
 				</p>
 				<a
 					href="https://app.barracudaseo.com"
-					class="inline-block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-4 rounded-lg font-medium text-lg transition-colors"
+					class="inline-block rounded-lg bg-[#8ec07c] px-8 py-4 text-lg font-medium text-[#3c3836] transition-colors hover:bg-[#a0d28c]"
 					target="_blank"
 					rel="noopener noreferrer"
 					onclick={handleFAQSignupClick}
@@ -512,4 +649,3 @@
 		</div>
 	</div>
 </section>
-

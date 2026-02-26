@@ -53,13 +53,6 @@
 	}
 </script>
 
-<a
-	{...restProps}
-	{href}
-	class={className}
-	{target}
-	{rel}
-	onclick={handleClick}
->
+<a {...restProps} {href} class={className} {target} {rel} onclick={handleClick}>
 	{@render children()}
 </a>

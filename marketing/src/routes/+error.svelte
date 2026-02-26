@@ -10,7 +10,9 @@
 	let { error, status }: { error: Error; status: number } = $props();
 
 	const is404 = $derived(status === 404);
-	const pageTitle = $derived(is404 ? 'Page Not Found - Barracuda SEO' : `Error ${status} - Barracuda SEO`);
+	const pageTitle = $derived(
+		is404 ? 'Page Not Found - Barracuda SEO' : `Error ${status} - Barracuda SEO`
+	);
 	const pageDescription = $derived(
 		is404
 			? "The page you're looking for doesn't exist. Return to Barracuda SEO homepage or explore our features."
@@ -42,80 +44,98 @@
 
 <MetaTags config={meta} />
 
-<section class="min-h-[70vh] flex items-center justify-center bg-gradient-to-b from-[#3c3836] via-[#8ec07c]/20 to-[#3c3836] py-20 px-4">
-	<div class="text-center max-w-2xl mx-auto">
-		<div class="flex items-center justify-center gap-4 mb-6">
-			<div class="p-4 bg-[#8ec07c]/10 rounded-full">
+<section
+	class="flex min-h-[70vh] items-center justify-center bg-gradient-to-b from-[#3c3836] via-[#8ec07c]/20 to-[#3c3836] px-4 py-20"
+>
+	<div class="mx-auto max-w-2xl text-center">
+		<div class="mb-6 flex items-center justify-center gap-4">
+			<div class="rounded-full bg-[#8ec07c]/10 p-4">
 				{#if is404}
-					<Search class="w-12 h-12 text-[#8ec07c]" />
+					<Search class="h-12 w-12 text-[#8ec07c]" />
 				{:else}
-					<AlertCircle class="w-12 h-12 text-[#d79921]" />
+					<AlertCircle class="h-12 w-12 text-[#d79921]" />
 				{/if}
 			</div>
 		</div>
 
-		<h1 class="text-6xl md:text-7xl font-heading font-bold mb-4 text-white">
+		<h1 class="mb-4 font-heading text-6xl font-bold text-white md:text-7xl">
 			{status}
 		</h1>
 
 		{#if is404}
-			<h2 class="text-3xl md:text-4xl font-heading font-bold mb-4 text-white">
-				Page Not Found
-			</h2>
-			<p class="text-xl text-white/80 mb-8">
+			<h2 class="mb-4 font-heading text-3xl font-bold text-white md:text-4xl">Page Not Found</h2>
+			<p class="mb-8 text-xl text-white/80">
 				The page you're looking for doesn't exist or has been moved.
 			</p>
 		{:else}
-			<h2 class="text-3xl md:text-4xl font-heading font-bold mb-4 text-white">
+			<h2 class="mb-4 font-heading text-3xl font-bold text-white md:text-4xl">
 				Something Went Wrong
 			</h2>
-			<p class="text-xl text-white/80 mb-8">
+			<p class="mb-8 text-xl text-white/80">
 				{error?.message || 'An unexpected error occurred. Please try again.'}
 			</p>
 		{/if}
 
-		<div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+		<div class="mb-12 flex flex-col justify-center gap-4 sm:flex-row">
 			<a
 				href="/"
-				class="inline-flex items-center justify-center gap-2 bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-4 rounded-lg font-medium text-lg transition-colors"
+				class="inline-flex items-center justify-center gap-2 rounded-lg bg-[#8ec07c] px-8 py-4 text-lg font-medium text-[#3c3836] transition-colors hover:bg-[#a0d28c]"
 			>
-				<Home class="w-5 h-5" />
+				<Home class="h-5 w-5" />
 				Go Home
 			</a>
 			<button
 				onclick={() => window.history.back()}
-				class="inline-flex items-center justify-center gap-2 border-2 border-white/20 hover:border-[#8ec07c] text-white px-8 py-4 rounded-lg font-medium text-lg transition-colors"
+				class="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-white/20 px-8 py-4 text-lg font-medium text-white transition-colors hover:border-[#8ec07c]"
 			>
-				<ArrowLeft class="w-5 h-5" />
+				<ArrowLeft class="h-5 w-5" />
 				Go Back
 			</button>
 		</div>
 
 		{#if is404}
-			<div class="bg-[#2d2826] rounded-lg p-6 border border-white/10 text-left">
-				<h3 class="text-lg font-heading font-bold mb-4 text-white">Popular Pages</h3>
-				<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-					<a href="/features" class="text-white/70 hover:text-[#8ec07c] transition-colors flex items-center gap-2">
+			<div class="rounded-lg border border-white/10 bg-[#2d2826] p-6 text-left">
+				<h3 class="mb-4 font-heading text-lg font-bold text-white">Popular Pages</h3>
+				<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+					<a
+						href="/features"
+						class="flex items-center gap-2 text-white/70 transition-colors hover:text-[#8ec07c]"
+					>
 						<span>→</span>
 						<span>Features</span>
 					</a>
-					<a href="/pricing" class="text-white/70 hover:text-[#8ec07c] transition-colors flex items-center gap-2">
+					<a
+						href="/pricing"
+						class="flex items-center gap-2 text-white/70 transition-colors hover:text-[#8ec07c]"
+					>
 						<span>→</span>
 						<span>Pricing</span>
 					</a>
-					<a href="/about" class="text-white/70 hover:text-[#8ec07c] transition-colors flex items-center gap-2">
+					<a
+						href="/about"
+						class="flex items-center gap-2 text-white/70 transition-colors hover:text-[#8ec07c]"
+					>
 						<span>→</span>
 						<span>About</span>
 					</a>
-					<a href="/faq" class="text-white/70 hover:text-[#8ec07c] transition-colors flex items-center gap-2">
+					<a
+						href="/faq"
+						class="flex items-center gap-2 text-white/70 transition-colors hover:text-[#8ec07c]"
+					>
 						<span>→</span>
 						<span>FAQ</span>
 					</a>
-					<a href="/use-cases/e-commerce" class="text-white/70 hover:text-[#8ec07c] transition-colors flex items-center gap-2">
+					<a
+						href="/use-cases/e-commerce"
+						class="flex items-center gap-2 text-white/70 transition-colors hover:text-[#8ec07c]"
+					>
 						<span>→</span>
 						<span>E-commerce SEO</span>
 					</a>
-					<a href="/use-cases/local-seo" class="text-white/70 hover:text-[#8ec07c] transition-colors flex items-center gap-2">
+					<a
+						href="/use-cases/local-seo"
+						class="flex items-center gap-2 text-white/70 transition-colors hover:text-[#8ec07c]"
+					>
 						<span>→</span>
 						<span>Local SEO</span>
 					</a>

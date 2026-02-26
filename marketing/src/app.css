@@ -19,7 +19,7 @@
 	--color-primary-focus: #a0d28c;
 	--color-neutral: #1d1d1d;
 	--color-base-100: #1d1d1d;
-	--color-base-content: #FFFFFF;
+	--color-base-content: #ffffff;
 	--color-info: #458588;
 	--color-success: #8ec07c;
 	--color-warning: #d79921;
@@ -36,7 +36,12 @@ body {
 	color: var(--color-base-content);
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
 	font-family: var(--font-heading);
 }
 

@@ -20,11 +20,15 @@
 
 <div
 	class="bg-[#2d2826] {width} {height} {rounded ? 'rounded-lg' : ''} {className}"
-	style={style}
+	{style}
 	role="status"
 	aria-label="Loading image..."
 >
-	<div class="w-full h-full bg-gradient-to-r from-[#2d2826] via-[#3c3836] to-[#2d2826] bg-[length:200%_100%] animate-shimmer {rounded ? 'rounded-lg' : ''}"></div>
+	<div
+		class="animate-shimmer h-full w-full bg-gradient-to-r from-[#2d2826] via-[#3c3836] to-[#2d2826] bg-[length:200%_100%] {rounded
+			? 'rounded-lg'
+			: ''}"
+	></div>
 </div>
 
 <style>

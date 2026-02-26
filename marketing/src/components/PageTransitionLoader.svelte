@@ -5,14 +5,11 @@
 
 {#if browser && $navigating}
 	<div
-		class="fixed top-0 left-0 right-0 h-1 bg-[#2d2826] z-50"
+		class="fixed top-0 right-0 left-0 z-50 h-1 bg-[#2d2826]"
 		role="progressbar"
 		aria-label="Loading page..."
 	>
-		<div
-			class="h-full bg-[#8ec07c] animate-progress"
-			style="width: 100%"
-		></div>
+		<div class="animate-progress h-full bg-[#8ec07c]" style="width: 100%"></div>
 	</div>
 {/if}
 

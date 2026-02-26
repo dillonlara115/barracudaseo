@@ -13,20 +13,24 @@
 		}
 		return pathname;
 	};
-	
+
 	// Build full URL for canonical and OG tags (normalized)
 	const fullUrl = $derived(`${SITE_URL}${normalizePath($page.url.pathname)}`);
 	const ogImage = $derived(
-		config.ogImage 
-			? (config.ogImage.startsWith('http') ? config.ogImage : `${SITE_URL}${config.ogImage}`)
+		config.ogImage
+			? config.ogImage.startsWith('http')
+				? config.ogImage
+				: `${SITE_URL}${config.ogImage}`
 			: `${SITE_URL}/mockups/barracuda-dashboard.png`
 	);
-	
+
 	// Handle structured data (can be single object or array)
 	const structuredDataArray = $derived(
-		Array.isArray(config.structuredData) 
-			? config.structuredData 
-			: config.structuredData ? [config.structuredData] : []
+		Array.isArray(config.structuredData)
+			? config.structuredData
+			: config.structuredData
+				? [config.structuredData]
+				: []
 	);
 </script>
 
@@ -36,7 +40,7 @@
 	<meta name="title" content={config.title} />
 	<meta name="description" content={config.description} />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	
+
 	<!-- Canonical URL -->
 	<link rel="canonical" href={fullUrl} />
 

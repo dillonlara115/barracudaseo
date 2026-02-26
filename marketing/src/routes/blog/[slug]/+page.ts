@@ -11,7 +11,7 @@ export async function load({ params }) {
 	// Get related posts (excluding current post)
 	const allPosts = getAllBlogPosts();
 	const relatedPosts = allPosts
-		.filter(p => p.slug !== params.slug && p.category === post.category)
+		.filter((p) => p.slug !== params.slug && p.category === post.category)
 		.slice(0, 3);
 
 	return {
@@ -23,5 +23,5 @@ export async function load({ params }) {
 // Generate static paths for all blog posts at build time
 export async function entries() {
 	const posts = getAllBlogPosts();
-	return posts.map(post => ({ slug: post.slug }));
+	return posts.map((post) => ({ slug: post.slug }));
 }

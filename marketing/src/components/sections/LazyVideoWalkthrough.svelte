@@ -50,41 +50,45 @@
 	}
 </script>
 
-<section class="pt-12 pb-20 bg-[#3c3836]">
+<section class="bg-[#3c3836] pt-12 pb-20">
 	<div class="container mx-auto px-4">
-		<div class="text-center mb-8">
-			<h2 class="text-4xl md:text-5xl font-heading font-bold mb-4 text-white">
+		<div class="mb-8 text-center">
+			<h2 class="mb-4 font-heading text-4xl font-bold text-white md:text-5xl">
 				See Barracuda SEO in Action
 			</h2>
-			<p class="text-xl text-white/70 max-w-2xl mx-auto">
+			<p class="mx-auto max-w-2xl text-xl text-white/70">
 				Watch how Barracuda helps you discover, analyze, and fix SEO issues quickly
 			</p>
 		</div>
-		<div class="max-w-5xl mx-auto" bind:this={containerRef}>
+		<div class="mx-auto max-w-5xl" bind:this={containerRef}>
 			<div class="relative" style="padding-bottom: 53.57894736842105%; height: 0;">
 				{#if !iframeLoaded}
 					<!-- Thumbnail placeholder with play button -->
 					<button
 						type="button"
-						class="absolute inset-0 rounded-lg shadow-2xl overflow-hidden bg-[#2d2826] cursor-pointer group border-0 p-0 w-full h-full focus:outline-none focus:ring-2 focus:ring-[#8ec07c] focus:ring-offset-2"
+						class="group absolute inset-0 h-full w-full cursor-pointer overflow-hidden rounded-lg border-0 bg-[#2d2826] p-0 shadow-2xl focus:ring-2 focus:ring-[#8ec07c] focus:ring-offset-2 focus:outline-none"
 						onclick={loadIframe}
 						aria-label="Play Barracuda SEO Video Walkthrough"
 					>
 						<img
 							src={LOOM_THUMBNAIL}
 							alt="Barracuda SEO Video Walkthrough"
-							class="w-full h-full object-cover"
+							class="h-full w-full object-cover"
 							loading="lazy"
 							decoding="async"
 						/>
-						<div class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
-							<div class="w-20 h-20 bg-[#8ec07c] rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
-								<Play class="w-10 h-10 text-[#3c3836] ml-1" fill="currentColor" />
+						<div
+							class="absolute inset-0 flex items-center justify-center bg-black/20 transition-colors group-hover:bg-black/30"
+						>
+							<div
+								class="flex h-20 w-20 items-center justify-center rounded-full bg-[#8ec07c] shadow-2xl transition-transform group-hover:scale-110"
+							>
+								<Play class="ml-1 h-10 w-10 text-[#3c3836]" fill="currentColor" />
 							</div>
 						</div>
 					</button>
 				{/if}
-				
+
 				{#if iframeLoaded}
 					<!-- Load iframe only when user clicks or scrolls near -->
 					<iframe
@@ -95,7 +99,7 @@
 						allowfullscreen
 						title="Barracuda SEO Video Walkthrough - See how Barracuda helps you discover, analyze, and fix SEO issues"
 						loading="lazy"
-						class="absolute top-0 left-0 w-full h-full rounded-lg shadow-2xl"
+						class="absolute top-0 left-0 h-full w-full rounded-lg shadow-2xl"
 					></iframe>
 				{/if}
 			</div>

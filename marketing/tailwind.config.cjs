@@ -5,9 +5,7 @@ const daisyui = require('daisyui');
 module.exports = {
 	...shared,
 	content: ['./src/**/*.{svelte,js,ts}'],
-	plugins: [
-		daisyui
-	],
+	plugins: [daisyui],
 	daisyui: {
 		themes: [
 			{
@@ -33,4 +31,3 @@ module.exports = {
 		themeRoot: ':root'
 	}
 };
-

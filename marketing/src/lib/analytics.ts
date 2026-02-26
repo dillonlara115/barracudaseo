@@ -70,13 +70,7 @@ export function trackCTA(
 /**
  * Track a signup link click (primary conversion)
  */
-export function trackSignup(
-	options?: {
-		source?: string;
-		location?: string;
-		plan?: string;
-	}
-) {
+export function trackSignup(options?: { source?: string; location?: string; plan?: string }) {
 	trackEvent('signup_click', {
 		category: 'conversion',
 		action: 'signup_click',

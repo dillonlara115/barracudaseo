@@ -1,6 +1,6 @@
 # Barracuda Team Accounts & Pricing Add-on Proposal
 
-*Last updated: {{today}}*
+_Last updated: {{today}}_
 
 ## 1. Overview
 
@@ -14,20 +14,20 @@ The team functionality should integrate seamlessly with **Supabase Auth** and **
 
 ### Core Capabilities
 
-* **Shared Project Access**: Multiple users can view and collaborate on the same projects.
-* **Role-Based Permissions**:
+- **Shared Project Access**: Multiple users can view and collaborate on the same projects.
+- **Role-Based Permissions**:
+  - **Owner**: Full permissions, including billing, invitations, and project deletion.
+  - **Editor**: Can trigger crawls, manage issues, and view recommendations.
+  - **Viewer**: Read-only access to dashboard and reports.
 
-  * **Owner**: Full permissions, including billing, invitations, and project deletion.
-  * **Editor**: Can trigger crawls, manage issues, and view recommendations.
-  * **Viewer**: Read-only access to dashboard and reports.
-* **Project Sharing**: Invite users by email via Supabase Auth.
-* **Audit Logs (Future)**: Track who triggered crawls, added notes, or changed statuses.
+- **Project Sharing**: Invite users by email via Supabase Auth.
+- **Audit Logs (Future)**: Track who triggered crawls, added notes, or changed statuses.
 
 ### Collaboration UX
 
-* In the dashboard sidebar, a new **Team** tab lists all members with role and status.
-* Owners can invite or remove members directly from the UI.
-* Editors and viewers receive email invites and authenticate via Supabase.
+- In the dashboard sidebar, a new **Team** tab lists all members with role and status.
+- Owners can invite or remove members directly from the UI.
+- Editors and viewers receive email invites and authenticate via Supabase.
 
 ---
 
@@ -46,15 +46,15 @@ The team functionality should integrate seamlessly with **Supabase Auth** and **
 
 **Advantages:**
 
-* Flexible scaling for small teams.
-* Simple Stripe integration (base plan + quantity add-on).
-* Encourages upgrades from solo users.
+- Flexible scaling for small teams.
+- Simple Stripe integration (base plan + quantity add-on).
+- Encourages upgrades from solo users.
 
 **Technical Implementation:**
 
-* Store `team_size` and `subscription_tier` in Supabase.
-* Use Stripe `quantity` pricing for seat-based billing.
-* Limit active users per project based on plan.
+- Store `team_size` and `subscription_tier` in Supabase.
+- Use Stripe `quantity` pricing for seat-based billing.
+- Limit active users per project based on plan.
 
 ### Option B: Separate Team Plan
 
@@ -77,21 +77,21 @@ E.g., $0.10 per 1,000 pages crawled + $5 per user/month.
 
 **Supabase Tables**:
 
-* `projects`: Defines ownership and settings.
-* `project_members`: Stores member roles and invites.
-* `profiles`: Stores user metadata (name, avatar, plan, etc.).
+- `projects`: Defines ownership and settings.
+- `project_members`: Stores member roles and invites.
+- `profiles`: Stores user metadata (name, avatar, plan, etc.).
 
 **Endpoints (Cloud Run API):**
 
-* `POST /api/v1/projects/:id/invite` → Invite user to project.
-* `PATCH /api/v1/project_members/:id` → Update role.
-* `DELETE /api/v1/project_members/:id` → Remove member.
+- `POST /api/v1/projects/:id/invite` → Invite user to project.
+- `PATCH /api/v1/project_members/:id` → Update role.
+- `DELETE /api/v1/project_members/:id` → Remove member.
 
 **UI Components:**
 
-* `TeamPanel.svelte` → Display team members, roles, invites.
-* `InviteMemberModal.svelte` → Send invites.
-* `RoleBadge.svelte` → Display permissions visually.
+- `TeamPanel.svelte` → Display team members, roles, invites.
+- `InviteMemberModal.svelte` → Send invites.
+- `RoleBadge.svelte` → Display permissions visually.
 
 ---
 
@@ -99,15 +99,15 @@ E.g., $0.10 per 1,000 pages crawled + $5 per user/month.
 
 **Implementation:**
 
-* Stripe integration with seat-based pricing (via `quantity` parameter).
-* Billing portal accessible only to project owners.
-* Supabase webhook updates team size on successful payment events.
+- Stripe integration with seat-based pricing (via `quantity` parameter).
+- Billing portal accessible only to project owners.
+- Supabase webhook updates team size on successful payment events.
 
 **Environment Variables:**
 
-* `STRIPE_PRICE_PRO` → Base price.
-* `STRIPE_PRICE_TEAM_ADDON` → Per-seat price.
-* `STRIPE_WEBHOOK_SECRET` → Verifies billing events.
+- `STRIPE_PRICE_PRO` → Base price.
+- `STRIPE_PRICE_TEAM_ADDON` → Per-seat price.
+- `STRIPE_WEBHOOK_SECRET` → Verifies billing events.
 
 ---
 
@@ -123,10 +123,10 @@ E.g., $0.10 per 1,000 pages crawled + $5 per user/month.
 
 ## 7. Future Enhancements
 
-* **Audit trail**: Record team activity (who changed what and when).
-* **Notes & comments**: Allow commenting on issues.
-* **Slack integration**: Notify team channels when new crawls or issues are created.
-* **Team analytics**: Track crawl performance across projects.
+- **Audit trail**: Record team activity (who changed what and when).
+- **Notes & comments**: Allow commenting on issues.
+- **Slack integration**: Notify team channels when new crawls or issues are created.
+- **Team analytics**: Track crawl performance across projects.
 
 ---
 

@@ -6,30 +6,32 @@
 		<link rel="icon" type="image/png" sizes="16x16" href="%sveltekit.assets%/favicon-16x16.png" />
 		<link rel="shortcut icon" href="%sveltekit.assets%/favicon.ico" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		
+
 		<!-- Performance: Preconnect to external domains (defer Loom until needed) -->
 		<link rel="dns-prefetch" href="https://www.googletagmanager.com" />
-		
+
 		<!-- Google tag (gtag.js) - Defer to improve initial load -->
 		<script>
 			// Defer GA loading until after page is interactive
 			window.dataLayer = window.dataLayer || [];
-			function gtag(){dataLayer.push(arguments);}
-			
+			function gtag() {
+				dataLayer.push(arguments);
+			}
+
 			// Load GA after a short delay to prioritize page content
-			setTimeout(function() {
+			setTimeout(function () {
 				var script = document.createElement('script');
 				script.async = true;
 				script.src = 'https://www.googletagmanager.com/gtag/js?id=G-B9442HLM46';
 				document.head.appendChild(script);
-				
-				script.onload = function() {
+
+				script.onload = function () {
 					gtag('js', new Date());
 					gtag('config', 'G-B9442HLM46');
 				};
 			}, 100);
 		</script>
-		
+
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

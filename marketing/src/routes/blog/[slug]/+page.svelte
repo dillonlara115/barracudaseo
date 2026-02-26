@@ -1,9 +1,7 @@
 <script lang="ts">
 	import MetaTags from '../../../components/MetaTags.svelte';
-	import { getMetaTags, getBreadcrumbSchema, getArticleSchema } from '$lib/meta';
-	import { SITE_URL } from '$lib/constants';
-	import { Calendar, Clock, ArrowLeft, ArrowRight, Tag } from '@lucide/svelte';
-	import { page } from '$app/stores';
+	import { getMetaTags, getBreadcrumbSchema, getArticleSchema, getHowToSchema } from '$lib/meta';
+	import { Calendar, Clock, ArrowLeft, Tag } from '@lucide/svelte';
 	import { trackCTA } from '$lib/analytics';
 	import { blogContent } from '$lib/blog-content';
 
@@ -36,6 +34,42 @@
 		})
 	];
 
+	if (post.slug === 'find-declining-pages-google-search-console') {
+		structuredData.push(
+			getHowToSchema({
+				name: 'How to Find Declining Pages in Google Search Console',
+				description:
+					'Step-by-step guide to finding and analyzing declining pages using GSC data comparison.',
+				steps: [
+					{
+						name: 'Open GSC and navigate to Search Results',
+						text: 'Log into Search Console, select your property, and click "Search results" in the left sidebar.'
+					},
+					{
+						name: 'Set a date comparison',
+						text: 'Click the date filter at the top and switch to "Compare." Use "Last 3 months" compared to the "Previous period."'
+					},
+					{
+						name: 'Switch to the Pages tab and sort by clicks change',
+						text: 'In the table below the chart, click the "Pages" tab. Then click the "Clicks Difference" column header to sort ascending.'
+					},
+					{
+						name: 'Cross-reference with impressions and position data',
+						text: 'For each declining page, check whether impressions also dropped or held steady. Toggle on "Average position" to see if rankings shifted too.'
+					},
+					{
+						name: 'Export and document',
+						text: 'Export the data to a spreadsheet and flag the pages worth investigating.'
+					},
+					{
+						name: 'Repeat the process weekly',
+						text: 'A recurring process tells you where things are heading.'
+					}
+				]
+			})
+		);
+	}
+
 	function formatDate(dateString: string): string {
 		const date = new Date(dateString);
 		return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -52,39 +86,42 @@
 <MetaTags config={{ ...meta, structuredData }} />
 
 <!-- Back to Blog -->
-<section class="pt-8 pb-4 bg-[#3c3836]">
+<section class="bg-[#3c3836] pt-8 pb-4">
 	<div class="container mx-auto px-4">
 		<a
 			href="/blog"
-			class="inline-flex items-center gap-2 text-white/70 hover:text-[#8ec07c] transition-colors"
+			class="inline-flex items-center gap-2 text-white/70 transition-colors hover:text-[#8ec07c]"
 		>
-			<ArrowLeft class="w-4 h-4" />
+			<ArrowLeft class="h-4 w-4" />
 			Back to Blog
 		</a>
 	</div>
 </section>
 
 <!-- Article Header -->
-<section class="py-12 bg-gradient-to-b from-[#3c3836] to-[#2d2826]">
-	<div class="container mx-auto px-4 max-w-4xl">
+<section class="bg-gradient-to-b from-[#3c3836] to-[#2d2826] py-12">
+	<div class="container mx-auto max-w-4xl px-4">
 		<div class="mb-6">
-			<span class="px-3 py-1 bg-[#8ec07c]/20 text-[#8ec07c] text-sm font-medium rounded-full">
+			<a
+				href="/blog/category/{post.category.toLowerCase()}"
+				class="rounded-full bg-[#8ec07c]/20 px-3 py-1 text-sm font-medium text-[#8ec07c] transition-colors hover:bg-[#8ec07c]/30"
+			>
 				{post.category}
-			</span>
+			</a>
 		</div>
-		<h1 class="text-4xl md:text-5xl font-heading font-bold mb-6 text-white">
+		<h1 class="mb-6 font-heading text-4xl font-bold text-white md:text-5xl">
 			{post.title}
 		</h1>
-		<p class="text-xl text-white/80 mb-8 max-w-3xl">
+		<p class="mb-8 max-w-3xl text-xl text-white/80">
 			{post.description}
 		</p>
 		<div class="flex flex-wrap items-center gap-6 text-white/60">
 			<div class="flex items-center gap-2">
-				<Calendar class="w-5 h-5" />
+				<Calendar class="h-5 w-5" />
 				{formatDate(post.publishDate)}
 			</div>
 			<div class="flex items-center gap-2">
-				<Clock class="w-5 h-5" />
+				<Clock class="h-5 w-5" />
 				{post.readTime} min read
 			</div>
 			<div class="flex items-center gap-2">
@@ -92,10 +129,10 @@
 			</div>
 		</div>
 		{#if post.tags.length > 0}
-			<div class="flex flex-wrap gap-2 mt-6">
+			<div class="mt-6 flex flex-wrap gap-2">
 				{#each post.tags as tag}
-					<span class="px-2 py-1 bg-white/5 text-white/70 text-xs rounded flex items-center gap-1">
-						<Tag class="w-3 h-3" />
+					<span class="flex items-center gap-1 rounded bg-white/5 px-2 py-1 text-xs text-white/70">
+						<Tag class="h-3 w-3" />
 						{tag}
 					</span>
 				{/each}
@@ -105,13 +142,66 @@
 </section>
 
 <!-- Article Content -->
-<article class="py-12 bg-[#2d2826]">
-	<div class="container mx-auto px-4 max-w-4xl">
+<article class="bg-[#2d2826] py-12">
+	<div class="container mx-auto max-w-4xl px-4">
 		<div class="blog-content">
 			{@html content}
 		</div>
 	</div>
 </article>
+
+<!-- Related Posts -->
+{#if relatedPosts.length > 0}
+	<section class="bg-[#3c3836] py-12">
+		<div class="container mx-auto max-w-4xl px-4">
+			<h2 class="mb-8 font-heading text-3xl font-bold text-white">Related Posts</h2>
+			<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+				{#each relatedPosts as relatedPost}
+					<a
+						href="/blog/{relatedPost.slug}"
+						class="group block rounded-lg border border-white/10 bg-[#2d2826] p-6 transition-all hover:border-[#8ec07c]/50"
+						onclick={() => handleRelatedPostClick(relatedPost.title)}
+					>
+						<h3
+							class="mb-2 font-heading text-lg font-bold text-white transition-colors group-hover:text-[#8ec07c]"
+						>
+							{relatedPost.title}
+						</h3>
+						<p class="mb-4 line-clamp-2 text-sm text-white/70">
+							{relatedPost.description}
+						</p>
+						<div class="flex items-center gap-2 text-sm text-white/50">
+							<Clock class="h-4 w-4" />
+							{relatedPost.readTime} min read
+						</div>
+					</a>
+				{/each}
+			</div>
+		</div>
+	</section>
+{/if}
+
+<!-- CTA Section -->
+<section class="bg-[#2d2826] py-20">
+	<div class="container mx-auto px-4">
+		<div class="mx-auto max-w-3xl text-center">
+			<h2 class="mb-6 font-heading text-4xl font-bold text-white md:text-5xl">
+				Ready to audit your site?
+			</h2>
+			<p class="mb-10 text-xl text-white/80">
+				Start your free 100-page audit and discover technical SEO issues in minutes.
+			</p>
+			<a
+				href="https://app.barracudaseo.com"
+				class="inline-block rounded-lg bg-[#8ec07c] px-8 py-4 text-lg font-medium text-[#3c3836] transition-colors hover:bg-[#a0d28c]"
+				target="_blank"
+				rel="noopener noreferrer"
+			>
+				Start Your Free Audit
+			</a>
+		</div>
+	</div>
+</section>
 
 <style>
 	.blog-content {
@@ -273,54 +363,3 @@
 		margin-bottom: 0 !important;
 	}
 </style>
-
-<!-- Related Posts -->
-{#if relatedPosts.length > 0}
-	<section class="py-12 bg-[#3c3836]">
-		<div class="container mx-auto px-4 max-w-4xl">
-			<h2 class="text-3xl font-heading font-bold mb-8 text-white">Related Posts</h2>
-			<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-				{#each relatedPosts as relatedPost}
-					<a
-						href="/blog/{relatedPost.slug}"
-						class="block bg-[#2d2826] rounded-lg border border-white/10 hover:border-[#8ec07c]/50 transition-all p-6 group"
-						onclick={() => handleRelatedPostClick(relatedPost.title)}
-					>
-						<h3 class="text-lg font-heading font-bold mb-2 text-white group-hover:text-[#8ec07c] transition-colors">
-							{relatedPost.title}
-						</h3>
-						<p class="text-white/70 text-sm mb-4 line-clamp-2">
-							{relatedPost.description}
-						</p>
-						<div class="flex items-center gap-2 text-white/50 text-sm">
-							<Clock class="w-4 h-4" />
-							{relatedPost.readTime} min read
-						</div>
-					</a>
-				{/each}
-			</div>
-		</div>
-	</section>
-{/if}
-
-<!-- CTA Section -->
-<section class="py-20 bg-[#2d2826]">
-	<div class="container mx-auto px-4">
-		<div class="max-w-3xl mx-auto text-center">
-			<h2 class="text-4xl md:text-5xl font-heading font-bold mb-6 text-white">
-				Ready to audit your site?
-			</h2>
-			<p class="text-xl text-white/80 mb-10">
-				Start your free 100-page audit and discover technical SEO issues in minutes.
-			</p>
-			<a
-				href="https://app.barracudaseo.com"
-				class="inline-block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-4 rounded-lg font-medium text-lg transition-colors"
-				target="_blank"
-				rel="noopener noreferrer"
-			>
-				Start Your Free Audit
-			</a>
-		</div>
-	</div>
-</section>

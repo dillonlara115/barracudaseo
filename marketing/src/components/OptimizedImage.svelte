@@ -45,7 +45,7 @@
 		<ImageSkeleton
 			width={width ? `${width}px` : 'w-full'}
 			height={height ? `${height}px` : undefined}
-			aspectRatio={aspectRatio}
+			{aspectRatio}
 			class="absolute inset-0"
 		/>
 	{/if}

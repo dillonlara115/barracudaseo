@@ -7,21 +7,17 @@
 		lines?: number;
 	}
 
-	let {
-		class: className = '',
-		showImage = false,
-		lines = 3
-	}: Props = $props();
+	let { class: className = '', showImage = false, lines = 3 }: Props = $props();
 </script>
 
 <div
-	class="bg-[#3c3836] rounded-lg p-6 border border-white/10 animate-pulse {className}"
+	class="animate-pulse rounded-lg border border-white/10 bg-[#3c3836] p-6 {className}"
 	role="status"
 	aria-label="Loading card..."
 >
 	{#if showImage}
-		<div class="w-full h-48 bg-[#2d2826] rounded-lg mb-4"></div>
+		<div class="mb-4 h-48 w-full rounded-lg bg-[#2d2826]"></div>
 	{/if}
-	<div class="h-6 bg-[#2d2826] rounded w-3/4 mb-4"></div>
+	<div class="mb-4 h-6 w-3/4 rounded bg-[#2d2826]"></div>
 	<TextSkeleton {lines} />
 </div>

@@ -20,7 +20,7 @@ const staticRoutes = [
 
 // Get blog posts dynamically
 const blogPosts = getAllBlogPosts();
-const blogRoutes = blogPosts.map(post => ({
+const blogRoutes = blogPosts.map((post) => ({
 	path: `/blog/${post.slug}`,
 	priority: '0.8',
 	changefreq: 'monthly',
