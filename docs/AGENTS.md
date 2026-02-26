@@ -621,4 +621,21 @@ The marketing site (`marketing/`) is an independent SvelteKit app (Svelte 5, Vit
 
 ### Cloud API / Supabase
 
-The web app and API server require Supabase credentials (`PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`). Without these, the web dashboard shows a login screen but cannot authenticate. The CLI crawl and serve commands work fully without Supabase. The marketing site also works independently.
+The web app and API server require Supabase credentials (`PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`). These should be provided via Cursor Secrets and are injected as environment variables. To configure locally, create `.env.local` files:
+
+- **Root** `.env.local`: all three Supabase vars
+- **`web/.env.local`**: `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_ANON_KEY`
+
+The CLI crawl and serve commands work fully without Supabase. The marketing site also works independently.
+
+When starting the API server locally, use `BARRACUDA_LOAD_ENV=1` to load `.env.local`:
+```bash
+BARRACUDA_LOAD_ENV=1 go run . api --port 8080
+```
+
+### Port Assignments for Parallel Development
+
+When running all services simultaneously, use these ports to avoid conflicts:
+- `:8080` — `barracuda serve` or `barracuda api`
+- `:5173` — `cd web && npm run dev`
+- `:5174` — `cd marketing && npm run dev`
