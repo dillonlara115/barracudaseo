@@ -4,8 +4,6 @@
   import { fetchProjects, fetchCrawls, fetchPages, fetchIssues, fetchCrawl } from '../lib/data.js';
   import ProjectsView from '../components/ProjectsView.svelte';
   import Dashboard from '../components/Dashboard.svelte';
-  import CrawlSelector from '../components/CrawlSelector.svelte';
-  import TriggerCrawlButton from '../components/TriggerCrawlButton.svelte';
   
   let projects = [];
   let project = null;
@@ -273,13 +271,17 @@
 {:else if project && selectedCrawl}
   <ProjectsView {projects} {selectedProject} on:select={(e) => handleProjectSelect(e.detail)} />
   
-  <div class="container mx-auto p-4">
-    <div class="flex justify-between items-center mb-4">
-      <CrawlSelector {crawls} selectedCrawl={selectedCrawl} {projectId} on:select={(e) => handleCrawlSelect(e.detail)} />
-      <TriggerCrawlButton {projectId} project={project} on:created={handleCrawlCreated} />
-    </div>
-  </div>
-  
-  <Dashboard {summary} {results} initialTab={tab} projectId={projectId} crawlId={crawlId} project={project} />
+  <Dashboard
+    {summary}
+    {results}
+    initialTab={tab}
+    projectId={projectId}
+    crawlId={crawlId}
+    project={project}
+    {crawls}
+    {selectedCrawl}
+    on:select={(e) => handleCrawlSelect(e.detail)}
+    on:created={handleCrawlCreated}
+  />
 {/if}
 

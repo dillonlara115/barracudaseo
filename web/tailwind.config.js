@@ -1,51 +1,50 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ['./src/**/*.{html,js,svelte,ts}'],
-  theme: {
-    extend: {},
-  },
-  plugins: [require('daisyui')],
-  daisyui: {
-    themes: [
-      {
-        barracuda: {
-          "primary": "#8ec07c",
-          "primary-focus": "#a0d28c",
-          "primary-content": "#FFFFFF",
-          "secondary": "#6B7280",
-          "secondary-focus": "#4B5563",
-          "secondary-content": "#FFFFFF",
-          "accent": "#8ec07c",
-          "accent-focus": "#a0d28c",
-          "accent-content": "#FFFFFF",
-          "neutral": "#3c3836",
-          "neutral-focus": "#2d2826",
-          "neutral-content": "#FFFFFF",
-          "base-100": "#3c3836",
-          "base-200": "#2d2826",
-          "base-300": "#1F1F1F",
-          "base-content": "#FFFFFF",
-          "info": "#458588",
-          "info-content": "#FFFFFF",
-          "success": "#8ec07c",
-          "success-content": "#FFFFFF",
-          "warning": "#d79921",
-          "warning-content": "#FFFFFF",
-          "error": "#cc241d",
-          "error-content": "#FFFFFF",
-          "--rounded-box": "0.5rem",
-          "--rounded-btn": "0.5rem",
-          "--rounded-badge": "1.9rem",
-          "--animation-btn": "0.25s",
-          "--animation-input": "0.2s",
-          "--btn-text-case": "uppercase",
-          "--btn-focus-scale": "0.95",
-          "--border-btn": "1px",
-          "--tab-border": "1px",
-          "--tab-radius": "0.5rem",
-        },
-      },
-    ],
-  },
-}
-
+	content: ['./src/**/*.{html,js,svelte,ts}'],
+	theme: {
+		extend: {}
+	},
+	plugins: [require('daisyui')],
+	daisyui: {
+		themes: [
+			{
+				barracuda: {
+					primary: '#8ec07c',
+					'primary-focus': '#a0d28c',
+					'primary-content': '#FFFFFF',
+					secondary: '#6B7280',
+					'secondary-focus': '#4B5563',
+					'secondary-content': '#FFFFFF',
+					accent: '#8ec07c',
+					'accent-focus': '#a0d28c',
+					'accent-content': '#FFFFFF',
+					neutral: '#3c3836',
+					'neutral-focus': '#2d2826',
+					'neutral-content': '#FFFFFF',
+					'base-100': '#3c3836',
+					'base-200': '#2d2826',
+					'base-300': '#1F1F1F',
+					'base-content': '#FFFFFF',
+					info: '#458588',
+					'info-content': '#FFFFFF',
+					success: '#8ec07c',
+					'success-content': '#FFFFFF',
+					warning: '#d79921',
+					'warning-content': '#FFFFFF',
+					error: '#cc241d',
+					'error-content': '#FFFFFF',
+					'--rounded-box': '0.5rem',
+					'--rounded-btn': '0.5rem',
+					'--rounded-badge': '1.9rem',
+					'--animation-btn': '0.25s',
+					'--animation-input': '0.2s',
+					'--btn-text-case': 'uppercase',
+					'--btn-focus-scale': '0.95',
+					'--border-btn': '1px',
+					'--tab-border': '1px',
+					'--tab-radius': '0.5rem'
+				}
+			}
+		]
+	}
+};

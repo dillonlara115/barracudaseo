@@ -28,11 +28,13 @@ This creates a `dist/` folder with optimized static files that can be served by 
 ## Usage
 
 1. Run a crawl with JSON export:
+
    ```bash
    barracuda crawl https://example.com --format json --export results.json --graph-export graph.json
    ```
 
 2. Build the frontend:
+
    ```bash
    make frontend-build
    ```
@@ -43,6 +45,7 @@ This creates a `dist/` folder with optimized static files that can be served by 
    ```
 
 Or use the Makefile shortcut:
+
 ```bash
 make serve
 ```
@@ -53,4 +56,3 @@ make serve
 - **Results Table**: Filterable, sortable table of all crawled pages
 - **Issues Panel**: Detailed view of SEO issues with recommendations
 - **Link Graph**: Visualization of internal/external link structure
-

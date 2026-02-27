@@ -171,7 +171,7 @@
   }
 </script>
 
-<ProjectPageLayout {projectId} showCrawlSection={false}>
+<ProjectPageLayout {projectId}>
 <div class="container mx-auto p-6 max-w-4xl">
   <div class="mb-6">
     <button 

@@ -43,7 +43,7 @@ vercel --prod
 Set these in Vercel Dashboard → Project Settings → Environment Variables:
 
 - `PUBLIC_SUPABASE_URL` - Your Supabase project URL
-- `PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anon key  
+- `PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anon key
 - `VITE_CLOUD_RUN_API_URL` - Your Cloud Run API URL (optional)
 
 **Note:** Vite exposes variables prefixed with `VITE_` or `PUBLIC_` to the client-side code.
@@ -51,6 +51,7 @@ Set these in Vercel Dashboard → Project Settings → Environment Variables:
 ## Build Configuration
 
 The `vercel.json` file is already configured with:
+
 - SPA routing (all routes → index.html)
 - Asset caching headers
 - Build commands
@@ -66,4 +67,3 @@ The `vercel.json` file is already configured with:
 - **Build fails**: Check Node.js version (Vercel uses 18.x by default)
 - **404 on routes**: Verify `vercel.json` rewrites are configured
 - **Environment variables not working**: Make sure they're prefixed with `VITE_` or `PUBLIC_`
-

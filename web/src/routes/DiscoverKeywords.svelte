@@ -32,7 +32,7 @@
   }
 </script>
 
-<ProjectPageLayout {projectId} {gscStatus} showCrawlSection={false}>
+<ProjectPageLayout {projectId} {gscStatus}>
   <div class="max-w-7xl mx-auto">
     <div class="mb-6">
       <h1 class="text-3xl font-bold mb-2">Discover Keywords</h1>

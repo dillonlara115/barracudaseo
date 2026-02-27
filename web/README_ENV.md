@@ -30,6 +30,6 @@ If variables still don't work after redeploying:
 ## Verification
 
 After deploying, check the browser console. You should see:
+
 - No "Missing Supabase configuration" errors
 - Variables should be accessible via `import.meta.env.PUBLIC_SUPABASE_URL`
-

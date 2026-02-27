@@ -937,6 +937,46 @@ Include a recommended next action.`, req.PageURL),
 
 // ---- Internal Link Suggester Handlers ----
 
+// extractInternalLinksFromData extracts internal_links from a page's data jsonb field.
+func extractInternalLinksFromData(dataVal interface{}) []string {
+	if dataVal == nil {
+		return nil
+	}
+	var dataField map[string]interface{}
+	switch v := dataVal.(type) {
+	case map[string]interface{}:
+		dataField = v
+	default:
+		jsonBytes, err := json.Marshal(v)
+		if err != nil {
+			return nil
+		}
+		if err := json.Unmarshal(jsonBytes, &dataField); err != nil {
+			return nil
+		}
+	}
+	if dataField == nil {
+		return nil
+	}
+	linksVal := dataField["internal_links"]
+	if linksVal == nil {
+		return nil
+	}
+	if linkSlice, ok := linksVal.([]interface{}); ok {
+		var out []string
+		for _, l := range linkSlice {
+			if linkStr, ok := l.(string); ok && linkStr != "" {
+				out = append(out, linkStr)
+			}
+		}
+		return out
+	}
+	if linkSlice, ok := linksVal.([]string); ok {
+		return linkSlice
+	}
+	return nil
+}
+
 // latestCrawlID returns the most recent succeeded crawl ID for a project, or "" if none.
 func (s *Server) latestCrawlID(projectID string) string {
 	crawlData, _, err := s.serviceRole.
@@ -944,7 +984,7 @@ func (s *Server) latestCrawlID(projectID string) string {
 		Select("id", "", false).
 		Eq("project_id", projectID).
 		Eq("status", "succeeded").
-		Order("created_at", nil).
+		Order("started_at", nil).
 		Limit(1, "").
 		Execute()
 	if err != nil {
@@ -980,7 +1020,7 @@ func (s *Server) handleInternalLinkSuggestions(w http.ResponseWriter, r *http.Re
 	}
 
 	query := s.serviceRole.From("pages").
-		Select("url,title,meta_description,internal_links", "", false).
+		Select("url,title,meta_description,data", "", false).
 		Eq("crawl_id", crawlID).
 		Limit(50, "")
 
@@ -998,14 +1038,13 @@ func (s *Server) handleInternalLinkSuggestions(w http.ResponseWriter, r *http.Re
 	var pages []map[string]interface{}
 	json.Unmarshal(data, &pages)
 
-	// Build link counts: how many other pages link to each page
+	// Build link counts: how many other pages link to each page (internal_links is in data jsonb)
 	inboundCounts := make(map[string]int)
 	for _, p := range pages {
-		if links, ok := p["internal_links"].([]interface{}); ok {
-			for _, l := range links {
-				if linkURL, ok := l.(string); ok {
-					inboundCounts[linkURL]++
-				}
+		internalLinks := extractInternalLinksFromData(p["data"])
+		for _, linkURL := range internalLinks {
+			if linkURL != "" {
+				inboundCounts[linkURL]++
 			}
 		}
 	}
@@ -1062,7 +1101,7 @@ func (s *Server) handleOrphanedPages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data, _, err := s.serviceRole.From("pages").
-		Select("url,title,internal_links", "", false).
+		Select("url,title,data", "", false).
 		Eq("crawl_id", crawlID).
 		Execute()
 	if err != nil {
@@ -1074,14 +1113,12 @@ func (s *Server) handleOrphanedPages(w http.ResponseWriter, r *http.Request) {
 	var pages []map[string]interface{}
 	json.Unmarshal(data, &pages)
 
-	// Build set of all internally linked URLs
+	// Build set of all internally linked URLs (internal_links is in data jsonb)
 	linkedURLs := make(map[string]bool)
 	for _, page := range pages {
-		if links, ok := page["internal_links"].([]interface{}); ok {
-			for _, l := range links {
-				if linkURL, ok := l.(string); ok {
-					linkedURLs[linkURL] = true
-				}
+		for _, linkURL := range extractInternalLinksFromData(page["data"]) {
+			if linkURL != "" {
+				linkedURLs[linkURL] = true
 			}
 		}
 	}

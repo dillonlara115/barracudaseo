@@ -182,7 +182,7 @@
   }
 </script>
 
-<ProjectPageLayout {projectId} showCrawlSection={false}>
+<ProjectPageLayout {projectId}>
   <div class="max-w-7xl mx-auto">
     <!-- Header -->
     <div class="mb-6">

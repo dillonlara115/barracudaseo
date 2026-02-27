@@ -90,7 +90,7 @@
   <title>Impact-First View - {project?.name || 'Barracuda SEO'}</title>
 </svelte:head>
 
-<ProjectPageLayout {projectId} {gscStatus} showCrawlSection={false}>
+<ProjectPageLayout {projectId} {gscStatus}>
 <div class="max-w-7xl mx-auto">
   <!-- Header -->
   <div class="mb-6">

@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { push, querystring, link, location } from 'svelte-spa-router';
+  import { push, querystring, link } from 'svelte-spa-router';
   import SummaryCard from './SummaryCard.svelte';
   import ResultsTable from './ResultsTable.svelte';
   import IssuesPanel from './IssuesPanel.svelte';
@@ -13,35 +13,28 @@
   import UnifiedInsightsPanel from './UnifiedInsightsPanel.svelte';
   import CrawlSummary from './AI/CrawlSummary.svelte';
   import PublicReportGenerator from './PublicReportGenerator.svelte';
-  import Logo from './Logo.svelte';
+  import ProjectSidebar from './ProjectSidebar.svelte';
+  import CrawlSelector from './CrawlSelector.svelte';
+  import TriggerCrawlButton from './TriggerCrawlButton.svelte';
   import { fetchProjects, fetchProjectGSCStatus, fetchProjectGSCDimensions, triggerProjectGSCSync, fetchProjectGA4Status, triggerProjectGA4Sync, fetchProjectClarityStatus, triggerProjectClaritySync, fetchCrawls } from '../lib/data.js';
   import { buildEnrichedIssues } from '../lib/gsc.js';
-  import { userProfile, isProOrTeam } from '../lib/subscription.js';
   import { 
-    LayoutDashboard, 
-    FileText, 
-    AlertTriangle, 
-    Lightbulb, 
-    Network, 
-    TrendingUp, 
-    ScanSearch, 
-    Target,
-    Search,
-    Settings,
-    BarChart,
     FileSearch,
     ArrowRight
   } from 'lucide-svelte';
+
+  import { createEventDispatcher } from 'svelte';
 
   export let summary = null;
   export let results = [];
   export let initialTab = 'dashboard';
   export let projectId = null;
   export let crawlId = null;
-  export let project = null; // Accept project as prop from parent
+  export let project = null;
+  export let crawls = [];
+  export let selectedCrawl = null;
 
-  // Check if we're on the settings page
-  $: isSettingsPage = $location?.includes('/settings');
+  const dispatch = createEventDispatcher();
 
   // Load project if not provided
   onMount(async () => {
@@ -155,8 +148,8 @@
     }
     if (projectId && crawlId) {
       push(`/project/${projectId}/crawl/${crawlId}?${params.toString()}`);
-    } else if (projectId && (tab === 'gsc-dashboard' || tab === 'gsc-keywords' || tab === 'ga4-dashboard' || tab === 'clarity-dashboard' || tab === 'insights')) {
-      // GSC tabs work at project level, redirect to first crawl or project view
+    } else if (projectId && (tab === 'gsc-dashboard' || tab === 'gsc-keywords' || tab === 'ga4-dashboard' || tab === 'clarity-dashboard')) {
+      // Integration tabs work at project level, redirect to first crawl or project view
       const params = new URLSearchParams();
       params.set('tab', tab);
       // Try to keep in crawl context if available, otherwise go to project
@@ -325,202 +318,27 @@
 </script>
 
 <div class="flex flex-col lg:flex-row min-h-[calc(100vh-200px)] bg-base-100 border-t border-base-200">
-  <!-- Sidebar Navigation -->
-  <aside class="w-full lg:w-64 bg-base-100 lg:border-r border-base-200 flex-shrink-0">
-    <ul class="menu menu-horizontal lg:menu-vertical p-2 lg:p-4 w-full overflow-x-auto lg:overflow-visible whitespace-nowrap lg:whitespace-normal space-x-2 lg:space-x-0 lg:space-y-1">
-      <li>
-        <button 
-          type="button" 
-          class:active={activeTab === 'dashboard'}
-          on:click={() => navigateToTab('dashboard')}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-          </svg>
-          Dashboard
-        </button>
-      </li>
-      <li>
-        <button 
-          type="button" 
-          class:active={activeTab === 'results'}
-          on:click={() => navigateToTab('results')}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 18.375v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 18.375c0 .621.504 1.125 1.125 1.125" />
-          </svg>
-          Results
-        </button>
-      </li>
-      <li>
-        <button 
-          type="button" 
-          class:active={activeTab === 'issues'}
-          on:click={() => navigateToTab('issues')}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-          </svg>
-          Issues
-        </button>
-      </li>
-      <li>
-        <button 
-          type="button" 
-          class:active={activeTab === 'recommendations'}
-          on:click={() => navigateToTab('recommendations')}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
-          </svg>
-          Recommendations
-        </button>
-      </li>
-      <li>
-        <button 
-          type="button" 
-          class:active={activeTab === 'graph'}
-          on:click={() => navigateToTab('graph')}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
-          </svg>
-          Link Graph
-        </button>
-      </li>
-      {#if projectId}
-        <li>
-          <a
-            href="/project/{projectId}/crawls"
-            use:link
-            class:active={false}
-          >
-            <FileSearch class="w-5 h-5" />
-            Crawls
-          </a>
-        </li>
-      {/if}
-      
-      <!-- Rank Tracking Section -->
-      {#if projectId}
-        <li class="hidden lg:block border-b border-base-200 my-2 pointer-events-none"></li>
-        <li>
-          <a
-            href="/project/{projectId}/rank-tracker"
-            use:link
-            class:active={false}
-          >
-            <TrendingUp class="w-5 h-5" />
-            Rank Tracker
-          </a>
-        </li>
-        <li>
-          <a
-            href="/project/{projectId}/discover-keywords"
-            use:link
-            class:active={false}
-          >
-            <ScanSearch class="w-5 h-5" />
-            Discover Keywords
-          </a>
-        </li>
-        <li>
-          <a
-            href="/project/{projectId}/impact-first"
-            use:link
-            class:active={false}
-          >
-            <Target class="w-5 h-5" />
-            Impact-First View
-          </a>
-        </li>
-      {/if}
-      
-      <!-- Google Search Console Section (only if connected) -->
-      {#if projectId && (gscStatus?.integration?.property_url || ga4Status?.integration?.property_id || clarityStatus?.integration?.connected)}
-        <li class="hidden lg:block border-b border-base-200 my-2 pointer-events-none"></li>
-        {#if gscStatus?.integration?.property_url}
-          <li>
-            <button
-              type="button"
-              class:active={activeTab === 'gsc-dashboard'}
-              on:click={() => navigateToTab('gsc-dashboard')}
-            >
-              <BarChart class="w-5 h-5" />
-              GSC Dashboard
-            </button>
-          </li>
-          <li>
-            <button
-              type="button"
-              class:active={activeTab === 'gsc-keywords'}
-              on:click={() => navigateToTab('gsc-keywords')}
-            >
-              <Search class="w-5 h-5" />
-              GSC Keywords
-            </button>
-          </li>
-        {/if}
-        {#if ga4Status?.integration?.property_id}
-          <li>
-            <button
-              type="button"
-              class:active={activeTab === 'ga4-dashboard'}
-              on:click={() => navigateToTab('ga4-dashboard')}
-            >
-              <BarChart class="w-5 h-5" />
-              GA4 Dashboard
-            </button>
-          </li>
-        {/if}
-        {#if clarityStatus?.integration?.connected}
-          <li>
-            <button
-              type="button"
-              class:active={activeTab === 'clarity-dashboard'}
-              on:click={() => navigateToTab('clarity-dashboard')}
-            >
-              <AlertTriangle class="w-5 h-5" />
-              Clarity
-            </button>
-          </li>
-        {/if}
-      {/if}
-      {#if projectId}
-        <li class="hidden lg:block border-b border-base-200 my-2 pointer-events-none"></li>
-        <li>
-          <button
-            type="button"
-            class:active={activeTab === 'insights'}
-            on:click={() => navigateToTab('insights')}
-          >
-            <Lightbulb class="w-5 h-5" />
-            Insights
-          </button>
-        </li>
-      {/if}
-      
-      <!-- Project Settings -->
-      {#if projectId}
-        <li class="hidden lg:block border-b border-base-200 my-2 pointer-events-none"></li>
-        <li>
-          <a 
-            href="/project/{projectId}/settings" 
-            use:link
-            class:active={isSettingsPage}
-          >
-            <Settings class="w-5 h-5" />
-            Settings
-          </a>
-        </li>
-      {/if}
-    </ul>
-  </aside>
+  <ProjectSidebar
+    {projectId}
+    {activeTab}
+    {gscStatus}
+    {ga4Status}
+    {clarityStatus}
+    {navigateToTab}
+    mode="crawl"
+  />
 
   <!-- Main Content -->
   <main class="flex-1 p-4 lg:p-8 overflow-y-auto">
     {#if activeTab === 'dashboard'}
     <div class="space-y-4">
+
+      {#if crawls.length > 0}
+        <div class="flex justify-between items-center">
+          <CrawlSelector {crawls} {selectedCrawl} {projectId} on:select />
+          <TriggerCrawlButton {projectId} {project} on:created />
+        </div>
+      {/if}
 
       <SummaryCard
         {summary}
@@ -630,8 +448,14 @@
       {crawlId}
     />
   {:else if activeTab === 'recommendations'}
-    <div class="space-y-4">
+    <div class="space-y-6">
       <RecommendationsPanel issues={displayIssues} {navigateToTab} enrichedIssues={enrichedIssuesMap} />
+      {#if projectId}
+        <UnifiedInsightsPanel
+          {projectId}
+          onNavigateToIssues={(url) => navigateToTab('issues', { url })}
+        />
+      {/if}
     </div>
   {:else if activeTab === 'graph'}
     <LinkGraph crawlId={crawlId} />
@@ -669,34 +493,6 @@
       {clarityError}
       onRefresh={refreshClarityData}
     />
-  {:else if activeTab === 'insights'}
-    <UnifiedInsightsPanel
-      {projectId}
-      onNavigateToIssues={(url) => navigateToTab('issues', { url })}
-    />
   {/if}
   </main>
 </div>
-
-<style>
-  /* Make active menu items more prominent */
-  .menu li button.active,
-  .menu li a.active {
-    background-color: hsl(var(--p) / 0.1) !important;
-    color: hsl(var(--p)) !important;
-    font-weight: 600;
-    border-left: 3px solid hsl(var(--p));
-  }
-  
-  /* Add hover effect for non-active items */
-  .menu li button:not(.active):hover,
-  .menu li a:not(.active):hover {
-    background-color: hsl(var(--bc) / 0.05);
-  }
-  
-  /* Ensure icons in active items are also colored */
-  .menu li button.active svg,
-  .menu li a.active svg {
-    color: hsl(var(--p));
-  }
-</style>
