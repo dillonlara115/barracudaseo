@@ -253,6 +253,7 @@ func (s *Server) Router() http.Handler {
 		v1.HandleFunc("/ai/gsc/declining", s.handleDecliningPages)
 		v1.HandleFunc("/ai/gsc/explain", s.handleExplainOpportunity(aiSuite))
 		v1.HandleFunc("/ai/gsc/diagnose", s.handleDiagnoseDecline(aiSuite))
+		v1.HandleFunc("/ai/gsc/content-gaps", s.handleContentGaps(aiSuite))
 		// Internal Links
 		v1.HandleFunc("/ai/links/suggestions", s.handleInternalLinkSuggestions)
 		v1.HandleFunc("/ai/links/orphaned", s.handleOrphanedPages)

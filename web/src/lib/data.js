@@ -1445,6 +1445,10 @@ export async function fetchDecliningPages(projectId) {
 	return authorizedJSON(`/api/v1/ai/gsc/declining?project_id=${projectId}`);
 }
 
+export async function fetchContentGaps(projectId) {
+	return authorizedJSON(`/api/v1/ai/gsc/content-gaps?project_id=${projectId}`);
+}
+
 export async function fetchInternalLinkSuggestions(projectId, pageUrl) {
 	return authorizedJSON(
 		`/api/v1/ai/links/suggestions?project_id=${projectId}&page_url=${encodeURIComponent(pageUrl)}`

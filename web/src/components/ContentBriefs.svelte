@@ -7,6 +7,7 @@
   marked.setOptions({ breaks: true, gfm: true });
 
   export let projectId;
+  export let initialKeyword = '';
 
   let briefs = [];
   let loading = false;
@@ -23,6 +24,10 @@
 
   onMount(async () => {
     await Promise.all([loadBriefs(), loadSuggestions()]);
+    if (initialKeyword) {
+      keyword = initialKeyword;
+      generateBrief(initialKeyword);
+    }
   });
 
   async function loadBriefs() {

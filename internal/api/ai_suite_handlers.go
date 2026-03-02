@@ -59,7 +59,7 @@ func (s *Server) InitAISuite() *AISuiteServices {
 		return nil
 	}
 
-	ctxBuilder := aicontext.NewBuilder(s.serviceRole, s.logger)
+	ctxBuilder := aicontext.NewBuilder(s.serviceRole, embedService, s.logger)
 	usageTracker := usage.NewTracker(s.serviceRole, s.logger)
 	memoryService := memory.NewService(liteProvider, s.serviceRole, s.logger)
 	streamHandler := stream.NewHandler(s.logger)
@@ -932,6 +932,173 @@ Include a recommended next action.`, req.PageURL),
 		_ = fullText
 
 		go ai.UsageTracker.Log(context.Background(), req.ProjectID, userID, "diagnose", "gemini-2.5-flash", 0, 0)
+	}
+}
+
+// ---- Content Gaps Handler ----
+
+// handleContentGaps identifies topics where GSC shows meaningful impressions but
+// the site has no page with strong topical coverage. For each high-impression query,
+// it checks pgvector cosine similarity against crawled pages. Queries whose best
+// matching page falls below a similarity threshold are flagged as content gaps.
+func (s *Server) handleContentGaps(ai *AISuiteServices) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, ok := userIDFromContext(r.Context())
+		if !ok {
+			s.respondError(w, http.StatusUnauthorized, "User not authenticated")
+			return
+		}
+
+		projectID := r.URL.Query().Get("project_id")
+		if ok, err := s.verifyProjectAccess(userID, projectID); !ok || err != nil {
+			s.respondError(w, http.StatusForbidden, "Access denied")
+			return
+		}
+
+		if ai == nil || ai.EmbedService == nil {
+			s.respondError(w, http.StatusServiceUnavailable, "AI features not available")
+			return
+		}
+
+		snapshotID := s.loadLatestGSCSnapshotID(projectID)
+		if snapshotID == "" {
+			s.respondJSON(w, http.StatusOK, []interface{}{})
+			return
+		}
+
+		data, _, err := s.serviceRole.From("gsc_performance_rows").
+			Select("*", "", false).
+			Eq("snapshot_id", snapshotID).
+			Eq("project_id", projectID).
+			Eq("row_type", "query").
+			Execute()
+		if err != nil {
+			s.logger.Warn("Failed to fetch GSC rows for content gaps", zap.Error(err))
+			s.respondJSON(w, http.StatusOK, []interface{}{})
+			return
+		}
+
+		var rawRows []map[string]interface{}
+		json.Unmarshal(data, &rawRows)
+
+		// Filter to queries with meaningful impressions
+		type candidate struct {
+			Query       string
+			Impressions float64
+			Clicks      float64
+			CTR         float64
+			Position    float64
+		}
+		var candidates []candidate
+		for _, raw := range rawRows {
+			flat := gscRowToFlat(raw)
+			query, _ := flat["query"].(string)
+			impressions, _ := flat["impressions"].(float64)
+			clicks, _ := flat["clicks"].(float64)
+			ctr, _ := flat["ctr"].(float64)
+			position, _ := flat["position"].(float64)
+
+			if query == "" || len(query) < 3 || impressions < 50 {
+				continue
+			}
+			candidates = append(candidates, candidate{
+				Query:       query,
+				Impressions: impressions,
+				Clicks:      clicks,
+				CTR:         ctr,
+				Position:    position,
+			})
+		}
+
+		// Sort by impressions descending and cap to avoid excessive embedding calls
+		sort.Slice(candidates, func(i, j int) bool {
+			return candidates[i].Impressions > candidates[j].Impressions
+		})
+		if len(candidates) > 100 {
+			candidates = candidates[:100]
+		}
+
+		// Batch embed all candidate queries
+		queryTexts := make([]string, len(candidates))
+		for i, c := range candidates {
+			queryTexts[i] = c.Query
+		}
+
+		queryVectors, err := ai.EmbedService.EmbedBatch(r.Context(), queryTexts)
+		if err != nil {
+			s.logger.Error("Failed to embed queries for content gaps", zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, "Failed to analyze content gaps")
+			return
+		}
+
+		// For each query, check its best match against crawled pages via RPC
+		const similarityThreshold = 0.45
+		type contentGap struct {
+			Query          string  `json:"query"`
+			Impressions    float64 `json:"impressions"`
+			Clicks         float64 `json:"clicks"`
+			CTR            float64 `json:"ctr"`
+			Position       float64 `json:"position"`
+			BestMatchURL   string  `json:"best_match_url"`
+			BestMatchTitle string  `json:"best_match_title"`
+			Similarity     float64 `json:"similarity"`
+			GapScore       float64 `json:"gap_score"`
+		}
+
+		var gaps []contentGap
+		for i, c := range candidates {
+			if i >= len(queryVectors) {
+				break
+			}
+			vecStr := embeddings.FormatForPgvector(queryVectors[i])
+			rpcBody := map[string]interface{}{
+				"query_embedding":  vecStr,
+				"match_project_id": projectID,
+				"match_count":      1,
+				"match_threshold":  0.0,
+			}
+
+			result := s.serviceRole.Rpc("match_crawled_pages", "", rpcBody)
+
+			var bestMatch float64
+			var matchURL, matchTitle string
+			if result != "" {
+				var matches []struct {
+					URL        string  `json:"url"`
+					Title      string  `json:"title"`
+					Similarity float64 `json:"similarity"`
+				}
+				if json.Unmarshal([]byte(result), &matches) == nil && len(matches) > 0 {
+					bestMatch = matches[0].Similarity
+					matchURL = matches[0].URL
+					matchTitle = matches[0].Title
+				}
+			}
+
+			if bestMatch < similarityThreshold {
+				gapMagnitude := similarityThreshold - bestMatch
+				gaps = append(gaps, contentGap{
+					Query:          c.Query,
+					Impressions:    c.Impressions,
+					Clicks:         c.Clicks,
+					CTR:            c.CTR,
+					Position:       c.Position,
+					BestMatchURL:   matchURL,
+					BestMatchTitle: matchTitle,
+					Similarity:     bestMatch,
+					GapScore:       c.Impressions * gapMagnitude,
+				})
+			}
+		}
+
+		sort.Slice(gaps, func(i, j int) bool {
+			return gaps[i].GapScore > gaps[j].GapScore
+		})
+		if len(gaps) > 30 {
+			gaps = gaps[:30]
+		}
+
+		s.respondJSON(w, http.StatusOK, gaps)
 	}
 }
 

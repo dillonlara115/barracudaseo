@@ -1,5 +1,5 @@
 <script>
-  import { params } from 'svelte-spa-router';
+  import { params, querystring } from 'svelte-spa-router';
   import ProjectPageLayout from '../components/ProjectPageLayout.svelte';
   import ContentBriefs from '../components/ContentBriefs.svelte';
   import ArticleWriter from '../components/ArticleWriter.svelte';
@@ -10,6 +10,10 @@
   $: if ($params?.projectId) {
     projectId = $params.projectId;
   }
+
+  $: initialKeyword = $querystring
+    ? new URLSearchParams($querystring).get('keyword') || ''
+    : '';
 </script>
 
 <ProjectPageLayout {projectId}>
@@ -30,7 +34,7 @@
 
     {#if projectId}
       {#if activeTab === 'briefs'}
-        <ContentBriefs {projectId} />
+        <ContentBriefs {projectId} {initialKeyword} />
       {:else}
         <ArticleWriter {projectId} />
       {/if}

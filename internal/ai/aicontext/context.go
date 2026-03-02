@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dillonlara115/barracudaseo/internal/ai/embeddings"
 	"github.com/dillonlara115/barracudaseo/internal/ai/providers"
 	"github.com/supabase-community/supabase-go"
 	"go.uber.org/zap"
@@ -36,15 +37,18 @@ type Params struct {
 
 // Builder assembles AI prompts from project data
 type Builder struct {
-	serviceRole *supabase.Client
-	logger      *zap.Logger
+	serviceRole  *supabase.Client
+	embedService *embeddings.Service
+	logger       *zap.Logger
 }
 
-// NewBuilder creates a new context builder
-func NewBuilder(serviceRoleClient *supabase.Client, logger *zap.Logger) *Builder {
+// NewBuilder creates a new context builder.
+// embedService may be nil; similarity search will fall back to word-count ordering.
+func NewBuilder(serviceRoleClient *supabase.Client, embedService *embeddings.Service, logger *zap.Logger) *Builder {
 	return &Builder{
-		serviceRole: serviceRoleClient,
-		logger:      logger,
+		serviceRole:  serviceRoleClient,
+		embedService: embedService,
+		logger:       logger,
 	}
 }
 
@@ -56,6 +60,7 @@ type CrawledPage struct {
 	Headings        interface{} `json:"headings"`
 	BodySummary     string      `json:"body_summary"`
 	WordCount       int         `json:"word_count"`
+	Similarity      float64     `json:"similarity,omitempty"`
 }
 
 // VoiceProfile represents the writing voice for a project
@@ -94,15 +99,50 @@ func (b *Builder) BuildMessages(ctx context.Context, projectID string, ctxType C
 	var prompt strings.Builder
 	prompt.WriteString(systemPreamble(ctxType))
 
-	// Load crawled pages (top N by word count as a proxy for relevance without embedding search)
-	pages, err := b.loadCrawledPages(ctx, projectID, topN)
-	if err != nil {
-		b.logger.Warn("Failed to load crawled pages for context", zap.Error(err))
-	} else if len(pages) > 0 {
-		prompt.WriteString("\n## Crawled Site Content\n")
+	// Build the search query for semantic similarity from available params
+	searchQuery := params.Keyword
+	if searchQuery == "" && params.PageURL != "" {
+		searchQuery = params.PageURL
+	}
+
+	// Try pgvector similarity search when we have a query and embedding service
+	var pages []CrawledPage
+	var usedSimilarity bool
+	if searchQuery != "" && b.embedService != nil {
+		similar, err := b.loadSimilarPages(ctx, projectID, searchQuery, topN)
+		if err != nil {
+			b.logger.Warn("Similarity search failed, falling back to word-count ordering",
+				zap.String("query", searchQuery), zap.Error(err))
+		} else if len(similar) > 0 {
+			pages = similar
+			usedSimilarity = true
+		}
+	}
+
+	// Fallback: top N pages by word count (longest content first)
+	if len(pages) == 0 {
+		fallback, err := b.loadCrawledPages(ctx, projectID, topN)
+		if err != nil {
+			b.logger.Warn("Failed to load crawled pages for context", zap.Error(err))
+		} else {
+			pages = fallback
+		}
+	}
+
+	if len(pages) > 0 {
+		if usedSimilarity {
+			prompt.WriteString(fmt.Sprintf("\n## Crawled Site Content (top %d pages by relevance to \"%s\")\n", len(pages), searchQuery))
+		} else {
+			prompt.WriteString("\n## Crawled Site Content\n")
+		}
 		for _, p := range pages {
-			prompt.WriteString(fmt.Sprintf("### %s\nURL: %s\nMeta: %s\nWord count: %d\n",
-				p.Title, p.URL, p.MetaDescription, p.WordCount))
+			header := fmt.Sprintf("### %s\nURL: %s\nMeta: %s\nWord count: %d\n",
+				p.Title, p.URL, p.MetaDescription, p.WordCount)
+			if usedSimilarity && p.Similarity > 0 {
+				header = fmt.Sprintf("### %s\nURL: %s\nMeta: %s\nWord count: %d\nRelevance: %.0f%%\n",
+					p.Title, p.URL, p.MetaDescription, p.WordCount, p.Similarity*100)
+			}
+			prompt.WriteString(header)
 			if p.BodySummary != "" {
 				summary := p.BodySummary
 				if len(summary) > 500 {
@@ -201,6 +241,8 @@ func systemPreamble(ctxType ContextType) string {
 	}
 }
 
+// loadCrawledPages returns the top N pages by word count (descending) as a fallback
+// when no keyword/page is available for semantic search.
 func (b *Builder) loadCrawledPages(ctx context.Context, projectID string, limit int) ([]CrawledPage, error) {
 	var pages []CrawledPage
 	data, _, err := b.serviceRole.From("crawled_pages").
@@ -215,6 +257,41 @@ func (b *Builder) loadCrawledPages(ctx context.Context, projectID string, limit 
 	if err := json.Unmarshal(data, &pages); err != nil {
 		return nil, fmt.Errorf("failed to parse crawled pages: %w", err)
 	}
+	return pages, nil
+}
+
+// loadSimilarPages uses pgvector cosine similarity to find the most relevant
+// crawled pages for a given search query. It embeds the query text, then calls
+// the match_crawled_pages RPC function in Supabase.
+func (b *Builder) loadSimilarPages(ctx context.Context, projectID string, query string, limit int) ([]CrawledPage, error) {
+	if b.embedService == nil {
+		return nil, fmt.Errorf("embedding service not available")
+	}
+
+	vec, err := b.embedService.Embed(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to embed query: %w", err)
+	}
+
+	vecStr := embeddings.FormatForPgvector(vec)
+
+	rpcBody := map[string]interface{}{
+		"query_embedding":  vecStr,
+		"match_project_id": projectID,
+		"match_count":      limit,
+		"match_threshold":  0.0,
+	}
+
+	result := b.serviceRole.Rpc("match_crawled_pages", "", rpcBody)
+	if result == "" {
+		return nil, fmt.Errorf("empty response from match_crawled_pages RPC")
+	}
+
+	var pages []CrawledPage
+	if err := json.Unmarshal([]byte(result), &pages); err != nil {
+		return nil, fmt.Errorf("failed to parse similarity results: %w", err)
+	}
+
 	return pages, nil
 }
 

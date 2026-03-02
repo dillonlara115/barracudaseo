@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
-  import { fetchQuickWins, fetchDecliningPages, streamAIRequest } from '../lib/data.js';
+  import { push } from 'svelte-spa-router';
+  import { fetchQuickWins, fetchDecliningPages, fetchContentGaps, streamAIRequest } from '../lib/data.js';
   import { marked } from 'marked';
 
   marked.setOptions({ breaks: true, gfm: true });
@@ -10,7 +11,9 @@
   let activeTab = 'quick-wins';
   let quickWins = [];
   let declining = [];
+  let contentGaps = [];
   let loading = false;
+  let gapsLoading = false;
   let error = null;
 
   let explainText = '';
@@ -35,6 +38,27 @@
 
     quickWins = (qw.data || []).sort((a, b) => (b.opportunity_score || 0) - (a.opportunity_score || 0));
     declining = dp.data || [];
+  }
+
+  async function loadContentGaps() {
+    if (contentGaps.length > 0) return;
+    gapsLoading = true;
+    const result = await fetchContentGaps(projectId);
+    gapsLoading = false;
+    if (result.error) {
+      error = result.error.message;
+      return;
+    }
+    contentGaps = result.data || [];
+  }
+
+  function handleTabChange(tab) {
+    activeTab = tab;
+    if (tab === 'content-gaps') loadContentGaps();
+  }
+
+  function generateBrief(query) {
+    push(`/project/${projectId}/content?keyword=${encodeURIComponent(query)}`);
   }
 
   async function explainOpportunity(row) {
@@ -71,6 +95,11 @@
   function formatCTR(ctr) {
     return ctr ? `${(ctr * 100).toFixed(2)}%` : '—';
   }
+
+  function formatSimilarity(sim) {
+    if (!sim && sim !== 0) return '—';
+    return `${(sim * 100).toFixed(0)}%`;
+  }
 </script>
 
 <div class="space-y-6">
@@ -87,11 +116,14 @@
   {/if}
 
   <div class="tabs tabs-boxed">
-    <button class="tab" class:tab-active={activeTab === 'quick-wins'} on:click={() => activeTab = 'quick-wins'}>
+    <button class="tab" class:tab-active={activeTab === 'quick-wins'} on:click={() => handleTabChange('quick-wins')}>
       Quick Wins
     </button>
-    <button class="tab" class:tab-active={activeTab === 'declining'} on:click={() => activeTab = 'declining'}>
+    <button class="tab" class:tab-active={activeTab === 'declining'} on:click={() => handleTabChange('declining')}>
       Declining Pages
+    </button>
+    <button class="tab" class:tab-active={activeTab === 'content-gaps'} on:click={() => handleTabChange('content-gaps')}>
+      Content Gaps
     </button>
   </div>
 
@@ -167,6 +199,62 @@
         </tbody>
       </table>
     </div>
+  {:else if activeTab === 'content-gaps'}
+    {#if gapsLoading}
+      <div class="flex flex-col items-center py-12 gap-3">
+        <span class="loading loading-spinner loading-lg"></span>
+        <p class="text-sm opacity-60">Analyzing content gaps with AI embeddings...</p>
+      </div>
+    {:else}
+      <div class="mb-4">
+        <p class="text-sm opacity-60">Topics where Google shows meaningful impressions but your site has no page with strong topical coverage. Each gap is identified by comparing GSC query data against your crawled pages using semantic similarity.</p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Topic / Query</th>
+              <th>Impressions</th>
+              <th>Position</th>
+              <th>Best Match</th>
+              <th>Coverage</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each contentGaps as gap}
+              <tr>
+                <td class="font-medium max-w-xs">
+                  <span class="truncate block">{gap.query}</span>
+                </td>
+                <td>{gap.impressions?.toLocaleString()}</td>
+                <td>{gap.position?.toFixed(1)}</td>
+                <td class="max-w-[12rem]">
+                  {#if gap.best_match_title}
+                    <span class="text-xs opacity-70 truncate block" title={gap.best_match_url}>{gap.best_match_title}</span>
+                  {:else}
+                    <span class="text-xs opacity-40">No match</span>
+                  {/if}
+                </td>
+                <td>
+                  <div class="flex items-center gap-2">
+                    <progress class="progress progress-error w-16" value={gap.similarity * 100} max="100"></progress>
+                    <span class="text-xs opacity-70">{formatSimilarity(gap.similarity)}</span>
+                  </div>
+                </td>
+                <td>
+                  <button class="btn btn-primary btn-xs" on:click={() => generateBrief(gap.query)}>
+                    Generate Brief
+                  </button>
+                </td>
+              </tr>
+            {:else}
+              <tr><td colspan="6" class="text-center opacity-60 py-8">No content gaps detected. This usually means your site covers the topics you rank for well, or GSC data needs to be synced.</td></tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    {/if}
   {/if}
 
   {#if explainRow}
