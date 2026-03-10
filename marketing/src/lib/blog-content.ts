@@ -1,5 +1,333 @@
 // Blog post content stored separately for better maintainability
 export const blogContent: Record<string, string> = {
+	'crawled-not-indexed': `
+		<p>
+			If you have spent any amount of time in Google Search Console, you have probably seen it: a growing list of URLs sitting under the "Crawled – currently not indexed" status. It is one of the most common and most misunderstood statuses in all of GSC.
+		</p>
+
+		<p>
+			The instinct is to treat it as a bug. Something must be broken. The page is right there, the content is published, Googlebot clearly found it. So why is it not in the index?
+		</p>
+
+		<p>
+			The short answer: Google looked at your page and decided not to include it. That is not a technical error. It is an editorial decision made by an algorithm, and it tells you more about how Google sees your site than most people realize.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8">
+			<h2 class="mt-0 text-[#8ec07c]">What This Post Covers</h2>
+			<ul class="mb-0">
+				<li>What "Crawled – currently not indexed" actually means and how it differs from "Discovered – not indexed"</li>
+				<li>The most common reasons Google decides not to index a crawled page</li>
+				<li>How Core Web Vitals play a less obvious but real role in the equation</li>
+				<li>Which pages to worry about and which to leave alone</li>
+				<li>Step-by-step fixes for pages that should be in the index</li>
+			</ul>
+		</div>
+
+		<h2>What "Crawled – Currently Not Indexed" Actually Means</h2>
+
+		<p>
+			To understand this status, you need to understand the difference between crawling and indexing, because they are two separate steps in how Google processes the web.
+		</p>
+
+		<p>
+			<strong>Crawling</strong> is discovery. Googlebot sends a request to your server, downloads the page, and reads the content. If your page shows up under "Crawled – currently not indexed," this step happened successfully. Google found your page and looked at it.
+		</p>
+
+		<p>
+			<strong>Indexing</strong> is the decision to store that page and make it eligible to appear in search results. This is where Google evaluates what it found during the crawl and decides whether the page adds enough value to warrant a spot in the index.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">Crawling vs. Indexing</h3>
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div>
+					<p class="text-[#8ec07c] font-bold mb-1">Crawling ✓</p>
+					<p class="text-white/80 mb-0">Google visited the URL, downloaded the page, and read its content. The technical part worked.</p>
+				</div>
+				<div>
+					<p class="text-[#fb4934] font-bold mb-1">Indexing ✗</p>
+					<p class="text-white/80 mb-0">Google evaluated what it found and decided not to store the page in its search index. This is a quality or relevance decision.</p>
+				</div>
+			</div>
+		</div>
+
+		<p>
+			When a page gets the "Crawled – currently not indexed" status, Google is saying: I saw this page, I read it, and I chose not to include it. The page is not blocked. There is no noindex tag in the way. Google simply decided the page was not worth indexing at this time.
+		</p>
+
+		<p>
+			That distinction matters because it changes what you need to fix. This is not a robots.txt problem. It is not a sitemap problem. It is a quality, relevance, or structural problem — and in some cases all three.
+		</p>
+
+		<h2>Why Google Decides Not to Index a Page It Already Crawled</h2>
+
+		<p>
+			Google does not publish a checklist for this. But based on years of industry testing, documentation from Google, and observable patterns, the most common causes fall into a few categories.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">1. The Content Is Thin or Duplicative</h3>
+			<p class="mb-0">
+				This is the most frequent cause. If a page does not offer enough substance to differentiate it from what is already in the index, Google has little reason to include it. This is especially common with archive pages, tag pages, paginated listings, and landing pages that are slight variations of each other.
+			</p>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">2. The Page Lacks Internal Link Support</h3>
+			<p class="mb-0">
+				If a page is buried deep in your site architecture with few or no <a href="/blog/find-fix-broken-links">internal links</a> pointing to it, Google interprets that as a signal that even you do not consider it important. Pages need to be connected to the rest of the site in a meaningful way. Orphan pages and poorly linked deep pages regularly end up in the "crawled, not indexed" bucket.
+			</p>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">3. The Site Has Overall Quality Concerns</h3>
+			<p class="mb-0">
+				Google does not evaluate pages in isolation. If a site has a large proportion of low-quality or thin pages, that reputation can affect how Google treats even the decent pages on the same domain. A site that publishes a hundred pages of mediocre content and ten pages of strong content may find those ten pages harder to get indexed than they would be on a leaner, higher-quality site.
+			</p>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">4. There Is No Clear Search Demand</h3>
+			<p class="mb-0">
+				Google is increasingly selective about what it indexes. If a page targets a query that almost nobody searches for, or if the topic is already well-served by existing results, Google may skip it. This does not mean the content is bad. It means Google does not see a reason to index it given the current state of the search results.
+			</p>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">5. The Content Lacks Originality or Information Gain</h3>
+			<p class="mb-0">
+				This has become more relevant over the past couple of years. Google's systems are now evaluating not just whether content is accurate, but whether it offers something that existing indexed pages do not. Rewriting what already exists at the same depth and from the same angle is no longer sufficient. The bar has moved.
+			</p>
+		</div>
+
+		<h2>The Difference Between "Crawled, Not Indexed" and "Discovered, Not Indexed"</h2>
+
+		<p>
+			These two statuses show up near each other in the Page Indexing report and people frequently confuse them. They are not the same.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<table class="w-full border-collapse">
+				<thead>
+					<tr>
+						<th class="border border-white/20 p-4 text-left text-white font-bold bg-[#282828]">Status</th>
+						<th class="border border-white/20 p-4 text-left text-white font-bold bg-[#282828]">What Happened</th>
+						<th class="border border-white/20 p-4 text-left text-white font-bold bg-[#282828]">Root Cause</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="border border-white/20 p-4 text-white/80">Crawled – currently not indexed</td>
+						<td class="border border-white/20 p-4 text-white/80">Google visited, read, and rejected the page</td>
+						<td class="border border-white/20 p-4 text-white/80">Content quality or site structure issue</td>
+					</tr>
+					<tr>
+						<td class="border border-white/20 p-4 text-white/80">Discovered – currently not indexed</td>
+						<td class="border border-white/20 p-4 text-white/80">Google knows the URL exists but has not crawled it</td>
+						<td class="border border-white/20 p-4 text-white/80">Crawl budget or priority issue</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<p>
+			The distinction matters because the fixes are different. A page that was discovered but not crawled is likely a crawl budget or priority issue. A page that was crawled but not indexed is a content quality or site structure issue. Treating one like the other wastes time.
+		</p>
+
+		<h2>How Core Web Vitals Factor Into the Indexing Equation</h2>
+
+		<p>
+			This is where the conversation gets nuanced, and where a lot of bad advice circulates.
+		</p>
+
+		<p>
+			Google's John Mueller has said directly that Core Web Vitals scores are ranking factors, not quality factors, and that improving your CWV scores will not directly improve your indexing outcomes. That statement is accurate and worth taking seriously.
+		</p>
+
+		<p>
+			But here is where it gets more complicated.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8">
+			<h3 class="mt-0 text-[#8ec07c]">Server Speed Affects Crawl Efficiency</h3>
+			<p class="mb-0">
+				If your server responds slowly, Googlebot cannot crawl as many pages in the same amount of time. Google allocates a crawl budget to every site, and slow server response times mean fewer pages get crawled per session. For small sites this rarely matters. For sites with thousands or tens of thousands of pages, slow response times can mean the difference between Google reaching your important pages or running out of budget before it gets to them.
+			</p>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8">
+			<h3 class="mt-0 text-[#8ec07c]">Page Experience Is Part of the Overall Quality Equation</h3>
+			<p class="mb-0">
+				While CWV scores alone will not determine indexing, Google's systems increasingly consider the full user experience when evaluating a page's value. A page with great content but terrible load performance, major layout shifts, and unresponsive interactions is objectively a worse experience for users. After Google's June 2025 core update, the SEO community observed that pages with persistent technical deficiencies — including poor Core Web Vitals — were more likely to be deindexed or left unindexed, particularly in competitive niches.
+			</p>
+		</div>
+
+		<h3>The Three Current Core Web Vitals</h3>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+				<div>
+					<p class="text-[#8ec07c] font-bold mb-1">LCP</p>
+					<p class="text-white/60 text-sm mb-2">Largest Contentful Paint</p>
+					<p class="text-white/80 text-sm mb-1">Measures how quickly the main content loads.</p>
+					<p class="text-[#8ec07c] font-bold mb-0">Good: &lt; 2.5s</p>
+				</div>
+				<div>
+					<p class="text-[#8ec07c] font-bold mb-1">INP</p>
+					<p class="text-white/60 text-sm mb-2">Interaction to Next Paint</p>
+					<p class="text-white/80 text-sm mb-1">Measures responsiveness after user interaction.</p>
+					<p class="text-[#8ec07c] font-bold mb-0">Good: &lt; 200ms</p>
+				</div>
+				<div>
+					<p class="text-[#8ec07c] font-bold mb-1">CLS</p>
+					<p class="text-white/60 text-sm mb-2">Cumulative Layout Shift</p>
+					<p class="text-white/80 text-sm mb-1">Measures visual stability of the page.</p>
+					<p class="text-[#8ec07c] font-bold mb-0">Good: &lt; 0.1</p>
+				</div>
+			</div>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8">
+			<h3 class="mt-0 text-[#8ec07c]">The Practical Takeaway</h3>
+			<p class="mb-0">
+				Fixing your Core Web Vitals will not magically get pages indexed. But consistently poor page performance is one more reason for Google to deprioritize your content, and on large sites, slow performance directly limits how much of your site Google can even evaluate.
+			</p>
+		</div>
+
+		<h2>Pages You Should and Should Not Worry About</h2>
+
+		<p>
+			Not every URL in the "Crawled – currently not indexed" list is a problem. Some of them are exactly where they should be.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				<div>
+					<h3 class="mt-0 text-[#8ec07c]">Don't Worry About These ✓</h3>
+					<ul class="mb-0 text-white/80">
+						<li>Archive pages</li>
+						<li>Tag pages</li>
+						<li>Author pages with no unique content</li>
+						<li>Paginated URLs</li>
+						<li>Internal search result pages</li>
+						<li>Image URLs (especially WebP files)</li>
+						<li>Utility pages not meant to rank</li>
+					</ul>
+				</div>
+				<div>
+					<h3 class="mt-0 text-[#fb4934]">Worry About These ✗</h3>
+					<ul class="mb-0 text-white/80">
+						<li>Blog posts with original content</li>
+						<li>Service pages</li>
+						<li>Product pages</li>
+						<li>Landing pages you are trying to rank</li>
+						<li>Any page targeting a keyword with real search demand</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+
+		<p>
+			The first step is always to check the URL Inspection Tool for each affected page. The Page Indexing report refreshes more slowly than URL Inspection, so there can be a lag. Google has confirmed this. If URL Inspection shows the page as indexed, the report will catch up eventually.
+		</p>
+
+		<p>
+			If URL Inspection also shows the page as not indexed, it is time to investigate.
+		</p>
+
+		<h2>How to Fix Pages That Should Be Indexed</h2>
+
+		<p>
+			There is no single fix. The right approach depends on why Google is not indexing the page. But the following steps cover the most common root causes.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">1. Improve the Content</h3>
+			<p class="mb-0">
+				This is the most common fix because thin or undifferentiated content is the most common cause. Add depth, add original data or perspective, cover subtopics that competing pages miss, and make the page genuinely useful to someone who lands on it. Google is evaluating information gain — give it something to find.
+			</p>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">2. Strengthen Internal Linking</h3>
+			<p class="mb-0">
+				Every important page should be reachable through multiple internal links from other relevant pages on your site. If a page is only linked from one place — or worse, only from the sitemap — Google has very little reason to treat it as important. Link to it from related blog posts, from relevant service pages, from your navigation where appropriate.
+			</p>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">3. Consolidate Duplicate or Near-Duplicate Content</h3>
+			<p class="mb-0">
+				If you have multiple pages that cover substantially the same topic, Google may index one and skip the others. Audit for cannibalization. Decide which page should be the canonical version and either redirect or consolidate.
+			</p>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">4. Improve Page Performance</h3>
+			<p class="mb-0">
+				Run your pages through PageSpeed Insights and address the issues. Compress images, reduce render-blocking resources, minimize JavaScript, and make sure your server responds quickly. You are not doing this to check a CWV box — you are doing it because faster pages are easier for Google to crawl and better for users to experience.
+			</p>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">5. Build External Signals</h3>
+			<p class="mb-0">
+				Pages with no backlinks can appear insignificant to Google. You do not need a massive link building campaign, but a few relevant, quality backlinks from real sites signal that the page has value beyond your own domain.
+			</p>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">6. Request Indexing Selectively</h3>
+			<p class="mb-0">
+				After making improvements, use the URL Inspection tool to request indexing. This is not a fix by itself, but it tells Google to come back and reevaluate. Do not spam the request. One submission after a meaningful improvement is enough.
+			</p>
+		</div>
+
+		<h2>What Not to Do</h2>
+
+		<p>
+			A few approaches waste time or make things worse.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-[#fb4934]/30 my-8">
+			<h3 class="mt-0 text-[#fb4934]">Common Mistakes to Avoid</h3>
+			<ul class="mb-0 text-white/80">
+				<li><strong>Do not submit the same URL repeatedly.</strong> Requesting indexing over and over without changing anything does not help. Google already saw the page. Sending it back without improvements will not change the outcome.</li>
+				<li><strong>Do not assume it is a technical issue.</strong> The most common mistake is chasing technical fixes when the real problem is content quality. If Googlebot crawled the page successfully, the technical basics are working. The issue is what it found when it got there.</li>
+				<li><strong>Do not panic about the number.</strong> Some percentage of URLs in the "crawled, not indexed" bucket is normal for every site. The goal is not to get that number to zero. The goal is to make sure the pages that matter to your business are not stuck there.</li>
+			</ul>
+		</div>
+
+		<h2>Think of It as Feedback, Not an Error</h2>
+
+		<p>
+			The "Crawled – currently not indexed" status is not a bug in Google Search Console. It is Google telling you something about how it perceives your content. The pages in that list were evaluated and found insufficient for the index. That is useful information.
+		</p>
+
+		<p>
+			For agency teams managing multiple client sites, this status is actually one of the best diagnostic signals available. A spike in crawled-but-not-indexed pages after a content push tells you the quality bar was not met. A steady accumulation over time suggests structural issues or a growing proportion of low-value pages on the site.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8">
+			<h2 class="mt-0 text-[#8ec07c]">The Bottom Line</h2>
+			<p>
+				The fix is almost always some combination of better content, better site architecture, and better page performance. None of that is quick, but all of it compounds. Sites that consistently publish original, well-structured content on a technically sound foundation do not tend to have persistent indexing problems.
+			</p>
+			<p class="mb-0">
+				The pages that matter should be in the index. If they are not, Google is telling you why. The status is the starting point. What you do with it is the work.
+			</p>
+		</div>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-[#8ec07c]/30 my-8 text-center">
+			<p class="text-white/80 mb-4">
+				Barracuda SEO connects directly to Google Search Console and surfaces content gaps, <a href="/blog/find-declining-pages-google-search-console">declining pages</a>, and indexing issues — with AI-powered diagnostics that tell you what to fix and why.
+			</p>
+			<a href="https://app.barracudaseo.com" class="inline-block bg-[#8ec07c] text-[#1d2021] font-bold py-3 px-6 rounded-lg hover:bg-[#a9d18e] transition-colors">
+				Try Barracuda SEO Free
+			</a>
+		</div>
+	`,
 	'why-seo-audits-feel-overwhelming': `
 		<p>
 			You just ran an SEO audit. The report loaded, and suddenly you're staring at 487 issues across 12 categories. Red flags everywhere. Yellow warnings stacked on top of orange alerts. The tool says your site health score is 62/100, but you have no idea what that actually means or where to start.

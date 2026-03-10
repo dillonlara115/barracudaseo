@@ -12,6 +12,25 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
 	{
+		slug: 'crawled-not-indexed',
+		title: 'Crawled, Not Indexed: What Google Is Actually Telling You',
+		description:
+			'Learn what the "Crawled – currently not indexed" status in Google Search Console really means, why it happens, how Core Web Vitals factor in, and what to do about it.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-02',
+		readTime: 14,
+		category: 'Guides',
+		tags: [
+			'crawled currently not indexed',
+			'google search console',
+			'indexing',
+			'Core Web Vitals',
+			'technical SEO',
+			'content quality'
+		],
+		featured: true
+	},
+	{
 		slug: 'alternatives-to-screaming-frog',
 		title: 'Best Alternatives to Screaming Frog SEO Spider in 2026',
 		description:
