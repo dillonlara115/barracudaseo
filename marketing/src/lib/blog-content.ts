@@ -1,5 +1,279 @@
 // Blog post content stored separately for better maintainability
 export const blogContent: Record<string, string> = {
+	'duplicate-h1-tags-seo-issue-or-just-noise': `
+		<p>
+			If you have ever run a site through Screaming Frog, Semrush, or any other crawl tool, you have seen this one flagged. "Multiple H1 tags detected." It shows up in red. It looks serious. And if you are managing SEO for clients, it is the kind of thing that ends up in a report and creates a conversation that takes longer than the fix itself.
+		</p>
+
+		<p>
+			The reality is more nuanced than the warning suggests. Duplicate H1 tags are real, they do exist on your pages, and audit tools are correct to surface them. But whether they are actually hurting anything is a different question entirely — one that most audit reports never bother to answer.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8">
+			<h2 class="mt-0 text-[#8ec07c]">What This Post Covers</h2>
+			<ul class="mb-0">
+				<li>What H1 tags are and why they exist</li>
+				<li>What Google has actually said about multiple H1 tags</li>
+				<li>When duplicate H1s are a real problem and when they are harmless noise</li>
+				<li>Why experienced SEOs deprioritize this issue</li>
+				<li>How to decide whether fixing them is worth your time</li>
+			</ul>
+		</div>
+
+		<h2>What Is an H1 Tag and Why It Matters</h2>
+
+		<p>
+			The H1 tag is an HTML heading element that signals the primary topic of a page. It tells both users and search engines what the page is about at the highest level. Think of it as the title of a chapter in a book. The rest of the heading hierarchy — H2, H3, and so on — breaks the content into sections beneath that primary topic.
+		</p>
+
+		<p>
+			For most sites built on a CMS like WordPress, the H1 is automatically generated from the page or post title. You type a title, publish the page, and the theme wraps it in an <code>&lt;h1&gt;</code> tag without you thinking about it.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">Why the H1 Matters</h3>
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div>
+					<p class="text-[#8ec07c] font-bold mb-1">Search Engine Signal</p>
+					<p class="text-white/80 mb-0">Google uses headings to understand the structure and context of content, even if headings are not a heavy direct ranking factor on their own. The H1 gives a clear signal about the core topic. The relationship between H1 tags and <a href="/blog/duplicate-meta-tags-fix" class="text-[#8ec07c] hover:underline">title tags</a> is important — they work together to signal page intent.</p>
+				</div>
+				<div>
+					<p class="text-[#8ec07c] font-bold mb-1">Accessibility Anchor</p>
+					<p class="text-white/80 mb-0">Screen readers use the H1 to announce the primary purpose of a page. According to a WebAIM survey, 69% of screen reader users navigate by headings and 52% find heading levels very useful. Clear heading structure is not optional.</p>
+				</div>
+			</div>
+		</div>
+
+		<p>
+			Where things get complicated is when a page ends up with more than one H1. That can happen intentionally, through design decisions, or unintentionally, through theme quirks and template logic.
+		</p>
+
+		<h2>Do Duplicate H1 Tags Hurt SEO?</h2>
+
+		<p>
+			The short answer: usually not.
+		</p>
+
+		<p>
+			Google's John Mueller has addressed this directly on multiple occasions. In one of his AskGoogleWebmasters sessions, he confirmed that Google's systems handle multiple H1 headings without issue. He noted that this is a common pattern across the web and that Google's algorithms will work with whatever HTML structure they find — whether that is a single H1, multiple H1s, or no semantic headings at all.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fabd2f]/30 my-8">
+			<h3 class="mt-0 text-[#fabd2f]">What Google Has Said</h3>
+			<div class="space-y-4">
+				<div class="border-l-4 border-[#fabd2f]/50 pl-4">
+					<p class="text-white/80 italic mb-1">"Proper heading hierarchy is a good practice and has a slight effect, but fixing headings on an existing site will not change your rankings."</p>
+					<p class="text-white/50 text-sm mb-0">— John Mueller, Reddit, September 2024</p>
+				</div>
+				<div class="border-l-4 border-[#fabd2f]/50 pl-4">
+					<p class="text-white/80 italic mb-1">"Heading order matters for screen readers, but from Google Search's perspective it does not matter if headings are used out of order."</p>
+					<p class="text-white/50 text-sm mb-0">— Gary Illyes, Google Search Team</p>
+				</div>
+			</div>
+		</div>
+
+		<p>
+			So the data and the direct statements from Google point in the same direction. Multiple H1 tags are not a ranking penalty. Google can parse your content regardless of how your headings are structured.
+		</p>
+
+		<p>
+			That said, "not a ranking penalty" and "never a problem" are not the same thing.
+		</p>
+
+		<h2>When Duplicate H1 Tags Can Be a Problem</h2>
+
+		<p>
+			There are situations where duplicate H1 tags signal a real issue, even if Google is not going to penalize you for them. If you are evaluating whether <a href="/blog/duplicate-meta-tags-fix">duplicate tags across your site</a> warrant attention, these are the scenarios to watch for.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fb4934]/30 my-8">
+			<h3 class="mt-0 text-[#fb4934]">Conflicting Page Intent</h3>
+			<p class="mb-0">
+				If a page has one H1 that says "Best Running Shoes for Trail Running" and another that says "Frequently Asked Questions," those headings are telling two different stories about what the page is primarily about. Google will likely figure it out, but you are making the algorithm work harder than it needs to. On a newer or lower-authority site, that ambiguity can matter more because Google has less context to fall back on.
+			</p>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fb4934]/30 my-8">
+			<h3 class="mt-0 text-[#fb4934]">Theme or Template Errors</h3>
+			<p class="mb-0">
+				Many WordPress themes and page builders inject extra H1 tags that the site owner never intended. A common pattern is a product page where the product title is an H1, but the flyout cart or a promotional banner also uses an H1. If those extra H1s contain completely unrelated text, they dilute the semantic clarity of the page.
+			</p>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fb4934]/30 my-8">
+			<h3 class="mt-0 text-[#fb4934]">Accessibility Impact</h3>
+			<p class="mb-0">
+				Screen readers rely on heading structure to help users navigate a page. When there are multiple H1 tags, a user relying on a screen reader has to determine which heading represents the actual main topic. Muddled heading structure makes navigation harder. Accessibility is always worth caring about, independent of SEO.
+			</p>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fb4934]/30 my-8">
+			<h3 class="mt-0 text-[#fb4934]">Identical H1s Across Many Pages</h3>
+			<p class="mb-0">
+				This is the version of "duplicate H1" that actually deserves attention. If every page on your site shares the same H1 — your brand name, for example — that is a structural problem. It means no page is clearly signaling its own unique topic, and search engines have less to work with when determining relevance. This usually points to a template issue worth fixing.
+			</p>
+		</div>
+
+		<h2>When Duplicate H1 Tags Are Not a Problem</h2>
+
+		<p>
+			Plenty of duplicate H1 situations are harmless and not worth spending time on.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				<div>
+					<h3 class="mt-0 text-[#8ec07c]">Harmless — Skip These</h3>
+					<ul class="mb-0 text-white/80">
+						<li><strong>Same-text duplication:</strong> Your theme applies an H1 to both the page title and a hero section with the same text. Google and users see the same info twice — no confusion.</li>
+						<li><strong>Clear singular intent:</strong> Two H1 tags but the content, structure, and metadata all point to the same topic. The duplication is cosmetic, not semantic.</li>
+						<li><strong>HTML5 sectioning:</strong> Pages with multiple <code>&lt;article&gt;</code> blocks each with their own H1 are technically valid HTML5.</li>
+					</ul>
+				</div>
+				<div>
+					<h3 class="mt-0 text-[#fb4934]">Investigate These</h3>
+					<ul class="mb-0 text-white/80">
+						<li><strong>Conflicting topics:</strong> H1 tags that describe entirely different subjects on the same page.</li>
+						<li><strong>Template-injected H1s:</strong> Widgets, carts, or banners adding H1s with unrelated text.</li>
+						<li><strong>Site-wide identical H1:</strong> Every page shares the same heading regardless of content.</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+
+		<p>
+			Mueller himself has noted that newer sites are more likely to feel any negative effects from ambiguous heading structure because Google has less data to rely on. Established sites with strong signals from backlinks, content depth, and user engagement are unlikely to see any impact from a duplicate H1.
+		</p>
+
+		<h2>Why Duplicate H1s Are Usually Deprioritized</h2>
+
+		<p>
+			When you look at the full list of things that affect organic performance, duplicate H1 tags sit near the bottom. They are not a ranking factor in any meaningful sense. They are a best-practice consideration, and there is a real difference between the two.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">What Actually Moves Rankings</h3>
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<div class="bg-[#282828] p-4 rounded-lg">
+					<p class="text-[#8ec07c] font-bold mb-1">Content</p>
+					<p class="text-white/70 text-sm mb-0">Content quality, topical relevance, and whether the page answers the searcher's question better than the competition.</p>
+				</div>
+				<div class="bg-[#282828] p-4 rounded-lg">
+					<p class="text-[#8ec07c] font-bold mb-1">Architecture</p>
+					<p class="text-white/70 text-sm mb-0">Internal link structure, site hierarchy, and how effectively link equity flows to important pages.</p>
+				</div>
+				<div class="bg-[#282828] p-4 rounded-lg">
+					<p class="text-[#8ec07c] font-bold mb-1">Authority</p>
+					<p class="text-white/70 text-sm mb-0">Backlink profiles, domain trust signals, and page experience metrics that reinforce credibility.</p>
+				</div>
+			</div>
+		</div>
+
+		<p>
+			A page with a perfect single H1 and thin content will lose to a page with three H1s and genuinely useful information every time. This is why experienced SEOs tend to deprioritize duplicate H1 fixes unless they are part of a larger template cleanup.
+		</p>
+
+		<p>
+			Spending an hour fixing heading tags across 200 pages when those pages also have weak content, no internal links, and poor keyword targeting is solving the wrong problem first. If you are unsure where heading fixes fall relative to other issues, the same <a href="/blog/how-to-prioritize-seo-issues">prioritization framework</a> that applies to any audit finding applies here.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fabd2f]/30 my-8">
+			<p class="text-[#fabd2f] font-bold mb-2">The Key Distinction</p>
+			<p class="text-white/80 mb-0">
+				Audit tools flag duplicate H1s because they are easy to detect, not because they are high-impact. The flag is valid. The implied urgency is not. Compare this with issues like <a href="/blog/redirect-chains-seo-killer" class="text-[#fabd2f] hover:underline">redirect chains</a> — a technical issue that demonstrably affects crawl efficiency and page speed. That is the kind of issue worth prioritizing.
+			</p>
+		</div>
+
+		<h2>How to Decide If You Should Fix Them</h2>
+
+		<p>
+			Not every issue in a site audit deserves the same level of attention. The way to decide whether duplicate H1 tags are worth fixing comes down to three factors.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<table class="w-full border-collapse">
+				<thead>
+					<tr>
+						<th class="border border-white/20 p-4 text-left text-white font-bold bg-[#282828]">Factor</th>
+						<th class="border border-white/20 p-4 text-left text-white font-bold bg-[#282828]">Question to Ask</th>
+						<th class="border border-white/20 p-4 text-left text-white font-bold bg-[#282828]">For Duplicate H1s</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="border border-white/20 p-4 text-[#8ec07c] font-bold">Impact</td>
+						<td class="border border-white/20 p-4 text-white/80">How much would fixing this improve ranking or conversion?</td>
+						<td class="border border-white/20 p-4 text-white/80">Almost always very little. If the page is ranking, the H1 is not what is holding it back.</td>
+					</tr>
+					<tr>
+						<td class="border border-white/20 p-4 text-[#8ec07c] font-bold">Reach</td>
+						<td class="border border-white/20 p-4 text-white/80">How many pages are affected?</td>
+						<td class="border border-white/20 p-4 text-white/80">A single blog post with a stray H1 is low priority. A template bug on 5,000 product pages may justify a fix.</td>
+					</tr>
+					<tr>
+						<td class="border border-white/20 p-4 text-[#8ec07c] font-bold">Risk</td>
+						<td class="border border-white/20 p-4 text-white/80">What is the downside of not fixing it?</td>
+						<td class="border border-white/20 p-4 text-white/80">Near zero for SEO. The only real risk is accessibility-related, depending on how different the duplicate headings are.</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<p>
+			If you are running audits for clients and want a framework for communicating this kind of prioritization clearly, that is exactly the kind of workflow <a href="https://app.barracudaseo.com">Barracuda SEO</a> is built around. Instead of dumping every crawl issue into a spreadsheet and leaving it to someone to figure out what matters, Barracuda's audit workflow surfaces issues with context: how many pages are affected, how those pages are currently performing in GSC, and whether the issue is likely to move the needle.
+		</p>
+
+		<p>
+			The time you would spend chasing heading fixes is almost always better spent on content improvements — whether that means updating underperforming pages or creating new content around gaps your site is missing.
+		</p>
+
+		<h2>Stop Treating Every Audit Flag Like an Emergency</h2>
+
+		<p>
+			The SEO industry has a habit of treating every red flag in a crawl report with equal urgency. Duplicate H1 tags are a textbook example of an issue that is technically real but practically insignificant for most sites.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-[#8ec07c]/30 my-8">
+			<h3 class="mt-0 text-[#8ec07c]">When to Fix Duplicate H1s</h3>
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<div class="bg-[#282828] p-4 rounded-lg text-center">
+					<p class="text-2xl mb-2">🔧</p>
+					<p class="text-white font-bold mb-1">Template Cleanup</p>
+					<p class="text-white/70 text-sm mb-0">Part of a broader theme or template fix that addresses multiple issues at once.</p>
+				</div>
+				<div class="bg-[#282828] p-4 rounded-lg text-center">
+					<p class="text-2xl mb-2">⚠️</p>
+					<p class="text-white font-bold mb-1">Conflicting Intent</p>
+					<p class="text-white/70 text-sm mb-0">H1 tags are creating genuine confusion about what the page is about.</p>
+				</div>
+				<div class="bg-[#282828] p-4 rounded-lg text-center">
+					<p class="text-2xl mb-2">♿</p>
+					<p class="text-white font-bold mb-1">Accessibility</p>
+					<p class="text-white/70 text-sm mb-0">Heading structure is making the page harder to navigate for screen reader users.</p>
+				</div>
+			</div>
+		</div>
+
+		<p>
+			But do not let duplicate H1s jump the queue ahead of content improvements, internal linking work, or the dozens of other things that will actually improve your organic performance.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8">
+			<h2 class="mt-0 text-[#8ec07c]">The Bottom Line</h2>
+			<p class="mb-0">
+				The best SEO work is not about fixing everything. It is about fixing the right things first. Duplicate H1 tags might make the list. They will not be at the top of it.
+			</p>
+		</div>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-[#8ec07c]/30 my-8 text-center">
+			<p class="text-white/80 mb-4">
+				Barracuda SEO helps you <a href="/blog/how-to-prioritize-seo-issues" class="text-[#8ec07c] hover:underline">prioritize the issues</a> that actually affect rankings — not just the ones that are easy to flag. Surface what matters, skip what does not.
+			</p>
+			<a href="https://app.barracudaseo.com" class="inline-block bg-[#8ec07c] text-[#1d2021] font-bold py-3 px-6 rounded-lg hover:bg-[#a9d18e] transition-colors">
+				Try Barracuda SEO Free
+			</a>
+		</div>
+	`,
 	'crawled-not-indexed': `
 		<p>
 			If you have spent any amount of time in Google Search Console, you have probably seen it: a growing list of URLs sitting under the "Crawled – currently not indexed" status. It is one of the most common and most misunderstood statuses in all of GSC.

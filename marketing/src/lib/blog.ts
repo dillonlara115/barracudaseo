@@ -12,6 +12,26 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
 	{
+		slug: 'duplicate-h1-tags-seo-issue-or-just-noise',
+		title: 'Duplicate H1 Tags: SEO Issue or Just Noise?',
+		description:
+			'Duplicate H1 tags show up in every audit tool, but do they actually hurt rankings? Here\u2019s when they matter, when they don\u2019t, and how to decide if they\u2019re worth fixing.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-12',
+		readTime: 10,
+		category: 'Guides',
+		tags: [
+			'duplicate h1 tags',
+			'h1 tags seo',
+			'multiple h1 tags',
+			'technical SEO',
+			'SEO audit',
+			'on-page SEO',
+			'accessibility'
+		],
+		featured: true
+	},
+	{
 		slug: 'crawled-not-indexed',
 		title: 'Crawled, Not Indexed: What Google Is Actually Telling You',
 		description:

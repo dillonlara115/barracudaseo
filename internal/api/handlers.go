@@ -141,7 +141,7 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 	// Analyze pages to detect issues
 	summary := analyzer.AnalyzeWithImages(req.Pages, 30*time.Second)
 
-	// Create crawl record
+	// Create crawl record (total_issues updated after deduplication below)
 	crawlID := uuid.New().String()
 	crawl := map[string]interface{}{
 		"id":           crawlID,
@@ -152,7 +152,7 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 		"started_at":   time.Now().UTC().Format(time.RFC3339),
 		"completed_at": time.Now().UTC().Format(time.RFC3339),
 		"total_pages":  len(req.Pages),
-		"total_issues": len(summary.Issues),
+		"total_issues": 0,
 		"meta": map[string]interface{}{
 			"user_agent": r.Header.Get("User-Agent"),
 		},
@@ -321,12 +321,17 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Return crawl response
+	// Update crawl record with accurate deduplicated issue count
+	_, _, _ = s.serviceRole.From("crawls").
+		Update(map[string]interface{}{"total_issues": len(issues)}, "", "").
+		Eq("id", crawlID).
+		Execute()
+
 	response := CreateCrawlResponse{
 		CrawlID:     crawlID,
 		ProjectID:   req.ProjectID,
 		TotalPages:  len(req.Pages),
-		TotalIssues: len(summary.Issues),
+		TotalIssues: len(issues),
 		Status:      "succeeded",
 	}
 
@@ -1438,8 +1443,8 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 	// Update crawl status to succeeded (total_pages already updated via callback)
 	s.updateCrawlStatus(crawlID, "succeeded", "")
 	update := map[string]interface{}{
-		"total_pages":  finalTotal, // Use the final count from callback
-		"total_issues": len(summary.Issues),
+		"total_pages":  finalTotal,
+		"total_issues": len(issues),
 		"completed_at": time.Now().UTC().Format(time.RFC3339),
 	}
 	_, _, err = s.serviceRole.From("crawls").Update(update, "", "").Eq("id", crawlID).Execute()
