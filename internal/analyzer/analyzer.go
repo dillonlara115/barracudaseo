@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"fmt"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -117,15 +118,15 @@ func Analyze(results []*models.PageResult) *Summary {
 
 		// Track redirects (always flag - technical issue)
 		// Note: result.URL is the REQUESTED URL (source that redirects); RedirectChain holds destinations
-		if len(result.RedirectChain) > 0 {
+		if chain := validateRedirectChain(result.URL, result.RedirectChain); len(chain) > 0 {
 			summary.PagesWithRedirects++
-			fullChain := result.URL + " -> " + strings.Join(result.RedirectChain, " -> ")
+			fullChain := result.URL + " -> " + strings.Join(chain, " -> ")
 			summary.Issues = append(summary.Issues, Issue{
 				Type:           IssueRedirectChain,
 				Severity:       "warning",
 				URL:            result.URL,
 				Message:        fmt.Sprintf("Redirect chain: %s", fullChain),
-				Value:          strings.Join(result.RedirectChain, " -> "),
+				Value:          strings.Join(chain, " -> "),
 				Recommendation: "Consider using direct links instead of redirect chains. Test the source URL (first in chain) with curl -I -L to verify.",
 			})
 			summary.IssuesByType[IssueRedirectChain]++
@@ -290,6 +291,71 @@ func AnalyzeWithImages(results []*models.PageResult, imageTimeout time.Duration)
 	summary.TotalIssues = len(summary.Issues)
 
 	return summary
+}
+
+// validateRedirectChain checks that a redirect chain is plausible.
+// A valid redirect chain should have each hop on the same host (or a closely
+// related one) as the source URL. If the chain contains URLs from completely
+// unrelated hosts, or if consecutive hops share no relationship, the chain is
+// likely corrupted data and should be discarded. Returns the validated chain
+// or nil if the chain appears invalid.
+func validateRedirectChain(sourceURL string, chain []string) []string {
+	if len(chain) == 0 {
+		return nil
+	}
+
+	srcParsed, err := url.Parse(sourceURL)
+	if err != nil {
+		return nil
+	}
+	srcHost := strings.ToLower(srcParsed.Hostname())
+
+	// Walk the chain and verify each hop is on the same host (or a closely
+	// related domain). Legitimate redirects almost always stay on-host or
+	// move to a closely related domain (e.g. www → non-www, http → https).
+	for _, hop := range chain {
+		hopParsed, err := url.Parse(hop)
+		if err != nil {
+			return nil
+		}
+		hopHost := strings.ToLower(hopParsed.Hostname())
+
+		if !hostsRelated(srcHost, hopHost) {
+			return nil
+		}
+	}
+
+	// A chain where consecutive hops share no common path prefix beyond "/"
+	// and the paths are all wildly different is suspicious.
+	// E.g. /big-bear-lake -> /privacy-policy/ -> /gallery/ -> /about/
+	// For chains with 3+ hops, check that at least one hop shares a path
+	// relationship with the source (common in trailing-slash or www redirects).
+	if len(chain) >= 3 {
+		srcPath := strings.TrimRight(srcParsed.Path, "/")
+		hasRelatedPath := false
+		for _, hop := range chain {
+			hopParsed, _ := url.Parse(hop)
+			hopPath := strings.TrimRight(hopParsed.Path, "/")
+			if srcPath == hopPath || strings.HasPrefix(hopPath, srcPath+"/") || strings.HasPrefix(srcPath, hopPath+"/") {
+				hasRelatedPath = true
+				break
+			}
+		}
+		if !hasRelatedPath {
+			return nil
+		}
+	}
+
+	return chain
+}
+
+// hostsRelated returns true if two hostnames are the same or differ only
+// by a www prefix (e.g. "example.com" and "www.example.com").
+func hostsRelated(a, b string) bool {
+	if a == b {
+		return true
+	}
+	return strings.TrimPrefix(a, "www.") == strings.TrimPrefix(b, "www.")
 }
 
 // GetIssueCountBySeverity returns counts grouped by severity

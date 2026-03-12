@@ -11,6 +11,8 @@ import (
 	"github.com/dillonlara115/barracudaseo/pkg/models"
 )
 
+const maxRedirects = 10
+
 // Fetcher handles HTTP requests and response processing
 type Fetcher struct {
 	client    *http.Client
@@ -28,12 +30,10 @@ type FetchResult struct {
 func NewFetcher(timeout time.Duration, userAgent string) *Fetcher {
 	client := &http.Client{
 		Timeout: timeout,
+		// Disable automatic redirect following — we handle redirects manually
+		// per-request to avoid race conditions with concurrent workers.
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			// Follow redirects up to 10 times
-			if len(via) >= 10 {
-				return fmt.Errorf("stopped after 10 redirects")
-			}
-			return nil
+			return http.ErrUseLastResponse
 		},
 	}
 
@@ -43,7 +43,14 @@ func NewFetcher(timeout time.Duration, userAgent string) *Fetcher {
 	}
 }
 
-// Fetch retrieves a URL and returns the response (single attempt, no retry)
+// isRedirect returns true for HTTP status codes that indicate a redirect.
+func isRedirect(statusCode int) bool {
+	return statusCode == 301 || statusCode == 302 || statusCode == 303 || statusCode == 307 || statusCode == 308
+}
+
+// Fetch retrieves a URL and returns the response (single attempt, no retry).
+// Redirects are followed manually in a loop so that each concurrent request
+// tracks its own redirect chain without shared mutable state.
 func (f *Fetcher) Fetch(url string) *FetchResult {
 	result := &FetchResult{
 		PageResult: &models.PageResult{
@@ -54,54 +61,71 @@ func (f *Fetcher) Fetch(url string) *FetchResult {
 
 	startTime := time.Now()
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		result.Error = fmt.Errorf("failed to create request: %w", err)
-		result.PageResult.Error = result.Error.Error()
-		return result
-	}
-
-	req.Header.Set("User-Agent", f.userAgent)
-	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-
-	// Track redirect chain using CheckRedirect callback
-	// CheckRedirect is called when the HTTP client encounters a redirect response
 	var redirectChain []string
-	originalCheckRedirect := f.client.CheckRedirect
+	currentURL := url
 
-	// Temporarily override CheckRedirect to capture redirect URLs
-	f.client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-		// When CheckRedirect is called:
-		// - 'via' contains all previous requests (via[0] = original request)
-		// - 'req' is the NEW request about to be made to follow the redirect
-		// - The redirect response came from the last request in 'via'
-		//
-		// We want to capture the redirect destinations (the URLs we're redirecting TO)
-		// Each time CheckRedirect is called, we're following a redirect, so we capture req.URL
-		if len(via) > 0 {
-			// This is a redirect - capture the destination URL
-			redirectChain = append(redirectChain, req.URL.String())
+	var resp *http.Response
+	for hops := 0; ; hops++ {
+		req, err := http.NewRequest("GET", currentURL, nil)
+		if err != nil {
+			result.Error = fmt.Errorf("failed to create request: %w", err)
+			result.PageResult.Error = result.Error.Error()
+			result.PageResult.ResponseTime = time.Since(startTime).Milliseconds()
+			return result
 		}
 
-		// Follow redirects up to 10 times
-		if len(via) >= 10 {
-			return fmt.Errorf("stopped after 10 redirects")
+		req.Header.Set("User-Agent", f.userAgent)
+		req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+
+		r, err := f.client.Do(req)
+		if err != nil {
+			result.Error = fmt.Errorf("request failed: %w", err)
+			result.PageResult.Error = result.Error.Error()
+			result.PageResult.ResponseTime = time.Since(startTime).Milliseconds()
+			return result
 		}
-		return nil
+
+		if !isRedirect(r.StatusCode) {
+			resp = r
+			break
+		}
+
+		// This is a redirect — record the destination and follow it.
+		location := r.Header.Get("Location")
+		r.Body.Close()
+
+		if location == "" {
+			result.Error = fmt.Errorf("redirect %d with no Location header", r.StatusCode)
+			result.PageResult.Error = result.Error.Error()
+			result.PageResult.StatusCode = r.StatusCode
+			result.PageResult.ResponseTime = time.Since(startTime).Milliseconds()
+			return result
+		}
+
+		// Resolve relative redirect URLs against the current request URL.
+		nextURL, err := req.URL.Parse(location)
+		if err != nil {
+			result.Error = fmt.Errorf("invalid redirect location %q: %w", location, err)
+			result.PageResult.Error = result.Error.Error()
+			result.PageResult.ResponseTime = time.Since(startTime).Milliseconds()
+			return result
+		}
+
+		redirectChain = append(redirectChain, nextURL.String())
+		currentURL = nextURL.String()
+
+		if hops >= maxRedirects {
+			result.Error = fmt.Errorf("stopped after %d redirects", maxRedirects)
+			result.PageResult.Error = result.Error.Error()
+			result.PageResult.ResponseTime = time.Since(startTime).Milliseconds()
+			if len(redirectChain) > 0 {
+				result.PageResult.RedirectChain = redirectChain
+			}
+			return result
+		}
 	}
 
-	resp, err := f.client.Do(req)
 	responseTime := time.Since(startTime)
-
-	// Restore original CheckRedirect
-	f.client.CheckRedirect = originalCheckRedirect
-
-	if err != nil {
-		result.Error = fmt.Errorf("request failed: %w", err)
-		result.PageResult.Error = result.Error.Error()
-		result.PageResult.ResponseTime = responseTime.Milliseconds()
-		return result
-	}
 	defer resp.Body.Close()
 
 	result.PageResult.StatusCode = resp.StatusCode
@@ -113,9 +137,6 @@ func (f *Fetcher) Fetch(url string) *FetchResult {
 		result.PageResult.XRobotsTag = xRobotsTag
 	}
 
-	// Only add redirect chain if we actually had redirects (status code indicates redirects were followed)
-	// If the final status is 3xx, it means we hit a redirect that wasn't followed, or
-	// if we have redirectChain entries, we followed redirects
 	if len(redirectChain) > 0 {
 		result.PageResult.RedirectChain = redirectChain
 	}
@@ -124,13 +145,11 @@ func (f *Fetcher) Fetch(url string) *FetchResult {
 	contentType := resp.Header.Get("Content-Type")
 	if contentType != "" {
 		contentTypeLower := strings.ToLower(contentType)
-		// Skip image content types
 		if strings.HasPrefix(contentTypeLower, "image/") {
 			result.Error = fmt.Errorf("skipped non-HTML content: %s", contentType)
 			result.PageResult.Error = result.Error.Error()
 			return result
 		}
-		// Skip other non-HTML content types
 		nonHTMLTypes := []string{"application/pdf", "application/zip", "application/json", "application/xml"}
 		for _, nonHTML := range nonHTMLTypes {
 			if strings.HasPrefix(contentTypeLower, nonHTML) {
@@ -141,7 +160,6 @@ func (f *Fetcher) Fetch(url string) *FetchResult {
 		}
 	}
 
-	// Read body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		result.Error = fmt.Errorf("failed to read response body: %w", err)
@@ -151,7 +169,6 @@ func (f *Fetcher) Fetch(url string) *FetchResult {
 
 	result.Body = body
 
-	// Handle non-2xx status codes
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		result.Error = fmt.Errorf("HTTP %d", resp.StatusCode)
 		result.PageResult.Error = result.Error.Error()
