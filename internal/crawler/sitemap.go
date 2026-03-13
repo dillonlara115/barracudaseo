@@ -67,36 +67,36 @@ func NewSitemapParser(fetcher *Fetcher) *SitemapParser {
 
 // ParseSitemap fetches and parses a sitemap URL, returning all URLs found
 func (s *SitemapParser) ParseSitemap(sitemapURL string) ([]string, error) {
-	result := s.fetcher.Fetch(sitemapURL)
-	if result.Error != nil {
-		return nil, fmt.Errorf("failed to fetch sitemap: %w", result.Error)
+	body, statusCode, err := s.fetcher.FetchRaw(sitemapURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch sitemap: %w", err)
 	}
 
-	if result.PageResult.StatusCode != 200 {
-		return nil, fmt.Errorf("sitemap returned HTTP %d", result.PageResult.StatusCode)
+	if statusCode != 200 {
+		return nil, fmt.Errorf("sitemap returned HTTP %d", statusCode)
 	}
 
 	// Try parsing as sitemap index first (with namespace - most sitemaps use xmlns)
 	var indexNS SitemapIndexNS
-	if err := xml.Unmarshal(result.Body, &indexNS); err == nil && len(indexNS.Sitemaps) > 0 {
+	if err := xml.Unmarshal(body, &indexNS); err == nil && len(indexNS.Sitemaps) > 0 {
 		return s.collectFromIndexNS(indexNS.Sitemaps)
 	}
 
 	// Try sitemap index without namespace
 	var index SitemapIndex
-	if err := xml.Unmarshal(result.Body, &index); err == nil && len(index.Sitemaps) > 0 {
+	if err := xml.Unmarshal(body, &index); err == nil && len(index.Sitemaps) > 0 {
 		return s.collectFromIndex(index.Sitemaps)
 	}
 
 	// Try parsing as URL set with namespace first (barracudaseo.com and most sites use this)
 	var urlSetNS URLSetNS
-	if err := xml.Unmarshal(result.Body, &urlSetNS); err == nil && len(urlSetNS.URLs) > 0 {
+	if err := xml.Unmarshal(body, &urlSetNS); err == nil && len(urlSetNS.URLs) > 0 {
 		return s.extractURLsNS(urlSetNS.URLs)
 	}
 
 	// Fallback: URL set without namespace
 	var urlSet URLSet
-	if err := xml.Unmarshal(result.Body, &urlSet); err != nil {
+	if err := xml.Unmarshal(body, &urlSet); err != nil {
 		return nil, fmt.Errorf("failed to parse sitemap XML: %w", err)
 	}
 	return s.extractURLs(urlSet.URLs)

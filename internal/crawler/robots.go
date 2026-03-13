@@ -56,12 +56,12 @@ func (r *RobotsChecker) IsAllowed(targetURL string) (bool, error) {
 	if err != nil {
 		// If robots.txt can't be fetched, allow by default
 		utils.Debug("Could not fetch robots.txt", utils.NewField("url", robotsURL), utils.NewField("error", err.Error()))
-		
+
 		// Cache a permissive group to avoid repeated fetches
 		r.cacheMu.Lock()
 		r.cache[domain] = nil // nil means allow all
 		r.cacheMu.Unlock()
-		
+
 		return true, nil
 	}
 
@@ -69,18 +69,18 @@ func (r *RobotsChecker) IsAllowed(targetURL string) (bool, error) {
 	robotsGroup, err := robotstxt.FromBytes(robotsData)
 	if err != nil {
 		utils.Debug("Could not parse robots.txt", utils.NewField("url", robotsURL), utils.NewField("error", err.Error()))
-		
+
 		// Cache a permissive group
 		r.cacheMu.Lock()
 		r.cache[domain] = nil
 		r.cacheMu.Unlock()
-		
+
 		return true, nil
 	}
 
 	// Get group for user agent
 	group := robotsGroup.FindGroup(r.userAgent)
-	
+
 	// Cache the group
 	r.cacheMu.Lock()
 	r.cache[domain] = group
@@ -91,15 +91,14 @@ func (r *RobotsChecker) IsAllowed(targetURL string) (bool, error) {
 
 // fetchRobotsTxt fetches robots.txt content
 func (r *RobotsChecker) fetchRobotsTxt(robotsURL string) ([]byte, error) {
-	result := r.fetcher.Fetch(robotsURL)
-	if result.Error != nil {
-		return nil, result.Error
+	body, statusCode, err := r.fetcher.FetchRaw(robotsURL)
+	if err != nil {
+		return nil, err
 	}
-	
-	if result.PageResult.StatusCode != 200 {
-		return nil, fmt.Errorf("HTTP %d", result.PageResult.StatusCode)
-	}
-	
-	return result.Body, nil
-}
 
+	if statusCode != 200 {
+		return nil, fmt.Errorf("HTTP %d", statusCode)
+	}
+
+	return body, nil
+}

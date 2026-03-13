@@ -177,6 +177,56 @@ func (f *Fetcher) Fetch(url string) *FetchResult {
 	return result
 }
 
+// FetchRaw performs a simple HTTP GET that follows redirects and returns the
+// response body without content-type filtering. Use this for fetching resources
+// like sitemaps and robots.txt that are not HTML pages.
+func (f *Fetcher) FetchRaw(rawURL string) ([]byte, int, error) {
+	req, err := http.NewRequest("GET", rawURL, nil)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("User-Agent", f.userAgent)
+
+	currentURL := rawURL
+	for hops := 0; ; hops++ {
+		r, err := f.client.Do(req)
+		if err != nil {
+			return nil, 0, fmt.Errorf("request failed: %w", err)
+		}
+
+		if !isRedirect(r.StatusCode) {
+			defer r.Body.Close()
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				return nil, r.StatusCode, fmt.Errorf("failed to read body: %w", err)
+			}
+			return body, r.StatusCode, nil
+		}
+
+		location := r.Header.Get("Location")
+		r.Body.Close()
+		if location == "" {
+			return nil, r.StatusCode, fmt.Errorf("redirect %d with no Location header", r.StatusCode)
+		}
+
+		nextURL, err := req.URL.Parse(location)
+		if err != nil {
+			return nil, 0, fmt.Errorf("invalid redirect location %q: %w", location, err)
+		}
+		currentURL = nextURL.String()
+
+		if hops >= maxRedirects {
+			return nil, r.StatusCode, fmt.Errorf("stopped after %d redirects", maxRedirects)
+		}
+
+		req, err = http.NewRequest("GET", currentURL, nil)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to create request: %w", err)
+		}
+		req.Header.Set("User-Agent", f.userAgent)
+	}
+}
+
 // isRetryableError checks if an error is retryable
 func isRetryableError(result *FetchResult) bool {
 	if result.Error == nil {
