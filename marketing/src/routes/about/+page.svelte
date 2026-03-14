@@ -1,5 +1,6 @@
 <script lang="ts">
 	import MetaTags from '../../components/MetaTags.svelte';
+	import RecentPosts from '../../components/sections/RecentPosts.svelte';
 	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
 	import { trackSignup } from '$lib/analytics';
 
@@ -131,7 +132,11 @@
 				You still make the final call.
 				<br />
 				<span class="mt-4 block font-medium text-white"
-					>Barracuda just removes the chaos in between.</span
+					>Barracuda just removes the chaos in between. <a
+						href="/features"
+						class="text-[#8ec07c] underline hover:text-[#a0d28c]"
+						>See how it works</a
+					>.</span
 				>
 			</p>
 		</div>
@@ -180,7 +185,11 @@
 			>
 				<h3 class="mb-3 text-xl font-bold text-white">Client calls</h3>
 				<p class="text-white/70">
-					Where you need clear answers immediately, not after digging through spreadsheets.
+					Where you need clear answers immediately — like explaining why a page is <a
+						href="/blog/crawled-not-indexed"
+						class="text-[#8ec07c] underline hover:text-[#a0d28c]"
+						>crawled but not indexed</a
+					> — not after digging through spreadsheets.
 				</p>
 			</div>
 
@@ -189,7 +198,11 @@
 			>
 				<h3 class="mb-3 text-xl font-bold text-white">Time-limited audits</h3>
 				<p class="text-white/70">
-					When accountability is high and you can't afford to waste time on low-impact fixes.
+					When accountability is high and you can't afford to waste time chasing <a
+						href="/blog/duplicate-meta-tags-fix"
+						class="text-[#8ec07c] underline hover:text-[#a0d28c]"
+						>duplicate meta tags</a
+					> on low-traffic pages.
 				</p>
 			</div>
 
@@ -327,6 +340,11 @@
 		</div>
 	</div>
 </section>
+
+<RecentPosts
+	title="Learn More"
+	subtitle="Guides on the technical SEO problems Barracuda helps you solve."
+/>
 
 <!-- Closing Section -->
 <section class="bg-gradient-to-t from-[#3c3836] to-[#282828] py-24">

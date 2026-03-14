@@ -9,6 +9,7 @@
 	import WhoItsFor from '../components/sections/WhoItsFor.svelte';
 	import SocialProof from '../components/sections/SocialProof.svelte';
 	import FinalCTA from '../components/sections/FinalCTA.svelte';
+	import RecentPosts from '../components/sections/RecentPosts.svelte';
 	import MetaTags from '../components/MetaTags.svelte';
 	import { getMetaTags, getSoftwareApplicationSchema } from '$lib/meta';
 	import { BrainCircuit, ChevronRight, PenTool, BarChart3, Link2 } from '@lucide/svelte';
@@ -53,10 +54,13 @@
 					<br />
 					<span class="text-[#d79921]">your voice, and your data.</span>
 				</h2>
-				<p class="mb-8 text-lg leading-relaxed text-white/50">
-					Content briefs from GSC data. Articles in your brand voice. Internal link suggestions
-					powered by semantic search. Intelligence at the moment you need it.
-				</p>
+			<p class="mb-8 text-lg leading-relaxed text-white/50">
+				Content briefs from GSC data. Articles in your brand voice. Internal link suggestions
+				powered by semantic search. Intelligence layered on top of <a
+					href="/features"
+					class="text-white/70 underline hover:text-white">Barracuda's core features</a
+				> — at the moment you need it.
+			</p>
 				<a
 					href="/roadmap"
 					class="inline-flex items-center gap-2 rounded-xl border border-[#d79921]/30 px-6 py-3 font-medium text-white/80 transition-all hover:border-[#d79921]/60 hover:text-white"
@@ -117,5 +121,9 @@
 </section>
 
 <WhoItsFor />
+<RecentPosts
+	title="Practical SEO Guides"
+	subtitle="Deep dives into technical SEO problems — and how to actually fix them."
+/>
 <SocialProof />
 <FinalCTA />

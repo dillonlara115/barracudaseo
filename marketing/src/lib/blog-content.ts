@@ -331,7 +331,7 @@ export const blogContent: Record<string, string> = {
 		</p>
 
 		<p>
-			That distinction matters because it changes what you need to fix. This is not a robots.txt problem. It is not a sitemap problem. It is a quality, relevance, or structural problem — and in some cases all three.
+			That distinction matters because it changes what you need to fix. This is not a robots.txt problem. It is not a sitemap problem. It is not a <a href="/blog/redirect-chains-seo-killer">redirect chain</a> problem. It is a quality, relevance, or structural problem — and in some cases all three.
 		</p>
 
 		<h2>Why Google Decides Not to Index a Page It Already Crawled</h2>
@@ -526,14 +526,14 @@ export const blogContent: Record<string, string> = {
 		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
 			<h3 class="mt-0 text-white">2. Strengthen Internal Linking</h3>
 			<p class="mb-0">
-				Every important page should be reachable through multiple internal links from other relevant pages on your site. If a page is only linked from one place — or worse, only from the sitemap — Google has very little reason to treat it as important. Link to it from related blog posts, from relevant service pages, from your navigation where appropriate.
+				Every important page should be reachable through multiple internal links from other relevant pages on your site. If a page is only linked from one place — or worse, only from the sitemap — Google has very little reason to treat it as important. Link to it from related blog posts, from relevant service pages, from your navigation where appropriate. <a href="/blog/visualize-site-structure-link-graph">Visualizing your site's link structure</a> can reveal exactly which pages are orphaned or poorly connected.
 			</p>
 		</div>
 
 		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
 			<h3 class="mt-0 text-white">3. Consolidate Duplicate or Near-Duplicate Content</h3>
 			<p class="mb-0">
-				If you have multiple pages that cover substantially the same topic, Google may index one and skip the others. Audit for cannibalization. Decide which page should be the canonical version and either redirect or consolidate.
+				If you have multiple pages that cover substantially the same topic, Google may index one and skip the others. Check for <a href="/blog/duplicate-meta-tags-fix">duplicate meta tags</a> as a starting point — they often reveal pages competing for the same queries. Audit for cannibalization. Decide which page should be the canonical version and either redirect or consolidate.
 			</p>
 		</div>
 
@@ -595,7 +595,7 @@ export const blogContent: Record<string, string> = {
 
 		<div class="bg-[#3c3836] p-6 rounded-lg border border-[#8ec07c]/30 my-8 text-center">
 			<p class="text-white/80 mb-4">
-				Barracuda SEO connects directly to Google Search Console and surfaces content gaps, <a href="/blog/find-declining-pages-google-search-console">declining pages</a>, and indexing issues — with AI-powered diagnostics that tell you what to fix and why.
+				Barracuda SEO connects directly to Google Search Console and surfaces content gaps, <a href="/blog/find-declining-pages-google-search-console">declining pages</a>, and indexing issues — with <a href="/features">AI-powered diagnostics</a> that tell you what to fix and why.
 			</p>
 			<a href="https://app.barracudaseo.com" class="inline-block bg-[#8ec07c] text-[#1d2021] font-bold py-3 px-6 rounded-lg hover:bg-[#a9d18e] transition-colors">
 				Try Barracuda SEO Free
@@ -1615,7 +1615,7 @@ sys.exit(0)</code></pre>
 			<li><strong>Search engine confusion:</strong> Google may not know which page to rank</li>
 			<li><strong>Poor click-through rates:</strong> Generic titles don't entice clicks</li>
 			<li><strong>Lost opportunities:</strong> Each page should have unique, optimized meta tags</li>
-			<li><strong>Crawl budget waste:</strong> Search engines may skip duplicate pages</li>
+			<li><strong>Crawl budget waste:</strong> Search engines may skip duplicate pages — or worse, they get <a href="/blog/crawled-not-indexed">crawled but not indexed</a></li>
 		</ul>
 
 		<h2>Types of Duplicate Meta Tags</h2>
@@ -1627,7 +1627,7 @@ sys.exit(0)</code></pre>
 		<p>Less critical than titles, but still important. Unique descriptions improve click-through rates from search results.</p>
 
 		<h3>Duplicate H1 Tags</h3>
-		<p>While not meta tags, duplicate H1s indicate content duplication issues. Each page should have one unique H1.</p>
+		<p>While not meta tags, <a href="/blog/duplicate-h1-tags-seo-issue-or-just-noise">duplicate H1s</a> indicate content duplication issues. Each page should have one unique H1.</p>
 
 		<h2>How to Find Duplicate Meta Tags</h2>
 
@@ -1734,11 +1734,12 @@ sys.exit(0)</code></pre>
 			<li><strong>Validation:</strong> Check for duplicates before publishing</li>
 			<li><strong>Regular audits:</strong> Run monthly crawls to catch new duplicates</li>
 			<li><strong>Automation:</strong> Use CI/CD checks to prevent duplicates</li>
+			<li><strong>Site structure:</strong> <a href="/blog/visualize-site-structure-link-graph">Visualize your site structure</a> to identify areas prone to duplication</li>
 		</ul>
 
 		<h2>Tools for Finding and Fixing Duplicates</h2>
 		<ul>
-			<li><strong>Barracuda SEO:</strong> Automatically detects duplicate meta tags</li>
+			<li><strong><a href="/features">Barracuda SEO</a>:</strong> Automatically detects duplicate meta tags</li>
 			<li><strong>Screaming Frog:</strong> Comprehensive duplicate detection</li>
 			<li><strong>Google Search Console:</strong> Shows duplicate titles Google has found</li>
 			<li><strong>Ahrefs Site Audit:</strong> Identifies duplicate content issues</li>
@@ -2220,7 +2221,7 @@ sys.exit(0)</code></pre>
 	`,
 	'visualize-site-structure-link-graph': `
 		<h2>Introduction</h2>
-		<p>Your site's internal linking structure is the foundation of SEO. It determines how search engines crawl your site, how link equity flows, and how users navigate. Visualizing this structure helps you identify problems and optimize architecture.</p>
+		<p>Your site's internal linking structure is the foundation of SEO. It determines how search engines crawl your site, how link equity flows, and how users navigate. Without a clear structure, pages can end up <a href="/blog/crawled-not-indexed">crawled but never indexed</a>. Visualizing this structure helps you identify problems and optimize architecture.</p>
 		<p>This guide shows you how to analyze and visualize your site's link structure using crawl data and link graphs.</p>
 
 		<h2>Why Site Structure Matters</h2>
@@ -2288,7 +2289,7 @@ sys.exit(0)</code></pre>
 		<h3>2. Deep Pages</h3>
 		<p><strong>Problem:</strong> Important pages 5+ clicks from homepage</p>
 		<p><strong>Impact:</strong> Less crawl priority, less link equity</p>
-		<p><strong>Solution:</strong> Reduce click depth, add direct links</p>
+		<p><strong>Solution:</strong> Reduce click depth, add direct links. Learn how to <a href="/blog/how-to-prioritize-seo-issues">prioritize which structural issues to fix first</a>.</p>
 
 		<h3>3. Flat Structure</h3>
 		<p><strong>Problem:</strong> Too many pages linked from homepage</p>
@@ -2325,6 +2326,7 @@ sys.exit(0)</code></pre>
 			<li>Use descriptive anchor text</li>
 			<li>Link to related content</li>
 			<li>Avoid over-optimization</li>
+			<li>Check for <a href="/blog/redirect-chains-seo-killer">redirect chains</a> in existing links before adding new ones</li>
 		</ul>
 
 		<h3>4. Fix Orphaned Pages</h3>
@@ -2338,12 +2340,13 @@ sys.exit(0)</code></pre>
 
 		<h2>Tools for Link Graph Analysis</h2>
 
-		<h3>Barracuda SEO</h3>
+		<h3><a href="/features">Barracuda SEO</a></h3>
 		<p>Features include:</p>
 		<ul>
 			<li>Interactive link graph visualization</li>
 			<li>Orphaned page detection</li>
 			<li>Click depth analysis</li>
+			<li><a href="/blog/duplicate-meta-tags-fix">Duplicate meta tag</a> detection</li>
 			<li>Link flow visualization</li>
 		</ul>
 
