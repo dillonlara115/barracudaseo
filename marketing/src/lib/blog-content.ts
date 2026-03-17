@@ -1,5 +1,1885 @@
 // Blog post content stored separately for better maintainability
 export const blogContent: Record<string, string> = {
+	'core-web-vitals-in-2026-what-actually-matters-after-the-latest-chrome-updates': `
+		<p>
+			You finally passed the Core Web Vitals assessment last year. Then you checked Search Console this morning and saw a sea of red URLs warning about poor INP scores.
+		</p>
+
+		<p>
+			Google never stops tweaking its page experience signals. What was considered a fast website three years ago is now struggling to pass the basic thresholds. Understanding Core Web Vitals in 2026 is not just about keeping developers happy. It is about protecting your organic traffic from competitors who take performance seriously.
+		</p>
+
+		<p>
+			This guide breaks down exactly what Google evaluates today and how to fix the issues that actually move the needle.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8">
+			<h2 class="mt-0 text-[#8ec07c]">What This Post Covers</h2>
+			<ul class="mb-0">
+				<li>The state of Core Web Vitals in 2026 and how measurement has evolved</li>
+				<li>What changed with INP, LCP, and CLS thresholds and enforcement</li>
+				<li>How Chrome's latest updates impact your CrUX data and rankings</li>
+				<li>SPA-specific CLS changes you need to know about</li>
+				<li>A step-by-step action plan to pass the assessment</li>
+			</ul>
+		</div>
+
+		<h2>The State of Core Web Vitals in 2026</h2>
+
+		<p>
+			The fundamental shift over the past two years is the move from laboratory metrics to field data. Google relies heavily on the Chrome User Experience Report (CrUX) to measure how actual humans interact with your pages. Synthetic tests in Lighthouse are useful for debugging, but they do not determine your ranking signal.
+		</p>
+
+		<p>
+			In 2026, the big three metrics remain <strong>LCP</strong> (Largest Contentful Paint), <strong>CLS</strong> (Cumulative Layout Shift), and <strong>INP</strong> (<a href="/blog/inp-vs-fid-what-changed-and-how-to-optimize-for-the-new-metric" class="text-[#8ec07c] hover:underline">Interaction to Next Paint</a>). However, the way Chrome measures these interactions has evolved. Background processes, third-party scripts, and heavy JavaScript frameworks face stricter penalization. The margin for error is smaller.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">2026 Core Web Vitals Thresholds</h3>
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Metric</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">What It Measures</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Good</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Poor</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">LCP</td>
+						<td class="p-3 border border-white/20 text-white/80">Loading speed — when the largest visible element renders</td>
+						<td class="p-3 border border-white/20 text-[#8ec07c]">≤ 2.5s</td>
+						<td class="p-3 border border-white/20 text-[#fb4934]">&gt; 4.0s</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">INP</td>
+						<td class="p-3 border border-white/20 text-white/80">Responsiveness — latency of all user interactions</td>
+						<td class="p-3 border border-white/20 text-[#8ec07c]">≤ 200ms</td>
+						<td class="p-3 border border-white/20 text-[#fb4934]">&gt; 500ms</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">CLS</td>
+						<td class="p-3 border border-white/20 text-white/80">Visual stability — how much the page layout shifts</td>
+						<td class="p-3 border border-white/20 text-[#8ec07c]">≤ 0.1</td>
+						<td class="p-3 border border-white/20 text-[#fb4934]">&gt; 0.25</td>
+					</tr>
+				</tbody>
+			</table>
+			<p class="text-white/50 text-xs mt-3 mb-0">All metrics are evaluated at the 75th percentile of real user sessions (field data from CrUX), not lab data.</p>
+		</div>
+
+		<h2>INP Is the New King of Responsiveness</h2>
+
+		<p>
+			When Google replaced First Input Delay (FID) with Interaction to Next Paint (INP) in March 2024, many site owners ignored the warning. Now, the algorithm heavily favors sites that respond instantly to clicks, taps, and keyboard inputs throughout the <em>entire</em> user journey — not just the first interaction.
+		</p>
+
+		<p>
+			INP measures full round-trip latency. If a user clicks an accordion menu and the browser takes 300 milliseconds to render the open state because the main thread is blocked by a tracking script, you fail. A passing score must be under 200 milliseconds at the 75th percentile.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fabd2f]/30 my-8">
+			<h3 class="mt-0 text-[#fabd2f]">Why INP Catches More Sites Than FID Did</h3>
+			<p class="text-white/80 mb-2">
+				FID only measured the <em>first</em> interaction and only measured the input delay (not processing or painting). Sites could pass FID by deferring heavy scripts past the first click. INP measures <strong>every interaction</strong> across the full session and includes processing time and paint time.
+			</p>
+			<p class="text-white/80 mb-0">
+				If a heavy third-party script freezes the page two minutes into a session and the user clicks during that freeze, your INP score tanks. There is no way to game this metric. Read our full <a href="/blog/inp-vs-fid-what-changed-and-how-to-optimize-for-the-new-metric" class="text-[#fabd2f] hover:underline">INP vs. FID deep dive</a> for optimization strategies.
+			</p>
+		</div>
+
+		<h3>Quick INP Wins</h3>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<ol class="text-white/80 mb-0">
+				<li class="mb-2"><strong>Break up long tasks</strong> — use <code>scheduler.yield()</code> or <code>setTimeout(0)</code> to split JavaScript execution into sub-50ms chunks so the browser can process pending user inputs between them.</li>
+				<li class="mb-2"><strong>Defer non-critical scripts</strong> — move analytics, chat widgets, and ad scripts to load after the page is interactive. Use <code>requestIdleCallback</code> or trigger on first user interaction.</li>
+				<li class="mb-2"><strong>Provide instant visual feedback</strong> — apply a CSS state change (button press animation, spinner) before any heavy processing. INP measures time to <em>next paint</em>, so a fast visual response keeps the score low.</li>
+				<li class="mb-0"><strong>Audit WordPress plugins</strong> — each plugin injecting scripts into the header adds main thread contention. Disable plugins one by one on staging to find the worst offenders.</li>
+			</ol>
+		</div>
+
+		<h2>LCP Optimization Requires Server-Side Fixes</h2>
+
+		<p>
+			Largest Contentful Paint measures loading performance. The target is still 2.5 seconds or faster. The difference in 2026 is that simple lazy-loading tricks are no longer enough.
+		</p>
+
+		<p>
+			Chrome now prioritizes the discovery of the LCP element much earlier in the rendering path. If your hero image is loaded via CSS background or hidden behind a client-side JavaScript rendering wall, the browser will not find it fast enough.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">LCP Optimization Checklist</h3>
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div>
+					<p class="text-[#8ec07c] font-bold mb-1">Server-Side (TTFB)</p>
+					<ul class="text-white/80 mb-0">
+						<li class="mb-1">Enable page caching at the server level</li>
+						<li class="mb-1">Deploy a CDN for edge-cached HTML (<a href="/blog/how-caching-layers-interact" class="text-[#8ec07c] hover:underline">see caching layers guide</a>)</li>
+						<li class="mb-1">Optimize database queries and plugin overhead</li>
+						<li class="mb-0">Upgrade from shared hosting if TTFB &gt; 600ms</li>
+					</ul>
+				</div>
+				<div>
+					<p class="text-[#8ec07c] font-bold mb-1">Front-End (Rendering)</p>
+					<ul class="text-white/80 mb-0">
+						<li class="mb-1">Add <code>fetchpriority="high"</code> to LCP images</li>
+						<li class="mb-1">Remove <code>loading="lazy"</code> from above-the-fold images</li>
+						<li class="mb-1">Preload LCP images with <code>&lt;link rel="preload"&gt;</code></li>
+						<li class="mb-0">Inline critical CSS, defer the rest</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fb4934]/30 my-8">
+			<h3 class="mt-0 text-[#fb4934]">The Hosting Reality Check</h3>
+			<p class="text-white/80 mb-0">
+				If you rely on a cheap shared hosting plan, your server latency will make passing LCP mathematically impossible regardless of how well you optimize the frontend. When your TTFB is already 800ms–1200ms, you only have 1.3–1.7 seconds left for the browser to download, parse, and render the LCP element. For most pages, that is not enough. A managed host or a CDN with HTML edge-caching is the only path forward.
+			</p>
+		</div>
+
+		<h2>CLS Standards Have Tightened</h2>
+
+		<p>
+			Cumulative Layout Shift measures visual stability. Users hate when they try to click a link and the page suddenly jumps. The passing threshold remains 0.1 or less, but Chrome's ability to detect shifts has improved significantly.
+		</p>
+
+		<p>
+			The most common culprits for poor CLS scores have not changed — ads without reserved space, web fonts swapping late, and images missing explicit dimensions still cause the majority of failures. Our <a href="/blog/how-to-fix-cls-issues-on-wordpress-sites" class="text-[#8ec07c] hover:underline">WordPress CLS fix guide</a> covers all seven major culprits in detail.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fabd2f]/30 my-8">
+			<h3 class="mt-0 text-[#fabd2f]">New in 2025–2026: SPA Soft Navigation CLS</h3>
+			<p class="text-white/80 mb-0">
+				Chrome now measures layout shifts during <strong>soft navigations</strong> within single-page applications (SPAs) more accurately. Previously, CLS was mostly tracked during initial page load. Now, if you run a React, Vue, or Next.js application and a route transition causes content to jump, Chrome records those shifts against your CLS score. You need to ensure skeleton screens and loading placeholders perfectly match the dimensions of the incoming content on every route change — not just the initial page load.
+			</p>
+		</div>
+
+		<h2>How Chrome's Latest Updates Impact CrUX Data</h2>
+
+		<p>
+			Recent Chrome updates have refined how user interactions are aggregated in the Chrome User Experience Report. Two changes are particularly important for SEOs:
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">CrUX Aggregation Changes</h3>
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div>
+					<p class="text-[#fb4934] font-bold mb-1">More Accurate Device Grouping</p>
+					<p class="text-white/80 mb-0">Chrome now groups similar devices and connection speeds more precisely. A surge in mobile traffic from slower networks will drag down your field data faster than before. You cannot rely on a fast desktop site to mask poor mobile performance.</p>
+				</div>
+				<div>
+					<p class="text-[#fb4934] font-bold mb-1">Mobile-First Evaluation</p>
+					<p class="text-white/80 mb-0">Google evaluates page experience on a mobile-first basis. The CrUX data in your Search Console reflects 28 days of historical data, weighted toward mobile sessions. Deploying a fix today means waiting up to a month to see validated results.</p>
+				</div>
+			</div>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fabd2f]/30 my-8">
+			<h3 class="mt-0 text-[#fabd2f]">The 28-Day Lag</h3>
+			<p class="text-white/80 mb-0">
+				CrUX field data is a 28-day rolling average. When you deploy a performance fix, the improvement blends into historical data gradually. Do not expect Search Console to turn green overnight. Use lab tools (Lighthouse, WebPageTest) to validate your fix immediately, then monitor CrUX weekly for the trailing metric to converge. If you need faster validation, the CrUX API provides daily-resolution data for origins with sufficient traffic.
+			</p>
+		</div>
+
+		<h2>Actionable Steps to Pass the Assessment</h2>
+
+		<p>
+			Passing the assessment requires a systematic approach. Do not guess what is slowing down your site. Follow this diagnostic workflow:
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8">
+			<div class="space-y-3">
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">1.</span>
+					<span class="text-white/80"><strong>Identify failing pages in Search Console</strong> — look for patterns in page templates rather than individual URLs. If all product pages fail INP, the problem is in the product template, not a single page.</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">2.</span>
+					<span class="text-white/80"><strong>Run affected URLs through PageSpeed Insights</strong> — gather both field data (real users) and lab data (Lighthouse). Field data tells you the problem exists; lab data helps you find the cause.</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">3.</span>
+					<span class="text-white/80"><strong>Inspect the Lighthouse Treemap</strong> — identify bloated JavaScript bundles blocking the main thread. Sort by size and execution time to find the worst offenders.</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">4.</span>
+					<span class="text-white/80"><strong>Implement resource hints</strong> — add <code>fetchpriority="high"</code> to LCP images, <code>&lt;link rel="preload"&gt;</code> for critical fonts, and <code>defer</code>/<code>async</code> on non-critical scripts.</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">5.</span>
+					<span class="text-white/80"><strong>Defer or remove third-party scripts</strong> — audit every tracking pixel, chat widget, and ad script. Load them after the page is interactive or move them to a web worker.</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">6.</span>
+					<span class="text-white/80"><strong>Verify your caching layers</strong> — ensure page cache, CDN, and browser cache are <a href="/blog/how-caching-layers-interact" class="text-[#8ec07c] hover:underline">properly configured and not conflicting</a>.</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">7.</span>
+					<span class="text-white/80"><strong>Validate and monitor</strong> — test on staging with lab tools, deploy, then track CrUX weekly. Follow our full <a href="/blog/the-complete-site-speed-audit-process-for-seo-professionals" class="text-[#8ec07c] hover:underline">site speed audit process</a> for the complete workflow.</span>
+				</div>
+			</div>
+		</div>
+
+		<h2>Where Each Metric Fails Most Often</h2>
+
+		<p>
+			Different types of sites tend to fail different metrics. Knowing where your site type is most vulnerable helps you prioritize:
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Site Type</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Most Likely Failure</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Root Cause</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">WordPress blogs</td>
+						<td class="p-3 border border-white/20 text-[#fb4934]">LCP</td>
+						<td class="p-3 border border-white/20 text-white/80">Slow shared hosting, unoptimized hero images, no CDN</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">E-commerce (WooCommerce, Shopify)</td>
+						<td class="p-3 border border-white/20 text-[#fb4934]">INP + CLS</td>
+						<td class="p-3 border border-white/20 text-white/80">Heavy product page JS, dynamically injected reviews/ads, mega menus</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">SPA (React, Vue, Next.js)</td>
+						<td class="p-3 border border-white/20 text-[#fb4934]">INP</td>
+						<td class="p-3 border border-white/20 text-white/80">Client-side rendering overhead, large component trees, hydration cost</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">News / media sites</td>
+						<td class="p-3 border border-white/20 text-[#fb4934]">CLS</td>
+						<td class="p-3 border border-white/20 text-white/80">Ads loading without reserved space, late-injecting banners, A/B testing scripts</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Lead gen / agency sites</td>
+						<td class="p-3 border border-white/20 text-[#fb4934]">LCP</td>
+						<td class="p-3 border border-white/20 text-white/80">Large hero video/animation, render-blocking CSS, unoptimized page builders</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<h2>Key Takeaway</h2>
+
+		<p>
+			The era of scraping by with mediocre site speed is over. Google wants to serve pages that load instantly, respond immediately, and remain perfectly stable. The three priorities for 2026 are clear:
+		</p>
+
+		<ul>
+			<li><strong>INP</strong> — unblock the main thread, yield frequently, defer third-party scripts</li>
+			<li><strong>LCP</strong> — fix server response times, preload critical assets, eliminate render-blocking resources</li>
+			<li><strong>CLS</strong> — reserve space for dynamic elements, preload fonts, set explicit image dimensions</li>
+		</ul>
+
+		<p>
+			Fast websites earn more visibility and convert better. If your competitors have smooth, instant interactions while your site stutters on mobile devices, Google will rank them higher.
+		</p>
+
+		<div class="bg-[#282828] p-8 rounded-lg border border-[#8ec07c]/30 text-center my-10">
+			<h3 class="mt-0 text-white">Stop guessing why your pages fail the assessment</h3>
+			<p class="text-white/80 mb-6">
+				Barracuda SEO crawls your site and pinpoints exactly which Core Web Vitals are failing and why — with AI-powered prioritization so you fix the highest-impact issues first.
+			</p>
+			<a href="https://app.barracudaseo.com" class="inline-block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-3 rounded-lg font-medium transition-colors">
+				Try Barracuda SEO Free
+			</a>
+		</div>
+	`,
+	'how-to-fix-cls-issues-on-wordpress-sites': `
+		<p>
+			You load a page, go to tap a link, and the entire screen jumps down. You end up clicking an ad instead. Google hates this as much as your users do.
+		</p>
+
+		<p>
+			Cumulative Layout Shift (CLS) measures visual stability. Since the Page Experience update in mid-2021, and continuing through the Chrome UX Report refinements in 2025 and 2026, Google strictly penalizes pages that jump around during loading. A poor CLS score will directly bottleneck your organic traffic.
+		</p>
+
+		<p>
+			If you run WordPress, you are likely dealing with a specific set of themes, plugins, and dynamic elements that cause these shifts. Fixing CLS on WordPress requires targeting a few usual suspects rather than tearing down your entire site architecture.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8">
+			<h2 class="mt-0 text-[#8ec07c]">What This Post Covers</h2>
+			<ul class="mb-0">
+				<li>How CLS is calculated and what the thresholds mean for rankings</li>
+				<li>The 7 most common WordPress-specific CLS culprits</li>
+				<li>Concrete code fixes for each issue</li>
+				<li>How to diagnose which elements are shifting using DevTools</li>
+				<li>A prioritized fix order for maximum impact</li>
+			</ul>
+		</div>
+
+		<h2>The Impact of Layout Shifts on SEO</h2>
+
+		<p>
+			Google calculates CLS by looking at the proportion of the viewport that shifts and the distance the unstable elements move. To pass the Core Web Vitals assessment, your CLS score must be 0.1 or less. Anything above 0.25 is considered poor and requires immediate intervention.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">CLS Thresholds</h3>
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Score</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Rating</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">SEO Impact</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-[#8ec07c] font-bold">≤ 0.1</td>
+						<td class="p-3 border border-white/20 text-[#8ec07c]">Good</td>
+						<td class="p-3 border border-white/20 text-white/80">Passes Core Web Vitals. No ranking penalty.</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-[#fabd2f] font-bold">0.1 – 0.25</td>
+						<td class="p-3 border border-white/20 text-[#fabd2f]">Needs Improvement</td>
+						<td class="p-3 border border-white/20 text-white/80">Partial penalty. You are losing ground to stable competitors.</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-[#fb4934] font-bold">&gt; 0.25</td>
+						<td class="p-3 border border-white/20 text-[#fb4934]">Poor</td>
+						<td class="p-3 border border-white/20 text-white/80">Fails Core Web Vitals. Significant ranking penalty on mobile.</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<p>
+			When pages are visually unstable, user experience plummets. Bounce rates increase, time on page drops, and conversion rates suffer. Search engines use these behavioral signals to determine quality. You cannot outrank a stable, fast-loading competitor with a jumping, frustrating website. Performance metrics are no longer tiebreakers — they are fundamental prerequisites for competitive search visibility.
+		</p>
+
+		<h2>How to Find Your CLS Culprits</h2>
+
+		<p>
+			Before fixing anything, you need to identify exactly which elements are shifting. There are two reliable approaches.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-[#8ec07c]">Method 1: Chrome DevTools Layout Shift Regions</h3>
+			<ol class="text-white/80 mb-0">
+				<li class="mb-2">Open Chrome DevTools (F12)</li>
+				<li class="mb-2">Press Cmd+Shift+P (or Ctrl+Shift+P on Windows) and type <strong>"Show Rendering"</strong></li>
+				<li class="mb-2">Enable <strong>Layout Shift Regions</strong></li>
+				<li class="mb-2">Reload the page — shifting elements flash blue as they move</li>
+				<li class="mb-0">Check the <strong>Performance panel → Experience row</strong> for individual shift events with exact CLS contribution scores</li>
+			</ol>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-[#8ec07c]">Method 2: PageSpeed Insights Diagnostics</h3>
+			<ol class="text-white/80 mb-0">
+				<li class="mb-2">Run your URL through <a href="https://pagespeed.web.dev" class="text-[#8ec07c] hover:underline" target="_blank" rel="noopener">PageSpeed Insights</a></li>
+				<li class="mb-2">Scroll to the <strong>"Avoid large layout shifts"</strong> diagnostic</li>
+				<li class="mb-0">It lists the exact DOM elements responsible for each shift, along with their CLS contribution — this tells you precisely which WordPress elements to target</li>
+			</ol>
+		</div>
+
+		<h2>Culprit 1: Missing Width and Height Attributes on Images</h2>
+
+		<p>
+			The single most common cause of layout shifts in WordPress is images loading without declared dimensions. When a browser does not know how much space an image will occupy, it renders the surrounding text first. Once the image downloads, the browser forces the text out of the way to make room.
+		</p>
+
+		<p>
+			Modern WordPress core (5.5+) automatically adds <code>width</code> and <code>height</code> attributes to images uploaded through the media library. However, older themes, custom page builders, or images inserted via external URLs often strip these attributes away.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8 font-mono text-sm">
+			<p class="text-[#fb4934] mb-2 font-sans font-bold">Before: No dimensions (causes CLS)</p>
+			<p class="text-white/70 mb-4"><code>&lt;img src="hero.jpg" alt="Product photo"&gt;</code></p>
+
+			<p class="text-[#8ec07c] mb-2 font-sans font-bold">After: Explicit dimensions</p>
+			<p class="text-white/70 mb-4"><code>&lt;img src="hero.jpg" alt="Product photo" width="1200" height="630"&gt;</code></p>
+
+			<p class="text-[#8ec07c] mb-2 font-sans font-bold">Alternative: CSS aspect-ratio (works with responsive images)</p>
+			<div class="text-white/70">
+				<p class="mb-0"><code>img {</code></p>
+				<p class="mb-0 pl-4"><code>aspect-ratio: 16 / 9;</code></p>
+				<p class="mb-0 pl-4"><code>width: 100%;</code></p>
+				<p class="mb-0 pl-4"><code>height: auto;</code></p>
+				<p class="mb-0"><code>}</code></p>
+			</div>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fabd2f]/30 my-8">
+			<h3 class="mt-0 text-[#fabd2f]">WordPress-Specific Tip</h3>
+			<p class="text-white/80 mb-0">
+				If your theme or page builder strips dimensions, add this filter to your <code>functions.php</code> to force WordPress to always include width and height on <code>&lt;img&gt;</code> tags: <code>add_filter('wp_img_tag_add_width_and_height_attr', '__return_true');</code>. For images loaded via ACF custom fields or external URLs, you may need to manually add the attributes in your template files.
+			</p>
+		</div>
+
+		<h2>Culprit 2: Web Fonts Causing FOIT and FOUT</h2>
+
+		<p>
+			Flash of Invisible Text (FOIT) and Flash of Unstyled Text (FOUT) happen when your custom web fonts load slower than your HTML. The browser initially displays a fallback system font. When your custom font loads, it replaces the system font.
+		</p>
+
+		<p>
+			Because different fonts have different letter spacing, x-height, and line heights, swapping them causes the text block to expand or contract. This shifts every element positioned below the text.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8 font-mono text-sm">
+			<p class="text-[#8ec07c] mb-2 font-sans font-bold">Step 1: Add font-display: swap</p>
+			<div class="text-white/70 mb-4">
+				<p class="mb-0"><code>@font-face {</code></p>
+				<p class="mb-0 pl-4"><code>font-family: 'YourFont';</code></p>
+				<p class="mb-0 pl-4"><code>src: url('/fonts/yourfont.woff2') format('woff2');</code></p>
+				<p class="mb-0 pl-4"><code>font-display: swap;</code></p>
+				<p class="mb-0"><code>}</code></p>
+			</div>
+
+			<p class="text-[#8ec07c] mb-2 font-sans font-bold">Step 2: Preload the critical font file</p>
+			<div class="text-white/70 mb-4">
+				<p class="mb-0"><code>&lt;link rel="preload" href="/fonts/yourfont.woff2" as="font" type="font/woff2" crossorigin&gt;</code></p>
+			</div>
+
+			<p class="text-[#8ec07c] mb-2 font-sans font-bold">Step 3: Match fallback geometry to reduce swap shift</p>
+			<div class="text-white/70">
+				<p class="mb-0"><code>@font-face {</code></p>
+				<p class="mb-0 pl-4"><code>font-family: 'YourFont Fallback';</code></p>
+				<p class="mb-0 pl-4"><code>src: local('Arial');</code></p>
+				<p class="mb-0 pl-4"><code>size-adjust: 105%;</code></p>
+				<p class="mb-0 pl-4"><code>ascent-override: 90%;</code></p>
+				<p class="mb-0 pl-4"><code>descent-override: 22%;</code></p>
+				<p class="mb-0 pl-4"><code>line-gap-override: 0%;</code></p>
+				<p class="mb-0"><code>}</code></p>
+			</div>
+		</div>
+
+		<p>
+			The <code>size-adjust</code> and override properties let you tune the fallback system font to closely match the custom font's dimensions. This minimizes the visible reflow when the swap happens. Tools like <a href="https://screenspan.net/fallback" class="text-[#8ec07c] hover:underline" target="_blank" rel="noopener">Fallback Font Generator</a> can calculate the exact values for your font pairing.
+		</p>
+
+		<h2>Culprit 3: Dynamically Injected Ads and Embeds</h2>
+
+		<p>
+			Ad networks and third-party embeds (YouTube videos, Twitter widgets, Instagram posts) are notorious for ruining CLS scores. These elements are injected via JavaScript late in the page load cycle, pushing content down after the user has already started reading.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8 font-mono text-sm">
+			<p class="text-[#8ec07c] mb-2 font-sans font-bold">Reserve space for ad slots with min-height</p>
+			<div class="text-white/70 mb-4">
+				<p class="mb-0"><code>&lt;div class="ad-slot" style="min-height: 250px;"&gt;</code></p>
+				<p class="mb-0 pl-4"><code>&lt;!-- Ad network script injects here --&gt;</code></p>
+				<p class="mb-0"><code>&lt;/div&gt;</code></p>
+			</div>
+
+			<p class="text-[#8ec07c] mb-2 font-sans font-bold">Reserve space for YouTube embeds</p>
+			<div class="text-white/70">
+				<p class="mb-0"><code>&lt;div style="aspect-ratio: 16 / 9; width: 100%;"&gt;</code></p>
+				<p class="mb-0 pl-4"><code>&lt;iframe src="..." loading="lazy" ...&gt;&lt;/iframe&gt;</code></p>
+				<p class="mb-0"><code>&lt;/div&gt;</code></p>
+			</div>
+		</div>
+
+		<p>
+			If the ad fails to load or serves a smaller creative, the reserved space simply remains blank instead of collapsing and causing a shift. The same logic applies to social embeds — always wrap them in a container with fixed dimensions matching the expected widget size.
+		</p>
+
+		<h2>Culprit 4: Cookie Banners and Notification Bars</h2>
+
+		<p>
+			Cookie consent banners are legally required in many regions, but they are often implemented poorly. When a banner drops from the top of the screen and pushes the main content down, it triggers a layout shift penalty.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">Cookie Banner Positioning Strategies</h3>
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Approach</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">CLS Impact</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Notes</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold"><code>position: fixed; bottom: 0</code></td>
+						<td class="p-3 border border-white/20 text-[#8ec07c]">Zero CLS</td>
+						<td class="p-3 border border-white/20 text-white/80">Overlays content, does not displace anything. Best option.</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold"><code>position: fixed; top: 0</code></td>
+						<td class="p-3 border border-white/20 text-[#8ec07c]">Zero CLS</td>
+						<td class="p-3 border border-white/20 text-white/80">Overlays from top. Fine as long as it does not push content down.</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Top banner, <code>position: static</code></td>
+						<td class="p-3 border border-white/20 text-[#fb4934]">High CLS</td>
+						<td class="p-3 border border-white/20 text-white/80">Pushes all content down when injected. Avoid this pattern entirely.</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Modal overlay</td>
+						<td class="p-3 border border-white/20 text-[#8ec07c]">Zero CLS</td>
+						<td class="p-3 border border-white/20 text-white/80">Covers content with a centered dialog. No layout displacement.</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<p>
+			If your banner absolutely must push content down (some GDPR implementations require this), ensure it renders in the initial HTML response rather than being injected by JavaScript after the page has already painted. A banner present on first paint does not count as a layout shift.
+		</p>
+
+		<h2>Culprit 5: Late-Loading or Deferred CSS</h2>
+
+		<p>
+			When critical CSS is deferred or loads asynchronously, the browser briefly renders the page as plain unstyled HTML. Once the stylesheet arrives, the page snaps into its intended layout. This massive restructuring destroys your CLS score.
+		</p>
+
+		<p>
+			Many WordPress caching and performance plugins offer options to "Optimize CSS Delivery" or "Remove Unused CSS." While these features improve other metrics, misconfiguring them strips out styles needed for above-the-fold content.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fb4934]/30 my-8">
+			<h3 class="mt-0 text-[#fb4934]">The Trap: CSS Optimization Plugins</h3>
+			<p class="text-white/80 mb-2">
+				Plugins like WP Rocket, Autoptimize, and Perfmatters all offer CSS deferral features. When enabled blindly, they can move all CSS to load asynchronously, causing a flash of unstyled content (FOUC) that registers as a massive layout shift.
+			</p>
+			<p class="text-white/80 mb-0">
+				<strong>The fix:</strong> Always extract your critical path CSS and inline it directly into the <code>&lt;head&gt;</code>. Most of these plugins have a "Critical CSS" option that does this automatically — make sure it is enabled alongside any CSS deferral. Test every major page template after enabling these features; do not assume the auto-generated critical CSS is complete.
+			</p>
+		</div>
+
+		<h2>Culprit 6: Lazy-Loaded Above-the-Fold Content</h2>
+
+		<p>
+			WordPress 5.5+ adds <code>loading="lazy"</code> to all images by default. This is excellent for below-the-fold images but disastrous for images visible in the initial viewport. When the hero image or a prominent above-the-fold graphic is lazy loaded, the browser reserves no space for it until the intersection observer triggers — causing a shift when it finally loads.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8 font-mono text-sm">
+			<p class="text-[#8ec07c] mb-2 font-sans font-bold">Remove lazy loading from above-the-fold images in your theme</p>
+			<div class="text-white/70 mb-4">
+				<p class="mb-0"><code>&lt;img src="hero.jpg" width="1200" height="630"</code></p>
+				<p class="mb-0 pl-4"><code>fetchpriority="high"</code></p>
+				<p class="mb-0 pl-4"><code>decoding="async"</code></p>
+				<p class="mb-0 pl-4"><code>alt="Hero image"&gt;</code></p>
+				<p class="mb-0 text-white/40">Note: no loading="lazy" attribute</p>
+			</div>
+
+			<p class="text-[#8ec07c] mb-2 font-sans font-bold">Or use the WordPress filter to skip lazy loading on the first image</p>
+			<div class="text-white/70">
+				<p class="mb-0"><code>add_filter('wp_img_tag_add_loading_attr', function($value, $image) {</code></p>
+				<p class="mb-0 pl-4"><code>if (str_contains($image, 'hero-image')) return false;</code></p>
+				<p class="mb-0 pl-4"><code>return $value;</code></p>
+				<p class="mb-0"><code>}, 10, 2);</code></p>
+			</div>
+		</div>
+
+		<p>
+			WordPress 6.3+ introduced the <code>fetchpriority="high"</code> attribute on the first content image automatically. If you are on an older version, add it manually to your hero image to ensure the browser prioritizes downloading it immediately.
+		</p>
+
+		<h2>Culprit 7: Theme Header Height Changes</h2>
+
+		<p>
+			Many WordPress themes use a transparent or slim header on desktop that transforms into a different height on scroll or on mobile. If the header height is not explicitly set, the body content position shifts when the header transitions between states.
+		</p>
+
+		<p>
+			Sticky headers that change height when a user scrolls past a threshold are a common offender. The content below the header jumps up or down as the header shrinks or expands.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8 font-mono text-sm">
+			<p class="text-[#8ec07c] mb-2 font-sans font-bold">Fix: Reserve consistent header space</p>
+			<div class="text-white/70">
+				<p class="mb-0"><code>.site-header {</code></p>
+				<p class="mb-0 pl-4"><code>height: 80px;  </code><span class="text-white/40">/* fixed height prevents shift */</span></p>
+				<p class="mb-0"><code>}</code></p>
+				<p class="mb-0"><code>.site-header.scrolled {</code></p>
+				<p class="mb-0 pl-4"><code>height: 60px;</code></p>
+				<p class="mb-0"><code>}</code></p>
+				<p class="mb-0"><code>main {</code></p>
+				<p class="mb-0 pl-4"><code>padding-top: 80px; </code><span class="text-white/40">/* matches header height */</span></p>
+				<p class="mb-0"><code>}</code></p>
+			</div>
+		</div>
+
+		<p>
+			Use CSS <code>transform: translateY()</code> for header animations instead of changing <code>height</code> or <code>padding</code>. Transform-based animations run on the compositor thread and do not trigger layout recalculation, so they cannot cause CLS.
+		</p>
+
+		<h2>Prioritized Fix Order</h2>
+
+		<p>
+			Not all CLS fixes are equal. Here is the order we recommend based on typical impact and effort:
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8">
+			<div class="space-y-3">
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">1.</span>
+					<span class="text-white/80"><strong>Image dimensions</strong> — highest impact, lowest effort. Add width/height to every <code>&lt;img&gt;</code> tag. Fixes the majority of CLS issues on most WordPress sites.</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">2.</span>
+					<span class="text-white/80"><strong>Remove lazy loading from above-the-fold images</strong> — quick filter change. Prevents the hero image shift that tanks your score.</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">3.</span>
+					<span class="text-white/80"><strong>Fix cookie banner positioning</strong> — switch to <code>position: fixed</code> if not already. Immediate CLS elimination.</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">4.</span>
+					<span class="text-white/80"><strong>Reserve ad slot and embed space</strong> — add <code>min-height</code> or <code>aspect-ratio</code> to container divs. Medium effort, high impact on ad-heavy pages.</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">5.</span>
+					<span class="text-white/80"><strong>Font loading optimization</strong> — preload fonts, add <code>font-display: swap</code>, tune fallback metrics. Medium effort, eliminates text reflow shifts.</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">6.</span>
+					<span class="text-white/80"><strong>Audit CSS optimization plugins</strong> — verify critical CSS is being generated correctly. Test every page template after changes.</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">7.</span>
+					<span class="text-white/80"><strong>Fix header height transitions</strong> — set explicit heights and use transforms for animations. Higher effort, impacts sites with sticky/shrinking headers.</span>
+				</div>
+			</div>
+		</div>
+
+		<p>
+			Start by running your most important pages through PageSpeed Insights. Look at the specific elements flagged under the "Avoid large layout shifts" diagnostic. Address image dimensions first, then work down the list. Most WordPress sites can drop their CLS below 0.1 by fixing just the first three items.
+		</p>
+
+		<p>
+			If your theme is fundamentally broken or you are dealing with complex shifts you cannot track down, a <a href="/blog/complete-technical-seo-audit-guide" class="text-[#8ec07c] hover:underline">full technical SEO audit</a> with waterfall analysis will pinpoint the exact source. For a broader view of how CLS fits into the complete performance picture, read our <a href="/blog/the-complete-site-speed-audit-process-for-seo-professionals" class="text-[#8ec07c] hover:underline">site speed audit process</a> guide.
+		</p>
+
+		<div class="bg-[#282828] p-8 rounded-lg border border-[#8ec07c]/30 text-center my-10">
+			<h3 class="mt-0 text-white">Stop losing traffic to jumping pages</h3>
+			<p class="text-white/80 mb-6">
+				Barracuda SEO crawls your WordPress site and flags exactly which elements cause layout shifts — with prioritized fixes so you know what to tackle first.
+			</p>
+			<a href="https://app.barracudaseo.com" class="inline-block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-3 rounded-lg font-medium transition-colors">
+				Try Barracuda SEO Free
+			</a>
+		</div>
+	`,
+	'inp-vs-fid-what-changed-and-how-to-optimize-for-the-new-metric': `
+		<p>
+			If your site felt fast three years ago but is failing performance reports today, you are not alone. First Input Delay is dead. Google replaced it with Interaction to Next Paint back in 2024, and the shift exposed thousands of websites that were masking terrible interaction delays behind fast initial load times.
+		</p>
+
+		<p>
+			This post covers why the metric changed and everything you need to know about INP optimization in 2026.
+		</p>
+
+		<p>
+			When you check your Google Search Console today, INP issues usually show up in the mobile report first. Mobile devices have weaker processors than desktops. When heavy JavaScript runs, those mobile processors choke. The user taps a button, nothing happens for a full second, and then the site suddenly reacts. That is a poor user experience, and Google now penalizes it heavily in search rankings.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8">
+			<h2 class="mt-0 text-[#8ec07c]">What This Post Covers</h2>
+			<ul class="mb-0">
+				<li>Why First Input Delay was a flawed metric and how sites gamed it</li>
+				<li>How INP works: the three phases of every interaction</li>
+				<li>Concrete optimization strategies for each INP phase</li>
+				<li>How to measure INP with field and lab data</li>
+				<li>Real-world fixes for the most common INP killers</li>
+			</ul>
+		</div>
+
+		<h2>Why First Input Delay Was Flawed</h2>
+
+		<p>
+			First Input Delay only measured the very first interaction a user had with your page. It also only measured the <em>input delay</em> itself — the time between a user clicking a link and the browser <em>beginning</em> to process that click.
+		</p>
+
+		<p>
+			It did not measure the time it took to actually process the event. It did not measure the time it took to paint the visual update to the screen. If a user clicked a menu icon and the browser took three seconds to animate the menu opening, FID might still report a perfect score.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fb4934]/30 my-8">
+			<h3 class="mt-0 text-[#fb4934]">How Sites Gamed FID</h3>
+			<p class="text-white/80 mb-0">
+				Developers quickly figured out how to exploit FID. They prioritized the initial paint and deferred heavy scripts until right after load. The site <em>looked</em> ready to use, but when users actually tried to interact, the main thread was frozen. FID rewarded the <strong>illusion of speed</strong> rather than actual responsiveness. A page could score a perfect FID while being completely unresponsive to every interaction after the first one.
+			</p>
+		</div>
+
+		<h2>Enter Interaction to Next Paint</h2>
+
+		<p>
+			Interaction to Next Paint is far more ruthless. It measures the latency of <strong>all</strong> click, tap, and keyboard interactions throughout the entire lifespan of a user's visit.
+		</p>
+
+		<p>
+			INP calculates the total time from the moment the user initiates the interaction until the browser presents the next visual frame to the screen. If a user clicks five different tabs on a product page, INP evaluates the latency of all those clicks and typically reports the worst one.
+		</p>
+
+		<p>
+			This creates a comprehensive picture of page responsiveness. You cannot trick INP by simply delaying scripts. If a heavy script freezes the page two minutes into a user session and they try to click a button during that freeze, your INP score tanks.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">FID vs. INP at a Glance</h3>
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]"></th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">First Input Delay (FID)</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Interaction to Next Paint (INP)</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Interactions measured</td>
+						<td class="p-3 border border-white/20 text-white/80">First interaction only</td>
+						<td class="p-3 border border-white/20 text-white/80">All interactions during the full session</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">What it measures</td>
+						<td class="p-3 border border-white/20 text-white/80">Input delay only (time until event handler starts)</td>
+						<td class="p-3 border border-white/20 text-white/80">Full round-trip: input delay + processing + presentation</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Reported value</td>
+						<td class="p-3 border border-white/20 text-white/80">The single first interaction</td>
+						<td class="p-3 border border-white/20 text-white/80">Worst interaction (approximated at 98th percentile)</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Good threshold</td>
+						<td class="p-3 border border-white/20 text-white/80">≤ 100ms</td>
+						<td class="p-3 border border-white/20 text-white/80">≤ 200ms</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Gameable?</td>
+						<td class="p-3 border border-white/20 text-white/80">Yes — defer scripts past first interaction</td>
+						<td class="p-3 border border-white/20 text-white/80">No — every interaction counts</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Status</td>
+						<td class="p-3 border border-white/20 text-[#fb4934]">Deprecated (March 2024)</td>
+						<td class="p-3 border border-white/20 text-[#8ec07c]">Active Core Web Vital</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<h2>The Three Phases of Every INP Interaction</h2>
+
+		<p>
+			To succeed at INP optimization, you need to break the metric into its three distinct phases. Every single interaction consists of an <strong>input delay</strong>, a <strong>processing time</strong>, and a <strong>presentation delay</strong>. Each phase has different root causes and different fixes.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8 font-mono text-sm">
+			<p class="text-[#8ec07c] font-bold mb-4 font-sans text-base">Anatomy of an INP Interaction</p>
+			<div class="space-y-3 text-white/80">
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">Phase 1</span>
+					<div>
+						<span class="text-white font-bold font-sans">Input Delay</span>
+						<span class="text-white/60 font-sans"> — user taps button → browser is busy with other tasks → <span class="text-[#fabd2f]">interaction waits in queue</span></span>
+					</div>
+				</div>
+				<div class="flex items-start gap-3 pl-6 border-l-2 border-[#8ec07c]/30">
+					<span class="text-[#fabd2f] font-bold shrink-0">↓</span>
+					<span class="text-white/40 font-sans">main thread becomes available</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">Phase 2</span>
+					<div>
+						<span class="text-white font-bold font-sans">Processing Time</span>
+						<span class="text-white/60 font-sans"> — event handlers execute → DOM mutations happen → <span class="text-[#fabd2f]">your code runs</span></span>
+					</div>
+				</div>
+				<div class="flex items-start gap-3 pl-6 border-l-2 border-[#8ec07c]/30">
+					<span class="text-[#fabd2f] font-bold shrink-0">↓</span>
+					<span class="text-white/40 font-sans">JavaScript complete, browser needs to render</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">Phase 3</span>
+					<div>
+						<span class="text-white font-bold font-sans">Presentation Delay</span>
+						<span class="text-white/60 font-sans"> — style recalculation → layout → paint → composite → <span class="text-[#8ec07c]">next frame displayed</span></span>
+					</div>
+				</div>
+			</div>
+			<div class="mt-4 pt-4 border-t border-white/10 font-sans">
+				<p class="text-white/60 text-xs mb-0"><strong class="text-white/80">INP = Phase 1 + Phase 2 + Phase 3.</strong> The total must be ≤ 200ms for a "Good" score. Any phase can be the bottleneck.</p>
+			</div>
+		</div>
+
+		<h3>Phase 1: Input Delay</h3>
+
+		<p>
+			This is the time a user waits for the browser to even acknowledge the interaction. The most common cause of high input delay is background tasks blocking the main thread. If the browser is busy executing a massive JavaScript bundle when the user taps a button, the tap has to wait in line.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-[#8ec07c]">Common Input Delay Causes</h3>
+			<ul class="mb-0 text-white/80">
+				<li class="mb-2">Third-party analytics or ad scripts executing heavy code on the main thread</li>
+				<li class="mb-2">Large JavaScript bundles parsing and compiling during idle moments — a user click that lands during compilation is delayed</li>
+				<li class="mb-2"><code>setInterval</code> or <code>requestAnimationFrame</code> callbacks that run continuously and consume thread time</li>
+				<li class="mb-0">Synchronous <code>localStorage</code> or <code>IndexedDB</code> reads triggered by background logic</li>
+			</ul>
+		</div>
+
+		<h3>Phase 2: Processing Time</h3>
+
+		<p>
+			Processing time is how long your code takes to run in response to the interaction. Complex event listeners, inefficient DOM manipulation, and unoptimized React state updates often bloat this phase. If your event handler parses a massive JSON object or triggers a full component tree re-render before doing anything visible, processing time spikes.
+		</p>
+
+		<h3>Phase 3: Presentation Delay</h3>
+
+		<p>
+			The browser has processed the event and now needs to calculate layout changes and paint the new pixels to the screen. Highly complex CSS selectors and massive DOM trees cause severe presentation delays. The more elements the browser has to recalculate, the longer it takes to paint the next frame.
+		</p>
+
+		<h2>Essential Strategies for INP Optimization</h2>
+
+		<p>
+			Improving your INP score requires a combination of JavaScript reduction, main thread management, and DOM optimization. Here are the most impactful fixes, ordered by typical return on effort.
+		</p>
+
+		<h3>1. Yield to the Main Thread</h3>
+
+		<p>
+			The single most effective INP optimization technique is breaking up long tasks. A long task is any piece of JavaScript execution that takes longer than 50 milliseconds.
+		</p>
+
+		<p>
+			When you have a long task, the browser cannot respond to user input until it finishes. You need to identify these tasks in Chrome DevTools and break them into smaller chunks.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8 font-mono text-sm">
+			<p class="text-[#8ec07c] mb-2 font-sans font-bold">Before: Monolithic handler (blocks main thread)</p>
+			<div class="text-white/70 mb-4">
+				<p class="mb-0">button.addEventListener('click', () => {</p>
+				<p class="mb-0 pl-4">processLargeDataset();    <span class="text-white/40">// 150ms</span></p>
+				<p class="mb-0 pl-4">updateDOM();              <span class="text-white/40">// 80ms</span></p>
+				<p class="mb-0 pl-4">sendAnalytics();          <span class="text-white/40">// 40ms</span></p>
+				<p class="mb-0">});</p>
+				<p class="mb-0 text-[#fb4934]">// Total: 270ms locked on main thread</p>
+			</div>
+
+			<p class="text-[#8ec07c] mb-2 font-sans font-bold">After: Yielding between chunks</p>
+			<div class="text-white/70">
+				<p class="mb-0">button.addEventListener('click', async () => {</p>
+				<p class="mb-0 pl-4">updateDOM();              <span class="text-white/40">// visual feedback first</span></p>
+				<p class="mb-0 pl-4">await scheduler.yield();  <span class="text-white/40">// let browser paint</span></p>
+				<p class="mb-0 pl-4">processLargeDataset();    <span class="text-white/40">// heavy work after paint</span></p>
+				<p class="mb-0 pl-4">await scheduler.yield();</p>
+				<p class="mb-0 pl-4">sendAnalytics();          <span class="text-white/40">// non-critical last</span></p>
+				<p class="mb-0">});</p>
+				<p class="mb-0 text-[#8ec07c]">// INP sees only the time to first paint</p>
+			</div>
+		</div>
+
+		<p>
+			The <code>scheduler.yield()</code> API is the modern way to yield. For browsers that do not yet support it, <code>await new Promise(r => setTimeout(r, 0))</code> achieves a similar effect. Think of it like a polite conversation instead of a monologue — the script talks for a moment, pauses to see if the user needs anything, and then continues.
+		</p>
+
+		<h3>2. Minimize DOM Complexity</h3>
+
+		<p>
+			A massive DOM tree destroys rendering performance. When a user interacts with a page and triggers a visual change, the browser recalculates how that change affects surrounding elements.
+		</p>
+
+		<p>
+			If your page has 5,000 DOM nodes, those calculations take significantly longer than if you have 500 nodes. <a href="/blog/ecommerce-seo-audit" class="text-[#8ec07c] hover:underline">E-commerce sites</a> are notorious for this. Mega menus, infinite scroll product grids, and hidden modal windows bloat the DOM.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">DOM Size Targets</h3>
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Metric</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Good</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Concerning</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Critical</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Total DOM nodes</td>
+						<td class="p-3 border border-white/20 text-[#8ec07c]">&lt; 800</td>
+						<td class="p-3 border border-white/20 text-[#fabd2f]">800 – 1,400</td>
+						<td class="p-3 border border-white/20 text-[#fb4934]">&gt; 1,400</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Max DOM depth</td>
+						<td class="p-3 border border-white/20 text-[#8ec07c]">&lt; 32</td>
+						<td class="p-3 border border-white/20 text-[#fabd2f]">32 – 60</td>
+						<td class="p-3 border border-white/20 text-[#fb4934]">&gt; 60</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Max child elements</td>
+						<td class="p-3 border border-white/20 text-[#8ec07c]">&lt; 60</td>
+						<td class="p-3 border border-white/20 text-[#fabd2f]">60 – 120</td>
+						<td class="p-3 border border-white/20 text-[#fb4934]">&gt; 120</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<p>
+			Audit your page structure. Remove hidden elements that are not immediately necessary. Use virtual scrolling for long lists so only the visible elements are rendered. Simplifying your HTML structure naturally improves both INP and rendering performance because there is simply less for the browser to process.
+		</p>
+
+		<h3>3. Optimize Third-Party Scripts</h3>
+
+		<p>
+			Third-party scripts are often the silent killers of INP scores. Chat widgets, analytics trackers, and advertising scripts frequently execute heavy code on the main thread without your direct control.
+		</p>
+
+		<p>
+			You cannot edit the code of a third-party tool. You can, however, control <strong>when</strong> and <strong>how</strong> it loads:
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-[#8ec07c]">Third-Party Script Loading Strategies</h3>
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Strategy</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">How It Works</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Best For</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Defer until idle</td>
+						<td class="p-3 border border-white/20 text-white/80">Load script via <code>requestIdleCallback</code> or after user's first interaction</td>
+						<td class="p-3 border border-white/20 text-white/80">Analytics, heatmaps, non-critical tracking</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Web Worker (Partytown)</td>
+						<td class="p-3 border border-white/20 text-white/80">Move script execution to a background thread entirely</td>
+						<td class="p-3 border border-white/20 text-white/80">Heavy analytics (GA4), ad scripts, tag managers</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Facade pattern</td>
+						<td class="p-3 border border-white/20 text-white/80">Show a static placeholder; load the real widget only on user interaction</td>
+						<td class="p-3 border border-white/20 text-white/80">Chat widgets, embedded video players, social embeds</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Remove entirely</td>
+						<td class="p-3 border border-white/20 text-white/80">Evaluate ROI vs. SEO penalty; remove if net negative</td>
+						<td class="p-3 border border-white/20 text-white/80">Unused tracking pixels, redundant tools, abandoned A/B tests</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<h3>4. Streamline Event Listeners</h3>
+
+		<p>
+			Bloated event listeners directly increase processing time. When a user clicks a button, every function attached to that click event must execute.
+		</p>
+
+		<p>
+			Audit your event listeners. Ensure you are not running redundant calculations. Debounce or throttle events that fire rapidly, like scroll and resize events. If an interaction requires heavy computation, provide visual feedback immediately before the heavy lifting begins.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fabd2f]/30 my-8">
+			<h3 class="mt-0 text-[#fabd2f]">The Instant Feedback Trick</h3>
+			<p class="text-white/80 mb-0">
+				Users need instant visual confirmation that their click registered. A simple CSS state change — a button color change, a loading spinner, a pressed animation — takes almost zero processing time and keeps <em>perceived</em> latency incredibly low. Apply the visual change <strong>before</strong> any heavy JavaScript runs. The browser paints the feedback to screen, and then your code can take as long as it needs to finish the actual work. INP measures time to <em>next paint</em>, not time to task completion.
+			</p>
+		</div>
+
+		<h3>5. Reduce CSS Complexity for Faster Presentation</h3>
+
+		<p>
+			Presentation delay is the most overlooked INP phase. After your JavaScript finishes, the browser still needs to recalculate styles, compute layout, and paint pixels.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-[#8ec07c]">Presentation Delay Fixes</h3>
+			<ul class="mb-0 text-white/80">
+				<li class="mb-2"><strong>Avoid layout thrashing</strong> — do not read layout properties (like <code>offsetHeight</code>) and then write styles in the same synchronous block. Batch reads and writes separately.</li>
+				<li class="mb-2"><strong>Use <code>content-visibility: auto</code></strong> — tells the browser to skip rendering off-screen elements until they scroll into view, reducing recalculation work.</li>
+				<li class="mb-2"><strong>Prefer <code>transform</code> and <code>opacity</code> animations</strong> — these run on the compositor thread and do not trigger layout recalculation. Animating <code>width</code>, <code>height</code>, <code>top</code>, or <code>left</code> forces expensive layout work.</li>
+				<li class="mb-0"><strong>Simplify CSS selectors</strong> — deeply nested selectors like <code>.sidebar > .widget:nth-child(3) .link span</code> are slower to match than flat class selectors. On large DOM trees, selector matching overhead becomes measurable.</li>
+			</ul>
+		</div>
+
+		<h2>Measuring Your INP Performance</h2>
+
+		<p>
+			You cannot optimize what you do not measure. Relying solely on Google Search Console is a mistake because the data is aggregated over 28 days. By the time you see an INP drop in GSC, you have been providing a poor experience for weeks.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">INP Measurement Tools</h3>
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div>
+					<p class="text-[#8ec07c] font-bold mb-1">Field Data (Real Users)</p>
+					<ul class="text-white/80 mb-0">
+						<li class="mb-1"><strong>CrUX Dashboard</strong> — weekly trends of 75th percentile INP for your origin</li>
+						<li class="mb-1"><strong>Search Console</strong> — identifies which URL groups fail the 200ms threshold</li>
+						<li class="mb-1"><strong>web-vitals.js</strong> — measure INP in production and send to your analytics</li>
+					</ul>
+				</div>
+				<div>
+					<p class="text-[#fabd2f] font-bold mb-1">Lab Data (Debugging)</p>
+					<ul class="text-white/80 mb-0">
+						<li class="mb-1"><strong>Chrome DevTools Performance tab</strong> — record traces, find long tasks, inspect event handlers</li>
+						<li class="mb-1"><strong>Web Vitals Extension</strong> — real-time INP overlay as you click through your site</li>
+						<li class="mb-1"><strong>Lighthouse Timespan mode</strong> — measure INP during a specific interaction sequence</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fabd2f]/30 my-8">
+			<h3 class="mt-0 text-[#fabd2f]">Pro Tip: Use Lighthouse Timespan Mode</h3>
+			<p class="text-white/80 mb-0">
+				Standard Lighthouse audits only measure page load. <strong>Timespan mode</strong> lets you start recording, interact with the page (click buttons, open menus, fill forms), and then stop. Lighthouse will report INP for those specific interactions, letting you pinpoint exactly which UI elements have the worst latency. Open DevTools → Lighthouse → select "Timespan" instead of "Navigation."
+			</p>
+		</div>
+
+		<h2>The Bottom Line on INP</h2>
+
+		<p>
+			Interaction to Next Paint is the most technically demanding Core Web Vital to optimize. It forces developers to write efficient code and prioritize the user experience throughout the entire session, not just during the initial load.
+		</p>
+
+		<p>
+			Fast loading is no longer enough. Your site must be immediately and consistently responsive. If your competitors have smooth, instant interactions while your site stutters on mobile devices, Google will rank them higher.
+		</p>
+
+		<p>
+			The optimization priority is clear: yield to the main thread, minimize DOM complexity, control third-party scripts, and provide instant visual feedback. Run your <a href="/blog/the-complete-site-speed-audit-process-for-seo-professionals" class="text-[#8ec07c] hover:underline">site speed audit</a> today with a focus on the Performance panel's interaction traces, and you will find exactly where those 200+ millisecond interactions are hiding.
+		</p>
+
+		<div class="bg-[#282828] p-8 rounded-lg border border-[#8ec07c]/30 text-center my-10">
+			<h3 class="mt-0 text-white">Struggling to find what is blocking your main thread?</h3>
+			<p class="text-white/80 mb-6">
+				Barracuda SEO runs comprehensive technical audits that pinpoint exactly which scripts and interactions are tanking your INP — with prioritized fixes your developers can execute immediately.
+			</p>
+			<a href="https://app.barracudaseo.com" class="inline-block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-3 rounded-lg font-medium transition-colors">
+				Try Barracuda SEO Free
+			</a>
+		</div>
+	`,
+	'the-complete-site-speed-audit-process-for-seo-professionals': `
+		<p>
+			A proper site speed audit SEO workflow separates the amateurs from the experts. Too many professionals run a single PageSpeed Insights test, download a generic PDF, and hand it to a developer. That is not an audit. It is just a list of symptoms.
+		</p>
+
+		<p>
+			True technical performance optimization requires digging into the root causes. You need to know exactly why the server response is slow, which specific scripts block rendering, and how different <a href="/blog/how-caching-layers-interact" class="text-[#8ec07c] hover:underline">caching layers interact</a>. An effective audit provides a prioritized, actionable roadmap — not a wall of complaints.
+		</p>
+
+		<p>
+			This guide breaks down the exact site speed audit process we use at Barracuda SEO to diagnose and fix performance bottlenecks in 2026.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8">
+			<h2 class="mt-0 text-[#8ec07c]">What This Post Covers</h2>
+			<ul class="mb-0">
+				<li>Establishing a performance baseline with field data and lab data</li>
+				<li>Diagnosing TTFB, rendering, interactivity, and layout stability</li>
+				<li>Reading waterfall charts to pinpoint exact bottlenecks</li>
+				<li>Building a prioritized action plan developers can execute</li>
+				<li>Tracking and validating results over time</li>
+			</ul>
+		</div>
+
+		<h2>Step 1: Establish the Performance Baseline</h2>
+
+		<p>
+			Before changing any code, you must establish a baseline. You cannot improve what you do not accurately measure.
+		</p>
+
+		<p>
+			Start by pulling field data from Google Search Console. The Core Web Vitals report shows exactly how real users experience your pages across different device types. Look at the aggregate data first to identify which metrics are failing across the most URLs.
+		</p>
+
+		<p>
+			Next, check the Chrome User Experience Report (CrUX) for historical trends. Field data represents a 28-day rolling average, so a change you made last week will not fully show in Search Console yet. CrUX dashboards let you track weekly movement.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">2026 Core Web Vitals Thresholds</h3>
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Metric</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Good</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Needs Improvement</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Poor</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">LCP (Largest Contentful Paint)</td>
+						<td class="p-3 border border-white/20 text-[#8ec07c]">≤ 2.5s</td>
+						<td class="p-3 border border-white/20 text-[#fabd2f]">2.5s – 4.0s</td>
+						<td class="p-3 border border-white/20 text-[#fb4934]">&gt; 4.0s</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">INP (Interaction to Next Paint)</td>
+						<td class="p-3 border border-white/20 text-[#8ec07c]">≤ 200ms</td>
+						<td class="p-3 border border-white/20 text-[#fabd2f]">200ms – 500ms</td>
+						<td class="p-3 border border-white/20 text-[#fb4934]">&gt; 500ms</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">CLS (Cumulative Layout Shift)</td>
+						<td class="p-3 border border-white/20 text-[#8ec07c]">≤ 0.1</td>
+						<td class="p-3 border border-white/20 text-[#fabd2f]">0.1 – 0.25</td>
+						<td class="p-3 border border-white/20 text-[#fb4934]">&gt; 0.25</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fabd2f]/30 my-8">
+			<h3 class="mt-0 text-[#fabd2f]">Field Data vs. Lab Data</h3>
+			<p class="text-white/80 mb-0">
+				Field data (CrUX, Search Console) reflects real user experience across diverse devices and networks. Lab data (Lighthouse, WebPageTest) gives you reproducible, controlled measurements you can use for debugging. You need both. Field data tells you <em>there is a problem</em>. Lab data helps you find the <em>exact source</em>.
+			</p>
+		</div>
+
+		<h2>Step 2: Isolate the Lab Data</h2>
+
+		<p>
+			Run your most important page templates through WebPageTest or Lighthouse. A common mistake is only testing the homepage. You need to test category pages, product pages, blog posts, and any other distinct layout — they load entirely different scripts and assets.
+		</p>
+
+		<p>
+			Configure your lab tests to simulate a realistic environment. Testing on an unthrottled desktop connection hides critical mobile performance issues. Set connection throttling to 4G and use a mid-tier mobile device profile.
+		</p>
+
+		<h3>Reading the Waterfall Chart</h3>
+
+		<p>
+			The waterfall chart is the single most useful artifact in a speed audit. It visualizes every request the browser makes and shows you exactly when DNS resolution happens, when the initial HTML document arrives, and when individual assets begin downloading.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">What to Look for in the Waterfall</h3>
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div>
+					<p class="text-[#8ec07c] font-bold mb-1">Long green bars at the top</p>
+					<p class="text-white/80 mb-0">The initial HTML request is slow to respond (TTFB problem). Everything downstream is delayed because nothing can start until the HTML arrives.</p>
+				</div>
+				<div>
+					<p class="text-[#8ec07c] font-bold mb-1">Blocking chains of CSS/JS</p>
+					<p class="text-white/80 mb-0">Resources loading sequentially rather than in parallel indicate render-blocking scripts. The browser cannot paint anything until these finish downloading and executing.</p>
+				</div>
+				<div>
+					<p class="text-[#fabd2f] font-bold mb-1">Late-loading hero images</p>
+					<p class="text-white/80 mb-0">If the LCP image does not start downloading until halfway through the waterfall, the browser did not know about it early enough. Look for missing preload hints or lazy loading on above-the-fold images.</p>
+				</div>
+				<div>
+					<p class="text-[#fabd2f] font-bold mb-1">Third-party script clusters</p>
+					<p class="text-white/80 mb-0">Dense clusters of requests to external domains (analytics, chat widgets, ad networks) that fire early in the page load compete with your own critical resources for bandwidth.</p>
+				</div>
+			</div>
+		</div>
+
+		<h2>Step 3: Analyze Time to First Byte (TTFB)</h2>
+
+		<p>
+			The foundation of a site speed audit is Time to First Byte. If the server is slow to respond, every other metric suffers — LCP cannot start until the HTML arrives, and the browser has nothing to parse or render until then.
+		</p>
+
+		<p>
+			A high TTFB usually points to backend issues. Common culprits include slow database queries, inefficient server-side code, or an underpowered hosting environment. Check the server response time in your waterfall chart. If the initial HTML document takes more than 600 milliseconds to arrive, you have a TTFB problem.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-[#8ec07c]">TTFB Diagnostic Checklist</h3>
+			<ol>
+				<li class="mb-2"><strong>Is page caching enabled?</strong> — Check whether your server generates HTML dynamically for every request or serves a pre-built copy. A simple <code>curl -sI</code> check for <code>X-Cache: HIT</code> headers tells you instantly.</li>
+				<li class="mb-2"><strong>Is a CDN in front of the origin?</strong> — Without a CDN, users far from your server experience artificial latency. Look for <code>CF-Cache-Status</code>, <code>X-Cache</code>, or similar CDN headers in the response. Read our guide on <a href="/blog/how-caching-layers-interact" class="text-[#8ec07c] hover:underline">how caching layers interact</a> for a deep dive.</li>
+				<li class="mb-2"><strong>Are database queries slow?</strong> — Enable slow query logging on your database. Queries taking more than 100ms are candidates for optimization (indexing, query rewriting, or object caching with Redis/Memcached).</li>
+				<li class="mb-0"><strong>Is a plugin or extension the bottleneck?</strong> — On WordPress or similar CMS platforms, disable plugins one by one on a staging environment and measure TTFB each time. A single poorly written plugin can add 500ms+ to every request.</li>
+			</ol>
+		</div>
+
+		<h2>Step 4: Evaluate Rendering and LCP</h2>
+
+		<p>
+			Once the browser receives the HTML document, it begins parsing the code. This is where rendering bottlenecks occur.
+		</p>
+
+		<p>
+			Look for render-blocking resources in the <code>&lt;head&gt;</code> of your document. External CSS and JavaScript files that load synchronously must be downloaded and parsed before the browser can render anything visible. Defer non-critical JavaScript using the <code>defer</code> attribute and consider inlining critical CSS to speed up the initial paint.
+		</p>
+
+		<h3>Optimizing the LCP Element</h3>
+
+		<p>
+			Identify the Largest Contentful Paint element for each page template. Is it an image, a heading block, or a video? The fix depends on the element type:
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">LCP Element</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Common Problems</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Fixes</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Hero image</td>
+						<td class="p-3 border border-white/20 text-white/80">Lazy loaded, no preload hint, oversized dimensions, JPEG instead of modern format</td>
+						<td class="p-3 border border-white/20 text-white/80">Remove <code>loading="lazy"</code>, add <code>fetchpriority="high"</code>, convert to WebP/AVIF, use <code>&lt;link rel="preload"&gt;</code></td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Text block</td>
+						<td class="p-3 border border-white/20 text-white/80">Render-blocked by CSS, web font FOIT (flash of invisible text)</td>
+						<td class="p-3 border border-white/20 text-white/80">Inline critical CSS, use <code>font-display: swap</code>, preload the primary font file</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Background image</td>
+						<td class="p-3 border border-white/20 text-white/80">Loaded via CSS (invisible to preload scanner), large file size</td>
+						<td class="p-3 border border-white/20 text-white/80">Add <code>&lt;link rel="preload" as="image"&gt;</code> in the HTML head, compress aggressively</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Video poster</td>
+						<td class="p-3 border border-white/20 text-white/80">Missing poster attribute, video auto-plays before LCP fires</td>
+						<td class="p-3 border border-white/20 text-white/80">Set a static <code>poster</code> image, preload it, defer video initialization</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fb4934]/30 my-8">
+			<h3 class="mt-0 text-[#fb4934]">The #1 LCP Mistake</h3>
+			<p class="mb-0 text-white/80">
+				Lazy loading the LCP image. This is the single most common LCP failure we see in audits. When <code>loading="lazy"</code> is applied to the hero image, you are explicitly telling the browser to <strong>wait</strong> before downloading the most important visual element on the page. Remove lazy loading from any image that appears above the fold and is the LCP candidate.
+			</p>
+		</div>
+
+		<h2>Step 5: Diagnose Interactivity and INP</h2>
+
+		<p>
+			Interaction to Next Paint (INP) measures responsiveness — how quickly the page reacts when a user clicks a button, taps a menu, or types in a field.
+		</p>
+
+		<p>
+			Long JavaScript execution is the primary cause of poor INP. When the main thread is blocked by heavy scripts, the browser cannot respond to user inputs. Use the Chrome DevTools Performance tab to record a trace while interacting with the page.
+		</p>
+
+		<h3>Finding and Breaking Up Long Tasks</h3>
+
+		<p>
+			Look for long tasks in the Performance trace. Any task that takes more than 50 milliseconds blocks the main thread. The DevTools flamechart highlights these in red.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-[#8ec07c]">INP Diagnostic Checklist</h3>
+			<ol>
+				<li class="mb-2"><strong>Record a trace with interaction</strong> — In DevTools Performance tab, click record, interact with the page (click buttons, open menus, submit forms), then stop recording. Focus on the event handlers that fire during your interactions.</li>
+				<li class="mb-2"><strong>Identify the longest event handler</strong> — Expand the interaction event in the flamechart. The total time from input to paint is your INP for that interaction. Look for synchronous JavaScript calls inside the handler.</li>
+				<li class="mb-2"><strong>Audit third-party scripts</strong> — Chat widgets, tracking pixels, and ad networks often execute heavy JavaScript on the main thread. Delay their loading until after the page is fully interactive using <code>requestIdleCallback</code> or tag manager trigger conditions.</li>
+				<li class="mb-0"><strong>Break up monolithic handlers</strong> — Use <code>scheduler.yield()</code> or <code>setTimeout(0)</code> to split long synchronous operations into smaller chunks that let the browser process pending user interactions between each chunk.</li>
+			</ol>
+		</div>
+
+		<h2>Step 6: Audit Layout Stability and CLS</h2>
+
+		<p>
+			Cumulative Layout Shift (CLS) measures visual stability. Elements shifting around as the page loads frustrate users and lead to accidental clicks.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">Top CLS Offenders</h3>
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<div>
+					<p class="text-[#fb4934] font-bold mb-1">Images without dimensions</p>
+					<p class="text-white/80 mb-0">Without explicit <code>width</code> and <code>height</code> attributes, the browser does not know how much space to reserve. Content jumps when the image loads. Always set dimensions or use CSS <code>aspect-ratio</code>.</p>
+				</div>
+				<div>
+					<p class="text-[#fb4934] font-bold mb-1">Web font swaps</p>
+					<p class="text-white/80 mb-0">Custom fonts cause layout shifts when the fallback font takes up different space. Use <code>font-display: swap</code> with precise <code>size-adjust</code>, <code>ascent-override</code>, and <code>descent-override</code> to match the fallback font's geometry.</p>
+				</div>
+				<div>
+					<p class="text-[#fb4934] font-bold mb-1">Injected dynamic content</p>
+					<p class="text-white/80 mb-0">Ads, promotional banners, cookie consent bars, and related product carousels injected into the DOM without a pre-allocated container size push surrounding content around. Reserve space in CSS before the element loads.</p>
+				</div>
+			</div>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fabd2f]/30 my-8">
+			<h3 class="mt-0 text-[#fabd2f]">Pro Tip: Use the Layout Shift Regions Flag</h3>
+			<p class="mb-0 text-white/80">
+				In Chrome DevTools, open the Rendering drawer (Cmd+Shift+P → "Show Rendering") and enable <strong>Layout Shift Regions</strong>. This highlights shifting elements in blue as they occur during page load. Combined with the Performance panel's "Experience" row, you can pinpoint exactly which elements are causing CLS and when they shift.
+			</p>
+		</div>
+
+		<h2>Step 7: Build the Action Plan</h2>
+
+		<p>
+			An audit is useless without a clear action plan. Do not hand a developer an automated 50-page report and expect results.
+		</p>
+
+		<p>
+			Prioritize recommendations based on impact and effort. A <a href="/blog/how-to-prioritize-seo-issues" class="text-[#8ec07c] hover:underline">structured prioritization framework</a> prevents the most common failure mode: fixing everything at once and shipping nothing.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">Prioritization Matrix</h3>
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Priority</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Example Fixes</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Typical Impact</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-[#8ec07c] font-bold">High impact, low effort</td>
+						<td class="p-3 border border-white/20 text-white/80">Add image dimensions, remove lazy load from LCP image, add <code>fetchpriority="high"</code></td>
+						<td class="p-3 border border-white/20 text-white/80">LCP and CLS improvements within days</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-[#fabd2f] font-bold">High impact, medium effort</td>
+						<td class="p-3 border border-white/20 text-white/80">Inline critical CSS, defer third-party scripts, convert images to AVIF/WebP</td>
+						<td class="p-3 border border-white/20 text-white/80">Measurable LCP and INP gains within 1–2 weeks</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-[#fb4934] font-bold">High impact, high effort</td>
+						<td class="p-3 border border-white/20 text-white/80">Replatform caching architecture, refactor JavaScript bundles, migrate to edge rendering</td>
+						<td class="p-3 border border-white/20 text-white/80">Transformative TTFB and INP improvements; requires phased rollout</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<p>
+			Group your recommendations into three categories: <strong>server-side fixes</strong>, <strong>front-end optimization</strong>, and <strong>third-party script management</strong>. Assign clear technical requirements for each task. Instead of saying "make images smaller," say "convert hero images on category templates to AVIF, set width/height attributes, and apply <code>fetchpriority=high</code>."
+		</p>
+
+		<h2>Step 8: Track and Validate Results</h2>
+
+		<p>
+			Optimization is an iterative process. You cannot implement the changes and walk away.
+		</p>
+
+		<p>
+			After deploying fixes, validate the results in a staging environment using your lab tools first. Ensure the changes actually moved the needle without breaking functionality. Run Lighthouse and WebPageTest again against the same templates you baselined in Step 2.
+		</p>
+
+		<p>
+			Once pushed to production, monitor the Search Console field data closely. It takes 28 days for field data to fully reflect your improvements. Use the CrUX dashboard to track progress week over week. If a specific metric is not improving despite lab data showing gains, investigate whether a specific user segment (slow devices, specific geographies) is dragging the aggregate score down.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8">
+			<h3 class="mt-0 text-[#8ec07c]">Validation Workflow</h3>
+			<div class="space-y-3">
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">1.</span>
+					<span class="text-white/80"><strong>Staging:</strong> Run Lighthouse and WebPageTest against the same templates from your baseline. Compare scores side by side.</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">2.</span>
+					<span class="text-white/80"><strong>Production deploy:</strong> Push changes and immediately run lab tests on the live URLs. Verify CDN caching is working correctly with <code>curl -sI</code>.</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">3.</span>
+					<span class="text-white/80"><strong>Week 1–2:</strong> Watch CrUX daily data for early signals. Check that the 75th percentile is moving in the right direction.</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">4.</span>
+					<span class="text-white/80"><strong>Week 4:</strong> Field data in Search Console should now reflect the changes. If a metric has not improved, revisit the waterfall and dig deeper.</span>
+				</div>
+			</div>
+		</div>
+
+		<p>
+			Site speed optimization is an ongoing discipline, not a one-time project. New code, new third-party integrations, and content changes can regress performance at any time. Build automated monitoring into your workflow with tools like <a href="/blog/automated-seo-audits-cicd" class="text-[#8ec07c] hover:underline">CI/CD pipeline audits</a> to catch regressions before they reach users.
+		</p>
+
+		<div class="bg-[#282828] p-8 rounded-lg border border-[#8ec07c]/30 text-center my-10">
+			<h3 class="mt-0 text-white">Stop relying on automated PDF reports</h3>
+			<p class="text-white/80 mb-6">
+				Barracuda SEO crawls your site and surfaces the technical issues that actually hurt performance — with AI-powered prioritization so you know what to fix first.
+			</p>
+			<a href="https://app.barracudaseo.com" class="inline-block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-3 rounded-lg font-medium transition-colors">
+				Try Barracuda SEO Free
+			</a>
+		</div>
+	`,
+	'how-caching-layers-interact': `
+		<p>
+			Most site owners treat caching like a magical toggle switch that automatically makes their pages load instantly. They install a WordPress plugin, turn on Cloudflare, and assume the job is done. But when you inspect the network tab, the Time to First Byte is still hovering around 800 milliseconds and the search engine bots are struggling to crawl efficiently.
+		</p>
+
+		<p>
+			Understanding how caching layers interact is not just for system administrators anymore. Google's algorithm has become increasingly sensitive to real-world user experience metrics. If your CDN, server, and browser caches are fighting each other, your rankings will suffer. The <a href="/blog/core-web-vitals-in-2026-what-actually-matters-after-the-latest-chrome-updates" class="text-[#8ec07c] hover:underline">recent Core Web Vitals updates</a> explicitly penalize sites that serve stale content incorrectly or have inconsistent server response times.
+		</p>
+
+		<p>
+			In this guide, we break down exactly how these different caching layers interact, how to configure them with real headers, and how to audit everything from your terminal or browser.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8">
+			<h2 class="mt-0 text-[#8ec07c]">What This Post Covers</h2>
+			<ul class="mb-0">
+				<li>The three caching layers every SEO must understand</li>
+				<li>How requests flow through browser, CDN, and server caches</li>
+				<li>Concrete <code>Cache-Control</code> header configurations</li>
+				<li>How to audit your caching headers with <code>curl</code> and Chrome DevTools</li>
+				<li>Common caching conflicts that silently wreck rankings</li>
+			</ul>
+		</div>
+
+		<h2>What Are Caching Layers and Why Do They Matter for SEO?</h2>
+
+		<p>
+			When a user or a Googlebot requests a page from your website, that request travels from their device, across the internet, to your hosting server, and back. Caching is the strategy of storing copies of your site's files at various points along that journey.
+		</p>
+
+		<p>
+			The closer you can store a file to the user, the faster the page loads. Faster load times directly improve your crawl budget, reduce bounce rates, and improve critical ranking factors like Largest Contentful Paint. If you are serious about optimizing LCP, configuring these layers correctly is mandatory.
+		</p>
+
+		<p>
+			There are three primary layers you need to manage: the <strong>browser cache</strong>, the <strong>server cache</strong>, and the <strong>CDN (edge) cache</strong>. When properly tuned, they work like a relay team. When poorly tuned, they overwrite each other and cause bizarre rendering issues, stale content, and crawl failures.
+		</p>
+
+		<h2>Browser Cache (The Local Layer)</h2>
+
+		<p>
+			Browser caching is the closest layer to the user. When a visitor lands on your site, their browser downloads your HTML, CSS, JavaScript, and images. With browser caching enabled, the browser stores these files locally on the user's hard drive.
+		</p>
+
+		<p>
+			When that user navigates to a second page on your site, their browser does not need to redownload the CSS or the logo. It simply loads them from the local drive.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">SEO Impact of Browser Caching</h3>
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div>
+					<p class="text-[#8ec07c] font-bold mb-1">Subsequent Page Views</p>
+					<p class="text-white/80 mb-0">Browser caching does not help the initial page load for a brand-new visitor, but it makes navigating through your site significantly faster. Users view more pages and spend more time on your domain, sending positive engagement signals to search engines.</p>
+				</div>
+				<div>
+					<p class="text-[#8ec07c] font-bold mb-1">Crawl Efficiency</p>
+					<p class="text-white/80 mb-0">While Googlebot does not maintain a persistent browser cache between crawl sessions, properly configured <code>Cache-Control</code> headers tell the bot how fresh your content is, which influences how often it revisits pages.</p>
+				</div>
+			</div>
+		</div>
+
+		<h3>Recommended Browser Cache Headers</h3>
+
+		<p>
+			Static assets like images, fonts, CSS, and JS should use long-lived cache durations with cache-busting filenames. HTML documents need shorter durations or validation-based caching.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8 font-mono text-sm">
+			<p class="text-[#8ec07c] font-bold mb-2 font-sans">Static assets (CSS, JS, images, fonts):</p>
+			<p class="text-white/80 mb-4"><code>Cache-Control: public, max-age=31536000, immutable</code></p>
+			<p class="text-white/60 text-xs mb-4 font-sans">This caches files for one year. The <code>immutable</code> directive tells the browser not to revalidate the file at all — it trusts the local copy completely. Use versioned filenames (e.g., <code>style.a1b2c3.css</code>) so that updates automatically get new URLs.</p>
+
+			<p class="text-[#8ec07c] font-bold mb-2 font-sans">HTML documents:</p>
+			<p class="text-white/80 mb-4"><code>Cache-Control: public, max-age=0, must-revalidate</code></p>
+			<p class="text-white/60 text-xs mb-4 font-sans">This tells the browser to always check with the server before using a cached copy. Combined with <code>ETag</code> or <code>Last-Modified</code> headers, the server can respond with a fast <code>304 Not Modified</code> if the content has not changed.</p>
+
+			<p class="text-[#8ec07c] font-bold mb-2 font-sans">API responses and dynamic pages:</p>
+			<p class="text-white/80 mb-0"><code>Cache-Control: private, no-cache</code></p>
+			<p class="text-white/60 text-xs mb-0 font-sans"><code>private</code> prevents CDNs from caching the response. <code>no-cache</code> forces revalidation every time. Use this for logged-in states, shopping carts, and personalized content.</p>
+		</div>
+
+		<h2>Server Caching (The Origin Layer)</h2>
+
+		<p>
+			The server cache lives on your origin server. Every time a request reaches your server, it has to process PHP scripts and query the database to build the HTML page. Server caching stores the fully constructed HTML page in the server's memory or hard drive. Instead of building the page from scratch for every single visitor, the server hands over the pre-built HTML file.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">Types of Server Caches</h3>
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Type</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">What It Stores</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">SEO Impact</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Page Cache</td>
+						<td class="p-3 border border-white/20 text-white/80">Fully rendered HTML</td>
+						<td class="p-3 border border-white/20 text-white/80">Largest TTFB reduction. Most important for SEO.</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Object Cache</td>
+						<td class="p-3 border border-white/20 text-white/80">Database query results (Redis, Memcached)</td>
+						<td class="p-3 border border-white/20 text-white/80">Reduces database load; smaller TTFB gains.</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Opcode Cache</td>
+						<td class="p-3 border border-white/20 text-white/80">Compiled PHP bytecode</td>
+						<td class="p-3 border border-white/20 text-white/80">Eliminates PHP compilation overhead. Minimal direct SEO impact but reduces server resource usage.</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<p>
+			Server caching drastically reduces Time to First Byte (TTFB). Google explicitly states that a slow TTFB forces bots to abandon crawl attempts. If your server is bogged down compiling pages, Googlebot will crawl fewer URLs, leading to indexing delays for new content. Any comprehensive <a href="/blog/complete-technical-seo-audit-guide" class="text-[#8ec07c] hover:underline">technical SEO audit</a> must begin with verifying that your page cache is functioning correctly for anonymous visitors.
+		</p>
+
+		<h2>The CDN Layer (The Edge Cache)</h2>
+
+		<p>
+			A Content Delivery Network sits between your user and your origin server. A CDN consists of hundreds of servers scattered across the globe. When you use a CDN, your cached assets are stored on these "edge" servers.
+		</p>
+
+		<p>
+			If your origin server is in New York and a user visits from London, the request does not have to travel across the Atlantic. The London edge server intercepts the request and serves the cached files instantly.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">SEO Impact of Edge Caching</h3>
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<div>
+					<p class="text-[#8ec07c] font-bold mb-1">Global TTFB</p>
+					<p class="text-white/80 mb-0">Eliminates geographic latency. Googlebot crawls from various locations (primarily US) — if your server is in Australia, you need an edge cache to prevent artificial latency.</p>
+				</div>
+				<div>
+					<p class="text-[#8ec07c] font-bold mb-1">Traffic Spikes</p>
+					<p class="text-white/80 mb-0">CDNs absorb traffic surges effortlessly, preventing server crashes during high-traffic events or aggressive bot crawls that would otherwise take your origin offline.</p>
+				</div>
+				<div>
+					<p class="text-[#8ec07c] font-bold mb-1">Origin Protection</p>
+					<p class="text-white/80 mb-0">Edge-cached HTML means your origin server handles a fraction of total requests. This keeps page generation fast even under heavy crawl pressure.</p>
+				</div>
+			</div>
+		</div>
+
+		<h2>How These Caching Layers Interact</h2>
+
+		<p>
+			The magic happens when these three layers communicate correctly. Here is the ideal request flow:
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8 font-mono text-sm">
+			<p class="text-[#8ec07c] font-bold mb-4 font-sans text-base">Cache Resolution Flow</p>
+			<div class="space-y-3 text-white/80">
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">1.</span>
+					<div>
+						<span class="text-white font-bold font-sans">Browser Cache</span>
+						<span class="text-white/60 font-sans"> — checks local disk first. If valid copy exists → <span class="text-[#8ec07c]">served instantly (0 ms latency)</span></span>
+					</div>
+				</div>
+				<div class="flex items-start gap-3 pl-6 border-l-2 border-[#8ec07c]/30">
+					<span class="text-[#fabd2f] font-bold shrink-0">↓</span>
+					<span class="text-white/40 font-sans">cache miss or expired</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">2.</span>
+					<div>
+						<span class="text-white font-bold font-sans">CDN Edge Server</span>
+						<span class="text-white/60 font-sans"> — nearest PoP checks its cache. If valid copy exists → <span class="text-[#8ec07c]">served with low latency (5–50 ms)</span></span>
+					</div>
+				</div>
+				<div class="flex items-start gap-3 pl-6 border-l-2 border-[#8ec07c]/30">
+					<span class="text-[#fabd2f] font-bold shrink-0">↓</span>
+					<span class="text-white/40 font-sans">cache miss</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#8ec07c] font-bold shrink-0">3.</span>
+					<div>
+						<span class="text-white font-bold font-sans">Origin Server (Page Cache)</span>
+						<span class="text-white/60 font-sans"> — checks for pre-built HTML in memory/disk. If cached → <span class="text-[#8ec07c]">served fast (50–200 ms)</span></span>
+					</div>
+				</div>
+				<div class="flex items-start gap-3 pl-6 border-l-2 border-[#fb4934]/30">
+					<span class="text-[#fb4934] font-bold shrink-0">↓</span>
+					<span class="text-white/40 font-sans">all caches miss</span>
+				</div>
+				<div class="flex items-start gap-3">
+					<span class="text-[#fb4934] font-bold shrink-0">4.</span>
+					<div>
+						<span class="text-white font-bold font-sans">Full Page Generation</span>
+						<span class="text-white/60 font-sans"> — PHP executes, database queries run, HTML is built from scratch → <span class="text-[#fb4934]">slowest path (300–2000+ ms)</span></span>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<p>
+			Problems arise when your <code>Cache-Control</code> headers are misconfigured. If your origin server tells the CDN not to cache HTML, every single request bypasses the edge and hits your origin. If you set your browser cache TTL too high for HTML documents, users see old versions of a page even after you update it on the server and purge the CDN.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fabd2f]/30 my-8">
+			<h3 class="mt-0 text-[#fabd2f]">The Golden Rule</h3>
+			<p class="mb-0 text-white/80">
+				Each layer should have a <strong>shorter or equal</strong> cache lifetime than the layer behind it. Browser ≤ CDN ≤ Server. If the browser cache outlives the CDN cache, users will see stale content even after you purge the CDN. If the CDN cache outlives the server cache, the edge will serve pages that the origin has already invalidated.
+			</p>
+		</div>
+
+		<h2>How to Audit Your Caching Headers</h2>
+
+		<p>
+			You cannot fix what you cannot see. Before making any configuration changes, audit what your server is actually sending. There are two fast approaches.
+		</p>
+
+		<h3>Method 1: curl from the Terminal</h3>
+
+		<p>
+			The fastest way to inspect caching headers is a single <code>curl</code> command. This shows you exactly what the CDN or origin is returning without any browser interference.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8 font-mono text-sm">
+			<p class="text-[#8ec07c] mb-2 font-sans font-bold">Check caching headers for any URL:</p>
+			<p class="text-white/80 mb-4"><code>curl -sI https://example.com/ | grep -iE 'cache-control|age|x-cache|cf-cache|etag|expires|vary'</code></p>
+
+			<p class="text-[#8ec07c] mb-2 font-sans font-bold">Example healthy response:</p>
+			<div class="text-white/70 space-y-1">
+				<p class="mb-0"><code>cache-control: public, max-age=3600, s-maxage=86400</code></p>
+				<p class="mb-0"><code>age: 1247</code></p>
+				<p class="mb-0"><code>x-cache: HIT</code></p>
+				<p class="mb-0"><code>vary: Accept-Encoding</code></p>
+				<p class="mb-0"><code>etag: "a1b2c3d4"</code></p>
+			</div>
+		</div>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">Key Headers to Look For</h3>
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Header</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">What It Tells You</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-mono"><code>Cache-Control</code></td>
+						<td class="p-3 border border-white/20 text-white/80">Caching rules. <code>max-age</code> controls browser TTL; <code>s-maxage</code> controls CDN TTL.</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-mono"><code>Age</code></td>
+						<td class="p-3 border border-white/20 text-white/80">How many seconds the response has been sitting in the CDN cache. If this is zero, you hit the origin.</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-mono"><code>X-Cache</code> / <code>CF-Cache-Status</code></td>
+						<td class="p-3 border border-white/20 text-white/80">Whether the CDN served from cache (<code>HIT</code>) or fetched from origin (<code>MISS</code>, <code>DYNAMIC</code>).</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-mono"><code>Vary</code></td>
+						<td class="p-3 border border-white/20 text-white/80">Which request headers cause separate cache entries. Common values: <code>Accept-Encoding</code>, <code>User-Agent</code>.</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-mono"><code>ETag</code></td>
+						<td class="p-3 border border-white/20 text-white/80">A fingerprint of the content. Enables <code>304 Not Modified</code> responses for efficient revalidation.</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<h3>Method 2: Chrome DevTools Network Tab</h3>
+
+		<p>
+			For a more visual approach, open Chrome DevTools (F12), go to the <strong>Network</strong> tab, and reload the page. Click any resource to see its response headers. Pay attention to:
+		</p>
+
+		<ol>
+			<li><strong>Filter by document type</strong> — click the "Doc" filter to isolate the HTML response. This is the most critical resource for SEO because it determines TTFB.</li>
+			<li><strong>Check "Disable cache"</strong> — tick this box and reload to simulate a first-time visitor. The headers you see now reflect what Googlebot would receive.</li>
+			<li><strong>Compare cached vs. uncached</strong> — uncheck "Disable cache" and reload again. If the response comes from <code>(disk cache)</code> or <code>(memory cache)</code>, browser caching is working. If it still hits the network, your <code>Cache-Control</code> headers for that resource are not set or are set to <code>no-store</code>.</li>
+		</ol>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fabd2f]/30 my-8">
+			<h3 class="mt-0 text-[#fabd2f]">Pro Tip: Test from Multiple Locations</h3>
+			<p class="mb-0 text-white/80">
+				Your CDN might cache content at one edge PoP but not another. Use <code>curl --resolve</code> with different CDN edge IPs, or tools like <a href="https://www.webpagetest.org" class="text-[#fabd2f] hover:underline" target="_blank" rel="noopener">WebPageTest</a> with various test locations, to verify that your caching strategy is consistent globally. Googlebot primarily crawls from the US, so at minimum verify caching behavior from a US-based location.
+			</p>
+		</div>
+
+		<h2>Concrete Configuration Examples</h2>
+
+		<p>
+			Here are production-ready configurations for the most common setups. Adapt the TTL values to your content update frequency.
+		</p>
+
+		<h3>Nginx</h3>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8 font-mono text-sm">
+			<div class="text-white/80 space-y-1">
+				<p class="mb-0 text-white/50"># HTML pages — short browser TTL, longer CDN TTL</p>
+				<p class="mb-0">location ~* \\.html$ {</p>
+				<p class="mb-0 pl-4">add_header Cache-Control "public, max-age=0, s-maxage=3600, must-revalidate";</p>
+				<p class="mb-0">}</p>
+				<p class="mb-0">&nbsp;</p>
+				<p class="mb-0 text-white/50"># Static assets — aggressive long-term caching</p>
+				<p class="mb-0">location ~* \\.(css|js|woff2|png|jpg|webp|avif|svg)$ {</p>
+				<p class="mb-0 pl-4">add_header Cache-Control "public, max-age=31536000, immutable";</p>
+				<p class="mb-0">}</p>
+				<p class="mb-0">&nbsp;</p>
+				<p class="mb-0 text-white/50"># Dynamic/private pages — no caching</p>
+				<p class="mb-0">location ~* ^/(cart|checkout|my-account) {</p>
+				<p class="mb-0 pl-4">add_header Cache-Control "private, no-store";</p>
+				<p class="mb-0">}</p>
+			</div>
+		</div>
+
+		<h3>Apache (.htaccess)</h3>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8 font-mono text-sm">
+			<div class="text-white/80 space-y-1">
+				<p class="mb-0">&lt;IfModule mod_headers.c&gt;</p>
+				<p class="mb-0 pl-4 text-white/50"># HTML</p>
+				<p class="mb-0 pl-4">&lt;FilesMatch "\\.(html)$"&gt;</p>
+				<p class="mb-0 pl-8">Header set Cache-Control "public, max-age=0, s-maxage=3600, must-revalidate"</p>
+				<p class="mb-0 pl-4">&lt;/FilesMatch&gt;</p>
+				<p class="mb-0">&nbsp;</p>
+				<p class="mb-0 pl-4 text-white/50"># Static assets</p>
+				<p class="mb-0 pl-4">&lt;FilesMatch "\\.(css|js|woff2|png|jpg|webp|avif|svg)$"&gt;</p>
+				<p class="mb-0 pl-8">Header set Cache-Control "public, max-age=31536000, immutable"</p>
+				<p class="mb-0 pl-4">&lt;/FilesMatch&gt;</p>
+				<p class="mb-0">&lt;/IfModule&gt;</p>
+			</div>
+		</div>
+
+		<h3>Cloudflare Page Rules / Cache Rules</h3>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-white/10 my-8 font-mono text-sm">
+			<div class="text-white/80 space-y-1">
+				<p class="mb-0 text-white/50"># Cache everything (including HTML) at the edge for 1 hour</p>
+				<p class="mb-0">URL pattern: example.com/*</p>
+				<p class="mb-0 pl-4">Cache Level: Cache Everything</p>
+				<p class="mb-0 pl-4">Edge Cache TTL: 1 hour</p>
+				<p class="mb-0 pl-4">Browser Cache TTL: Respect Existing Headers</p>
+				<p class="mb-0">&nbsp;</p>
+				<p class="mb-0 text-white/50"># Bypass cache for dynamic paths</p>
+				<p class="mb-0">URL pattern: example.com/cart/* , example.com/checkout/*</p>
+				<p class="mb-0 pl-4">Cache Level: Bypass</p>
+			</div>
+		</div>
+
+		<p>
+			The key pattern across all configurations: <code>s-maxage</code> (the CDN TTL) should be equal to or greater than <code>max-age</code> (the browser TTL). This ensures the CDN always has a valid copy when a browser's local cache expires.
+		</p>
+
+		<h2>Common Caching Conflicts and How to Fix Them</h2>
+
+		<p>
+			Configuring caching layers requires strict attention to HTTP headers. Here are the most common conflicts we see during <a href="/blog/complete-technical-seo-audit-guide" class="text-[#8ec07c] hover:underline">technical audits</a>.
+		</p>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fb4934]/30 my-8">
+			<h3 class="mt-0 text-[#fb4934]">1. Double Minification</h3>
+			<p class="text-white/80 mb-2">
+				<strong>Symptom:</strong> Broken layouts, JavaScript console errors, elements failing to render.
+			</p>
+			<p class="text-white/80 mb-2">
+				<strong>Cause:</strong> Your caching plugin (WP Rocket, W3 Total Cache) minifies CSS and JavaScript, and your CDN (Cloudflare, Fastly) is also configured to minify those same files. The CDN attempts to re-minify already-minified code, which corrupts it.
+			</p>
+			<p class="text-white/80 mb-0">
+				<strong>Fix:</strong> Pick one layer to handle minification. The CDN is usually the better choice because it minifies at the edge without consuming your server's CPU. Disable minification in your WordPress plugin and enable it in your CDN settings.
+			</p>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fb4934]/30 my-8">
+			<h3 class="mt-0 text-[#fb4934]">2. Cache Busting Failures</h3>
+			<p class="text-white/80 mb-2">
+				<strong>Symptom:</strong> Users see old CSS after a redesign. The site looks broken for returning visitors but fine in incognito.
+			</p>
+			<p class="text-white/80 mb-2">
+				<strong>Cause:</strong> Your static assets are cached with long TTLs (correct), but the filenames do not change when the content changes. The browser trusts its local copy and never requests the updated file.
+			</p>
+			<p class="text-white/80 mb-0">
+				<strong>Fix:</strong> Use content-hashed filenames (e.g., <code>style.a1b2c3.css</code>) or version query strings (e.g., <code>style.css?v=2.1</code>). Most modern build tools (Vite, Webpack) generate hashed filenames automatically. If you are using a CMS, ensure your theme appends version strings to enqueued assets.
+			</p>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fb4934]/30 my-8">
+			<h3 class="mt-0 text-[#fb4934]">3. Missing or Incorrect Vary Headers</h3>
+			<p class="text-white/80 mb-2">
+				<strong>Symptom:</strong> Mobile users see the desktop layout. Mobile usability errors appear in Google Search Console.
+			</p>
+			<p class="text-white/80 mb-2">
+				<strong>Cause:</strong> Your site dynamically serves different HTML to mobile and desktop users (dynamic serving), but the <code>Vary: User-Agent</code> header is missing. The CDN caches the desktop version and serves it to all devices.
+			</p>
+			<p class="text-white/80 mb-0">
+				<strong>Fix:</strong> Add <code>Vary: User-Agent</code> to responses that differ by device. Better yet, migrate to responsive design (single HTML, CSS-based layout changes) which eliminates this class of caching bugs entirely. If you must use dynamic serving, Google's documentation explicitly requires the <code>Vary</code> header for correct indexing.
+			</p>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fb4934]/30 my-8">
+			<h3 class="mt-0 text-[#fb4934]">4. Over-Caching Dynamic Content</h3>
+			<p class="text-white/80 mb-2">
+				<strong>Symptom:</strong> Users see other people's shopping carts, logged-in states leak to anonymous visitors, or personalized content appears on the wrong accounts.
+			</p>
+			<p class="text-white/80 mb-2">
+				<strong>Cause:</strong> Pages that should never be cached (carts, checkout, dashboards) are being cached by the CDN or server because no explicit <code>no-store</code> directive is set. Some CDN configurations default to caching everything with a 200 status code.
+			</p>
+			<p class="text-white/80 mb-0">
+				<strong>Fix:</strong> Send <code>Cache-Control: private, no-store</code> for any URL that contains user-specific content. Audit your CDN rules to ensure these paths are excluded from edge caching. This is not just a performance issue — it is a security and privacy failure.
+			</p>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fb4934]/30 my-8">
+			<h3 class="mt-0 text-[#fb4934]">5. Stale HTML After Content Updates</h3>
+			<p class="text-white/80 mb-2">
+				<strong>Symptom:</strong> You publish a blog post update, but Google keeps indexing the old version for days. Users see outdated content.
+			</p>
+			<p class="text-white/80 mb-2">
+				<strong>Cause:</strong> Your CDN edge cache TTL for HTML is set too high (e.g., 24 hours) and there is no purge mechanism in your CMS. Your server sends updated HTML, but the CDN keeps serving the old copy until the TTL expires.
+			</p>
+			<p class="text-white/80 mb-0">
+				<strong>Fix:</strong> Set a reasonable HTML edge TTL (1–4 hours) and configure your CMS to trigger a CDN purge on publish. Most CDN providers have WordPress plugins or API-based purge endpoints. For critical updates, manually purge the specific URL from your CDN dashboard.
+			</p>
+		</div>
+
+		<div class="bg-[#282828] p-6 rounded-lg border border-[#fb4934]/30 my-8">
+			<h3 class="mt-0 text-[#fb4934]">6. Query String Cache Fragmentation</h3>
+			<p class="text-white/80 mb-2">
+				<strong>Symptom:</strong> Low CDN hit rate despite heavy traffic. Origin server load remains high.
+			</p>
+			<p class="text-white/80 mb-2">
+				<strong>Cause:</strong> Marketing UTM parameters (<code>?utm_source=twitter</code>), analytics tags, or session IDs in the URL create unique cache keys for what is actually the same page. The CDN treats <code>/page</code>, <code>/page?utm_source=twitter</code>, and <code>/page?fbclid=abc123</code> as three different resources.
+			</p>
+			<p class="text-white/80 mb-0">
+				<strong>Fix:</strong> Configure your CDN to strip or ignore known marketing query parameters from the cache key. Cloudflare, Fastly, and CloudFront all support query string sorting and filtering. This can dramatically improve your cache hit ratio overnight.
+			</p>
+		</div>
+
+		<h2>Putting It All Together</h2>
+
+		<p>
+			Stop relying on default plugin settings and hoping for the best. To maximize crawl efficiency and pass Core Web Vitals, you must explicitly define how your caching strategy operates at each layer:
+		</p>
+
+		<ul>
+			<li><strong>Browser cache</strong> — long TTLs for static assets with hashed filenames; short TTLs or validation-based caching for HTML</li>
+			<li><strong>Server cache</strong> — page cache enabled for anonymous visitors; object cache (Redis/Memcached) to reduce database load</li>
+			<li><strong>CDN edge cache</strong> — HTML cached at the edge with a reasonable TTL and purge-on-publish; dynamic/private paths excluded</li>
+		</ul>
+
+		<p>
+			Run <code>curl -sI</code> against your homepage, a blog post, and a static asset right now. If you see <code>no-store</code> on public pages, missing <code>s-maxage</code> directives, or <code>X-Cache: MISS</code> on every request, you have work to do. The configuration examples above will get you 90% of the way there.
+		</p>
+
+		<div class="bg-[#282828] p-8 rounded-lg border border-[#8ec07c]/30 text-center my-10">
+			<h3 class="mt-0 text-white">Stop guessing about your technical performance</h3>
+			<p class="text-white/80 mb-6">
+				Barracuda SEO crawls your site and surfaces the technical issues that actually hurt rankings — including misconfigured caching headers, slow TTFB, and crawl budget waste.
+			</p>
+			<a href="https://app.barracudaseo.com" class="inline-block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-3 rounded-lg font-medium transition-colors">
+				Try Barracuda SEO Free
+			</a>
+		</div>
+	`,
 	'duplicate-h1-tags-seo-issue-or-just-noise': `
 		<p>
 			If you have ever run a site through Screaming Frog, Semrush, or any other crawl tool, you have seen this one flagged. "Multiple H1 tags detected." It shows up in red. It looks serious. And if you are managing SEO for clients, it is the kind of thing that ends up in a report and creates a conversation that takes longer than the fix itself.

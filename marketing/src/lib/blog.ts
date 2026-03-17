@@ -12,6 +12,110 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
 	{
+		slug: 'core-web-vitals-in-2026-what-actually-matters-after-the-latest-chrome-updates',
+		title: 'Core Web Vitals in 2026: What Actually Matters After the Latest Chrome Updates',
+		description:
+			'Core Web Vitals in 2026 shift focus to INP and real-user stability. Learn what changed, which metrics matter most, and exactly how to pass the assessment.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-13',
+		readTime: 11,
+		category: 'Guides',
+		tags: [
+			'Core Web Vitals',
+			'technical SEO',
+			'site speed',
+			'Google algorithm',
+			'INP',
+			'LCP',
+			'CLS',
+			'Chrome UX Report'
+		],
+		featured: true
+	},
+	{
+		slug: 'how-to-fix-cls-issues-on-wordpress-sites',
+		title: 'How to Fix CLS Issues on WordPress Sites (The Most Common Culprits)',
+		description:
+			'Struggling to fix CLS on WordPress? Stop losing rankings over jumping pages. These targeted solutions handle the most common layout shift culprits.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-14',
+		readTime: 10,
+		category: 'Guides',
+		tags: [
+			'Core Web Vitals',
+			'technical SEO',
+			'CLS',
+			'WordPress',
+			'layout shift',
+			'site speed',
+			'web fonts'
+		],
+		featured: true
+	},
+	{
+		slug: 'inp-vs-fid-what-changed-and-how-to-optimize-for-the-new-metric',
+		title: 'INP vs. FID: What Changed and How to Optimize for the New Metric',
+		description:
+			'Master INP optimization with our technical guide. Learn why INP replaced FID and how to fix JavaScript blocking issues that tank your mobile search rankings.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-16',
+		readTime: 13,
+		category: 'Guides',
+		tags: [
+			'Core Web Vitals',
+			'technical SEO',
+			'site speed',
+			'INP',
+			'JavaScript',
+			'main thread',
+			'mobile performance'
+		],
+		featured: true
+	},
+	{
+		slug: 'the-complete-site-speed-audit-process-for-seo-professionals',
+		title: 'The Complete Site Speed Audit Process for SEO Professionals',
+		description:
+			'A proper site speed audit SEO process reveals the root causes of slow load times. Learn the exact technical steps to diagnose and fix performance bottlenecks in 2026.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-17',
+		readTime: 11,
+		category: 'Guides',
+		tags: [
+			'site speed',
+			'Core Web Vitals',
+			'technical SEO',
+			'SEO audit',
+			'TTFB',
+			'LCP',
+			'INP',
+			'CLS',
+			'page speed'
+		],
+		featured: true
+	},
+	{
+		slug: 'how-caching-layers-interact',
+		title: 'How Caching Layers Interact: CDN, Server Cache, and Browser Cache Explained for SEOs',
+		description:
+			'Mismatched caching layers ruin Core Web Vitals. Learn how CDN, server, and browser caches work together—and how to audit them—to pass technical SEO audits.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-18',
+		readTime: 12,
+		category: 'Guides',
+		tags: [
+			'caching',
+			'site speed',
+			'technical SEO',
+			'CDN',
+			'Core Web Vitals',
+			'TTFB',
+			'server cache',
+			'browser cache'
+		],
+		featured: true
+	},
+	{
 		slug: 'duplicate-h1-tags-seo-issue-or-just-noise',
 		title: 'Duplicate H1 Tags: SEO Issue or Just Noise?',
 		description:
