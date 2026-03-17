@@ -601,17 +601,23 @@ func (s *Server) handleQuickWins(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var rawRows []map[string]interface{}
-	json.Unmarshal(data, &rawRows)
+	if err := json.Unmarshal(data, &rawRows); err != nil {
+		s.logger.Warn("Failed to parse GSC performance rows for quick wins", zap.Error(err))
+		s.respondJSON(w, http.StatusOK, []interface{}{})
+		return
+	}
 
-	// Filter to keywords ranking 5-15 with decent impressions, compute opportunity score
+	// Filter to keywords ranking 4-20 with at least 10 impressions, compute opportunity score.
+	// The opportunity score naturally down-ranks low-traffic queries, so a permissive impression
+	// floor avoids excluding legitimate opportunities on smaller sites.
 	var results []map[string]interface{}
 	for _, raw := range rawRows {
 		flat := gscRowToFlat(raw)
-		position, _ := flat["position"].(float64)
-		impressions, _ := flat["impressions"].(float64)
-		ctr, _ := flat["ctr"].(float64)
+		position := getFloat(flat["position"])
+		impressions := getFloat(flat["impressions"])
+		ctr := getFloat(flat["ctr"])
 
-		if position >= 5 && position <= 15 && impressions >= 100 {
+		if position >= 4 && position <= 20 && impressions >= 10 {
 			if position > 0 {
 				flat["opportunity_score"] = impressions * (1 - ctr) * (1 / position)
 			}
@@ -666,7 +672,11 @@ func (s *Server) handleDecliningPages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var rawRows []map[string]interface{}
-	json.Unmarshal(data, &rawRows)
+	if err := json.Unmarshal(data, &rawRows); err != nil {
+		s.logger.Warn("Failed to parse GSC performance rows for declining pages", zap.Error(err))
+		s.respondJSON(w, http.StatusOK, []interface{}{})
+		return
+	}
 
 	var results []map[string]interface{}
 	for _, raw := range rawRows {
@@ -676,8 +686,8 @@ func (s *Server) handleDecliningPages(w http.ResponseWriter, r *http.Request) {
 
 	// Sort by clicks descending
 	sort.Slice(results, func(i, j int) bool {
-		ci, _ := results[i]["clicks"].(float64)
-		cj, _ := results[j]["clicks"].(float64)
+		ci := getFloat(results[i]["clicks"])
+		cj := getFloat(results[j]["clicks"])
 		return ci > cj
 	})
 

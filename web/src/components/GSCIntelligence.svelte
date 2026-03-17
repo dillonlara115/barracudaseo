@@ -161,7 +161,7 @@
               </td>
             </tr>
           {:else}
-            <tr><td colspan="6" class="text-center opacity-60 py-8">No quick wins found. Connect GSC and sync data first.</td></tr>
+            <tr><td colspan="6" class="text-center opacity-60 py-8">No quick wins found. This means no queries currently rank in positions 4–20 with enough impressions to optimize.</td></tr>
           {/each}
         </tbody>
       </table>
