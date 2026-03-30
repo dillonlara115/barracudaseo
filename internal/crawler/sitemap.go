@@ -186,5 +186,65 @@ func (s *SitemapParser) DiscoverSitemapURL(baseURL string) string {
 	if err != nil {
 		return ""
 	}
-	return fmt.Sprintf("%s://%s/sitemap.xml", u.Scheme, u.Host)
+
+	defaultSitemapURL := fmt.Sprintf("%s://%s/sitemap.xml", u.Scheme, u.Host)
+
+	candidates := s.discoverSitemapCandidates(u, defaultSitemapURL)
+	for _, candidate := range candidates {
+		body, statusCode, err := s.fetcher.FetchRaw(candidate)
+		if err != nil || statusCode != 200 {
+			continue
+		}
+		if looksLikeSitemapXML(body) {
+			return candidate
+		}
+	}
+
+	return defaultSitemapURL
+}
+
+func (s *SitemapParser) discoverSitemapCandidates(base *url.URL, defaultSitemapURL string) []string {
+	candidates := make([]string, 0, 8)
+	seen := make(map[string]bool)
+
+	addCandidate := func(raw string) {
+		raw = strings.TrimSpace(raw)
+		if raw == "" {
+			return
+		}
+
+		parsed, err := base.Parse(raw)
+		if err != nil {
+			return
+		}
+
+		candidate := parsed.String()
+		if seen[candidate] {
+			return
+		}
+		seen[candidate] = true
+		candidates = append(candidates, candidate)
+	}
+
+	robotsURL := fmt.Sprintf("%s://%s/robots.txt", base.Scheme, base.Host)
+	if body, statusCode, err := s.fetcher.FetchRaw(robotsURL); err == nil && statusCode == 200 {
+		for _, line := range strings.Split(string(body), "\n") {
+			line = strings.TrimSpace(line)
+			if len(line) < len("sitemap:") || !strings.EqualFold(line[:len("sitemap:")], "sitemap:") {
+				continue
+			}
+			addCandidate(strings.TrimSpace(line[len("sitemap:"):]))
+		}
+	}
+
+	addCandidate(defaultSitemapURL)
+	addCandidate(fmt.Sprintf("%s://%s/sitemap_index.xml", base.Scheme, base.Host))
+	addCandidate(fmt.Sprintf("%s://%s/wp-sitemap.xml", base.Scheme, base.Host))
+
+	return candidates
+}
+
+func looksLikeSitemapXML(body []byte) bool {
+	content := strings.ToLower(strings.TrimSpace(string(body)))
+	return strings.Contains(content, "<urlset") || strings.Contains(content, "<sitemapindex")
 }
