@@ -12,6 +12,26 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
 	{
+		slug: 'javascript-rendering-and-seo-what-google-actually-crawls-in-2026',
+		title: 'JavaScript Rendering and SEO: What Google Actually Crawls in 2026',
+		description:
+			'Master javascript SEO rendering to prevent indexation delays. Learn what Google actually crawls now, where client-side rendering still fails, and how to reduce rendering risk.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-19',
+		readTime: 7,
+		category: 'Guides',
+		tags: [
+			'JavaScript',
+			'rendering',
+			'Googlebot',
+			'technical SEO',
+			'crawling',
+			'SSR',
+			'CSR'
+		],
+		featured: true
+	},
+	{
 		slug: 'core-web-vitals-in-2026-what-actually-matters-after-the-latest-chrome-updates',
 		title: 'Core Web Vitals in 2026: What Actually Matters After the Latest Chrome Updates',
 		description:
@@ -400,6 +420,150 @@ export const blogPosts: BlogPost[] = [
 		readTime: 11,
 		category: 'Guides',
 		tags: ['ecommerce SEO', 'product pages', 'category pages', 'technical SEO'],
+		featured: false
+	},
+	{
+		slug: 'google-business-profile-optimization-the-2026-playbook',
+		title: 'Google Business Profile Optimization The 2026 Playbook',
+		description:
+			'Stop losing local customers to competitors with half your reviews. This google business profile optimization 2026 guide drives map pack dominance.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-20',
+		readTime: 6,
+		category: 'Local SEO',
+		tags: ['local SEO', 'google business profile', 'map pack', 'reviews'],
+		featured: false
+	},
+	{
+		slug: 'local-pack-ranking-factors-what-the-data-shows-in-2026',
+		title: 'Local Pack Ranking Factors 2026: What Actually Works',
+		description:
+			'Google Business Profile optimization drives 32% of local pack rankings in 2026. Discover the data-backed local pack ranking factors you need to focus on.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-21',
+		readTime: 6,
+		category: 'Local SEO',
+		tags: ['local SEO', 'google business profile', 'ranking factors', 'local pack'],
+		featured: false
+	},
+	{
+		slug: 'how-to-build-local-citations-that-still-move-the-needle',
+		title: 'Building Local Citations SEO Strategies That Actually Work',
+		description:
+			'Stop wasting time on directory spam. Unstructured mentions and niche placements are the only local citations SEO tactics that actually move the needle.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-22',
+		readTime: 6,
+		category: 'Local SEO',
+		tags: ['local SEO', 'citations', 'NAP consistency', 'local pack'],
+		featured: false
+	},
+	{
+		slug: 'review-management-for-seo-getting-more-reviews-without-breaking-googles-guidelines',
+		title: 'Review Management for SEO: Maximize Local Ratings Safely',
+		description:
+			'Fake ratings trigger penalties. Discover how review management SEO tactics generate authentic feedback without violating strict Google guidelines.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-23',
+		readTime: 7,
+		category: 'Local SEO',
+		tags: ['review management', 'local SEO', 'google business profile', 'local pack'],
+		featured: false
+	},
+	{
+		slug: 'local-service-ads-vs-organic-local-seo',
+		title: 'Local Service Ads vs Organic SEO: 2026 ROI Breakdown',
+		description:
+			'Stop guessing between local service ads vs organic seo. We break down 2026 ROI data so you know exactly where to allocate your marketing budget.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-24',
+		readTime: 6,
+		category: 'Local SEO',
+		tags: ['local SEO', 'google ads', 'LSA', 'marketing budget'],
+		featured: false
+	},
+	{
+		slug: 'multi-location-seo-strategy-managing-5-locations-without-duplicate-content',
+		title: 'Multi-Location SEO Strategy: Avoid Duplicate Content in 2026',
+		description:
+			'Duplicate content ruins your multi location seo strategy. These 5 steps secure local pack rankings across all branches without triggering Google penalties.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-24',
+		readTime: 7,
+		category: 'Local SEO',
+		tags: ['local SEO', 'multi-location', 'duplicate content', 'technical SEO'],
+		featured: false
+	},
+	{
+		slug: 'hyperlocal-content-strategy-writing-pages-that-rank-for-service-near-me',
+		title: "Hyperlocal Content Strategy for 'Near Me' Searches",
+		description:
+			'A solid hyperlocal content strategy captures high-intent customers right in their neighborhoods. Learn how to rank for near me searches in 2026.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-25',
+		readTime: 6,
+		category: 'Local SEO',
+		tags: ['local SEO', 'content strategy', 'near me'],
+		featured: false
+	},
+	{
+		slug: 'keyword-cannibalization-fix',
+		title: 'Keyword Cannibalization Fix: Find & Resolve Overlaps',
+		description:
+			'Is your own content tanking your rankings? Learn the exact keyword cannibalization fix to consolidate authority and reclaim your top spots in Google.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-26',
+		readTime: 7,
+		category: 'On-Page SEO',
+		tags: ['keyword research', 'content audit', 'SEO strategy', 'technical SEO'],
+		featured: false
+	},
+	{
+		slug: 'how-to-write-title-tags-that-rank-and-get-clicks',
+		title: 'Title Tag Optimization for 2026: Get More Clicks',
+		description:
+			'Master title tag optimization with proven formulas. We show before and after examples of how tweaking a few words boosts click-through rates and rankings.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-28',
+		readTime: 7,
+		category: 'On-Page SEO',
+		tags: ['title tags', 'on-page SEO', 'CTR optimization', 'SEO copywriting'],
+		featured: false
+	},
+	{
+		slug: 'the-hub-and-spoke-content-model-building-topical-authority-step-by-step',
+		title: 'Hub and Spoke Content Model: SEO Guide for Topical Authority',
+		description:
+			'Organize your site with the hub spoke content model seo strategy. Learn how to structure pages to build massive topical authority and command SERPs.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-28',
+		readTime: 7,
+		category: 'Content Strategy',
+		tags: ['content strategy', 'topical authority', 'site architecture', 'on-page SEO'],
+		featured: false
+	},
+	{
+		slug: 'internal-linking-strategy-seo',
+		title: 'Advanced Internal Linking Strategy SEO For 2026',
+		description:
+			'A proper internal linking strategy seo requires more than automated related post widgets. Learn how to construct topical silos that move the needle.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-30',
+		readTime: 5,
+		category: 'On-Page SEO',
+		tags: ['internal linking', 'site architecture', 'SEO strategy'],
+		featured: false
+	},
+	{
+		slug: 'content-refresh-playbook',
+		title: 'Content Refresh SEO: Update Old Posts for Better Rankings',
+		description:
+			'Content decay tanks your organic traffic. Use this content refresh SEO playbook to update old posts, reclaim rankings, and multiply your daily clicks.',
+		author: 'Barracuda Team',
+		publishDate: '2026-03-31',
+		readTime: 6,
+		category: 'Content Strategy',
+		tags: ['content refresh', 'SEO strategy', 'organic traffic', 'content marketing'],
 		featured: false
 	}
 ];
