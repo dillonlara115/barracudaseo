@@ -1,5 +1,232 @@
 // Blog post content stored separately for better maintainability
 export const blogContent: Record<string, string> = {
+	'best-technical-seo-tools': `
+		<p>
+			Most "best technical SEO tools" lists are a dozen logos with a paragraph each, ordered by who pays the highest affiliate commission. This one is organized by the job — crawling, indexing, performance, structured data, rendering, logs, monitoring — because technical SEO is not one task and no single tool covers it. For each job we name the free option first, then what you pay for when the free option runs out. We make one of these tools and say so where it appears.
+		</p>
+		<p>
+			If you are building a stack from scratch: Google Search Console, a crawler, and PageSpeed Insights cover 80% of technical SEO for $0. Everything else on this page is about the other 20%, or about doing the first 80% faster and across more sites.
+		</p>
+		<p class="text-white/60 text-sm">
+			Prices checked September 2026. Confirm with vendors before buying.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">Technical SEO tools by job</h3>
+			<div class="overflow-x-auto">
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Job</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Free</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Paid</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Indexing &amp; what Google sees</td>
+						<td class="p-3 border border-white/20 text-white/80">Google Search Console, Bing Webmaster Tools</td>
+						<td class="p-3 border border-white/20 text-white/80">—</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Crawling &amp; site audit</td>
+						<td class="p-3 border border-white/20 text-white/80">Screaming Frog (500 URLs), LibreCrawl, SiteOne, Barracuda Free</td>
+						<td class="p-3 border border-white/20 text-white/80">Screaming Frog $279/yr, Sitebulb ~$15/mo, Barracuda $29/mo, Lumar/JetOctopus for enterprise</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Performance &amp; Core Web Vitals</td>
+						<td class="p-3 border border-white/20 text-white/80">PageSpeed Insights, Lighthouse, CrUX, WebPageTest</td>
+						<td class="p-3 border border-white/20 text-white/80">DebugBear, SpeedCurve, GTmetrix Pro</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Structured data</td>
+						<td class="p-3 border border-white/20 text-white/80">Rich Results Test, Schema Markup Validator</td>
+						<td class="p-3 border border-white/20 text-white/80">Crawler-level validation (Sitebulb, Screaming Frog)</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">JavaScript rendering</td>
+						<td class="p-3 border border-white/20 text-white/80">URL Inspection, Chrome DevTools, technicalseo.com Fetch &amp; Render</td>
+						<td class="p-3 border border-white/20 text-white/80">Screaming Frog JS mode, Sitebulb, Prerender.io</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Log file analysis</td>
+						<td class="p-3 border border-white/20 text-white/80">GSC Crawl Stats, Screaming Frog Log File Analyser (1,000 lines)</td>
+						<td class="p-3 border border-white/20 text-white/80">Log File Analyser licence, JetOctopus, Oncrawl, Botify</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">robots.txt, sitemaps, hreflang</td>
+						<td class="p-3 border border-white/20 text-white/80">technicalseo.com tools, GSC sitemap report</td>
+						<td class="p-3 border border-white/20 text-white/80">Crawler-level checks</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Monitoring &amp; change detection</td>
+						<td class="p-3 border border-white/20 text-white/80">GSC email alerts, uptime monitors</td>
+						<td class="p-3 border border-white/20 text-white/80">Barracuda (crawl history + CI), ContentKing, Sitechecker</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">All-in-one suites</td>
+						<td class="p-3 border border-white/20 text-white/80">Ahrefs Webmaster Tools (own sites)</td>
+						<td class="p-3 border border-white/20 text-white/80">Semrush $139/mo, Ahrefs $129/mo, SE Ranking $129/mo</td>
+					</tr>
+				</tbody>
+			</table>
+			</div>
+		</div>
+
+		<h2>1. Indexing: Google Search Console and Bing Webmaster Tools</h2>
+		<p>
+			Every other tool on this page infers what search engines are doing. <strong>Google Search Console</strong> tells you. The Page Indexing report shows which URLs are excluded and why — <a href="/blog/crawled-not-indexed">"Crawled – currently not indexed"</a> being the one that keeps people up at night — the URL Inspection tool shows the rendered HTML Google actually saw, Crawl Stats shows how much of your crawl budget went where, and the Core Web Vitals report is real-user data rather than lab tests. It is free, it is first-party, and it should be open in a tab during every audit.
+		</p>
+		<p>
+			<strong>Bing Webmaster Tools</strong> is the same idea for Bing, with a bonus: its Site Scan is a free cloud crawler that flags the basics, and its index coverage occasionally surfaces problems Google's report buries. Ten minutes to verify, worth it.
+		</p>
+
+		<h2>2. Crawling and site audit</h2>
+		<p>
+			A crawler is the tool that finds what Search Console only hints at: the 3,000 pages with duplicate titles, the redirect chains, the orphaned category, the canonical pointing at a 404. This is the biggest category and the one with the most real choice, so we keep a full <a href="/blog/best-seo-crawler-tools">comparison of SEO crawlers</a> and cover the short version here.
+		</p>
+		<h3>Screaming Frog SEO Spider — the reference crawler</h3>
+		<p>
+			Free for 500 URLs, $279 a year for unlimited crawling plus JavaScript rendering, custom extraction, list mode, and API pulls from GA4, Search Console and PageSpeed Insights. Desktop-only and raw — it finds everything and ranks nothing — which is exactly what an experienced technical SEO wants for a migration or a deep dig. See <a href="/blog/alternatives-to-screaming-frog">Screaming Frog alternatives</a> if the 500-URL limit or the spreadsheet output is the problem.
+		</p>
+		<h3>Sitebulb — the crawler that explains itself</h3>
+		<p>
+			Same crawl, different ending: every issue is a "Hint" with a priority and fix guidance, plus crawl-map visualisations that clients understand. Desktop from around $15 a month, cloud from £95. The choice for agencies that present audits rather than just run them.
+		</p>
+		<h3>Barracuda — the crawler that prioritizes</h3>
+		<p>
+			<a href="/features">Barracuda</a> crawls up to 10,000 pages on Pro and then does the triage most audits leave to a spreadsheet: issues scored by impact and grouped by type, AI recommendations with page-specific fixes, reasoning shown for every priority, and — once you connect Search Console — everything weighted by real impressions and clicks so the missing title on a page with traffic outranks the same issue on one without. Crawl history, an interactive link graph, rank tracking and public report links are included; a CLI runs it in CI. $29 a month, free for 100 pages. It does not render JavaScript or do custom extraction, so pair it with Screaming Frog for those jobs.
+		</p>
+		<h3>Free and open source: LibreCrawl and SiteOne</h3>
+		<p>
+			Both MIT-licensed. LibreCrawl is a self-hosted web app with unlimited URLs and Playwright rendering; SiteOne is a desktop app and CLI with an HTML audit report and JUnit output for pipelines. If you are technical and the budget is zero, either is a complete crawler.
+		</p>
+		<h3>Enterprise: Lumar, Oncrawl, Botify, JetOctopus</h3>
+		<p>
+			Cloud crawlers for millions of URLs, joined to log files, priced by quote (JetOctopus publishes: about $549 a month on annual). If you are crawling at that scale you already know which of these your procurement team prefers.
+		</p>
+
+		<h2>3. Performance and Core Web Vitals</h2>
+		<p>
+			Since Chrome swapped FID for INP, and with Google's <a href="/blog/core-web-vitals-in-2026-what-actually-matters-after-the-latest-chrome-updates">2026 Core Web Vitals</a> thresholds settled, performance tooling splits cleanly into lab data (what a synthetic test measured) and field data (what real Chrome users experienced). You need both.
+		</p>
+		<ul>
+			<li><strong>PageSpeed Insights</strong> — free, and the only tool that shows lab and field (CrUX) data side by side for a URL. Start every performance conversation here.</li>
+			<li><strong>Lighthouse</strong> in Chrome DevTools — the same lab audit, runnable locally on staging and behind logins. The Performance panel is where you actually find the <a href="/blog/inp-vs-fid-what-changed-and-how-to-optimize-for-the-new-metric">INP</a> culprit.</li>
+			<li><strong>Chrome UX Report (CrUX)</strong> via the dashboard or BigQuery — origin-level field data over time, free.</li>
+			<li><strong>WebPageTest</strong> — free tier for filmstrips, waterfalls and connection throttling from real locations; the tool for diagnosing <em>why</em> LCP is slow, not just that it is.</li>
+			<li><strong>DebugBear, SpeedCurve, GTmetrix Pro</strong> — paid monitoring that tracks lab and field metrics per page over time and alerts on regressions. Worth it once performance is a KPI someone is accountable for.</li>
+		</ul>
+		<p>
+			Our <a href="/blog/the-complete-site-speed-audit-process-for-seo-professionals">site speed audit process</a> walks through using these together, and <a href="/blog/how-caching-layers-interact">how caching layers interact</a> explains the most common reason a fix does not show up in the numbers.
+		</p>
+
+		<h2>4. Structured data</h2>
+		<ul>
+			<li><strong>Google Rich Results Test</strong> — tells you whether a page is eligible for rich results and which schema types Google recognised. Eligibility, not validity.</li>
+			<li><strong>Schema Markup Validator</strong> (validator.schema.org) — checks syntax against the vocabulary, including types Google does not use. Validity, not eligibility. You need both.</li>
+			<li><strong>Crawler-level validation</strong> — Screaming Frog and Sitebulb validate structured data across the whole site in one crawl, which is the only sane way to find the 400 product pages with a broken <code>offers</code> block.</li>
+		</ul>
+
+		<h2>5. JavaScript rendering</h2>
+		<p>
+			If content only appears after client-side rendering, you need to confirm that Google renders it and that your crawler does too. <strong>URL Inspection</strong> in Search Console shows the rendered DOM Google used, which is the ground truth. <strong>Chrome DevTools</strong> with JavaScript disabled shows what a non-rendering crawler sees. The free <strong>Fetch &amp; Render</strong> tool at technicalseo.com compares raw and rendered HTML side by side. For crawling JS sites at scale, Screaming Frog's paid JavaScript mode, Sitebulb, LibreCrawl and the enterprise platforms all render; if rendering is unreliable, <strong>Prerender.io</strong> serves search engines a pre-rendered snapshot. Our guide to <a href="/blog/javascript-rendering-and-seo-what-google-actually-crawls-in-2026">what Google actually crawls</a> covers when any of this matters.
+		</p>
+
+		<h2>6. Log file analysis</h2>
+		<p>
+			Crawlers show what <em>could</em> be crawled; logs show what Googlebot <em>did</em> crawl, how often, and what it wasted budget on. GSC's <strong>Crawl Stats</strong> report is the free, aggregated version. The <strong>Screaming Frog Log File Analyser</strong> is free up to 1,000 lines and around £79 a year beyond, and is the right tool for a one-off analysis. At scale, <strong>JetOctopus</strong>, <strong>Oncrawl</strong> and <strong>Botify</strong> ingest logs continuously and join them to crawl data, which is the single most valuable thing the enterprise tier does.
+		</p>
+
+		<h2>7. robots.txt, sitemaps, hreflang, and the small stuff</h2>
+		<p>
+			<strong>technicalseo.com</strong> (by Merkle) hosts the best free set of single-purpose tools: a robots.txt tester, a .htaccess tester, hreflang tag generator and validator, a mobile-first index checker, and the Fetch &amp; Render tool above. Google removed its own robots.txt tester from Search Console, which makes this one essential. The GSC <strong>Sitemaps</strong> report tells you whether Google could read your sitemap and how many URLs it discovered from it — compare that number against the sitemap's actual count and against the crawler's, and the gaps are your audit.
+		</p>
+
+		<h2>8. Monitoring and change detection</h2>
+		<p>
+			Most technical SEO damage is not caused by SEOs. It is a deploy that ships a noindex to production, a CMS update that rewrites canonicals, a redirect rule that loops. Search Console will email you eventually. <strong>ContentKing</strong> (now part of Conductor) pioneered real-time change tracking for this and remains the reference at enterprise prices. <strong>Sitechecker</strong> offers alerts and monitoring for small agencies. <strong>Barracuda</strong> keeps crawl history so each run compares against the last and the dashboard shows what changed; the CLI can also run a crawl in <a href="/blog/automated-seo-audits-cicd">CI/CD</a> against a staging URL so a noindex or redirect loop is caught before it reaches production, which is the cheapest monitoring there is.
+		</p>
+
+		<h2>9. All-in-one suites: when the bundle makes sense</h2>
+		<p>
+			<strong>Semrush</strong> ($139 a month), <strong>Ahrefs</strong> ($129) and <strong>SE Ranking</strong> ($129, $103 annual) each bundle a scheduled cloud crawler with keyword research, rank tracking and backlink data. The crawlers are competent and unremarkable — health score, issue buckets, export to spreadsheet — and the reason to use them is that you already pay for the suite for other reasons. <strong>Ahrefs Webmaster Tools</strong> gives you the Ahrefs crawler free for sites you own. If technical SEO is most of what you do, a dedicated crawler beats the bundled one; if it is a fraction, the bundle is fine. Our <a href="/blog/best-semrush-alternatives-2026">Semrush alternatives</a> and <a href="/blog/alternatives-to-ahrefs">Ahrefs alternatives</a> guides break the suites down by module.
+		</p>
+
+		<h2>A technical SEO stack by budget</h2>
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<div class="overflow-x-auto">
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Budget</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Stack</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Covers</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">$0</td>
+						<td class="p-3 border border-white/20 text-white/80">GSC + Bing WMT, Screaming Frog free or LibreCrawl, PageSpeed Insights, Rich Results Test, technicalseo.com</td>
+						<td class="p-3 border border-white/20 text-white/80">Everything for a site under ~500 URLs; most things for larger ones if you self-host a crawler</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">~$30/mo</td>
+						<td class="p-3 border border-white/20 text-white/80">Above + Barracuda Pro or Sitebulb Lite</td>
+						<td class="p-3 border border-white/20 text-white/80">Adds prioritization, history, sharing, monitoring; 10k–500k URLs</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">~$60/mo</td>
+						<td class="p-3 border border-white/20 text-white/80">Above + Screaming Frog licence (~$23/mo) + Log File Analyser</td>
+						<td class="p-3 border border-white/20 text-white/80">Adds JS rendering, custom extraction, logs — the full freelancer/agency kit</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">$130–300/mo</td>
+						<td class="p-3 border border-white/20 text-white/80">Above + a suite (Semrush/Ahrefs/SE Ranking) + DebugBear or SpeedCurve</td>
+						<td class="p-3 border border-white/20 text-white/80">Adds keyword/backlink data and performance monitoring</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">$500+/mo</td>
+						<td class="p-3 border border-white/20 text-white/80">JetOctopus, Lumar, Oncrawl or Botify</td>
+						<td class="p-3 border border-white/20 text-white/80">Millions of URLs, continuous logs, segmentation, SLAs</td>
+					</tr>
+				</tbody>
+			</table>
+			</div>
+		</div>
+
+		<h2>Frequently asked questions</h2>
+		<h3>What tools are best for technical SEO?</h3>
+		<p>
+			Google Search Console for indexing data, a crawler (Screaming Frog, Sitebulb or Barracuda depending on whether you want raw data, presentation or prioritization), PageSpeed Insights and Lighthouse for Core Web Vitals, the Rich Results Test and Schema Markup Validator for structured data, and technicalseo.com's free tools for robots.txt and hreflang. Log file analysis and change monitoring are the next layer.
+		</p>
+		<h3>What is technical SEO?</h3>
+		<p>
+			Technical SEO is the work of making a site easy for search engines to crawl, render, index and serve quickly: site architecture and internal linking, status codes and redirects, indexability directives, structured data, page speed and Core Web Vitals, JavaScript rendering, and mobile usability. It is distinct from on-page SEO (content and keywords) and off-page SEO (links and mentions). Our <a href="/blog/complete-technical-seo-audit-guide">technical SEO audit guide</a> walks through the process.
+		</p>
+		<h3>What is the difference between SEO and technical SEO?</h3>
+		<p>
+			SEO is the whole discipline; technical SEO is the part concerned with infrastructure rather than content or authority. A page with perfect content and strong links still will not rank if it is blocked in robots.txt, returns a 500 error, or takes eight seconds to load. Technical SEO removes those failures so the content and links can work.
+		</p>
+		<h3>Are there free technical SEO tools?</h3>
+		<p>
+			Yes, and they are excellent: Google Search Console, Bing Webmaster Tools, PageSpeed Insights, Lighthouse, the Rich Results Test, the Schema Markup Validator, technicalseo.com's toolset, Screaming Frog's 500-URL free tier, the open-source crawlers LibreCrawl and SiteOne, and Barracuda's 100-page free tier. A small site can be fully audited without spending anything.
+		</p>
+
+		<h2>The bottom line</h2>
+		<p>
+			Technical SEO tooling is unusually generous with free options because the source of truth — Search Console, Chrome, schema.org — is free. Build on that: Search Console for what Google did, a crawler for what it could do, PageSpeed Insights for how fast it did it. Pay when the site outgrows the free crawler, when someone else needs to see the results, or when the audit keeps ending in a spreadsheet nobody actions. The last one is what we built Barracuda for.
+		</p>
+		<div class="bg-[#282828] p-8 rounded-lg border border-[#8ec07c]/30 text-center my-10">
+			<h3 class="mt-0 text-white">Turn the audit into a fix list</h3>
+			<p class="text-white/80 mb-6">
+				Crawl 100 pages free, no card. See issues ranked by impact with the reasoning behind each one.
+			</p>
+			<a href="https://app.barracudaseo.com" class="inline-block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-3 rounded-lg font-medium transition-colors">
+				Try Barracuda Free
+			</a>
+		</div>
+	`,
 	'best-seo-crawler-tools': `
 		<p>
 			An SEO crawler is the tool that sees your website the way Googlebot does: it follows every link, fetches every page, and records what it finds — status codes, titles, canonicals, redirects, internal links, page weight. Every technical SEO audit starts with one. The question is which one, and the honest answer is that it depends on the size of the site, whether one person or a team needs the results, how much JavaScript is involved, and whether you want raw data or a fix list.
@@ -125,7 +352,7 @@ export const blogContent: Record<string, string> = {
 			<li><strong>Performance signals</strong> — page size, response time, and (via Lighthouse or PageSpeed integrations) Core Web Vitals.</li>
 		</ul>
 		<p>
-			A crawler that finds all of the above on 500 pages is table stakes. Where tools separate is what they do with a site of 50,000 pages and 6,000 findings.
+			A crawler is one part of the kit — our guide to the <a href="/blog/best-technical-seo-tools">best technical SEO tools</a> covers the rest, from Search Console to log analysis. A crawler that finds all of the above on 500 pages is table stakes. Where tools separate is what they do with a site of 50,000 pages and 6,000 findings.
 		</p>
 
 		<h2>How to choose: five questions</h2>

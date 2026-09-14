@@ -18,6 +18,48 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
 	{
+		slug: 'best-technical-seo-tools',
+		title: 'Best Technical SEO Tools in 2026 (Free and Paid, by Job)',
+		seoTitle: 'Best Technical SEO Tools 2026: Free & Paid, by Job',
+		description:
+			'Technical SEO tools organized by job: indexing, crawling, Core Web Vitals, structured data, JavaScript rendering, log files and monitoring. Free option first, then what you pay for. Stacks by budget.',
+		author: 'Barracuda Team',
+		publishDate: '2026-09-14',
+		readTime: 12,
+		category: 'Comparisons',
+		tags: [
+			'technical SEO',
+			'SEO tools',
+			'site audit',
+			'Core Web Vitals',
+			'structured data',
+			'comparison'
+		],
+		featured: true,
+		faqs: [
+			{
+				question: 'What tools are best for technical SEO?',
+				answer:
+					"Google Search Console for indexing data, a crawler such as Screaming Frog, Sitebulb or Barracuda, PageSpeed Insights and Lighthouse for Core Web Vitals, the Rich Results Test and Schema Markup Validator for structured data, and technicalseo.com's free tools for robots.txt and hreflang. Log file analysis and change monitoring are the next layer."
+			},
+			{
+				question: 'What is technical SEO?',
+				answer:
+					'Technical SEO is the work of making a site easy for search engines to crawl, render, index and serve quickly: site architecture and internal linking, status codes and redirects, indexability directives, structured data, page speed and Core Web Vitals, JavaScript rendering and mobile usability. It is distinct from on-page SEO (content) and off-page SEO (links).'
+			},
+			{
+				question: 'What is the difference between SEO and technical SEO?',
+				answer:
+					'SEO is the whole discipline; technical SEO is the part concerned with infrastructure rather than content or authority. A page with perfect content and strong links will not rank if it is blocked in robots.txt, returns a 500 error or takes eight seconds to load. Technical SEO removes those failures so content and links can work.'
+			},
+			{
+				question: 'Are there free technical SEO tools?',
+				answer:
+					"Yes: Google Search Console, Bing Webmaster Tools, PageSpeed Insights, Lighthouse, the Rich Results Test, the Schema Markup Validator, technicalseo.com's toolset, Screaming Frog's 500-URL free tier, the open-source crawlers LibreCrawl and SiteOne, and Barracuda's 100-page free tier. A small site can be fully audited for free."
+			}
+		]
+	},
+	{
 		slug: 'best-seo-crawler-tools',
 		title: 'Best SEO Crawler & Site Audit Tools in 2026 (Compared by Use Case)',
 		seoTitle: 'Best SEO Crawler Tools 2026: Compared by Use Case',
