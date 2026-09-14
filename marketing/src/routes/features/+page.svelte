@@ -19,9 +19,9 @@
 	import { getMetaTags, getBreadcrumbSchema } from '$lib/meta';
 
 	const meta = getMetaTags({
-		title: 'Decision-Support for SEO Audits',
+		title: 'Technical SEO Tool: Crawler, Link Graph & Prioritization',
 		description:
-			'Barracuda SEO features: High-speed crawling, interactive link graphs, issue prioritization, and team collaboration tools for agencies and in-house teams.'
+			'A technical SEO tool built for decisions: high-speed crawling, interactive link graphs, AI issue prioritization, and team collaboration for agencies and in-house SEOs.'
 	});
 
 	const structuredData = getBreadcrumbSchema([
@@ -124,11 +124,12 @@
 						</li>
 						<li class="flex items-start gap-2">
 							<CircleCheck class="mt-0.5 h-5 w-5 flex-shrink-0 text-[#8ec07c]" />
-							<span>Missing or <a
-								href="/blog/duplicate-meta-tags-fix"
-								class="text-[#8ec07c] underline hover:text-[#a0d28c]"
-								>duplicate meta tags</a
-							></span>
+							<span
+								>Missing or <a
+									href="/blog/duplicate-meta-tags-fix"
+									class="text-[#8ec07c] underline hover:text-[#a0d28c]">duplicate meta tags</a
+								></span
+							>
 						</li>
 						<li class="flex items-start gap-2">
 							<CircleCheck class="mt-0.5 h-5 w-5 flex-shrink-0 text-[#8ec07c]" />
@@ -136,11 +137,12 @@
 						</li>
 						<li class="flex items-start gap-2">
 							<CircleCheck class="mt-0.5 h-5 w-5 flex-shrink-0 text-[#8ec07c]" />
-							<span><a
-								href="/blog/crawled-not-indexed"
-								class="text-[#8ec07c] underline hover:text-[#a0d28c]"
-								>Indexability issues</a
-							> and best practice violations</span>
+							<span
+								><a
+									href="/blog/crawled-not-indexed"
+									class="text-[#8ec07c] underline hover:text-[#a0d28c]">Indexability issues</a
+								> and best practice violations</span
+							>
 						</li>
 					</ul>
 				</div>
@@ -182,8 +184,7 @@
 					<p class="text-white/70">
 						Automatically <a
 							href="/blog/how-to-prioritize-seo-issues"
-							class="text-[#8ec07c] underline hover:text-[#a0d28c]"
-							>ranks issues by impact</a
+							class="text-[#8ec07c] underline hover:text-[#a0d28c]">ranks issues by impact</a
 						>, so you know exactly what to fix first.
 					</p>
 				</div>
@@ -192,8 +193,7 @@
 					<p class="text-white/70">
 						<a
 							href="/blog/visualize-site-structure-link-graph"
-							class="text-[#8ec07c] underline hover:text-[#a0d28c]"
-							>Visualize site structure</a
+							class="text-[#8ec07c] underline hover:text-[#a0d28c]">Visualize site structure</a
 						> and discover orphaned pages at a glance.
 					</p>
 				</div>

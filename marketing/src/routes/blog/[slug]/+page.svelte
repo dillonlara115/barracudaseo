@@ -11,7 +11,7 @@
 	const content = blogContent[post.slug] || '<p>Content coming soon...</p>';
 
 	const meta = getMetaTags({
-		title: post.title,
+		title: post.seoTitle ?? post.title,
 		description: post.description,
 		keywords: post.tags.join(', '),
 		author: post.author,

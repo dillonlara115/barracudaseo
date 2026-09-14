@@ -13,9 +13,9 @@
 	import { getMetaTags, getBreadcrumbSchema, getFAQPageSchema } from '$lib/meta';
 
 	const meta = getMetaTags({
-		title: 'E-commerce SEO Auditing Tool',
+		title: 'Ecommerce SEO Audit Tool for Product & Category Pages',
 		description:
-			'Optimize your e-commerce site for search with Barracuda SEO. Discover technical issues, improve product page performance, and boost organic traffic today.'
+			'Run an ecommerce SEO audit with Barracuda. Find technical issues across product and category pages, fix faceted navigation problems, and grow organic revenue.'
 	});
 
 	const faqs = [

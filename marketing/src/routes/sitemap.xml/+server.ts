@@ -2,20 +2,34 @@ import { SITE_URL } from '$lib/constants';
 
 import { getAllBlogPosts } from '$lib/blog';
 
-// Define all routes with their priority and change frequency
+// The blog index changes whenever a post is published
+function latestBlogDate(): string {
+	const dates = getAllBlogPosts().map((p) => p.publishDate);
+	return dates.sort().at(-1) ?? new Date().toISOString();
+}
+
+// Define all routes with their priority and change frequency.
+// lastmod must be the date the page content actually changed — a build-time
+// "today" on every page teaches Google to ignore the field entirely.
+// Update the date when you meaningfully edit a page.
 const staticRoutes = [
-	{ path: '', priority: '1.0', changefreq: 'weekly' }, // Home
-	{ path: '/about', priority: '0.8', changefreq: 'monthly' },
-	{ path: '/features', priority: '0.9', changefreq: 'monthly' },
-	{ path: '/pricing', priority: '0.9', changefreq: 'monthly' },
-	{ path: '/faq', priority: '0.8', changefreq: 'monthly' },
-	{ path: '/roadmap', priority: '0.7', changefreq: 'monthly' },
-	{ path: '/privacy', priority: '0.5', changefreq: 'yearly' },
-	{ path: '/terms', priority: '0.5', changefreq: 'yearly' },
-	{ path: '/use-cases/e-commerce', priority: '0.8', changefreq: 'monthly' },
-	{ path: '/use-cases/local-seo', priority: '0.8', changefreq: 'monthly' },
-	{ path: '/use-cases/programmatic-seo', priority: '0.8', changefreq: 'monthly' },
-	{ path: '/blog', priority: '0.9', changefreq: 'weekly' }
+	{ path: '', priority: '1.0', changefreq: 'weekly', lastmod: '2026-09-14' }, // Home
+	{ path: '/about', priority: '0.8', changefreq: 'monthly', lastmod: '2026-03-14' },
+	{ path: '/features', priority: '0.9', changefreq: 'monthly', lastmod: '2026-09-14' },
+	{ path: '/pricing', priority: '0.9', changefreq: 'monthly', lastmod: '2026-02-26' },
+	{ path: '/faq', priority: '0.8', changefreq: 'monthly', lastmod: '2026-02-26' },
+	{ path: '/roadmap', priority: '0.7', changefreq: 'monthly', lastmod: '2026-02-26' },
+	{ path: '/privacy', priority: '0.5', changefreq: 'yearly', lastmod: '2026-02-26' },
+	{ path: '/terms', priority: '0.5', changefreq: 'yearly', lastmod: '2026-02-26' },
+	{ path: '/use-cases/e-commerce', priority: '0.8', changefreq: 'monthly', lastmod: '2026-09-14' },
+	{ path: '/use-cases/local-seo', priority: '0.8', changefreq: 'monthly', lastmod: '2026-09-14' },
+	{
+		path: '/use-cases/programmatic-seo',
+		priority: '0.8',
+		changefreq: 'monthly',
+		lastmod: '2026-02-26'
+	},
+	{ path: '/blog', priority: '0.9', changefreq: 'weekly', lastmod: latestBlogDate() }
 ];
 
 // Get blog posts dynamically
@@ -44,7 +58,7 @@ ${routes
 	.map(
 		(route) => `  <url>
     <loc>${SITE_URL}${normalizePath(route.path)}</loc>
-    <lastmod>${route.lastmod ? route.lastmod.split('T')[0] : new Date().toISOString().split('T')[0]}</lastmod>
+    <lastmod>${route.lastmod.split('T')[0]}</lastmod>
     <changefreq>${route.changefreq}</changefreq>
     <priority>${route.priority}</priority>
   </url>`

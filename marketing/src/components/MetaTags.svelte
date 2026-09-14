@@ -39,7 +39,6 @@
 	<title>{config.title}</title>
 	<meta name="title" content={config.title} />
 	<meta name="description" content={config.description} />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 	<!-- Canonical URL -->
 	<link rel="canonical" href={fullUrl} />

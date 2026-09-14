@@ -24,12 +24,21 @@ export interface MetaTags {
 	description?: string;
 	ogImage?: string;
 	ogType?: string;
+	/** Append " - Barracuda SEO" to the title. Defaults to true. */
+	withSuffix?: boolean;
 }
 
+/** Google truncates title tags at roughly this many characters. */
+export const MAX_TITLE_LENGTH = 60;
+
 export function getMetaTags(meta: MetaTags = {}): MetaTagsConfig {
-	const title = meta.title
-		? `${meta.title} - ${SITE_NAME}`
-		: `${SITE_NAME} - Web-Based SEO Crawler & Auditing Tool`;
+	let title = `${SITE_NAME} - AI-Powered SEO Crawler & Technical Audit Tool`;
+	if (meta.title) {
+		const suffixed = `${meta.title} - ${SITE_NAME}`;
+		// Keep the brand suffix unless it would push the title past the SERP cutoff
+		const withSuffix = meta.withSuffix ?? suffixed.length <= MAX_TITLE_LENGTH;
+		title = withSuffix ? suffixed : meta.title;
+	}
 
 	const description = meta.description || SITE_DESCRIPTION;
 
@@ -89,11 +98,6 @@ export function getSoftwareApplicationSchema() {
 			price: '0',
 			priceCurrency: 'USD',
 			description: 'Free tier available'
-		},
-		aggregateRating: {
-			'@type': 'AggregateRating',
-			ratingValue: '4.8',
-			ratingCount: '1'
 		},
 		description: SITE_DESCRIPTION,
 		url: APP_URL

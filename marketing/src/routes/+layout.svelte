@@ -2,18 +2,20 @@
 	import '../app.css';
 	import Header from '../components/layout/Header.svelte';
 	import Footer from '../components/layout/Footer.svelte';
-	import MetaTags from '../components/MetaTags.svelte';
 	import GoogleAnalytics from '../components/GoogleAnalytics.svelte';
 	import PageTransitionLoader from '../components/PageTransitionLoader.svelte';
-	import { getMetaTags, getOrganizationSchema, getWebSiteSchema } from '$lib/meta';
+	import { getOrganizationSchema, getWebSiteSchema } from '$lib/meta';
 
 	let { children } = $props();
 
-	const defaultMeta = getMetaTags();
-	const structuredData = [getOrganizationSchema(), getWebSiteSchema()];
+	// Site-wide structured data only. Each page renders its own <MetaTags>,
+	// so rendering it here too would duplicate title/description/canonical.
+	const siteSchema = JSON.stringify([getOrganizationSchema(), getWebSiteSchema()]);
 </script>
 
-<MetaTags config={{ ...defaultMeta, structuredData }} />
+<svelte:head>
+	{@html `<script type="application/ld+json">${siteSchema}</script>`}
+</svelte:head>
 <GoogleAnalytics />
 <PageTransitionLoader />
 

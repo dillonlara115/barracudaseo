@@ -13,7 +13,7 @@
 	import { getMetaTags, getBreadcrumbSchema, getFAQPageSchema } from '$lib/meta';
 
 	const meta = getMetaTags({
-		title: 'Local SEO Auditing Tool',
+		title: 'Local SEO Audit Tool',
 		description:
 			'Optimize your local business website with Barracuda SEO. Discover technical issues, check schema markup, and improve local search visibility today.'
 	});

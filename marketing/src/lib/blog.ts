@@ -1,6 +1,8 @@
 export interface BlogPost {
 	slug: string;
 	title: string;
+	/** Shorter <title> for SERPs when `title` exceeds ~60 chars. H1 still uses `title`. */
+	seoTitle?: string;
 	description: string;
 	author: string;
 	publishDate: string; // ISO date string
@@ -14,26 +16,20 @@ export const blogPosts: BlogPost[] = [
 	{
 		slug: 'javascript-rendering-and-seo-what-google-actually-crawls-in-2026',
 		title: 'JavaScript Rendering and SEO: What Google Actually Crawls in 2026',
+		seoTitle: 'JavaScript Rendering & SEO: What Google Crawls in 2026',
 		description:
 			'Master javascript SEO rendering to prevent indexation delays. Learn what Google actually crawls now, where client-side rendering still fails, and how to reduce rendering risk.',
 		author: 'Barracuda Team',
 		publishDate: '2026-03-19',
 		readTime: 7,
 		category: 'Guides',
-		tags: [
-			'JavaScript',
-			'rendering',
-			'Googlebot',
-			'technical SEO',
-			'crawling',
-			'SSR',
-			'CSR'
-		],
+		tags: ['JavaScript', 'rendering', 'Googlebot', 'technical SEO', 'crawling', 'SSR', 'CSR'],
 		featured: true
 	},
 	{
 		slug: 'core-web-vitals-in-2026-what-actually-matters-after-the-latest-chrome-updates',
 		title: 'Core Web Vitals in 2026: What Actually Matters After the Latest Chrome Updates',
+		seoTitle: 'Core Web Vitals in 2026: What Actually Matters Now',
 		description:
 			'Core Web Vitals in 2026 shift focus to INP and real-user stability. Learn what changed, which metrics matter most, and exactly how to pass the assessment.',
 		author: 'Barracuda Team',
@@ -55,6 +51,7 @@ export const blogPosts: BlogPost[] = [
 	{
 		slug: 'how-to-fix-cls-issues-on-wordpress-sites',
 		title: 'How to Fix CLS Issues on WordPress Sites (The Most Common Culprits)',
+		seoTitle: 'How to Fix CLS Issues on WordPress Sites',
 		description:
 			'Struggling to fix CLS on WordPress? Stop losing rankings over jumping pages. These targeted solutions handle the most common layout shift culprits.',
 		author: 'Barracuda Team',
@@ -75,6 +72,7 @@ export const blogPosts: BlogPost[] = [
 	{
 		slug: 'inp-vs-fid-what-changed-and-how-to-optimize-for-the-new-metric',
 		title: 'INP vs. FID: What Changed and How to Optimize for the New Metric',
+		seoTitle: 'INP vs FID: What Changed & How to Optimize for INP',
 		description:
 			'Master INP optimization with our technical guide. Learn why INP replaced FID and how to fix JavaScript blocking issues that tank your mobile search rankings.',
 		author: 'Barracuda Team',
@@ -117,6 +115,7 @@ export const blogPosts: BlogPost[] = [
 	{
 		slug: 'how-caching-layers-interact',
 		title: 'How Caching Layers Interact: CDN, Server Cache, and Browser Cache Explained for SEOs',
+		seoTitle: 'CDN, Server & Browser Caching Explained for SEOs',
 		description:
 			'Mismatched caching layers ruin Core Web Vitals. Learn how CDN, server, and browser caches work together—and how to audit them—to pass technical SEO audits.',
 		author: 'Barracuda Team',

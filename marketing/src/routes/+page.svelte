@@ -15,9 +15,9 @@
 	import { BrainCircuit, ChevronRight, PenTool, BarChart3, Link2 } from '@lucide/svelte';
 
 	const meta = getMetaTags({
-		title: 'Turn crawl data into decisions',
+		title: 'AI-Powered SEO Crawler & Technical Audit Tool',
 		description:
-			'When SEO data gets overwhelming, Barracuda tells you what actually matters. AI-powered decision support for technical SEO audits.'
+			'Barracuda is an AI-powered SEO crawler that turns technical audit data into prioritized decisions. Crawl your site, find what matters, fix it faster.'
 	});
 
 	const structuredData = getSoftwareApplicationSchema();
@@ -54,13 +54,13 @@
 					<br />
 					<span class="text-[#d79921]">your voice, and your data.</span>
 				</h2>
-			<p class="mb-8 text-lg leading-relaxed text-white/50">
-				Content briefs from GSC data. Articles in your brand voice. Internal link suggestions
-				powered by semantic search. Intelligence layered on top of <a
-					href="/features"
-					class="text-white/70 underline hover:text-white">Barracuda's core features</a
-				> — at the moment you need it.
-			</p>
+				<p class="mb-8 text-lg leading-relaxed text-white/50">
+					Content briefs from GSC data. Articles in your brand voice. Internal link suggestions
+					powered by semantic search. Intelligence layered on top of <a
+						href="/features"
+						class="text-white/70 underline hover:text-white">Barracuda's core features</a
+					> — at the moment you need it.
+				</p>
 				<a
 					href="/roadmap"
 					class="inline-flex items-center gap-2 rounded-xl border border-[#d79921]/30 px-6 py-3 font-medium text-white/80 transition-all hover:border-[#d79921]/60 hover:text-white"
