@@ -1,5 +1,172 @@
 // Blog post content stored separately for better maintainability
 export const blogContent: Record<string, string> = {
+	'screaming-frog-pricing': `
+		<p>
+			<strong>Screaming Frog SEO Spider costs $279 per user per year</strong> (£199 / €245), with volume discounts from five licences. The free version crawls up to 500 URLs with most of the checks enabled but no saved crawls, JavaScript rendering, custom extraction, scheduling, or API integrations. There is no monthly plan. That is the whole pricing model, and it has barely changed in a decade — the price went up modestly, the structure did not.
+		</p>
+		<p>
+			The more useful question, and the one the r/SEO thread "Is Screaming Frog worth the $279/year?" has a hundred-plus answers to, is whether <em>you</em> need the licence. This guide covers the full price list, exactly what the free tier leaves out, who gets their money's worth, the costs the price tag does not show, and the cheaper ways to get the same outcome.
+		</p>
+		<p class="text-white/60 text-sm">
+			Prices checked September 2026 on screamingfrog.co.uk. Confirm before you buy.
+		</p>
+
+		<h2>Screaming Frog pricing in 2026</h2>
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">SEO Spider licence (per user, per year)</h3>
+			<div class="overflow-x-auto">
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Licences</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">USD</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">GBP</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">EUR</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80">1–4</td>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">$279</td>
+						<td class="p-3 border border-white/20 text-white/80">£199</td>
+						<td class="p-3 border border-white/20 text-white/80">€245</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80">5–9</td>
+						<td class="p-3 border border-white/20 text-white/80">$265</td>
+						<td class="p-3 border border-white/20 text-white/80">£189</td>
+						<td class="p-3 border border-white/20 text-white/80">€235</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80">10–19</td>
+						<td class="p-3 border border-white/20 text-white/80">$249</td>
+						<td class="p-3 border border-white/20 text-white/80">£179</td>
+						<td class="p-3 border border-white/20 text-white/80">€219</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80">20+</td>
+						<td class="p-3 border border-white/20 text-white/80">$235</td>
+						<td class="p-3 border border-white/20 text-white/80">£169</td>
+						<td class="p-3 border border-white/20 text-white/80">€209</td>
+					</tr>
+				</tbody>
+			</table>
+			</div>
+			<p class="text-white/60 text-sm mt-4 mb-0">
+				Licences last one year and must be renewed at the then-current price. No monthly billing, no auto-renew by default, no free trial of the paid features. The separate <strong>Log File Analyser</strong> is free for 1,000 log lines and £79 per user per year beyond that (£69 at 20+ licences).
+			</p>
+		</div>
+		<p>
+			Per month, a single licence works out to about $23 — cheaper than almost any cloud SEO tool. The catch is the word "user": a five-person agency pays $1,325 a year for everyone to have it, and the licences are tied to individuals rather than seats you can pass around.
+		</p>
+
+		<h2>Free vs paid: what the 500-URL limit actually leaves out</h2>
+		<p>
+			Screaming Frog's feature page lists the same features for both versions, which confuses people. The free version genuinely runs most of the checks — broken links, redirects, titles and meta data, canonicals, hreflang, duplicate content — on up to 500 URLs. What it restricts is everything around the crawl:
+		</p>
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<div class="overflow-x-auto">
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Capability</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Free</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Paid ($279/yr)</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr><td class="p-3 border border-white/20 text-white/80">Crawl limit</td><td class="p-3 border border-white/20 text-white/80">500 URLs</td><td class="p-3 border border-white/20 text-white/80">Unlimited (memory/storage bound)</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80">Core technical checks</td><td class="p-3 border border-white/20 text-white/80">Yes</td><td class="p-3 border border-white/20 text-white/80">Yes</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80">Save and re-open crawls</td><td class="p-3 border border-white/20 text-white/80">No</td><td class="p-3 border border-white/20 text-white/80">Yes</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80">Crawl configuration (speed, include/exclude, user-agent, etc.)</td><td class="p-3 border border-white/20 text-white/80">Restricted</td><td class="p-3 border border-white/20 text-white/80">Full</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80">JavaScript rendering</td><td class="p-3 border border-white/20 text-white/80">No</td><td class="p-3 border border-white/20 text-white/80">Yes (headless Chromium)</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80">Custom extraction (XPath/CSS/regex)</td><td class="p-3 border border-white/20 text-white/80">No</td><td class="p-3 border border-white/20 text-white/80">Yes</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80">Scheduling and CLI</td><td class="p-3 border border-white/20 text-white/80">No</td><td class="p-3 border border-white/20 text-white/80">Yes</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80">GA4, Search Console, PageSpeed, Ahrefs/Moz APIs</td><td class="p-3 border border-white/20 text-white/80">No</td><td class="p-3 border border-white/20 text-white/80">Yes</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80">Crawl comparison, list mode, database storage</td><td class="p-3 border border-white/20 text-white/80">No</td><td class="p-3 border border-white/20 text-white/80">Yes</td></tr>
+				</tbody>
+			</table>
+			</div>
+		</div>
+		<p>
+			The practical translation: the free version is a complete one-off audit tool for a site under 500 pages, and a demo for anything bigger. The moment you want to crawl a client's site a second time and see what changed, you are buying the licence.
+		</p>
+
+		<h2>Is Screaming Frog worth $279 a year?</h2>
+		<p>
+			It depends on who is asking, and the honest answers split cleanly by role.
+		</p>
+		<h3>Freelance or in-house technical SEO: yes, almost unconditionally</h3>
+		<p>
+			If you run technical audits as part of your job, $279 is one of the highest-value purchases in the field. Custom extraction alone — pulling prices, stock status, schema fields, or author names across a whole site with an XPath — replaces work that would otherwise be a developer ticket. List mode, crawl comparison and the API integrations are the tools you reach for on every migration. Nothing at this price matches the depth.
+		</p>
+		<h3>Small agency with several people: yes for one or two, not for everyone</h3>
+		<p>
+			Per-user licensing is where the bill stops being small. The usual pattern is one or two licences for the people who actually run deep crawls, and something cloud-based with shared access for the rest of the team and for clients — see our note on hidden costs below. Buying five licences so everyone can open the same crawl is the expensive way to solve a sharing problem.
+		</p>
+		<h3>Content or general marketer who audits occasionally: probably not</h3>
+		<p>
+			If you run a crawl a few times a year to check for broken links and missing titles, the free version plus Google Search Console covers you until the site passes 500 URLs. Past that, a $29-a-month tool you can cancel, or a free open-source crawler, is a better fit than an annual licence for a tool you will use quarterly.
+		</p>
+		<h3>Developer who wants a crawler in a pipeline: it depends on the pipeline</h3>
+		<p>
+			The paid version has a CLI and scheduling, and plenty of teams run it headless. But if the goal is a crawl in CI against staging, an open-source CLI crawler or a tool with a built-in CI workflow is usually less friction than a Java desktop app on a build agent.
+		</p>
+
+		<h2>The costs that are not on the price tag</h2>
+		<ul>
+			<li><strong>Hardware.</strong> Screaming Frog runs on your machine. Large crawls need RAM — 16 GB is a realistic floor for a few hundred thousand URLs in memory mode, and JavaScript rendering multiplies crawl time. Database storage mode helps, at the cost of speed. The licence is $279; the laptop that crawls comfortably is not.</li>
+			<li><strong>Per user, not per seat.</strong> Licences are tied to a person. Sharing a login across a team is against the terms, and the price scales with headcount rather than usage.</li>
+			<li><strong>Triage time.</strong> This is the big one. Screaming Frog is deliberately neutral about what matters: 4,000 missing meta descriptions and three 500 errors get the same weight. Turning a crawl into <a href="/blog/how-to-prioritize-seo-issues">a prioritized fix list</a> is a half-day of spreadsheet work per audit for most people, and it is the cost that makes a "cheap" tool expensive across a year of client work.</li>
+			<li><strong>Sharing.</strong> There is no link to send a client. You export, format, and email, or you pay for a second tool that does the presenting.</li>
+		</ul>
+
+		<h2>Cheaper ways to get the same outcome</h2>
+		<p>
+			If the licence is the sticking point, the options depend on which restriction you are hitting:
+		</p>
+		<ul>
+			<li><strong>Only the 500-URL limit:</strong> <strong>LibreCrawl</strong> and <strong>SiteOne Crawler</strong> are MIT-licensed, unlimited, and render JavaScript; both are covered in our <a href="/blog/alternatives-to-screaming-frog">Screaming Frog alternatives</a> guide.</li>
+			<li><strong>Only a scheduled cloud audit of a site you own:</strong> <strong>Ahrefs Webmaster Tools</strong> is free for verified sites.</li>
+			<li><strong>The triage and sharing problem:</strong> this is what <a href="/features">Barracuda</a> is for. It crawls up to 10,000 pages, scores issues by impact, shows the reasoning behind each priority, overlays Search Console impressions and clicks, keeps history, and gives you a public report link instead of a spreadsheet. At $29 a month it costs slightly more per year than one Screaming Frog licence and considerably less than five; the free tier covers 100 pages. It does not render JavaScript or do custom extraction, so it replaces the recurring audit rather than the deep one-off dig — our <a href="/blog/screaming-frog-vs-barracuda">Screaming Frog vs Barracuda</a> comparison goes through the split.</li>
+			<li><strong>You already pay for a suite:</strong> the Site Audit tools in Semrush, Ahrefs and SE Ranking are bundled. Less depth, no extra cost.</li>
+		</ul>
+		<p>
+			For a wider view of the field, our comparison of <a href="/blog/best-seo-crawler-tools">SEO crawler and site audit tools</a> covers all of these by use case.
+		</p>
+
+		<h2>Frequently asked questions</h2>
+		<h3>How much does Screaming Frog cost?</h3>
+		<p>
+			$279 per user per year (£199, €245) for the SEO Spider, with discounts to $265, $249 and $235 per licence at 5, 10 and 20 licences. The Log File Analyser is a separate £79-a-year licence. There is no monthly plan.
+		</p>
+		<h3>Is there a free version of Screaming Frog?</h3>
+		<p>
+			Yes. It crawls up to 500 URLs with most technical checks enabled, but you cannot save crawls, change most configuration, render JavaScript, use custom extraction, schedule crawls, or connect Google Analytics, Search Console or PageSpeed Insights. It does not expire.
+		</p>
+		<h3>Is Screaming Frog worth it?</h3>
+		<p>
+			For anyone who runs technical SEO audits regularly, yes — $279 a year for unlimited crawling, JavaScript rendering, custom extraction and API integrations is exceptional value. For occasional users on small sites the free version is enough, and for teams the per-user pricing makes a shared cloud tool a better fit for everyone who does not run deep crawls.
+		</p>
+		<h3>Does Screaming Frog have a monthly subscription or free trial?</h3>
+		<p>
+			No to both. Licences are annual only and the paid features cannot be trialled; the free version is the trial. The licence can be cancelled at renewal with no penalty since it is a one-year term.
+		</p>
+
+		<h2>The bottom line</h2>
+		<p>
+			Screaming Frog's pricing is simple, fair, and unchanged in spirit for years: $279 a year buys the deepest desktop crawler there is, and the free version is a genuinely useful tool rather than a teaser. The decision is not really about the $279. It is about whether your bottleneck is finding issues — in which case buy it — or deciding what to do with them and showing someone else, in which case the licence is only half the answer.
+		</p>
+		<div class="bg-[#282828] p-8 rounded-lg border border-[#8ec07c]/30 text-center my-10">
+			<h3 class="mt-0 text-white">The other half of the answer</h3>
+			<p class="text-white/80 mb-6">
+				Crawl 100 pages free, no card. See issues ranked by impact with the reasoning behind each one.
+			</p>
+			<a href="https://app.barracudaseo.com" class="inline-block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-3 rounded-lg font-medium transition-colors">
+				Try Barracuda Free
+			</a>
+		</div>
+	`,
 	'best-technical-seo-tools': `
 		<p>
 			Most "best technical SEO tools" lists are a dozen logos with a paragraph each, ordered by who pays the highest affiliate commission. This one is organized by the job — crawling, indexing, performance, structured data, rendering, logs, monitoring — because technical SEO is not one task and no single tool covers it. For each job we name the free option first, then what you pay for when the free option runs out. We make one of these tools and say so where it appears.
@@ -380,7 +547,7 @@ export const blogContent: Record<string, string> = {
 		<h2>Best desktop SEO crawlers</h2>
 		<h3>Screaming Frog SEO Spider</h3>
 		<p>
-			The reference tool since 2010. Fast, exhaustively configurable, and the free version crawls 500 URLs with the complete check suite; the $279-a-year licence removes the limit and adds JavaScript rendering, custom extraction with XPath and CSS selectors, list mode, scheduling, and API pulls from GA4, Search Console, PageSpeed Insights, Ahrefs and Moz. It runs on your machine, produces tables rather than opinions, and has no native way to share results. If you know exactly what you are looking for, nothing on this list beats it. If you want the crawler to tell you what to look for, see <a href="/blog/alternatives-to-screaming-frog">Screaming Frog alternatives</a>.
+			The reference tool since 2010. Fast, exhaustively configurable, and the free version crawls 500 URLs with the complete check suite; the <a href="/blog/screaming-frog-pricing">$279-a-year licence</a> removes the limit and adds JavaScript rendering, custom extraction with XPath and CSS selectors, list mode, scheduling, and API pulls from GA4, Search Console, PageSpeed Insights, Ahrefs and Moz. It runs on your machine, produces tables rather than opinions, and has no native way to share results. If you know exactly what you are looking for, nothing on this list beats it. If you want the crawler to tell you what to look for, see <a href="/blog/alternatives-to-screaming-frog">Screaming Frog alternatives</a>.
 		</p>
 		<h3>Sitebulb</h3>
 		<p>
@@ -6064,7 +6231,7 @@ sys.exit(0)</code></pre>
 			Read the Reddit threads on this and the same five complaints come up, in roughly this order:
 		</p>
 		<ol>
-			<li><strong>The 500-URL free limit.</strong> Enough for a brochure site, not for anything with a blog or a product catalogue. The paid licence is per user and per year, which is fine for a consultant and awkward for a team that only audits quarterly.</li>
+			<li><strong>The 500-URL free limit.</strong> Enough for a brochure site, not for anything with a blog or a product catalogue. The paid licence is per user and per year, which is fine for a consultant and awkward for a team that only audits quarterly — our <a href="/blog/screaming-frog-pricing">Screaming Frog pricing breakdown</a> covers who gets their money's worth.</li>
 			<li><strong>It is desktop-only.</strong> The crawl runs on your laptop's RAM and CPU. A 200,000-URL JavaScript crawl can take a machine out for an afternoon, and there is no "share this audit with the client" button — you export and email spreadsheets.</li>
 			<li><strong>The output is raw.</strong> Screaming Frog is superb at finding things and deliberately neutral about what matters. It will hand you 4,000 rows of "missing meta description" with the same weight as three pages returning 500 errors. Turning that into <a href="/blog/how-to-prioritize-seo-issues">a prioritized list</a> is your job, every time.</li>
 			<li><strong>Scheduling and history are bolted on.</strong> You can schedule crawls and compare them, but it is not the tool's centre of gravity the way it is for cloud platforms.</li>
@@ -6175,7 +6342,7 @@ sys.exit(0)</code></pre>
 
 		<h2>The bottom line</h2>
 		<p>
-			If the problem is the 500-URL limit and you are technical, LibreCrawl or SiteOne get you unlimited crawling for nothing. If the problem is presentation, Sitebulb is the closest direct swap. If the problem is scale and collaboration across a large team, JetOctopus is the value pick and Lumar the enterprise one. If the problem is that every crawl ends in a spreadsheet and a triage meeting, that is what Barracuda was built for — and it costs less than a Screaming Frog licence, with the caveats above. And if none of those five complaints are yours, keep Screaming Frog; it is still an excellent tool at a fair price.
+			If the problem is the 500-URL limit and you are technical, LibreCrawl or SiteOne get you unlimited crawling for nothing. If the problem is presentation, Sitebulb is the closest direct swap. If the problem is scale and collaboration across a large team, JetOctopus is the value pick and Lumar the enterprise one. If the problem is that every crawl ends in a spreadsheet and a triage meeting, that is what Barracuda was built for, with the caveats above — at $29 a month it costs a little more per year than a single Screaming Frog licence, and the difference buys the prioritization, history and sharing rather than the crawl. And if none of those five complaints are yours, keep Screaming Frog; it is still an excellent tool at a fair price.
 		</p>
 		<div class="bg-[#282828] p-8 rounded-lg border border-[#8ec07c]/30 text-center my-10">
 			<h3 class="mt-0 text-white">From crawl to a fix list, without the spreadsheet</h3>

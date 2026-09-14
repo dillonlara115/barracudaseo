@@ -18,6 +18,40 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
 	{
+		slug: 'screaming-frog-pricing',
+		title: 'Screaming Frog Pricing in 2026: Is the $279 Licence Worth It?',
+		seoTitle: 'Screaming Frog Pricing 2026: Is $279/Year Worth It?',
+		description:
+			"Screaming Frog costs $279 per user per year; the free version crawls 500 URLs. Full price list, exactly what the free tier leaves out, who gets their money's worth, hidden costs, and cheaper ways to get the same outcome.",
+		author: 'Barracuda Team',
+		publishDate: '2026-09-14',
+		readTime: 9,
+		category: 'Comparisons',
+		tags: ['screaming frog', 'pricing', 'SEO tools', 'technical SEO', 'site audit'],
+		faqs: [
+			{
+				question: 'How much does Screaming Frog cost?',
+				answer:
+					'$279 per user per year (£199, €245) for the SEO Spider, with discounts to $265, $249 and $235 per licence at 5, 10 and 20 licences. The Log File Analyser is a separate £79-a-year licence. There is no monthly plan.'
+			},
+			{
+				question: 'Is there a free version of Screaming Frog?',
+				answer:
+					'Yes. It crawls up to 500 URLs with most technical checks enabled, but cannot save crawls, change most configuration, render JavaScript, use custom extraction, schedule crawls, or connect Google Analytics, Search Console or PageSpeed Insights. It does not expire.'
+			},
+			{
+				question: 'Is Screaming Frog worth it?',
+				answer:
+					'For anyone who runs technical SEO audits regularly, yes: $279 a year for unlimited crawling, JavaScript rendering, custom extraction and API integrations is exceptional value. Occasional users on small sites can rely on the free version, and teams often pair one or two licences with a shared cloud tool because pricing is per user.'
+			},
+			{
+				question: 'Does Screaming Frog have a monthly subscription or free trial?',
+				answer:
+					'No to both. Licences are annual only and the paid features cannot be trialled; the free version serves as the trial. Because it is a one-year term, the licence can simply be left to lapse at renewal.'
+			}
+		]
+	},
+	{
 		slug: 'best-technical-seo-tools',
 		title: 'Best Technical SEO Tools in 2026 (Free and Paid, by Job)',
 		seoTitle: 'Best Technical SEO Tools 2026: Free & Paid, by Job',
