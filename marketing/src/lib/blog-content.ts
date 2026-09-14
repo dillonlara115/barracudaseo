@@ -5507,103 +5507,227 @@ sys.exit(0)</code></pre>
 `,
 	'alternatives-to-screaming-frog': `
 		<p>
-			Screaming Frog SEO Spider has been the default tool for technical SEO crawling for over a decade, and for good reason. It is fast, thorough, and the free tier handles up to 500 URLs — which is enough for a meaningful audit on a small site without spending a dollar.
+			Screaming Frog SEO Spider is the crawler most technical SEOs learned on, and at $279 a year with a free tier that handles 500 URLs, it is still one of the best deals in SEO software. If you are looking for an alternative, it is usually not because Screaming Frog is bad. It is because of one of five specific things: the 500-URL ceiling on the free version, the desktop-only architecture, the raw spreadsheet output, the difficulty of sharing results with a team or client, or the RAM it eats on a large JavaScript site.
 		</p>
 		<p>
-			The paid license runs about $259 per year, which is one of the better value propositions in SEO software. For developers and technical SEOs doing deep site analysis, it is hard to argue with.
+			This guide is organized around those reasons. It covers genuinely free and open-source crawlers, paid desktop alternatives, cloud platforms for teams and enterprise sites, and tools like ours that take a different approach to the output. We are upfront about where Barracuda fits and — just as important — where Screaming Frog is still the right answer.
 		</p>
-		<p>
-			But Screaming Frog is also not the right tool for every team, every use case, or every kind of SEO problem. Here is an honest look at where it excels, where it falls short, and what the alternatives are.
-		</p>
-
-		<hr />
-
-		<h2>What Screaming Frog Does Well</h2>
-		<p>
-			<strong>Comprehensive technical crawling.</strong> Screaming Frog catches broken links, redirect chains, missing meta data, duplicate content, thin pages, canonical issues, hreflang problems, and a long list of other technical flags. If it can be identified by crawling, Screaming Frog will find it.
-		</p>
-		<p>
-			<strong>Custom extraction.</strong> You can pull custom data points from pages using XPath or CSS selectors. For technical teams, this makes it genuinely powerful for site-specific analysis.
-		</p>
-		<p>
-			<strong>Integration with Google Analytics, Search Console, and PageSpeed Insights.</strong> Combining crawl data with performance data adds useful context to what would otherwise be raw technical flags.
-		</p>
-		<p>
-			<strong>Affordable.</strong> The annual license is reasonable for what it does. The free tier is genuinely useful for smaller sites.
-		</p>
-		<p>
-			Where it falls short: Screaming Frog is a desktop application, which creates friction for team collaboration and remote workflows. The output is a spreadsheet-style data dump — thorough but not always actionable without additional analysis. It tells you what is broken but not <a href="/blog/how-to-prioritize-seo-issues">what to fix first</a> or what the fix should look like. And it does nothing for the content side of SEO.
+		<p class="text-white/60 text-sm">
+			Prices checked September 2026. Vendors change plans often; confirm before you buy.
 		</p>
 
-		<hr />
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">Screaming Frog alternatives at a glance</h3>
+			<div class="overflow-x-auto">
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Tool</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Type</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Best for</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">JS rendering</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">From</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Free tier</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Screaming Frog</td>
+						<td class="p-3 border border-white/20 text-white/80">Desktop</td>
+						<td class="p-3 border border-white/20 text-white/80">Raw data, custom extraction, list mode</td>
+						<td class="p-3 border border-white/20 text-white/80">Yes</td>
+						<td class="p-3 border border-white/20 text-white/80">$279/yr</td>
+						<td class="p-3 border border-white/20 text-white/80">500 URLs</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Sitebulb</td>
+						<td class="p-3 border border-white/20 text-white/80">Desktop + Cloud</td>
+						<td class="p-3 border border-white/20 text-white/80">Visual audits, client-ready hints</td>
+						<td class="p-3 border border-white/20 text-white/80">Yes</td>
+						<td class="p-3 border border-white/20 text-white/80">~$15/mo desktop; £95/mo cloud</td>
+						<td class="p-3 border border-white/20 text-white/80">14-day trial</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">LibreCrawl</td>
+						<td class="p-3 border border-white/20 text-white/80">Self-hosted web app</td>
+						<td class="p-3 border border-white/20 text-white/80">Free unlimited crawling with JS</td>
+						<td class="p-3 border border-white/20 text-white/80">Yes (Playwright)</td>
+						<td class="p-3 border border-white/20 text-white/80">$0 (MIT)</td>
+						<td class="p-3 border border-white/20 text-white/80">Everything</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">SiteOne Crawler</td>
+						<td class="p-3 border border-white/20 text-white/80">Desktop + CLI</td>
+						<td class="p-3 border border-white/20 text-white/80">Developers, CI/CD, offline reports</td>
+						<td class="p-3 border border-white/20 text-white/80">Yes (Chromium)</td>
+						<td class="p-3 border border-white/20 text-white/80">$0 (MIT)</td>
+						<td class="p-3 border border-white/20 text-white/80">Everything</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Netpeak Spider</td>
+						<td class="p-3 border border-white/20 text-white/80">Desktop</td>
+						<td class="p-3 border border-white/20 text-white/80">Budget Windows/Mac crawler</td>
+						<td class="p-3 border border-white/20 text-white/80">Yes</td>
+						<td class="p-3 border border-white/20 text-white/80">~$20/mo</td>
+						<td class="p-3 border border-white/20 text-white/80">3-day trial</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Barracuda</td>
+						<td class="p-3 border border-white/20 text-white/80">Cloud + CLI</td>
+						<td class="p-3 border border-white/20 text-white/80">Prioritized issues, GSC overlay, team sharing</td>
+						<td class="p-3 border border-white/20 text-white/80">No</td>
+						<td class="p-3 border border-white/20 text-white/80">$29/mo (+$5/user)</td>
+						<td class="p-3 border border-white/20 text-white/80">100 pages, no card</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Ahrefs / Semrush Site Audit</td>
+						<td class="p-3 border border-white/20 text-white/80">Cloud (bundled)</td>
+						<td class="p-3 border border-white/20 text-white/80">Teams already paying for the suite</td>
+						<td class="p-3 border border-white/20 text-white/80">Yes</td>
+						<td class="p-3 border border-white/20 text-white/80">$129–139/mo suite</td>
+						<td class="p-3 border border-white/20 text-white/80">AWT (own sites) / trial</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Lumar, Oncrawl, JetOctopus</td>
+						<td class="p-3 border border-white/20 text-white/80">Cloud (enterprise)</td>
+						<td class="p-3 border border-white/20 text-white/80">Millions of URLs, log files</td>
+						<td class="p-3 border border-white/20 text-white/80">Yes</td>
+						<td class="p-3 border border-white/20 text-white/80">$549/mo+ or quote</td>
+						<td class="p-3 border border-white/20 text-white/80">Demo</td>
+					</tr>
+				</tbody>
+			</table>
+			</div>
+		</div>
 
-		<h2>The Best Screaming Frog Alternatives</h2>
-		<h3>For cleaner output and better visualization</h3>
+		<h2>Why people look for a Screaming Frog alternative</h2>
 		<p>
-			<strong>Sitebulb</strong> is the most direct Screaming Frog alternative. It crawls sites similarly but organizes its findings around visual site architecture maps and prioritized issue lists that are significantly easier to hand off to a client or explain to a stakeholder. If you find yourself spending a lot of time turning Screaming Frog's raw output into something presentable, Sitebulb is worth the switch. It runs around $14 to $35 per month.
+			Read the Reddit threads on this and the same five complaints come up, in roughly this order:
 		</p>
+		<ol>
+			<li><strong>The 500-URL free limit.</strong> Enough for a brochure site, not for anything with a blog or a product catalogue. The paid licence is per user and per year, which is fine for a consultant and awkward for a team that only audits quarterly.</li>
+			<li><strong>It is desktop-only.</strong> The crawl runs on your laptop's RAM and CPU. A 200,000-URL JavaScript crawl can take a machine out for an afternoon, and there is no "share this audit with the client" button — you export and email spreadsheets.</li>
+			<li><strong>The output is raw.</strong> Screaming Frog is superb at finding things and deliberately neutral about what matters. It will hand you 4,000 rows of "missing meta description" with the same weight as three pages returning 500 errors. Turning that into <a href="/blog/how-to-prioritize-seo-issues">a prioritized list</a> is your job, every time.</li>
+			<li><strong>Scheduling and history are bolted on.</strong> You can schedule crawls and compare them, but it is not the tool's centre of gravity the way it is for cloud platforms.</li>
+			<li><strong>Java.</strong> Some people just do not want to run it.</li>
+		</ol>
 		<p>
-			<strong>Lumar</strong> (formerly DeepCrawl) is a cloud-based alternative aimed at larger sites and enterprise teams. It handles crawling at scale without the desktop app constraint and produces better collaborative reporting. The price reflects its enterprise positioning.
-		</p>
-
-		<h3>For cloud-based auditing without desktop software</h3>
-		<p>
-			<strong><a href="/blog/alternatives-to-ahrefs">Ahrefs Site Audit</a></strong> and <strong><a href="/blog/best-semrush-alternatives-2026">SEMrush Site Audit</a></strong> both offer cloud-based crawling that runs on a schedule. Neither matches Screaming Frog for raw technical depth, but both are more accessible for teams that want crawl results without managing software installs, and they integrate naturally with the rest of those platforms' data.
-		</p>
-		<p>
-			<strong>SE Ranking</strong> has a solid site audit tool built into an affordable all-in-one platform. For smaller agencies looking for a single tool that covers keyword tracking, competitive research, and technical auditing, it is worth a look.
+			Notice what is not on that list: crawl accuracy or feature depth. If your reason for switching is that Screaming Frog missed something, you are probably looking at a configuration problem, not a tool problem.
 		</p>
 
-		<h3>For teams where content is the primary SEO work</h3>
+		<h2>Best free Screaming Frog alternatives</h2>
 		<p>
-			Here is the honest version of this section: if your main SEO activity is producing content for WordPress sites rather than diagnosing technical problems, Screaming Frog is answering a question you are not really asking. Technical audits matter, but they are not the daily work of content-focused SEO teams.
-		</p>
-		<p>
-			<strong>Barracuda SEO</strong> occupies the other end of the spectrum. Rather than crawling for broken links and missing meta tags, it crawls your sitemap to build a semantic map of what your site already covers. That map powers content brief generation, cannibalization checks, and internal linking suggestions — all grounded in what actually exists on your site.
-		</p>
-		<p>
-			If you are running a WordPress-focused SEO operation where most of your time goes toward identifying content gaps, briefing writers, and publishing new articles, Barracuda is doing the job Screaming Frog was never designed for.
+			The honest starting point is that Screaming Frog's own free tier is the best free crawler for a site under 500 URLs, full stop. It has the complete check suite; the limits are on URL count, saving crawls, and integrations. Past 500 URLs, these are the free options that hold up:
 		</p>
 
-		<hr />
-
-		<h2>Do You Need Both?</h2>
+		<h3>LibreCrawl — free, open source, unlimited, with JavaScript</h3>
 		<p>
-			For many teams, the answer is yes — and that is a reasonable position. Technical SEO and content SEO are different disciplines requiring different tools. Screaming Frog (or Sitebulb) handles the former. Barracuda handles the latter.
+			LibreCrawl is an MIT-licensed, self-hosted web app that has become the default answer in the r/opensource and r/SEO "free Screaming Frog alternative" threads. Unlimited URLs, Playwright-based JavaScript rendering for React, Vue, Angular and Next.js sites, real-time memory profiling for large crawls, and unlimited CSV/JSON/XML exports. The catch is the word "self-hosted": you run it yourself, and the community is a fraction of Screaming Frog's, so when something breaks you are reading source rather than a knowledge base.
 		</p>
 		<p>
-			The case for keeping Screaming Frog around is strongest when:
+			<strong>Choose it if:</strong> you are technical, crawl big JS sites, and want $0. <strong>Skip it if:</strong> you want a client-facing report or a support desk.
+		</p>
+
+		<h3>SiteOne Crawler — the developer's crawler</h3>
+		<p>
+			Also MIT-licensed and free, SiteOne ships as a desktop app for Windows, macOS and Linux <em>and</em> as a CLI with around 200 options. It produces an interactive HTML audit report with quality scores, generates sitemaps, checks security headers and accessibility, can render JavaScript through real Chromium, and outputs JUnit XML and GitHub annotations so it drops straight into a CI pipeline. It is closer to a website QA tool than an SEO tool, which is exactly why developers like it.
+		</p>
+
+		<h3>Barracuda Free — 100 pages with the prioritization layer</h3>
+		<p>
+			Our own free tier crawls up to 100 pages, no card required, and shows the detected issues and opportunities in the web dashboard rather than a spreadsheet. It is deliberately small — the point is to see how the prioritization works before deciding whether it is worth $29 a month — but for a local business or small service site, 100 pages is a complete audit.
+		</p>
+
+		<h3>Ahrefs Webmaster Tools — free cloud audit for sites you own</h3>
+		<p>
+			If you can verify the site, Ahrefs Webmaster Tools runs a scheduled cloud crawl with a health score and issue list, plus backlink data, for free. It is limited to owned properties and you get Ahrefs' opinion of what matters rather than raw data, but for a single in-house site it removes the need for a desktop crawler entirely.
+		</p>
+
+		<h2>Best paid desktop alternatives</h2>
+
+		<h3>Sitebulb — the closest direct alternative</h3>
+		<p>
+			Sitebulb is the tool most people mean when they say "Screaming Frog but nicer." It crawls the same way and then does the explaining: every issue is a "Hint" with a plain-English description, importance rating, and how-to-fix guidance, and the site is visualised as a crawl map you can actually show a client. Desktop plans start around $15 a month (Lite, 10,000 URLs per audit) and go to roughly $35 (Pro, 500,000 URLs), with a 14-day trial and extra seats at about £7. Sitebulb Cloud, for teams, starts at £95 a month. The trade-off against Screaming Frog is control: Sitebulb decides what is worth flagging, and its custom extraction is far more limited.
+		</p>
+		<p>
+			We have a dedicated <a href="/blog/screaming-frog-vs-barracuda">Screaming Frog vs Barracuda</a> comparison; the short version of Screaming Frog vs Sitebulb is that Sitebulb wins on presentation and loses on raw configurability, and a lot of agencies run both.
+		</p>
+
+		<h3>Netpeak Spider — the budget desktop option</h3>
+		<p>
+			Netpeak Spider covers the standard crawl checks, JavaScript rendering, and exports at around $20 a month, with a three-day trial. It is a solid Windows and Mac crawler that sits a step below Screaming Frog on depth and a step below Sitebulb on presentation. Worth a look if the annual Screaming Frog licence is the sticking point and you want month-to-month billing.
+		</p>
+
+		<h2>Best cloud alternatives for teams and large sites</h2>
+		<p>
+			Once a site passes a few hundred thousand URLs, or once more than one person needs to see the results, desktop crawling stops making sense regardless of which desktop tool you use.
 		</p>
 		<ul>
-			<li>You manage sites with complex technical structures or large page counts</li>
-			<li>You do regular client audits and need to document issues for reporting</li>
-			<li>You handle migration or redesign projects where crawl data is essential</li>
+			<li><strong>Lumar (formerly DeepCrawl)</strong> — the enterprise standard. Scheduled crawls of millions of URLs, log file analysis, and change monitoring. Pricing is by quote and reflects that.</li>
+			<li><strong>Oncrawl</strong> — similar territory with a stronger data-science bent: crawl data joined to logs, GSC and analytics for segmentation. Also quote-based.</li>
+			<li><strong>JetOctopus</strong> — the value option at enterprise scale. Pro starts at about $549 a month (annual) for a million crawled URLs and five million log lines, with unlimited seats and projects and a JavaScript crawler included.</li>
+			<li><strong>Sitebulb Cloud</strong> — from £95 a month, the natural upgrade for Sitebulb desktop users who need collaboration.</li>
+			<li><strong>Ahrefs Site Audit and Semrush Site Audit</strong> — if you already pay $129–139 a month for the suite, the bundled cloud crawler is "free." Both are less configurable than Screaming Frog and produce the same kind of undifferentiated issue list; see our <a href="/blog/best-semrush-alternatives-2026">Semrush alternatives</a> and <a href="/blog/alternatives-to-ahrefs">Ahrefs alternatives</a> guides if the suite itself is the thing you are questioning.</li>
 		</ul>
+
+		<h2>Barracuda: for when the crawl is not the hard part</h2>
 		<p>
-			The case for pairing it with something like Barracuda is strongest when:
+			Here is where we fit, and where we do not.
+		</p>
+		<p>
+			<a href="/features">Barracuda</a> is a crawler — a Go CLI that crawls up to 10,000 pages on the Pro plan, plus a cloud dashboard — but the crawl is the input, not the product. The product is what happens next: issues are scored by impact and grouped by type, AI recommendations come with contextual fixes for your page rather than a generic help article, and every priority shows its reasoning so you can defend it to a developer or a client. Connect Google Search Console and the audit is overlaid with real impressions and clicks, so a missing H1 on a page with 4,000 monthly impressions outranks the same issue on a page nobody visits. An <a href="/blog/visualize-site-structure-link-graph">interactive link graph</a> replaces the exported-to-Gephi workflow for finding orphan pages and weak internal linking. Results live in the cloud with history, so the second crawl shows what changed, and public report links replace the emailed spreadsheet. Extra seats are $5, not a second licence. The CLI is included on every plan, which is how teams run <a href="/blog/automated-seo-audits-cicd">audits in CI/CD</a>.
+		</p>
+		<p>
+			<strong>What Barracuda does not do</strong>, so you find out here and not on day two: it crawls server-rendered HTML, with no JavaScript rendering — if your content only exists after client-side rendering, Screaming Frog, Sitebulb or LibreCrawl in JS mode is the right crawler for that site. There is no XPath/CSS custom extraction, no list mode for crawling an arbitrary URL set, and no log file analyser. If those are in your weekly workflow, keep Screaming Frog for them. A lot of our users do exactly that: Screaming Frog for the deep, one-off technical dig; Barracuda for the recurring "what do we fix this month" question.
+		</p>
+
+		<h2>When to keep Screaming Frog</h2>
+		<p>
+			Switching tools has a cost, and for some jobs nothing here is a real substitute:
 		</p>
 		<ul>
-			<li>Content production is where most of your SEO effort actually goes</li>
-			<li>You want AI-assisted brief generation that is aware of what the site already covers</li>
-			<li>You are running a WordPress-focused shop that needs content tooling, not just audit tooling</li>
+			<li><strong>Custom extraction.</strong> Pulling prices, stock status, author names or schema fields with XPath across 50,000 pages is a Screaming Frog speciality. Nothing in the free or mid-market tier matches it.</li>
+			<li><strong>List mode.</strong> Feeding it an arbitrary list of URLs — a sitemap, a GSC export, a client's spreadsheet — and crawling exactly those.</li>
+			<li><strong>Migrations.</strong> Crawling old and new, mapping redirects, diffing the two. The <a href="/blog/redirect-chains-seo-killer">redirect chain</a> reporting alone justifies the licence during a replatform.</li>
+			<li><strong>JavaScript sites at scale, offline.</strong> If you need rendered crawls of large SPAs without a cloud bill, Screaming Frog's Chromium mode on a beefy laptop is still the cheapest way to get them.</li>
+			<li><strong>The API integrations.</strong> GA4, GSC, PageSpeed Insights and Ahrefs/Moz/Majestic data joined onto the crawl, all in one export.</li>
 		</ul>
-
-		<hr />
-
-		<h2>The Bottom Line</h2>
 		<p>
-			Screaming Frog is excellent for what it does and its pricing makes it hard to dismiss. For technical SEO work, it should probably still be in your toolkit. But it was built to find technical problems, not to help you produce better content. For the content side of SEO — especially for WordPress teams — Screaming Frog is not competing with Barracuda SEO any more than a hammer competes with a saw. They are solving different problems.
+			If two or more of those describe your week, the answer is not an alternative to Screaming Frog. It is Screaming Frog plus something that handles the sharing and prioritization it was never designed to do.
+		</p>
+
+		<h2>Frequently asked questions</h2>
+		<h3>Is there a free version of Screaming Frog?</h3>
+		<p>
+			Yes. The free version crawls up to 500 URLs per crawl with the full set of technical checks. It cannot save or schedule crawls, and it lacks the JavaScript rendering, custom extraction and API integrations of the $279-per-year licence. For sites under 500 URLs it is the best free crawler available.
+		</p>
+		<h3>What is the best free alternative to Screaming Frog?</h3>
+		<p>
+			For unlimited crawling with JavaScript rendering, LibreCrawl (MIT, self-hosted). For developers who want a CLI and CI/CD output, SiteOne Crawler (MIT). For a site you own, Ahrefs Webmaster Tools gives a free scheduled cloud audit. For a small site where you want prioritized issues rather than a spreadsheet, Barracuda's free tier covers 100 pages.
+		</p>
+		<h3>Is Screaming Frog safe to use?</h3>
+		<p>
+			Yes. It is a desktop application from a UK SEO agency that has been maintained since 2010, it runs entirely on your machine, and crawl data stays local unless you connect an API. The only real risk is to the site being crawled: an aggressive crawl can load down a small server, so lower the thread count for fragile hosts.
+		</p>
+		<h3>Can Screaming Frog crawl JavaScript websites?</h3>
+		<p>
+			The paid version can, using a built-in headless Chromium renderer. The free version cannot. Among alternatives, Sitebulb, LibreCrawl, SiteOne, Netpeak Spider and the enterprise cloud crawlers all render JavaScript; Barracuda currently crawls server-rendered HTML only. Our guide to <a href="/blog/javascript-rendering-and-seo-what-google-actually-crawls-in-2026">JavaScript rendering and SEO</a> covers when this actually matters.
+		</p>
+
+		<h2>The bottom line</h2>
+		<p>
+			If the problem is the 500-URL limit and you are technical, LibreCrawl or SiteOne get you unlimited crawling for nothing. If the problem is presentation, Sitebulb is the closest direct swap. If the problem is scale and collaboration across a large team, JetOctopus is the value pick and Lumar the enterprise one. If the problem is that every crawl ends in a spreadsheet and a triage meeting, that is what Barracuda was built for — and it costs less than a Screaming Frog licence, with the caveats above. And if none of those five complaints are yours, keep Screaming Frog; it is still an excellent tool at a fair price.
 		</p>
 		<div class="bg-[#282828] p-8 rounded-lg border border-[#8ec07c]/30 text-center my-10">
-			<h3 class="mt-0 text-white">Focus on content that moves the needle</h3>
+			<h3 class="mt-0 text-white">From crawl to a fix list, without the spreadsheet</h3>
 			<p class="text-white/80 mb-6">
-				See what Barracuda SEO does for content-focused WordPress teams.
+				Crawl 100 pages free, no card. See issues ranked by impact with the reasoning behind each one.
 			</p>
 			<a href="https://app.barracudaseo.com" class="inline-block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-3 rounded-lg font-medium transition-colors">
-				Try Barracuda SEO Free
+				Try Barracuda Free
 			</a>
 		</div>
-	`,
+`,
 	'alternatives-to-ahrefs': `
 		<p>
 			Ahrefs built its reputation on one of the best backlink indexes in the industry and keyword data that SEO professionals genuinely trust. The platform has grown well beyond backlinks into a full-suite tool, and the pricing has followed that expansion upward.
