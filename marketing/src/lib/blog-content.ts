@@ -1,5 +1,235 @@
 // Blog post content stored separately for better maintainability
 export const blogContent: Record<string, string> = {
+	'best-seo-crawler-tools': `
+		<p>
+			An SEO crawler is the tool that sees your website the way Googlebot does: it follows every link, fetches every page, and records what it finds — status codes, titles, canonicals, redirects, internal links, page weight. Every technical SEO audit starts with one. The question is which one, and the honest answer is that it depends on the size of the site, whether one person or a team needs the results, how much JavaScript is involved, and whether you want raw data or a fix list.
+		</p>
+		<p>
+			This guide compares the SEO crawlers and site audit tools worth using in 2026, grouped by the job they are best at: desktop crawlers, free and open-source options, cloud platforms for large sites and teams, the crawlers bundled into all-in-one suites, and tools built around prioritizing what the crawl finds. It is the hub for our deeper comparisons, which are linked throughout. We make one of these tools, and we say so where it comes up.
+		</p>
+		<p class="text-white/60 text-sm">
+			Prices checked September 2026, monthly billing unless noted. Confirm with vendors before buying.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">SEO crawlers compared</h3>
+			<div class="overflow-x-auto">
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Tool</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Type</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Sweet spot</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">JS rendering</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Output</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">From</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Screaming Frog</td>
+						<td class="p-3 border border-white/20 text-white/80">Desktop</td>
+						<td class="p-3 border border-white/20 text-white/80">Up to ~500k URLs, deep configuration</td>
+						<td class="p-3 border border-white/20 text-white/80">Yes (paid)</td>
+						<td class="p-3 border border-white/20 text-white/80">Raw tables, exports</td>
+						<td class="p-3 border border-white/20 text-white/80">Free (500 URLs) / $279/yr</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Sitebulb</td>
+						<td class="p-3 border border-white/20 text-white/80">Desktop + Cloud</td>
+						<td class="p-3 border border-white/20 text-white/80">Agencies presenting audits</td>
+						<td class="p-3 border border-white/20 text-white/80">Yes</td>
+						<td class="p-3 border border-white/20 text-white/80">Explained "Hints", crawl maps</td>
+						<td class="p-3 border border-white/20 text-white/80">~$15/mo desktop; £95/mo cloud</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">LibreCrawl</td>
+						<td class="p-3 border border-white/20 text-white/80">Self-hosted web</td>
+						<td class="p-3 border border-white/20 text-white/80">Unlimited free crawling, JS sites</td>
+						<td class="p-3 border border-white/20 text-white/80">Yes</td>
+						<td class="p-3 border border-white/20 text-white/80">Web UI, CSV/JSON</td>
+						<td class="p-3 border border-white/20 text-white/80">Free (MIT)</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">SiteOne Crawler</td>
+						<td class="p-3 border border-white/20 text-white/80">Desktop + CLI</td>
+						<td class="p-3 border border-white/20 text-white/80">Developers, CI pipelines</td>
+						<td class="p-3 border border-white/20 text-white/80">Yes</td>
+						<td class="p-3 border border-white/20 text-white/80">HTML report, JUnit</td>
+						<td class="p-3 border border-white/20 text-white/80">Free (MIT)</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Netpeak Spider</td>
+						<td class="p-3 border border-white/20 text-white/80">Desktop</td>
+						<td class="p-3 border border-white/20 text-white/80">Budget month-to-month crawler</td>
+						<td class="p-3 border border-white/20 text-white/80">Yes</td>
+						<td class="p-3 border border-white/20 text-white/80">Tables, exports</td>
+						<td class="p-3 border border-white/20 text-white/80">~$20/mo</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Barracuda</td>
+						<td class="p-3 border border-white/20 text-white/80">Cloud + CLI</td>
+						<td class="p-3 border border-white/20 text-white/80">Recurring audits you have to act on</td>
+						<td class="p-3 border border-white/20 text-white/80">No</td>
+						<td class="p-3 border border-white/20 text-white/80">Prioritized issues, reasoning, GSC overlay</td>
+						<td class="p-3 border border-white/20 text-white/80">Free (100 pages) / $29/mo</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Semrush / Ahrefs / SE Ranking Site Audit</td>
+						<td class="p-3 border border-white/20 text-white/80">Cloud (bundled)</td>
+						<td class="p-3 border border-white/20 text-white/80">Teams already on the suite</td>
+						<td class="p-3 border border-white/20 text-white/80">Yes</td>
+						<td class="p-3 border border-white/20 text-white/80">Health score, issue lists</td>
+						<td class="p-3 border border-white/20 text-white/80">$129–139/mo suite</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Sitechecker</td>
+						<td class="p-3 border border-white/20 text-white/80">Cloud</td>
+						<td class="p-3 border border-white/20 text-white/80">Small agencies wanting monitoring + alerts</td>
+						<td class="p-3 border border-white/20 text-white/80">Yes</td>
+						<td class="p-3 border border-white/20 text-white/80">Dashboard, alerts</td>
+						<td class="p-3 border border-white/20 text-white/80">Subscription</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">JetOctopus</td>
+						<td class="p-3 border border-white/20 text-white/80">Cloud (enterprise)</td>
+						<td class="p-3 border border-white/20 text-white/80">1M+ URLs plus log files, on a budget</td>
+						<td class="p-3 border border-white/20 text-white/80">Yes</td>
+						<td class="p-3 border border-white/20 text-white/80">Dashboards, segments, logs</td>
+						<td class="p-3 border border-white/20 text-white/80">~$549/mo</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Lumar, Oncrawl, Botify</td>
+						<td class="p-3 border border-white/20 text-white/80">Cloud (enterprise)</td>
+						<td class="p-3 border border-white/20 text-white/80">Millions of URLs, data science, SLAs</td>
+						<td class="p-3 border border-white/20 text-white/80">Yes</td>
+						<td class="p-3 border border-white/20 text-white/80">Dashboards, logs, APIs</td>
+						<td class="p-3 border border-white/20 text-white/80">Quote</td>
+					</tr>
+				</tbody>
+			</table>
+			</div>
+		</div>
+
+		<h2>What an SEO crawler actually checks</h2>
+		<p>
+			Every serious crawler on this list finds the same core problems. The differences are in scale, rendering, and what happens to the results afterwards. The core checks are:
+		</p>
+		<ul>
+			<li><strong>Response codes and redirects</strong> — 4xx and 5xx pages, <a href="/blog/redirect-chains-seo-killer">redirect chains and loops</a>, redirects to redirects, mixed HTTP/HTTPS.</li>
+			<li><strong>Indexability</strong> — noindex tags and headers, robots.txt blocks, canonical tags pointing elsewhere, canonical conflicts between HTML and HTTP headers, pages missing from the sitemap or present in it but blocked.</li>
+			<li><strong>On-page elements</strong> — missing, duplicate, too-long or too-short titles and meta descriptions, <a href="/blog/duplicate-h1-tags-seo-issue-or-just-noise">missing or multiple H1s</a>, thin pages, images without alt text.</li>
+			<li><strong>Internal linking and architecture</strong> — orphan pages, crawl depth, pages with few inbound links, <a href="/blog/find-fix-broken-links">broken internal links</a>, nofollow on internal links.</li>
+			<li><strong>Duplication</strong> — duplicate or near-duplicate content, parameter URLs, trailing-slash and case variants.</li>
+			<li><strong>Structured data, hreflang, and pagination</strong> — validation and consistency across the site.</li>
+			<li><strong>Performance signals</strong> — page size, response time, and (via Lighthouse or PageSpeed integrations) Core Web Vitals.</li>
+		</ul>
+		<p>
+			A crawler that finds all of the above on 500 pages is table stakes. Where tools separate is what they do with a site of 50,000 pages and 6,000 findings.
+		</p>
+
+		<h2>How to choose: five questions</h2>
+		<h3>1. How big is the site?</h3>
+		<p>
+			Under a few thousand URLs, everything works, including the free tiers. Up to a few hundred thousand, desktop crawlers work if you have the RAM and the patience; Screaming Frog with database storage handles it, Sitebulb Pro caps at 500,000 per audit. Past that — or if you crawl many large sites — cloud is not a luxury, it is the only architecture that finishes.
+		</p>
+		<h3>2. Does one person need the results, or a team?</h3>
+		<p>
+			Desktop crawlers produce files on one laptop. If a client, a developer, or a second SEO needs to see the audit, you are either exporting spreadsheets or paying for a cloud tool with sharing built in. This is the most common reason agencies outgrow Screaming Frog, and it has nothing to do with crawl quality.
+		</p>
+		<h3>3. How much JavaScript?</h3>
+		<p>
+			If your content only exists after client-side rendering, you need a crawler that runs a headless browser: Screaming Frog (paid), Sitebulb, LibreCrawl, SiteOne, Netpeak, and every cloud platform do; Barracuda currently does not. If the site is server-rendered — most WordPress, Shopify, and static sites — rendering just makes crawls slower. Our guide to <a href="/blog/javascript-rendering-and-seo-what-google-actually-crawls-in-2026">JavaScript rendering and SEO</a> covers how to tell.
+		</p>
+		<h3>4. Raw data or a fix list?</h3>
+		<p>
+			This is the real fork. Screaming Frog, Netpeak, and the open-source crawlers give you everything and rank nothing — perfect for an experienced technical SEO who wants to slice the data themselves, exhausting for everyone else. Sitebulb and Barracuda take a position on what matters; the suites sit in between with health scores and severity buckets. If your audits end in a spreadsheet and a triage meeting, you want the second kind. Our post on <a href="/blog/how-to-prioritize-seo-issues">prioritizing SEO issues after an audit</a> is about doing that by hand; some tools do it for you.
+		</p>
+		<h3>5. One-off or recurring?</h3>
+		<p>
+			A migration audit is a one-off and rewards depth and custom extraction. A monthly health check rewards scheduling, history, change detection, and alerts. Desktop tools are built for the first; cloud tools for the second. Teams that do both usually end up with one of each, which is less wasteful than it sounds — the free tiers cover a lot.
+		</p>
+
+		<h2>Best desktop SEO crawlers</h2>
+		<h3>Screaming Frog SEO Spider</h3>
+		<p>
+			The reference tool since 2010. Fast, exhaustively configurable, and the free version crawls 500 URLs with the complete check suite; the $279-a-year licence removes the limit and adds JavaScript rendering, custom extraction with XPath and CSS selectors, list mode, scheduling, and API pulls from GA4, Search Console, PageSpeed Insights, Ahrefs and Moz. It runs on your machine, produces tables rather than opinions, and has no native way to share results. If you know exactly what you are looking for, nothing on this list beats it. If you want the crawler to tell you what to look for, see <a href="/blog/alternatives-to-screaming-frog">Screaming Frog alternatives</a>.
+		</p>
+		<h3>Sitebulb</h3>
+		<p>
+			The crawler for people who have to explain the audit to someone else. Every finding is a "Hint" with a plain-English description, a priority, and fix guidance, and the crawl map visualisation is the best in the category. Desktop plans run from roughly $15 a month (Lite, 10,000 URLs per audit) to about $35 (Pro, 500,000), with a 14-day trial; Sitebulb Cloud adds team access from £95 a month. Less configurable than Screaming Frog, and it decides what is worth flagging, which is the point.
+		</p>
+		<h3>Netpeak Spider</h3>
+		<p>
+			A capable Windows and Mac crawler at around $20 a month with JavaScript rendering and the standard checks. It is the option when the annual Screaming Frog licence is the sticking point and you want to pay monthly.
+		</p>
+
+		<h2>Best free and open-source SEO crawlers</h2>
+		<p>
+			"Free SEO crawler" means three different things: a free tier of a paid product, a fully free tool, or open-source software you host. All three have good options in 2026.
+		</p>
+		<ul>
+			<li><strong>Screaming Frog free tier</strong> — 500 URLs, full checks, no saving or scheduling. Still the best free crawler for a small site.</li>
+			<li><strong>LibreCrawl</strong> — MIT-licensed, self-hosted, unlimited URLs, Playwright-based JavaScript rendering, unlimited exports. The r/opensource answer to "free Screaming Frog alternative," and a fair one if you can run it.</li>
+			<li><strong>SiteOne Crawler</strong> — MIT-licensed desktop app and CLI with roughly 200 options, an HTML audit report, optional Chromium rendering, and JUnit/GitHub-annotation output for CI. Built by developers for developers.</li>
+			<li><strong>Barracuda Free</strong> — 100 pages, prioritized issues in a web dashboard, no card. Small by design; for a local or small service site it is a complete audit.</li>
+			<li><strong>Ahrefs Webmaster Tools</strong> — a free scheduled cloud crawl for sites you can verify, plus your backlinks. Not a general crawler, but for one owned site it may be all you need.</li>
+			<li><strong>Google Search Console</strong> — not a crawler, but its Page Indexing and Crawl Stats reports are the only view of what Google actually did on your site, and every audit should start there.</li>
+		</ul>
+
+		<h2>Best cloud SEO crawlers for large sites and teams</h2>
+		<p>
+			Cloud crawlers trade configurability for scale, scheduling, and shared access. The enterprise tier — <strong>Lumar</strong> (formerly DeepCrawl), <strong>Oncrawl</strong>, and <strong>Botify</strong> — crawls millions of URLs, joins the crawl to server log files so you can see what Googlebot actually fetched, and prices by quote, usually in the thousands per month. <strong>JetOctopus</strong> is the value option in that class: about $549 a month on annual for a million crawled URLs and five million log lines, with unlimited seats and a JavaScript crawler included. For the enterprise buyer the decision is usually about log-file analysis, segmentation, and integrations rather than the crawl itself, which all of them do well.
+		</p>
+		<p>
+			Below enterprise, <strong>Sitechecker</strong> and similar cloud tools bundle a crawler with rank tracking, GSC and GA4 dashboards, and alerting for small agencies that want monitoring rather than deep audits. And the crawler built into <strong>Semrush</strong>, <strong>Ahrefs</strong>, and <strong>SE Ranking</strong> is "free" if you already pay $129–139 a month for the suite — competent, scheduled, and the same undifferentiated issue list every suite produces. If the suite is the thing you are questioning, our guides to <a href="/blog/best-semrush-alternatives-2026">Semrush alternatives</a> and <a href="/blog/alternatives-to-ahrefs">Ahrefs alternatives</a> break down what the audit module alone costs elsewhere.
+		</p>
+
+		<h2>Best SEO crawler for prioritization: Barracuda</h2>
+		<p>
+			We built <a href="/features">Barracuda</a> because every crawler above ends the same way — a list — and the expensive part of a technical audit is not finding 6,000 issues, it is deciding which six to fix this month and explaining why to whoever has to do the work. The crawler is a Go CLI that handles up to 10,000 pages on the Pro plan and runs locally or in <a href="/blog/automated-seo-audits-cicd">CI/CD</a>; the cloud dashboard is where the triage happens. Issues are scored by impact and grouped by type, AI recommendations carry fixes specific to the page, and every priority shows its reasoning. Connect Google Search Console and the audit is weighted by real impressions and clicks, so the missing title tag on a page with traffic outranks the same issue on a page with none. An <a href="/blog/visualize-site-structure-link-graph">interactive link graph</a> replaces the export-to-Gephi routine for orphan pages, and results keep history, so the second crawl shows what changed. Rank tracking and public report links are included; extra seats are $5 a month. It is $29 a month, with a free tier of 100 pages.
+		</p>
+		<p>
+			<strong>What it does not do:</strong> JavaScript rendering, XPath custom extraction, list mode, or log-file analysis. For those, keep Screaming Frog — most of our users do, and run the two together: Screaming Frog for the deep one-off dig, Barracuda for the recurring "what do we fix" question. Head-to-heads: <a href="/blog/screaming-frog-vs-barracuda">Screaming Frog vs Barracuda</a> and <a href="/blog/semrush-vs-barracuda">Semrush vs Barracuda</a>.
+		</p>
+
+		<h2>SEO crawler vs web scraper: not the same search</h2>
+		<p>
+			If you searched "website crawler tool" and found Firecrawl, Octoparse, or Scrapy, you found the other kind of crawler. Web scrapers and data crawlers extract content from pages — prices, listings, article text — for use elsewhere, often to feed an LLM or a database. SEO crawlers audit pages for how search engines will treat them. Screaming Frog's custom extraction blurs the line slightly, and SiteOne can clone a site to Markdown, but if the goal is rankings rather than data, you want the tools on this page.
+		</p>
+
+		<h2>Frequently asked questions</h2>
+		<h3>What is an SEO crawler?</h3>
+		<p>
+			An SEO crawler is software that visits a website the way a search engine bot does, following links from page to page and recording technical data about each one: status codes, titles and meta tags, canonical and robots directives, internal links, page size and speed. The output is used to find and fix issues that affect crawling, indexing, and ranking.
+		</p>
+		<h3>What is the best SEO crawler?</h3>
+		<p>
+			Screaming Frog for raw data and configurability, Sitebulb for audits you present to others, LibreCrawl for free unlimited crawling with JavaScript, Lumar or JetOctopus for millions of URLs with log-file analysis, and Barracuda for turning a crawl into a prioritized fix list with Search Console data. There is no single best; there is a best for the size of the site and what you do with the results.
+		</p>
+		<h3>Is there a free SEO crawler?</h3>
+		<p>
+			Yes. Screaming Frog is free for up to 500 URLs, LibreCrawl and SiteOne Crawler are fully free and open source under the MIT licence, Ahrefs Webmaster Tools crawls sites you own for free, and Barracuda's free tier covers 100 pages with prioritized results.
+		</p>
+		<h3>Which SEO crawler is best for large websites?</h3>
+		<p>
+			For sites in the hundreds of thousands of URLs, Screaming Frog in database-storage mode or Sitebulb Pro can still cope on a well-specified machine. Past a million URLs, or when log-file analysis and team access matter, cloud platforms — JetOctopus, Lumar, Oncrawl, Botify — are the practical choice. Our guide to <a href="/blog/audit-large-sites-10000-pages">auditing sites with 10,000+ pages</a> covers the workflow.
+		</p>
+
+		<h2>The bottom line</h2>
+		<p>
+			Start with the free tiers: Screaming Frog for a deep look, Barracuda for a prioritized one, Search Console for what Google actually did. If the site is small and you are technical, that may be the whole stack. If you present audits to clients, add Sitebulb. If you crawl millions of URLs, budget for the cloud. And if your audits keep ending in a spreadsheet nobody actions, the crawler is not the problem — what happens after the crawl is, and that is the thing worth paying for.
+		</p>
+		<div class="bg-[#282828] p-8 rounded-lg border border-[#8ec07c]/30 text-center my-10">
+			<h3 class="mt-0 text-white">From crawl data to a fix list</h3>
+			<p class="text-white/80 mb-6">
+				Crawl 100 pages free, no card. See issues ranked by impact with the reasoning behind each one.
+			</p>
+			<a href="https://app.barracudaseo.com" class="inline-block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-3 rounded-lg font-medium transition-colors">
+				Try Barracuda Free
+			</a>
+		</div>
+	`,
 	'javascript-rendering-and-seo-what-google-actually-crawls-in-2026': `
 		<p>
 			Most SEO professionals still treat Googlebot like it is stuck in 2018, waiting days for a second wave of indexing to process JavaScript. The reality is that Google's rendering engine has fundamentally shifted how it handles client-side execution. If your site relies on JS to display core content, depending on outdated crawling theories will tank your visibility.
@@ -2745,6 +2975,7 @@ export const blogContent: Record<string, string> = {
 	`,
 	'screaming-frog-vs-barracuda': `
 		<h2>Introduction</h2>
+		<p class="text-white/60 text-sm">Part of our guide to the <a href="/blog/best-seo-crawler-tools">best SEO crawler and site audit tools</a>.</p>
 		<p>When it comes to technical SEO audits, Screaming Frog has been the industry standard for over a decade. But as SEO workflows evolve toward cloud-based collaboration and automation, is it still the best choice?</p>
 		<p>In this comprehensive comparison, we'll break down Screaming Frog vs Barracuda SEO across key dimensions: features, pricing, collaboration, automation, and workflow fit. Whether you're a solo SEO, agency owner, or developer, this guide will help you choose the right tool.</p>
 
@@ -3217,6 +3448,7 @@ export const blogContent: Record<string, string> = {
 	`,
 	'semrush-vs-barracuda': `
 		<h2>Introduction</h2>
+		<p class="text-white/60 text-sm">Part of our guide to the <a href="/blog/best-seo-crawler-tools">best SEO crawler and site audit tools</a>.</p>
 		<p>SEMrush is a powerhouse SEO tool known for keyword research, competitor analysis, and rank tracking. But when it comes to technical SEO audits and website crawling, how does it compare to dedicated crawlers like Barracuda SEO?</p>
 		<p>In this comparison, we'll explore when SEMrush's crawl features are sufficient—and when you need a specialized tool like Barracuda for deeper technical audits.</p>
 
@@ -5493,7 +5725,7 @@ sys.exit(0)</code></pre>
 
 		<h2>The bottom line</h2>
 		<p>
-			If you use all of Semrush, keep Semrush, or move to SE Ranking and save a third. If you use a slice of it — and the honest answer for most freelancers, small agencies, and in-house teams is that you do — pick the specialist for that slice. For keyword research, Mangools or Ahrefs Starter. For competitor intelligence, SpyFu. For technical audits you actually act on, Barracuda, with Screaming Frog when you want the raw data. Start with the free tiers, connect Search Console, and let a month of parallel use make the decision for you.
+			If you use all of Semrush, keep Semrush, or move to SE Ranking and save a third. If you use a slice of it — and the honest answer for most freelancers, small agencies, and in-house teams is that you do — pick the specialist for that slice. For keyword research, Mangools or Ahrefs Starter. For competitor intelligence, SpyFu. For technical audits you actually act on, Barracuda, with Screaming Frog when you want the raw data — our <a href="/blog/best-seo-crawler-tools">SEO crawler comparison</a> covers the whole field. Start with the free tiers, connect Search Console, and let a month of parallel use make the decision for you.
 		</p>
 		<div class="bg-[#282828] p-8 rounded-lg border border-[#8ec07c]/30 text-center my-10">
 			<h3 class="mt-0 text-white">Replace Semrush Site Audit with something that decides</h3>
@@ -5510,7 +5742,7 @@ sys.exit(0)</code></pre>
 			Screaming Frog SEO Spider is the crawler most technical SEOs learned on, and at $279 a year with a free tier that handles 500 URLs, it is still one of the best deals in SEO software. If you are looking for an alternative, it is usually not because Screaming Frog is bad. It is because of one of five specific things: the 500-URL ceiling on the free version, the desktop-only architecture, the raw spreadsheet output, the difficulty of sharing results with a team or client, or the RAM it eats on a large JavaScript site.
 		</p>
 		<p>
-			This guide is organized around those reasons. It covers genuinely free and open-source crawlers, paid desktop alternatives, cloud platforms for teams and enterprise sites, and tools like ours that take a different approach to the output. We are upfront about where Barracuda fits and — just as important — where Screaming Frog is still the right answer.
+			This guide is organized around those reasons. It covers genuinely free and open-source crawlers, paid desktop alternatives, cloud platforms for teams and enterprise sites, and tools like ours that take a different approach to the output. For the broader landscape beyond Screaming Frog, see our <a href="/blog/best-seo-crawler-tools">comparison of SEO crawler and site audit tools</a>. We are upfront about where Barracuda fits and — just as important — where Screaming Frog is still the right answer.
 		</p>
 		<p class="text-white/60 text-sm">
 			Prices checked September 2026. Vendors change plans often; confirm before you buy.
@@ -5909,7 +6141,7 @@ sys.exit(0)</code></pre>
 			<li><strong>Moz's free tools</strong> — a handful of Domain Authority and link checks per month.</li>
 		</ul>
 		<p>
-			What this stack cannot do is competitor backlink research. If you build links for a living, budget for Majestic or keep an Ahrefs seat for that one job.
+			For the crawler side specifically, our <a href="/blog/best-seo-crawler-tools">SEO crawler tools comparison</a> goes deeper. What this stack cannot do is competitor backlink research. If you build links for a living, budget for Majestic or keep an Ahrefs seat for that one job.
 		</p>
 
 		<h2>If Site Audit is what you use Ahrefs for, read this</h2>

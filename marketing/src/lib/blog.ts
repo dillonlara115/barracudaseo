@@ -18,6 +18,49 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
 	{
+		slug: 'best-seo-crawler-tools',
+		title: 'Best SEO Crawler & Site Audit Tools in 2026 (Compared by Use Case)',
+		seoTitle: 'Best SEO Crawler Tools 2026: Compared by Use Case',
+		description:
+			'The SEO crawlers and site audit tools worth using in 2026, compared by site size, team needs, JavaScript, and whether you want raw data or a prioritized fix list. Desktop, cloud, free and open source.',
+		author: 'Barracuda Team',
+		publishDate: '2026-09-14',
+		readTime: 14,
+		category: 'Comparisons',
+		tags: [
+			'SEO crawler',
+			'site audit',
+			'technical SEO',
+			'SEO tools',
+			'comparison',
+			'screaming frog',
+			'sitebulb'
+		],
+		featured: true,
+		faqs: [
+			{
+				question: 'What is an SEO crawler?',
+				answer:
+					'An SEO crawler is software that visits a website the way a search engine bot does, following links from page to page and recording technical data about each one: status codes, titles and meta tags, canonical and robots directives, internal links, page size and speed. The output is used to find and fix issues that affect crawling, indexing and ranking.'
+			},
+			{
+				question: 'What is the best SEO crawler?',
+				answer:
+					'Screaming Frog for raw data and configurability, Sitebulb for audits you present to others, LibreCrawl for free unlimited crawling with JavaScript, Lumar or JetOctopus for millions of URLs with log-file analysis, and Barracuda for turning a crawl into a prioritized fix list with Search Console data. The best choice depends on site size and what you do with the results.'
+			},
+			{
+				question: 'Is there a free SEO crawler?',
+				answer:
+					"Yes. Screaming Frog is free for up to 500 URLs, LibreCrawl and SiteOne Crawler are fully free and open source under the MIT licence, Ahrefs Webmaster Tools crawls sites you own for free, and Barracuda's free tier covers 100 pages with prioritized results."
+			},
+			{
+				question: 'Which SEO crawler is best for large websites?',
+				answer:
+					'For hundreds of thousands of URLs, Screaming Frog in database-storage mode or Sitebulb Pro can cope on a well-specified machine. Past a million URLs, or when log-file analysis and team access matter, cloud platforms such as JetOctopus, Lumar, Oncrawl and Botify are the practical choice.'
+			}
+		]
+	},
+	{
 		slug: 'javascript-rendering-and-seo-what-google-actually-crawls-in-2026',
 		title: 'JavaScript Rendering and SEO: What Google Actually Crawls in 2026',
 		seoTitle: 'JavaScript Rendering & SEO: What Google Crawls in 2026',
