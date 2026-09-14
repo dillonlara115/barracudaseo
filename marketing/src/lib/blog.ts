@@ -6,6 +6,10 @@ export interface BlogPost {
 	description: string;
 	author: string;
 	publishDate: string; // ISO date string
+	/** Set when a post is substantially rewritten; drives dateModified + sitemap lastmod. */
+	updatedDate?: string;
+	/** Rendered as FAQPage structured data. Keep answers to 1–3 plain sentences. */
+	faqs?: Array<{ question: string; answer: string }>;
 	readTime: number; // minutes
 	category: string;
 	tags: string[];
@@ -199,20 +203,45 @@ export const blogPosts: BlogPost[] = [
 	},
 	{
 		slug: 'best-semrush-alternatives-2026',
-		title: 'Best Alternatives to SEMrush in 2026',
+		title: 'Best Semrush Alternatives in 2026 (Free, Cheaper & Open Source)',
+		seoTitle: 'Best Semrush Alternatives 2026: Free, Cheaper & Open Source',
 		description:
-			'Looking for a SEMrush alternative? Compare the best options for keyword research, site auditing, rank tracking, and AI-powered content creation — including tools built specifically for WordPress.',
+			'Semrush alternatives compared by the job you actually use it for: all-in-one swaps, free tools, sub-$50 options, and open-source stacks. 2026 pricing verified.',
 		author: 'Barracuda Team',
 		publishDate: '2026-02-26',
-		readTime: 7,
+		updatedDate: '2026-09-14',
+		readTime: 12,
 		category: 'Comparisons',
 		tags: [
-			'SEMrush',
+			'Semrush',
 			'SEO tools',
 			'comparison',
 			'keyword research',
 			'rank tracking',
-			'technical SEO'
+			'technical SEO',
+			'site audit'
+		],
+		faqs: [
+			{
+				question: 'Is there a free version of Semrush?',
+				answer:
+					'Semrush offers a seven-day free trial and a free account limited to roughly ten lookups a day with one project. For a genuinely free stack, combine Google Search Console, Keyword Planner, Ahrefs Webmaster Tools, and a free crawler tier such as Screaming Frog (500 URLs) or Barracuda (100 pages).'
+			},
+			{
+				question: 'Is there anything better than Semrush?',
+				answer:
+					"For individual jobs, yes: Ahrefs has the stronger backlink index and content research, Screaming Frog and Sitebulb are deeper technical crawlers, and Barracuda is better at turning a crawl into a prioritized fix list. Nothing matches Semrush's breadth in one login."
+			},
+			{
+				question: 'What is the cheapest Semrush plan?',
+				answer:
+					'The SEO plan at $139 a month, or $117.33 a month billed annually, with one user included. Additional users cost $45 or more per month. The Starter plan with AI-search features is $199 a month.'
+			},
+			{
+				question: 'Is there a cheaper alternative to Semrush with the same features?',
+				answer:
+					'SE Ranking is the closest full replacement at $129 a month ($103 annual), and Moz Pro at around $49 covers the fundamentals. Below $50 you are choosing a specialist: Mangools for keywords, SpyFu for competitor data, Barracuda or Screaming Frog for site audits.'
+			}
 		],
 		featured: true
 	},

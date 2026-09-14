@@ -1,6 +1,12 @@
 <script lang="ts">
 	import MetaTags from '../../../components/MetaTags.svelte';
-	import { getMetaTags, getBreadcrumbSchema, getArticleSchema, getHowToSchema } from '$lib/meta';
+	import {
+		getMetaTags,
+		getBreadcrumbSchema,
+		getArticleSchema,
+		getHowToSchema,
+		getFAQPageSchema
+	} from '$lib/meta';
 	import { Calendar, Clock, ArrowLeft, Tag } from '@lucide/svelte';
 	import { trackCTA } from '$lib/analytics';
 	import { blogContent } from '$lib/blog-content';
@@ -30,9 +36,14 @@
 			description: post.description,
 			author: post.author,
 			publishDate: post.publishDate,
+			updatedDate: post.updatedDate,
 			url: `/blog/${post.slug}`
 		})
 	];
+
+	if (post.faqs?.length) {
+		structuredData.push(getFAQPageSchema(post.faqs));
+	}
 
 	if (post.slug === 'find-declining-pages-google-search-console') {
 		structuredData.push(
@@ -72,7 +83,12 @@
 
 	function formatDate(dateString: string): string {
 		const date = new Date(dateString);
-		return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+		return date.toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
+			timeZone: 'UTC'
+		});
 	}
 
 	function handleRelatedPostClick(title: string) {
@@ -118,7 +134,11 @@
 		<div class="flex flex-wrap items-center gap-6 text-white/60">
 			<div class="flex items-center gap-2">
 				<Calendar class="h-5 w-5" />
-				{formatDate(post.publishDate)}
+				{#if post.updatedDate}
+					Updated {formatDate(post.updatedDate)}
+				{:else}
+					{formatDate(post.publishDate)}
+				{/if}
 			</div>
 			<div class="flex items-center gap-2">
 				<Clock class="h-5 w-5" />

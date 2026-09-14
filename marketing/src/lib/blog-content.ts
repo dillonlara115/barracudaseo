@@ -5211,104 +5211,300 @@ sys.exit(0)</code></pre>
 	`,
 	'best-semrush-alternatives-2026': `
 		<p>
-			SEMrush is one of the most recognized names in SEO software. It is also one of the most expensive, and for a lot of agencies and small businesses, the price-to-value ratio stops making sense somewhere around the first renewal invoice.
+			Semrush is the default answer to "which SEO tool should I buy?" It is also, in 2026, a $139-to-$549-a-month answer, plus $45 for every extra seat, for a platform where most teams use two or three of its forty-odd features. If you are here, you have probably already had the renewal-invoice conversation.
 		</p>
 		<p>
-			At $130 to $500 per month depending on the plan, SEMrush is built for enterprise teams that use every corner of the platform. If you are a freelancer managing a handful of clients, a growing agency that does not need competitive intelligence on global markets, or a WordPress-focused shop that wants great content tooling without paying for features you will never touch — there are better options.
+			This guide is organized by <strong>which part of Semrush you actually use</strong>, because "the best Semrush alternative" is a different tool for a freelancer doing keyword research than it is for an agency running monthly technical audits. We cover paid all-in-one replacements, genuinely free options, sub-$50 tools, and the open-source route — and we are upfront about where our own tool, Barracuda, does and does not belong on the list.
 		</p>
-		<p>
-			This post covers the most useful SEMrush alternatives depending on what you actually need, and where Barracuda SEO fits into that picture.
-		</p>
-
-		<hr />
-
-		<h2>What SEMrush Does Well</h2>
-		<p>
-			Before getting into alternatives, it is worth being clear about what you would be replacing. SEMrush's strongest capabilities are:
-		</p>
-		<p>
-			<strong>Keyword research at scale.</strong> The keyword database is enormous and the tooling for exploring related terms, questions, and intent clustering is genuinely good.
-		</p>
-		<p>
-			<strong>Competitive analysis.</strong> If you want to see what domains are ranking for a keyword, who is gaining and losing traffic, and what a competitor's top pages look like — SEMrush does this well.
-		</p>
-		<p>
-			<strong>Backlink data.</strong> SEMrush has one of the larger backlink indexes in the industry.
-		</p>
-		<p>
-			<strong>Site audit.</strong> The technical SEO crawler is thorough and the reporting is detailed, though the sheer volume of flags it raises can create its own kind of paralysis.
-		</p>
-		<p>
-			Where SEMrush falls short: it is expensive, the interface is cluttered, onboarding is steep, and for content-focused teams, it does not bridge the gap between identifying an opportunity and actually producing content around it. You get the data. What you do with it is entirely up to you.
+		<p class="text-white/60 text-sm">
+			Prices checked September 2026, monthly billing unless noted. Vendors change plans often; treat these as ballpark and confirm before you buy.
 		</p>
 
-		<hr />
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">Semrush alternatives at a glance</h3>
+			<div class="overflow-x-auto">
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Tool</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Best for</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Replaces (Semrush module)</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">From</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Free tier</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">SE Ranking</td>
+						<td class="p-3 border border-white/20 text-white/80">Agencies wanting the closest 1:1 swap</td>
+						<td class="p-3 border border-white/20 text-white/80">Keywords, rank tracking, backlinks, audit</td>
+						<td class="p-3 border border-white/20 text-white/80">$129/mo ($103 annual)</td>
+						<td class="p-3 border border-white/20 text-white/80">14-day trial</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Ahrefs</td>
+						<td class="p-3 border border-white/20 text-white/80">Backlink and content research depth</td>
+						<td class="p-3 border border-white/20 text-white/80">Keywords, backlinks, audit</td>
+						<td class="p-3 border border-white/20 text-white/80">$29/mo Starter; $129/mo Lite</td>
+						<td class="p-3 border border-white/20 text-white/80">Webmaster Tools (your own sites)</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Moz Pro</td>
+						<td class="p-3 border border-white/20 text-white/80">Clean fundamentals, client reporting</td>
+						<td class="p-3 border border-white/20 text-white/80">Keywords, rank tracking, links</td>
+						<td class="p-3 border border-white/20 text-white/80">~$49/mo</td>
+						<td class="p-3 border border-white/20 text-white/80">Limited free queries</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Mangools</td>
+						<td class="p-3 border border-white/20 text-white/80">Freelancers, beginners</td>
+						<td class="p-3 border border-white/20 text-white/80">Keywords, SERP analysis, rank tracking</td>
+						<td class="p-3 border border-white/20 text-white/80">~$29/mo (~$20 annual)</td>
+						<td class="p-3 border border-white/20 text-white/80">Limited free plan</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">SpyFu</td>
+						<td class="p-3 border border-white/20 text-white/80">Competitor PPC + SEO history</td>
+						<td class="p-3 border border-white/20 text-white/80">Competitive research, Advertising</td>
+						<td class="p-3 border border-white/20 text-white/80">~$39/mo</td>
+						<td class="p-3 border border-white/20 text-white/80">Limited free searches</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Ubersuggest</td>
+						<td class="p-3 border border-white/20 text-white/80">Tight budgets, lifetime deal</td>
+						<td class="p-3 border border-white/20 text-white/80">Keywords, basic audit</td>
+						<td class="p-3 border border-white/20 text-white/80">~$29/mo or ~$290 lifetime</td>
+						<td class="p-3 border border-white/20 text-white/80">3 searches/day</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Screaming Frog</td>
+						<td class="p-3 border border-white/20 text-white/80">Raw technical crawl data</td>
+						<td class="p-3 border border-white/20 text-white/80">Site Audit</td>
+						<td class="p-3 border border-white/20 text-white/80">$279/yr</td>
+						<td class="p-3 border border-white/20 text-white/80">500 URLs</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Barracuda</td>
+						<td class="p-3 border border-white/20 text-white/80">Site Audit + GSC insights, prioritized</td>
+						<td class="p-3 border border-white/20 text-white/80">Site Audit, Position Tracking, GSC reporting</td>
+						<td class="p-3 border border-white/20 text-white/80">$29/mo (+$5/user)</td>
+						<td class="p-3 border border-white/20 text-white/80">100 pages, no card</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80 font-bold">Google Search Console + Keyword Planner</td>
+						<td class="p-3 border border-white/20 text-white/80">Everyone, as the baseline</td>
+						<td class="p-3 border border-white/20 text-white/80">Position Tracking (your site), keyword volume</td>
+						<td class="p-3 border border-white/20 text-white/80">$0</td>
+						<td class="p-3 border border-white/20 text-white/80">Fully free</td>
+					</tr>
+				</tbody>
+			</table>
+			</div>
+		</div>
 
-		<h2>The Best SEMrush Alternatives by Use Case</h2>
-		<h3>For keyword research and rank tracking on a budget</h3>
+		<h2>Why people are leaving Semrush in 2026</h2>
 		<p>
-			<strong><a href="/blog/alternatives-to-ahrefs">Ahrefs</a></strong> is the most direct SEMrush competitor and arguably stronger for pure keyword research and backlink analysis. The pricing is similar but slightly lower on the entry tier. If keyword data and rank tracking are your primary needs and you want a clean interface, Ahrefs is worth a serious look.
+			Three things changed. First, the pricing ladder moved. The old Pro plan became the <strong>SEO plan at $139/month</strong>, and the AI-search features most of the marketing now talks about live in the <strong>Starter tier at $199/month</strong> ($165 on annual). Pro+ is $299 and Advanced is $549. Every additional user is $45 or more per month, which is where agency bills quietly double.
 		</p>
 		<p>
-			<strong>Mangools</strong> (including KWFinder) is significantly more affordable and covers keyword research, SERP analysis, rank tracking, and backlink data with a notably cleaner interface. Plans start around $29/month. Not as deep as SEMrush, but more than enough for freelancers and small agencies.
+			Second, the free tier eroded. There is a seven-day trial and a free account with a handful of daily lookups, but nothing you can run a client on.
 		</p>
 		<p>
-			<strong>Ubersuggest</strong> positions itself as a budget-friendly SEMrush alternative with lifetime pricing available. The data quality is acceptable for exploratory research, though the keyword database is smaller and the competitive data is thinner.
-		</p>
-
-		<h3>For technical SEO and site auditing</h3>
-		<p>
-			<strong><a href="/blog/alternatives-to-screaming-frog">Screaming Frog SEO Spider</a></strong> is the standard for technical auditing. It is not a SEMrush replacement in a broad sense, but for crawling, identifying technical issues, and understanding site structure, nothing matches it at the price point. The free tier handles up to 500 URLs.
-		</p>
-		<p>
-			<strong>Sitebulb</strong> is a strong alternative to Screaming Frog with a cleaner interface and better visualization of site architecture. Worth considering if you find Screaming Frog's output hard to act on.
+			Third — and this is the one the Reddit threads keep circling — most people use a fraction of it. In the r/SEO "is Semrush essential?" discussions, the honest answers cluster around the same pattern: keyword research once a month, Position Tracking daily, Site Audit occasionally, and the other thirty tools never. You are paying for the bundle and using the sampler.
 		</p>
 
-		<h3>For content-focused WordPress teams</h3>
+		<h2>Start here: which Semrush job are you actually replacing?</h2>
 		<p>
-			This is where the calculus changes significantly. If your primary SEO work is producing content for WordPress sites — writing briefs, identifying gaps, creating articles, managing internal links — a full SEMrush subscription is mostly overhead.
+			Semrush is really four products under one login. Before you pick an alternative, decide which of these you would miss:
 		</p>
+		<ol>
+			<li><strong>Keyword research</strong> — Keyword Magic Tool, Keyword Overview, intent and difficulty data.</li>
+			<li><strong>Rank tracking</strong> — Position Tracking with daily updates, local and mobile variants.</li>
+			<li><strong>Competitive and backlink research</strong> — Domain Overview, Backlink Analytics, Traffic Analytics.</li>
+			<li><strong>Site Audit</strong> — the technical crawler, plus On Page SEO Checker.</li>
+		</ol>
 		<p>
-			<strong>Barracuda SEO</strong> is built specifically for this workflow. It connects to Google Search Console, crawls your sitemap, analyzes your existing content, and uses that context to generate content briefs and full articles grounded in what your site already covers. You are not paying for backlink data you never use or competitive intelligence on domains you do not care about.
-		</p>
-		<p>
-			The brief generation alone replaces most of the workflow that people use SEMrush's content toolkit for — but the output is tied to your actual site, not a generic template. For WordPress-focused shops, it is purpose-built in a way that SEMrush fundamentally is not.
+			If you need all four, you want an all-in-one replacement and should expect to pay $100+ a month for it. If you need one or two, you can usually assemble a stack that is both cheaper and better at each job than the corresponding Semrush module. That second path is where most of the savings are, and it is the one Semrush's own marketing is designed to talk you out of.
 		</p>
 
-		<hr />
+		<h2>Best all-in-one Semrush alternatives (paid)</h2>
 
-		<h2>What to Ask Before Switching</h2>
+		<h3>1. SE Ranking — the closest like-for-like swap</h3>
 		<p>
-			Not every SEMrush user needs to switch to a single replacement. For many teams, the right answer is a combination: a lighter keyword tool for research, Screaming Frog for technical audits, and something like Barracuda for content operations.
+			SE Ranking is the tool most of the ranking listicles put first, and for once the consensus is right. It covers the same four jobs — keyword research, rank tracking, backlink analysis, site audit — and adds white-label reporting that agencies actually use. The <strong>Core plan is $129/month, or $103 on annual</strong>; Growth is $279. The keyword and backlink databases are smaller than Semrush's, which you will notice on long-tail research in niche verticals and almost nowhere else. There is a 14-day trial with no card.
 		</p>
 		<p>
-			The questions worth asking are:
+			<strong>Choose it if:</strong> you want to cancel Semrush and change nothing about your workflow. <strong>Skip it if:</strong> your main Semrush use is one module — you will still be paying for the bundle.
+		</p>
+
+		<h3>2. Ahrefs — better research, similar price</h3>
+		<p>
+			Ahrefs is the other half of the Semrush duopoly. Its backlink index updates faster, Content Explorer has no real Semrush equivalent, and the interface is cleaner. Pricing has converged: <strong>Lite is $129/month</strong>, Standard $249, and there is now a <strong>$29/month Starter plan</strong> with tight limits that works for a single small site. The catch is that Ahrefs is a pure SEO tool — no PPC data, no social, no content marketing calendar — so if you were using Semrush's marketing breadth, you will feel the gap.
+		</p>
+		<p>
+			We have a full <a href="/blog/alternatives-to-ahrefs">Ahrefs alternatives</a> guide if you get there and find the same "paying for the bundle" problem.
+		</p>
+
+		<h3>3. Moz Pro — the reporting-friendly option</h3>
+		<p>
+			Moz Pro starts around <strong>$49/month</strong> and does the fundamentals — keyword research, rank tracking, link analysis, a site crawl — without trying to be an entire marketing department. Domain Authority is still the number clients recognize, which matters more than it should. Data depth is a step below Ahrefs and Semrush; the trade is a much shorter learning curve and cheaper seats.
+		</p>
+
+		<h3>4. Mangools — for freelancers and small teams</h3>
+		<p>
+			Mangools (KWFinder, SERPChecker, SERPWatcher, LinkMiner) is what you buy when Semrush's interface makes you tired. Plans run roughly <strong>$29/month, or about $20 on annual</strong>. Keyword research and SERP analysis are genuinely good; the site audit component is thin, so pair it with a real crawler (below). The free plan is limited enough that you will upgrade within a week if you use it seriously.
+		</p>
+
+		<h3>5. SpyFu — if competitor intelligence was the point</h3>
+		<p>
+			SpyFu's pitch is unlimited data at a lower price — roughly <strong>$39/month</strong> for the Basic plan — and it is strongest on historical PPC and organic competitor data. If Semrush's Advertising Research and Domain Overview were your daily drivers, SpyFu covers them. If you never opened those reports, it is not your tool.
+		</p>
+
+		<h2>Best free Semrush alternatives</h2>
+		<p>
+			No single free tool replaces Semrush. A stack of them replaces most of it for most sites:
 		</p>
 		<ul>
-			<li>How much of your SEMrush subscription are you actually using?</li>
-			<li>Is the price justified by outcomes, or by the feeling of having enterprise tooling?</li>
-			<li>Is content production your primary SEO activity, and if so, is SEMrush helping you produce better content or just identifying more opportunities you do not have time to act on?</li>
+			<li>
+				<strong>Google Search Console</strong> — real impressions, clicks, and positions for your own site. It is better data than any rank tracker for the queries you already appear for; the gap is that it cannot see keywords you do not rank for yet. Every tool below either builds on it or should.
+			</li>
+			<li>
+				<strong>Google Keyword Planner</strong> — search volume ranges and CPC straight from Google. Volumes are bucketed unless you run ads, but the intent signal is first-party.
+			</li>
+			<li>
+				<strong>Ahrefs Webmaster Tools</strong> — free Site Audit and backlink data, restricted to sites you verify. For a single owned property this quietly covers two Semrush modules.
+			</li>
+			<li>
+				<strong>Screaming Frog (free tier)</strong> — crawls up to 500 URLs with the full check suite. For a small site this is the entire Semrush Site Audit, minus the dashboard. See our <a href="/blog/alternatives-to-screaming-frog">Screaming Frog alternatives</a> post for what to use past 500 URLs.
+			</li>
+			<li>
+				<strong>Barracuda Free</strong> — crawls 100 pages, shows detected issues and opportunities in the web dashboard, no card. Enough to audit a small business or local site properly.
+			</li>
+			<li>
+				<strong>Google Trends and Bing Webmaster Tools</strong> — seasonal interest and a second search engine's index, respectively. Both underused.
+			</li>
 		</ul>
 		<p>
-			For teams where the bottleneck is content execution rather than data access, a specialized tool almost always beats a generalist platform at a fraction of the cost.
+			What this stack cannot do: competitor keyword gap analysis and third-party backlink profiles. If those are in your weekly workflow, you need a paid tool for that one job — but only that one job.
 		</p>
 
-		<hr />
-
-		<h2>The Bottom Line</h2>
+		<h2>Cheaper Semrush alternatives (under $50/month)</h2>
 		<p>
-			SEMrush is a capable tool that costs more than most independent teams can justify. The best alternative depends on what part of SEMrush you actually use. For keyword research, Ahrefs or Mangools. For technical auditing, Screaming Frog. For content-focused WordPress teams that want AI-powered brief and article generation grounded in real site data, Barracuda SEO is purpose-built for that job in a way SEMrush never will be.
+			The "cheap alternative to Semrush" search is really a question about which module you can live without. At under $50 a month you cannot get the whole bundle; you can get any single piece of it done well.
+		</p>
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<div class="overflow-x-auto">
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">If you mainly use Semrush for…</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Under-$50 replacement</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Approx. cost</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80">Keyword research</td>
+						<td class="p-3 border border-white/20 text-white/80">Mangools or Ahrefs Starter</td>
+						<td class="p-3 border border-white/20 text-white/80">$20–29/mo</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80">Competitor PPC/SEO research</td>
+						<td class="p-3 border border-white/20 text-white/80">SpyFu Basic</td>
+						<td class="p-3 border border-white/20 text-white/80">~$39/mo</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80">Occasional research, lifetime pricing</td>
+						<td class="p-3 border border-white/20 text-white/80">Ubersuggest</td>
+						<td class="p-3 border border-white/20 text-white/80">~$29/mo or ~$290 once</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80">Site Audit + rank tracking + GSC reporting</td>
+						<td class="p-3 border border-white/20 text-white/80">Barracuda Pro</td>
+						<td class="p-3 border border-white/20 text-white/80">$29/mo, +$5 per extra user</td>
+					</tr>
+					<tr>
+						<td class="p-3 border border-white/20 text-white/80">Deep technical crawls, no dashboard needed</td>
+						<td class="p-3 border border-white/20 text-white/80">Screaming Frog licence</td>
+						<td class="p-3 border border-white/20 text-white/80">$279/yr (~$23/mo)</td>
+					</tr>
+				</tbody>
+			</table>
+			</div>
+		</div>
+		<p>
+			A realistic "I need most of it" budget stack is Mangools for keywords plus Barracuda or Screaming Frog for audits — call it $50–60 a month for two seats, against $184 for Semrush SEO with one extra user. The thing you lose is a single login. The thing you gain is two tools that are each better at their job than the module they replace.
+		</p>
+
+		<h2>Open-source and self-hosted Semrush alternatives</h2>
+		<p>
+			There is no open-source Semrush, because the expensive part of Semrush is the proprietary keyword and backlink databases, and no volunteer project maintains a petabyte-scale crawl of the web. What does exist is a set of self-hostable pieces you can assemble if you would rather run software than rent it:
+		</p>
+		<ul>
+			<li><strong>OpenSEO</strong> (github.com/every-app/open-seo) — the closest thing to an open-source Semrush front-end. Keyword volume, related keywords, domain research, and Lighthouse-based audits, with data pulled pay-as-you-go from the DataForSEO API. You control the spend; light use runs a few dollars a month.</li>
+			<li><strong>SerpBear</strong> — self-hosted rank tracker. Pair it with a scraper API and it replaces Position Tracking for a handful of domains.</li>
+			<li><strong>LibreCrawl and SiteOne Crawler</strong> — open-source SEO crawlers. LibreCrawl is web-based with JavaScript rendering; SiteOne is a desktop and CLI crawler with an HTML audit report. Either covers the Site Audit job for technical users.</li>
+			<li><strong>Matomo</strong> — self-hosted analytics if you are leaving Google Analytics too.</li>
+		</ul>
+		<p>
+			Barracuda's crawler is a Go CLI whose source is public on GitHub, and the CLI is included on every plan, so it slots into this kind of stack — run <code>barracuda crawl</code> locally or in CI and push results to the dashboard when you want the prioritization layer. It is not a full open-source suite and we do not pretend otherwise.
+		</p>
+
+		<h2>If you only use Semrush for Site Audit, read this section</h2>
+		<p>
+			This is the group we built Barracuda for, so here is the honest version.
+		</p>
+		<p>
+			Semrush Site Audit is a good crawler with a bad ending: it hands you a health score and a list of several hundred "errors," "warnings," and "notices," and leaves the actual decision — which five things to fix this sprint — to you. Ask anyone who has opened a Site Audit report for a 20,000-page site what they did next. The usual answer is "exported it to a spreadsheet and triaged by hand."
+		</p>
+		<p>
+			<a href="/features">Barracuda</a> starts from the same kind of crawl (up to 10,000 pages on Pro, with an interactive link graph for spotting orphan pages and weak internal linking) and does the triage. Issues are scored by impact and grouped by type, AI recommendations come with contextual fixes rather than a generic help-article link, and each priority shows its reasoning so you can defend it to a client or a developer. One caveat for JavaScript-heavy sites: Barracuda crawls server-rendered HTML, so if your content only exists after client-side rendering, Screaming Frog or Sitebulb in JS mode is the right tool for that crawl. Connect Google Search Console and it overlays real impressions and clicks, so "this page has a missing H1" becomes "this page gets 4,000 impressions a month and has a missing H1." It also covers the two things people keep Semrush for after the audit — <strong>keyword rank tracking</strong> with scheduled checks and <strong>shareable public reports</strong> — at $29 a month, with extra seats at $5 instead of $45.
+		</p>
+		<p>
+			<strong>What Barracuda does not do:</strong> it is not a keyword research database, and it has no third-party backlink index. If you open Keyword Magic Tool or Backlink Gap every week, you will need one of the tools above alongside it. We would rather say that here than have you find out on day two. For a fuller head-to-head, see <a href="/blog/semrush-vs-barracuda">Semrush vs Barracuda</a>.
+		</p>
+
+		<h2>How to switch from Semrush without losing anything</h2>
+		<ol>
+			<li><strong>Export before you cancel.</strong> Position Tracking history, your Site Audit issue list, and any keyword lists. Semrush's exports are decent; your access to them ends with the subscription.</li>
+			<li><strong>Run the replacement in parallel for one billing cycle.</strong> Most alternatives have a free trial or free tier long enough to confirm the data you rely on is there.</li>
+			<li><strong>Re-verify Google Search Console and Analytics</strong> in the new tool on day one. Most of what felt like "Semrush data" was Google data with a nicer chart.</li>
+			<li><strong>Downgrade rather than cancel</strong> if one report is irreplaceable. Semrush SEO at $139 with no add-ons is a very different bill from Starter plus three seats.</li>
+			<li><strong>Re-baseline your audit.</strong> Different crawlers flag different things; a new tool's first report will look worse or better than Semrush's, and neither is more true. Compare on the issues that matter, not the count. Our guide on <a href="/blog/how-to-prioritize-seo-issues">prioritizing SEO issues after an audit</a> covers how.</li>
+		</ol>
+
+		<h2>Frequently asked questions</h2>
+		<h3>Is there a free version of Semrush?</h3>
+		<p>
+			There is a seven-day free trial and a free account limited to roughly ten lookups a day with one project. It is enough to evaluate the interface, not to run a site. For a genuinely free stack, combine Google Search Console, Keyword Planner, Ahrefs Webmaster Tools, and a free crawler tier such as Screaming Frog (500 URLs) or Barracuda (100 pages).
+		</p>
+		<h3>Is there anything better than Semrush?</h3>
+		<p>
+			For individual jobs, yes: Ahrefs has the stronger backlink index and content research, Screaming Frog and Sitebulb are deeper technical crawlers, and Barracuda is better at turning a crawl into a prioritized fix list. Nothing matches Semrush's breadth in one login — which is only "better" if you use that breadth.
+		</p>
+		<h3>What is the cheapest Semrush plan?</h3>
+		<p>
+			The SEO plan at $139 a month, or $117.33 a month billed annually. It includes one user; additional users are $45 or more per month. The Starter plan with AI-search features is $199 a month.
+		</p>
+		<h3>Is there a cheaper alternative to Semrush with the same features?</h3>
+		<p>
+			SE Ranking is the closest full replacement at $129 a month ($103 annual), and Moz Pro at around $49 covers the fundamentals. Below $50 you are choosing a specialist — Mangools for keywords, SpyFu for competitor data, Barracuda or Screaming Frog for site audits — rather than a smaller Semrush.
+		</p>
+
+		<h2>The bottom line</h2>
+		<p>
+			If you use all of Semrush, keep Semrush, or move to SE Ranking and save a third. If you use a slice of it — and the honest answer for most freelancers, small agencies, and in-house teams is that you do — pick the specialist for that slice. For keyword research, Mangools or Ahrefs Starter. For competitor intelligence, SpyFu. For technical audits you actually act on, Barracuda, with Screaming Frog when you want the raw data. Start with the free tiers, connect Search Console, and let a month of parallel use make the decision for you.
 		</p>
 		<div class="bg-[#282828] p-8 rounded-lg border border-[#8ec07c]/30 text-center my-10">
-			<h3 class="mt-0 text-white">Focus on content that moves the needle</h3>
+			<h3 class="mt-0 text-white">Replace Semrush Site Audit with something that decides</h3>
 			<p class="text-white/80 mb-6">
-				See how Barracuda SEO handles content briefs and article generation for WordPress sites.
+				Crawl 100 pages free, no card. See prioritized issues with the reasoning behind each one.
 			</p>
 			<a href="https://app.barracudaseo.com" class="inline-block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-3 rounded-lg font-medium transition-colors">
-				Try Barracuda SEO Free
+				Try Barracuda Free
 			</a>
 		</div>
-	`,
+`,
 	'alternatives-to-screaming-frog': `
 		<p>
 			Screaming Frog SEO Spider has been the default tool for technical SEO crawling for over a decade, and for good reason. It is fast, thorough, and the free tier handles up to 500 URLs — which is enough for a meaningful audit on a small site without spending a dollar.
@@ -7967,5 +8163,5 @@ sys.exit(0)</code></pre>
 				Try Barracuda SEO Free
 			</a>
 		</div>
-	`,
+	`
 };

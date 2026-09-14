@@ -137,6 +137,7 @@ export function getArticleSchema(article: {
 	description: string;
 	author: string;
 	publishDate: string;
+	updatedDate?: string;
 	image?: string;
 	url: string;
 }) {
@@ -150,7 +151,7 @@ export function getArticleSchema(article: {
 			name: article.author
 		},
 		datePublished: article.publishDate,
-		dateModified: article.publishDate,
+		dateModified: article.updatedDate ?? article.publishDate,
 		image: article.image || `${SITE_URL}/mockups/barracuda-dashboard.png`,
 		url: article.url.startsWith('http') ? article.url : `${SITE_URL}${article.url}`,
 		publisher: {

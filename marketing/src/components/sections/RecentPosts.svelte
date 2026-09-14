@@ -2,7 +2,11 @@
 	import { getAllBlogPosts, type BlogPost } from '$lib/blog';
 	import { Calendar, Clock, ChevronRight } from '@lucide/svelte';
 
-	let { count = 3, title = 'From the Blog', subtitle = '' }: { count?: number; title?: string; subtitle?: string } = $props();
+	let {
+		count = 3,
+		title = 'From the Blog',
+		subtitle = ''
+	}: { count?: number; title?: string; subtitle?: string } = $props();
 
 	const posts: BlogPost[] = $derived(getAllBlogPosts().slice(0, count));
 
@@ -10,7 +14,8 @@
 		return new Date(dateStr).toLocaleDateString('en-US', {
 			month: 'short',
 			day: 'numeric',
-			year: 'numeric'
+			year: 'numeric',
+			timeZone: 'UTC'
 		});
 	};
 </script>
@@ -43,7 +48,7 @@
 						</span>
 					</div>
 					<h3
-						class="mb-3 font-heading text-lg font-bold leading-snug text-white transition-colors group-hover:text-[#8ec07c]"
+						class="mb-3 font-heading text-lg leading-snug font-bold text-white transition-colors group-hover:text-[#8ec07c]"
 					>
 						{post.title}
 					</h3>
@@ -61,9 +66,7 @@
 								{post.readTime} min
 							</span>
 						</div>
-						<ChevronRight
-							class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-						/>
+						<ChevronRight class="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
 					</div>
 				</a>
 			{/each}

@@ -4,7 +4,7 @@ import { getAllBlogPosts } from '$lib/blog';
 
 // The blog index changes whenever a post is published
 function latestBlogDate(): string {
-	const dates = getAllBlogPosts().map((p) => p.publishDate);
+	const dates = getAllBlogPosts().map((p) => p.updatedDate ?? p.publishDate);
 	return dates.sort().at(-1) ?? new Date().toISOString();
 }
 
@@ -38,7 +38,7 @@ const blogRoutes = blogPosts.map((post) => ({
 	path: `/blog/${post.slug}`,
 	priority: '0.8',
 	changefreq: 'monthly',
-	lastmod: post.publishDate
+	lastmod: post.updatedDate ?? post.publishDate
 }));
 
 const routes = [...staticRoutes, ...blogRoutes];
