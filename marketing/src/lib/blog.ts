@@ -575,26 +575,74 @@ export const blogPosts: BlogPost[] = [
 	},
 	{
 		slug: 'screaming-frog-vs-barracuda',
-		title: 'Screaming Frog vs Barracuda: Which is Best?',
+		title: 'Screaming Frog vs Barracuda: The Crawler or the Audit?',
+		seoTitle: 'Screaming Frog vs Barracuda: Crawler or Audit? (2026)',
 		description:
-			'A detailed comparison of Screaming Frog and Barracuda SEO crawlers. Discover which tool fits your workflow, budget, and team needs.',
+			'An honest vendor comparison: Screaming Frog is the deeper crawler and cheaper for one user; Barracuda prioritizes, weights by Search Console, and shares. Feature table, pricing math, who should pick which.',
 		author: 'Barracuda Team',
 		publishDate: '2025-01-15',
-		readTime: 8,
+		updatedDate: '2026-09-15',
+		readTime: 9,
 		category: 'Comparisons',
-		tags: ['screaming frog', 'SEO crawler', 'comparison', 'technical SEO'],
+		tags: ['screaming frog', 'SEO crawler', 'comparison', 'technical SEO', 'site audit'],
+		faqs: [
+			{
+				question: 'Is Barracuda a replacement for Screaming Frog?',
+				answer:
+					'For the recurring site audit — crawl, prioritize, share, track — yes. For JavaScript rendering, custom extraction, list mode, log analysis or crawls past 10,000 pages, no; keep Screaming Frog for those.'
+			},
+			{
+				question: 'Which is cheaper, Screaming Frog or Barracuda?',
+				answer:
+					'For one user, Screaming Frog at $279 a year is cheaper than Barracuda Pro at $348. For two or more users Barracuda is cheaper, because extra seats are $5 a month rather than a second $279 licence.'
+			},
+			{
+				question: 'Does Barracuda render JavaScript?',
+				answer:
+					"No. Barracuda crawls server-rendered HTML, which covers most WordPress, Shopify and static sites. For client-rendered content, use Screaming Frog's paid JavaScript mode or another rendering crawler."
+			},
+			{
+				question: 'Can I import Screaming Frog crawls into Barracuda?',
+				answer:
+					'Not currently. Barracuda runs its own crawl via the dashboard or the CLI and pushes results to your project.'
+			}
+		],
 		featured: true
 	},
 	{
 		slug: 'semrush-vs-barracuda',
-		title: 'SEMrush vs Barracuda: When You Need a Crawler',
+		title: 'Semrush vs Barracuda: If Site Audit Is the Report You Actually Use',
+		seoTitle: 'Semrush vs Barracuda: Site Audit Compared (2026)',
 		description:
-			"SEMrush is great for keyword research, but when do you need a dedicated crawler? Compare SEMrush's crawl features with Barracuda's specialized approach.",
+			'Barracuda is not a Semrush replacement — it has no keyword or backlink data. But if Site Audit and rank tracking are the reports you open, here is how the two compare on output, Search Console weighting, sharing and price.',
 		author: 'Barracuda Team',
 		publishDate: '2025-01-12',
-		readTime: 9,
+		updatedDate: '2026-09-15',
+		readTime: 8,
 		category: 'Comparisons',
-		tags: ['SEMrush', 'SEO tools', 'comparison', 'crawling', 'technical SEO'],
+		tags: ['Semrush', 'SEO tools', 'comparison', 'site audit', 'technical SEO'],
+		faqs: [
+			{
+				question: 'Can Barracuda replace Semrush?',
+				answer:
+					'Only if Site Audit and rank tracking are what you use Semrush for. Barracuda has no keyword research database or backlink index; for those, keep Semrush or pair Barracuda with a cheaper research tool.'
+			},
+			{
+				question: 'Is Barracuda cheaper than Semrush?',
+				answer:
+					'Yes: $29 a month with $5 seats against $139 to $549 a month with $45 seats. The comparison is only meaningful for the audit and rank-tracking jobs, since Barracuda does not do the rest.'
+			},
+			{
+				question: 'Does Semrush Site Audit render JavaScript?',
+				answer:
+					'Yes. Barracuda does not, so for client-rendered sites Semrush Site Audit or a dedicated rendering crawler such as Screaming Frog is the right choice for the crawl itself.'
+			},
+			{
+				question: 'Can I connect Google Search Console to both?',
+				answer:
+					'Yes. Semrush uses it for separate reports; Barracuda uses it to weight audit priorities by impressions and clicks and to surface declining pages and quick-win keywords in its GSC intelligence dashboard.'
+			}
+		],
 		featured: false
 	},
 	{
