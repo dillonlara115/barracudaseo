@@ -25,11 +25,12 @@ export default defineConfig(({ mode }) => {
 	return {
 		plugins: [svelte()],
 		server: {
-			port: 5173,
-			strictPort: false, // Allow Vite to use next available port if 5173 is taken
+			host: '127.0.0.1',
+			port: 5174,
+			strictPort: true,
 			proxy: {
 				'/api': {
-					target: 'http://localhost:8080',
+					target: 'http://127.0.0.1:8091',
 					changeOrigin: true
 				}
 			}

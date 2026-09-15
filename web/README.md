@@ -15,7 +15,7 @@ npm install
 npm run dev
 ```
 
-This will start the Vite dev server on port 5173. The frontend will proxy API requests to `http://localhost:8080` (the Go server).
+This will start the Vite dev server on port 5173. The frontend will proxy API requests to `http://localhost:8081` (the Go server).
 
 ## Building for Production
 

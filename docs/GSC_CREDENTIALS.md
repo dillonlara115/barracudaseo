@@ -12,7 +12,7 @@ GSC_CLIENT_SECRET=your-client-secret
 Or use a JSON credentials file:
 
 ```bash
-GSC_CREDENTIALS_JSON='{"web":{"client_id":"...","client_secret":"...","redirect_uris":["http://localhost:8080/api/gsc/callback"]}}'
+GSC_CREDENTIALS_JSON='{"web":{"client_id":"...","client_secret":"...","redirect_uris":["http://localhost:8081/api/gsc/callback"]}}'
 ```
 
 ## Usage

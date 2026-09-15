@@ -1,6 +1,8 @@
 import { supabase } from './supabase.js';
 
-export const getApiUrl = () => import.meta.env.VITE_CLOUD_RUN_API_URL || 'http://localhost:8080';
+export const getApiOrigin = () => import.meta.env.VITE_CLOUD_RUN_API_URL || 'http://localhost:8091';
+export const getApiUrl = () => import.meta.env.VITE_CLOUD_RUN_API_URL || '';
+export const buildApiUrl = (path) => `${getApiUrl()}${path}`;
 
 // Track ongoing refresh to prevent concurrent refresh attempts
 let refreshPromise = null;

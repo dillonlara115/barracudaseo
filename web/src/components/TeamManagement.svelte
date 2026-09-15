@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { user } from '../lib/auth.js';
   import { supabase } from '../lib/supabase.js';
+  import { buildApiUrl } from '../lib/data.js';
   import { X, Loader, Mail, UserPlus, Trash2, Check, AlertCircle, Send } from 'lucide-svelte';
 
   let loading = true;
@@ -16,8 +17,6 @@
   let inviteError = null;
   let showInviteModal = false;
   let resendingInviteId = null;
-
-  const API_URL = import.meta.env.VITE_CLOUD_RUN_API_URL || 'http://localhost:8080';
 
   onMount(() => {
     if ($user) {
@@ -65,7 +64,7 @@
     
     try {
       const token = await getValidAccessToken();
-      const response = await fetch(`${API_URL}/api/v1/team/members`, {
+      const response = await fetch(buildApiUrl('/api/v1/team/members'), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -108,7 +107,7 @@
     
     try {
       const token = await getValidAccessToken();
-      const response = await fetch(`${API_URL}/api/v1/team/invite`, {
+      const response = await fetch(buildApiUrl('/api/v1/team/invite'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -148,7 +147,7 @@
     
     try {
       const token = await getValidAccessToken();
-      const response = await fetch(`${API_URL}/api/v1/team/${memberId}/resend`, {
+      const response = await fetch(buildApiUrl(`/api/v1/team/${memberId}/resend`), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -185,7 +184,7 @@
     
     try {
       const token = await getValidAccessToken();
-      const response = await fetch(`${API_URL}/api/v1/team/${memberId}/remove`, {
+      const response = await fetch(buildApiUrl(`/api/v1/team/${memberId}/remove`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -426,4 +425,3 @@
     </div>
   </div>
 {/if}
-

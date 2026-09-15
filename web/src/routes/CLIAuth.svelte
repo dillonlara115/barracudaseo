@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { supabase } from '../lib/supabase.js';
-  import { getApiUrl } from '../lib/data.js';
+  import { getApiOrigin } from '../lib/data.js';
 
   let status = 'loading';
   let error = null;
@@ -73,7 +73,7 @@
       token_type: session.token_type,
       supabase_url: supabaseUrl,
       supabase_anon_key: supabaseAnonKey,
-      api_url: getApiUrl(),
+      api_url: getApiOrigin(),
       user_id: session.user?.id || '',
       user_email: session.user?.email || '',
       state

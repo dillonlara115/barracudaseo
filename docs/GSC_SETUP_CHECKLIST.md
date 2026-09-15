@@ -80,7 +80,7 @@ If you've completed Google's verification process but users still see "Google ha
 1. Go to **APIs & Services** → **Credentials**
 2. Click on your OAuth 2.0 Client ID
 3. Under **Authorized redirect URIs**, make sure you have:
-   - `http://localhost:8080/api/gsc/callback`
+   - `http://localhost:8081/api/gsc/callback`
 4. Click **Save**
 
 ## Step 4: Verify Setup

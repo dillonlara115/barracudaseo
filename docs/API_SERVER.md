@@ -26,7 +26,7 @@ export SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 export PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
 # Run the server
-go run . api --port 8080
+go run . api --port 8081
 ```
 
 Or using flags:
@@ -36,7 +36,7 @@ go run . api \
   --supabase-url https://your-project.supabase.co \
   --supabase-service-key your-service-role-key \
   --supabase-anon-key your-anon-key \
-  --port 8080
+  --port 8081
 ```
 
 ### Docker/Cloud Run
@@ -181,4 +181,3 @@ HTTP status codes:
    - `PATCH /api/v1/issues/:id` - Update issue status
 3. **Add CLI integration** - Update `cmd/crawl.go` to support `--cloud` flag
 4. **Deploy to Cloud Run** - Use the provided Dockerfile and deployment scripts
-

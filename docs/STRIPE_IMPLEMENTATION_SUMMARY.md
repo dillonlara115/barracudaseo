@@ -90,10 +90,10 @@ VITE_STRIPE_PRICE_ID_TEAM_SEAT=price_1SQX9LI4GvFkgB3qAUWyEQee
 1. **Local Testing:**
    ```bash
    # Start API server
-   go run . api --port 8080
+   go run . api --port 8081
    
    # In another terminal, forward Stripe webhooks locally
-   stripe listen --forward-to localhost:8080/api/stripe/webhook
+   stripe listen --forward-to localhost:8081/api/stripe/webhook
    ```
 
 2. **Test Flow:**
@@ -158,7 +158,6 @@ Stripe-Signature: <signature>
 - Subscription updates are handled automatically via webhooks
 - Users can manage billing through Stripe's hosted billing portal
 - Free tier is the default for all new users
-
 
 
 

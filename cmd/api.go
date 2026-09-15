@@ -33,7 +33,7 @@ authenticated endpoints for the dashboard.`,
 }
 
 func init() {
-	apiCmd.Flags().IntVar(&apiPort, "port", 8080, "Port to run the API server on")
+	apiCmd.Flags().IntVar(&apiPort, "port", 8091, "Port to run the API server on")
 	apiCmd.Flags().StringVar(&apiSupabaseURL, "supabase-url", "", "Supabase project URL (or set PUBLIC_SUPABASE_URL env var)")
 	apiCmd.Flags().StringVar(&apiSupabaseServiceKey, "supabase-service-key", "", "Supabase service role key (or set SUPABASE_SERVICE_ROLE_KEY env var)")
 	apiCmd.Flags().StringVar(&apiSupabaseAnonKey, "supabase-anon-key", "", "Supabase anon key (or set PUBLIC_SUPABASE_ANON_KEY env var)")
@@ -91,6 +91,10 @@ func runAPI(cmd *cobra.Command, args []string) error {
 			apiPort = p
 		}
 	}
+
+	// Make the resolved API port available to downstream initialization code that
+	// derives localhost callback URLs from PORT.
+	_ = os.Setenv("PORT", strconv.Itoa(apiPort))
 
 	// Log configuration (without sensitive data)
 	logger.Info("Initializing API server",

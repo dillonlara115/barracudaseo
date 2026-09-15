@@ -18,6 +18,40 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
 	{
+		slug: 'screaming-frog-vs-semrush',
+		title: 'Screaming Frog vs Semrush (vs Barracuda): Crawler or Suite?',
+		seoTitle: 'Screaming Frog vs Semrush: Which Do You Need in 2026?',
+		description:
+			'Screaming Frog is a $279/yr desktop crawler; Semrush is a $139+/mo marketing suite. What each does the other cannot, how their site audits compare, the pricing math, and when you need both.',
+		author: 'Barracuda Team',
+		publishDate: '2026-09-15',
+		readTime: 9,
+		category: 'Comparisons',
+		tags: ['screaming frog', 'Semrush', 'comparison', 'SEO tools', 'technical SEO', 'site audit'],
+		faqs: [
+			{
+				question: 'Is Screaming Frog better than Semrush?',
+				answer:
+					'For technical site audits, yes: it is deeper, more configurable and a fraction of the price. For keyword research, rank tracking, backlinks and competitor analysis, Screaming Frog does not compete; Semrush is the better tool because it is the only one of the two that does those things.'
+			},
+			{
+				question: 'Can Semrush replace Screaming Frog?',
+				answer:
+					'For routine audits on a normal site, Semrush Site Audit covers most of what people use Screaming Frog for, with less depth and no custom extraction, list mode or full crawl configuration. For migrations, large or unusual sites and data extraction it cannot, which is why many teams keep one Screaming Frog licence alongside Semrush.'
+			},
+			{
+				question: 'Which is better for beginners, Screaming Frog or Semrush?',
+				answer:
+					'Semrush, for the guided interface, health score and built-in explanations. The free version of Screaming Frog is still an excellent way to learn what a crawler sees. Beginners who only need a site audit may find a prioritized tool such as Barracuda or Sitebulb easier than either.'
+			},
+			{
+				question: 'Is Screaming Frog free? Is Semrush free?',
+				answer:
+					'Screaming Frog is free for up to 500 URLs with no expiry. Semrush offers a 7-day trial and a free account limited to roughly ten lookups a day with one project, which is enough to evaluate but not to work.'
+			}
+		]
+	},
+	{
 		slug: 'screaming-frog-pricing',
 		title: 'Screaming Frog Pricing in 2026: Is the $279 Licence Worth It?',
 		seoTitle: 'Screaming Frog Pricing 2026: Is $279/Year Worth It?',

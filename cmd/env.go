@@ -43,7 +43,7 @@ func resolveSupabaseConfig() (string, string) {
 }
 
 func resolveAPIURL() string {
-	return defaultEnv("http://localhost:8080",
+	return defaultEnv("http://localhost:8091",
 		"BARRACUDA_API_URL",
 		"CLOUD_RUN_API_URL",
 		"VITE_CLOUD_RUN_API_URL",

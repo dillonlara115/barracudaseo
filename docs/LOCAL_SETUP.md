@@ -52,8 +52,8 @@ You have two options for Supabase: **Remote (Cloud)** or **Local (Docker)**.
      ```
      http://localhost:5173
      http://localhost:5173/**
-     http://localhost:8080
-     http://localhost:8080/**
+     http://localhost:8081
+     http://localhost:8081/**
      ```
 
 4. **Run Database Migrations**:
@@ -177,17 +177,17 @@ The API server connects to Supabase and provides REST endpoints:
 ```bash
 # Using environment variables from .env.local
 export BARRACUDA_LOAD_ENV=1
-go run . api --port 8080
+go run . api --port 8081
 
 # Or with explicit flags
 go run . api \
   --supabase-url https://your-project.supabase.co \
   --supabase-anon-key your-anon-key \
   --supabase-service-key your-service-role-key \
-  --port 8080
+  --port 8081
 ```
 
-The API will be available at `http://localhost:8080/api/v1/...`
+The API will be available at `http://localhost:8081/api/v1/...`
 
 ## Step 7: Run the Frontend in Development Mode
 
@@ -202,7 +202,7 @@ cd web
 npm run dev
 ```
 
-The frontend will be available at `http://localhost:5173` and will proxy API requests to `http://localhost:8080`.
+The frontend will be available at `http://localhost:5173` and will proxy API requests to `http://localhost:8081`.
 
 ## Step 8: Serve Crawl Results Locally
 
@@ -222,7 +222,7 @@ After running a crawl, you can view results in the embedded dashboard:
 make serve
 ```
 
-Open `http://localhost:8080` in your browser to view the dashboard.
+Open `http://localhost:8080` in your browser to view the embedded dashboard.
 
 ## Step 9: Testing the Full Stack
 
@@ -230,7 +230,7 @@ Open `http://localhost:8080` in your browser to view the dashboard.
 
 1. **Start the API server**:
    ```bash
-   go run . api --port 8080
+   go run . api --port 8081
    ```
 
 2. **Start the frontend dev server** (in another terminal):
@@ -303,7 +303,7 @@ make frontend-build
 make frontend-dev
 
 # Run API server
-go run . api --port 8080
+go run . api --port 8081
 
 # Run a crawl
 ./bin/barracuda crawl https://example.com
@@ -325,7 +325,7 @@ make test
 ### Useful URLs
 
 - **Local Frontend**: http://localhost:5173
-- **Local API**: http://localhost:8080
+- **Local API**: http://localhost:8081
 - **Local Supabase Studio** (if using local Supabase): http://localhost:54323
 - **Supabase Dashboard** (remote): https://supabase.com/dashboard
 

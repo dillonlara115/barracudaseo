@@ -85,7 +85,7 @@ If you've completed Google's verification process but users still see "Google ha
 3. Choose **Web application** as the application type
 4. Give it a name (e.g., "Barracuda GA4 Integration")
 5. Under **Authorized redirect URIs**, add:
-   - For local development: `http://localhost:8080/api/ga4/callback`
+   - For local development: `http://localhost:8081/api/ga4/callback`
    - For production: `https://your-api-url.com/api/ga4/callback`
 6. Click **Create**
 7. **Copy your Client ID and Client Secret** - you'll need these for environment variables
@@ -102,7 +102,7 @@ export GA4_CLIENT_SECRET='your-client-secret'
 Or use JSON credentials:
 
 ```bash
-export GA4_CREDENTIALS_JSON='{"web":{"client_id":"...","client_secret":"...","redirect_uris":["http://localhost:8080/api/ga4/callback"]}}'
+export GA4_CREDENTIALS_JSON='{"web":{"client_id":"...","client_secret":"...","redirect_uris":["http://localhost:8081/api/ga4/callback"]}}'
 ```
 
 ## Step 5: Verify Setup

@@ -19,7 +19,6 @@
   let creatingCheckout = false;
   let creatingPortal = false;
   
-  const API_URL = import.meta.env.VITE_CLOUD_RUN_API_URL || 'http://localhost:8080';
   const STRIPE_PRICE_ID_PRO = import.meta.env.VITE_STRIPE_PRICE_ID_PRO || '';
   const STRIPE_PRICE_ID_PRO_ANNUAL = import.meta.env.VITE_STRIPE_PRICE_ID_PRO_ANNUAL || '';
   const STRIPE_PRICE_ID_TEAM_SEAT = import.meta.env.VITE_STRIPE_PRICE_ID_TEAM_SEAT || '';
@@ -907,6 +906,4 @@
     color: white;
   }
 </style>
-
-
 

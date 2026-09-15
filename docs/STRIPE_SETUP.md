@@ -137,7 +137,7 @@ The frontend requires these environment variables:
    - Decline: `4000 0000 0000 0002`
 3. Use Stripe CLI for local webhook testing:
    ```bash
-   stripe listen --forward-to localhost:8080/api/stripe/webhook
+   stripe listen --forward-to localhost:8081/api/stripe/webhook
    ```
 
 ### Production
@@ -167,7 +167,6 @@ The frontend requires these environment variables:
 7. ⏳ Create frontend billing UI component
 8. ⏳ Test checkout flow
 9. ⏳ Deploy to production
-
 
 
 

@@ -73,7 +73,7 @@ Before using GSC integration, you need to:
 3. **Update Redirect URI:**
    - Go to **APIs & Services** → **Credentials**
    - Click your OAuth 2.0 Client ID
-   - Add redirect URI: `http://localhost:8080/api/gsc/callback`
+   - Add redirect URI: `http://localhost:8081/api/gsc/callback`
    - Save
 
 See `docs/GSC_SETUP_CHECKLIST.md` for detailed step-by-step instructions.
@@ -103,7 +103,7 @@ If you want to use your own Google Cloud project instead of the default credenti
    - Navigate to **APIs & Services** > **Credentials**
    - Click **Create Credentials** > **OAuth client ID**
    - Choose **Web application**
-   - Add authorized redirect URI: `http://localhost:8080/api/gsc/callback`
+   - Add authorized redirect URI: `http://localhost:8081/api/gsc/callback`
    - Save your **Client ID** and **Client Secret**
 
 3. Configure Barracuda:
@@ -118,7 +118,7 @@ export GSC_CLIENT_SECRET="your-client-secret"
 Or use a JSON credentials file:
 
 ```bash
-export GSC_CREDENTIALS_JSON='{"web":{"client_id":"...","client_secret":"...","redirect_uris":["http://localhost:8080/api/gsc/callback"]}}'
+export GSC_CREDENTIALS_JSON='{"web":{"client_id":"...","client_secret":"...","redirect_uris":["http://localhost:8081/api/gsc/callback"]}}'
 ```
 
 ### Install Dependencies

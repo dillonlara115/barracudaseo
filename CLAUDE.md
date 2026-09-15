@@ -26,7 +26,7 @@ make frontend-dev
 # Run CLI commands directly
 go run . crawl https://example.com
 go run . serve --results results.json
-go run . api --port 8080
+go run . api --port 8081
 
 # Lint and format
 make lint              # Go linting (requires golangci-lint)

@@ -38,7 +38,7 @@ This will open your browser to authenticate with Stripe.
 **IMPORTANT:** Run this in a separate terminal window and keep it running:
 
 ```bash
-stripe listen --forward-to localhost:8080/api/stripe/webhook
+stripe listen --forward-to localhost:8081/api/stripe/webhook
 ```
 
 This will:
@@ -65,19 +65,19 @@ STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxx
 After updating the webhook secret, restart your API server:
 
 ```bash
-go run . api --port 8080
+go run . api --port 8081
 ```
 
 ## Testing the Flow
 
 1. **Start API Server** (Terminal 1):
    ```bash
-   go run . api --port 8080
+   go run . api --port 8081
    ```
 
 2. **Start Stripe CLI Webhook Forwarding** (Terminal 2):
    ```bash
-   stripe listen --forward-to localhost:8080/api/stripe/webhook
+   stripe listen --forward-to localhost:8081/api/stripe/webhook
    ```
 
 3. **Start Frontend** (Terminal 3):
@@ -158,4 +158,3 @@ The FDW wrapper setup is documented in:
 - `supabase/migrations/20250113_setup_stripe_fdw.sql`
 
 This is optional and doesn't affect the webhook flow.
-

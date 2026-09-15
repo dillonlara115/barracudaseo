@@ -110,14 +110,14 @@ The `api` command starts the Supabase-backed REST service used in Cloud Run.
 
 ```bash
 # With env vars already exported (or set `BARRACUDA_LOAD_ENV=1` to load .env/.env.local)
-go run . api --port 8080
+go run . api --port 8081
 
 # Or pass flags explicitly
 go run . api \
   --supabase-url https://your-project.supabase.co \
   --supabase-anon-key public-anon-key \
   --supabase-service-key service-role-key \
-  --port 8080
+  --port 8081
 ```
 
 Docker helpers (`make docker-build`, `make deploy-backend`) are available for packaging and deploying to Cloud Run.
@@ -180,7 +180,7 @@ The web dashboard includes:
 - **Projects Workspace**: Authenticated Supabase session picker that lets you switch projects or create new ones
 - **Link Graph**: Visualization of internal and external link structures with export support
 
-Access the dashboard at `http://localhost:8080` (default port).
+For local API development, use `http://localhost:8081`.
 
 For the hosted dashboard (https://app.barracudaseo.com) configure Supabase auth + API URLs as described in `docs/VERCEL_DEPLOYMENT.md` and `docs/VERCEL_URL.md`.
 
@@ -293,10 +293,10 @@ export PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 export PUBLIC_SUPABASE_ANON_KEY=public-anon-key
 export SUPABASE_SERVICE_ROLE_KEY=service-role-key
 
-barracuda api --port 8080
+barracuda api --port 8081
 ```
 
-The API now serves authenticated REST endpoints for projects, crawls, pages, and issues at `http://localhost:8080/api/v1/...`. Review `docs/API_SERVER.md` for a complete endpoint list.
+The API now serves authenticated REST endpoints for projects, crawls, pages, and issues at `http://localhost:8081/api/v1/...`. Review `docs/API_SERVER.md` for a complete endpoint list.
 
 ## Output Format
 
@@ -388,7 +388,7 @@ go build -o bin/barracuda .
 make test
 
 # Start the Supabase-backed API server
-go run . api --port 8080
+go run . api --port 8081
 
 # Build and deploy the Cloud Run image (requires GCP + Supabase env vars)
 make deploy-backend

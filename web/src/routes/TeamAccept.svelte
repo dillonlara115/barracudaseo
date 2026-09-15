@@ -4,6 +4,7 @@
   import { supabase } from '../lib/supabase.js';
   import { user } from '../lib/auth.js';
   import { Check, X, Loader, AlertCircle, Mail, UserPlus, LogIn } from 'lucide-svelte';
+  import { buildApiUrl } from '../lib/data.js';
 
   let loading = true;
   let error = null;
@@ -11,8 +12,6 @@
   let token = null;
   let inviteDetails = null;
   let needsAuth = false;
-
-  const API_URL = import.meta.env.VITE_CLOUD_RUN_API_URL || 'http://localhost:8080';
 
   onMount(async () => {
     // Get token from URL - check both hash and search params
@@ -50,7 +49,7 @@
 
   async function loadInviteDetails() {
     try {
-      const response = await fetch(`${API_URL}/api/v1/team/${encodeURIComponent(token)}/details`);
+      const response = await fetch(buildApiUrl(`/api/v1/team/${encodeURIComponent(token)}/details`));
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
@@ -82,7 +81,7 @@
       }
 
       const accessToken = sessionData.session.access_token;
-      const response = await fetch(`${API_URL}/api/v1/team/${encodeURIComponent(token)}/accept`, {
+      const response = await fetch(buildApiUrl(`/api/v1/team/${encodeURIComponent(token)}/accept`), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -208,4 +207,3 @@
     {/if}
   </div>
 </div>
-

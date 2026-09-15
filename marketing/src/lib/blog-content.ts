@@ -1,5 +1,145 @@
 // Blog post content stored separately for better maintainability
 export const blogContent: Record<string, string> = {
+	'screaming-frog-vs-semrush': `
+		<p>
+			Screaming Frog and Semrush get compared constantly and are barely the same kind of product. Screaming Frog is a desktop crawler that does one thing — technical site audits — to a depth nothing else matches, for $279 a year. Semrush is a cloud marketing suite that does forty things, one of which is a site audit, for $139 to $549 a month. The question people are really asking when they search this is: <strong>do I need both, and if I can only afford one, which?</strong>
+		</p>
+		<p>
+			Short answer: if your job is technical SEO, Screaming Frog; if your job is SEO generally, Semrush; if you are an agency, probably both, with one Screaming Frog licence for the person who runs deep crawls. And if the only Semrush report you open is Site Audit, there is a third option that costs less than either of them for that job. This guide works through each of those in turn. We make the third option and say so.
+		</p>
+		<p class="text-white/60 text-sm">
+			Prices checked September 2026. Confirm with vendors before buying.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">Screaming Frog vs Semrush at a glance</h3>
+			<div class="overflow-x-auto">
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]"></th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Screaming Frog</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Semrush</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Barracuda</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">What it is</td><td class="p-3 border border-white/20 text-white/80">Desktop technical crawler</td><td class="p-3 border border-white/20 text-white/80">Cloud all-in-one marketing suite</td><td class="p-3 border border-white/20 text-white/80">Cloud crawler + prioritization</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Site audit depth</td><td class="p-3 border border-white/20 text-white/80">Deepest available; fully configurable</td><td class="p-3 border border-white/20 text-white/80">Good; scheduled; health score</td><td class="p-3 border border-white/20 text-white/80">Good; prioritized with reasoning</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Keyword research</td><td class="p-3 border border-white/20 text-white/80">No</td><td class="p-3 border border-white/20 text-white/80">Best-in-class</td><td class="p-3 border border-white/20 text-white/80">No</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Backlink data</td><td class="p-3 border border-white/20 text-white/80">Via Ahrefs/Moz/Majestic API (paid)</td><td class="p-3 border border-white/20 text-white/80">Large own index</td><td class="p-3 border border-white/20 text-white/80">No</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Rank tracking</td><td class="p-3 border border-white/20 text-white/80">No</td><td class="p-3 border border-white/20 text-white/80">Yes, daily</td><td class="p-3 border border-white/20 text-white/80">Yes, scheduled</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">JavaScript rendering</td><td class="p-3 border border-white/20 text-white/80">Yes (paid)</td><td class="p-3 border border-white/20 text-white/80">Yes</td><td class="p-3 border border-white/20 text-white/80">No</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Custom extraction / list mode</td><td class="p-3 border border-white/20 text-white/80">Yes</td><td class="p-3 border border-white/20 text-white/80">No</td><td class="p-3 border border-white/20 text-white/80">No</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">GSC / GA4 overlay on audit</td><td class="p-3 border border-white/20 text-white/80">Yes (paid, per crawl)</td><td class="p-3 border border-white/20 text-white/80">Partial</td><td class="p-3 border border-white/20 text-white/80">Yes, weights priorities</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Sharing with clients/team</td><td class="p-3 border border-white/20 text-white/80">Export files</td><td class="p-3 border border-white/20 text-white/80">Yes; extra users $45+/mo</td><td class="p-3 border border-white/20 text-white/80">Public report links; users $5/mo</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Price</td><td class="p-3 border border-white/20 text-white/80">Free ≤500 URLs; $279/user/yr</td><td class="p-3 border border-white/20 text-white/80">$139–549/mo; 7-day trial</td><td class="p-3 border border-white/20 text-white/80">Free ≤100 pages; $29/mo</td></tr>
+				</tbody>
+			</table>
+			</div>
+		</div>
+
+		<h2>What Screaming Frog does that Semrush cannot</h2>
+		<p>
+			Screaming Frog's whole product is the crawl, and it shows. You control everything: crawl speed, include and exclude patterns, user-agent, whether to follow nofollow, whether to render JavaScript in headless Chromium, which URL list to crawl in list mode. <strong>Custom extraction</strong> pulls any element from every page with XPath, CSS selectors or regex — prices, schema fields, author names, stock status — which turns a crawler into a site-wide data collection tool. <strong>Crawl comparison</strong> diffs two crawls, which is the entire workflow for a migration. API integrations join GA4, Search Console, PageSpeed Insights, and Ahrefs or Moz data onto every URL in one export. The free version does all the core checks on 500 URLs; the <a href="/blog/screaming-frog-pricing">$279 licence</a> unlocks the rest.
+		</p>
+		<p>
+			Semrush's Site Audit does none of that. It runs a scheduled cloud crawl with a fixed set of checks, scores the site, and buckets issues into errors, warnings and notices. That is a genuinely useful thing, and for many teams it is enough — but if you have ever needed to crawl a client's staging site behind basic auth with a custom user-agent and extract the product SKU from every page, you know which tool you reached for.
+		</p>
+
+		<h2>What Semrush does that Screaming Frog cannot</h2>
+		<p>
+			Everything that is not crawling. <strong>Keyword Magic Tool</strong> and Keyword Overview are the reason most people buy Semrush: a very large keyword database with volume, difficulty, intent and SERP features. <strong>Position Tracking</strong> checks rankings daily with local and mobile variants. <strong>Backlink Analytics</strong> and Backlink Gap run on Semrush's own index. <strong>Domain Overview</strong> and Organic Research show what competitors rank for. Then the marketing layer: Advertising Research, Social Toolkit, Content Marketing Platform, and in the Starter tier and up, AI-search visibility tracking.
+		</p>
+		<p>
+			Screaming Frog has no keyword database, no backlink index, no rank tracker and no competitor data. It can pull some of that in through APIs if you also pay for Ahrefs or Moz, but it is a consumer of that data, not a source. If your week involves keyword research, Screaming Frog is not in the running.
+		</p>
+
+		<h2>Site audit head-to-head: the only overlap</h2>
+		<p>
+			This is the one place the tools compete directly, so it is worth being specific.
+		</p>
+		<ul>
+			<li><strong>Depth and control:</strong> Screaming Frog, clearly. It finds more, on more configurable terms, and lets you look at the raw data any way you like.</li>
+			<li><strong>Convenience:</strong> Semrush. Set it once, it crawls weekly, emails you the delta, and shows the health score trend in a dashboard anyone on the account can open. Nothing to install and no laptop tied up.</li>
+			<li><strong>Scale:</strong> Semrush for large sites on a normal machine, since the crawl runs in its cloud within your plan's page limits; Screaming Frog for very large sites if you have the RAM and use database storage mode, with no plan limits at all.</li>
+			<li><strong>JavaScript:</strong> both render it; Screaming Frog only in the paid version.</li>
+			<li><strong>What you get at the end:</strong> a list, in both cases. Screaming Frog gives you everything unranked; Semrush gives you everything in three severity buckets with a score. Neither tells you which five issues to fix this sprint given what the site actually earns traffic from. That gap is the reason the third column exists in the table above.</li>
+		</ul>
+
+		<h2>The pricing math</h2>
+		<p>
+			Screaming Frog is $279 per user per year — about $23 a month — with a free tier that does not expire. Semrush's SEO plan is $139 a month, or $117 on annual billing, so $1,408 to $1,668 a year for one user, and each extra user is $45 or more a month. The Starter plan with AI-search features is $199. Semrush costs five to six times as much as Screaming Frog for one seat, and the gap widens with every teammate.
+		</p>
+		<p>
+			That is not an unfair comparison so much as a category difference. Semrush's price buys the keyword and backlink databases, which cost real money to maintain. If you use them, the price is defensible. If you bought Semrush and mostly run Site Audit — which describes a surprising share of the "is Semrush worth it?" Reddit posts — you are paying $1,400 a year for a crawler, and our <a href="/blog/best-semrush-alternatives-2026">Semrush alternatives</a> guide is the next thing to read.
+		</p>
+
+		<h2>Which should you choose?</h2>
+		<h3>Choose Screaming Frog if…</h3>
+		<ul>
+			<li>Technical SEO is your job or a large part of it</li>
+			<li>You do migrations, replatforms, or one-off deep audits</li>
+			<li>You need custom extraction, list mode, or full crawl control</li>
+			<li>You already get keyword and backlink data elsewhere, or do not need it</li>
+			<li>Budget matters and one licence covers the people who actually crawl</li>
+		</ul>
+		<h3>Choose Semrush if…</h3>
+		<ul>
+			<li>Keyword research, rank tracking and competitor analysis are your daily work</li>
+			<li>You want one login for the whole SEO and content workflow</li>
+			<li>You will use the PPC, social or content tools too</li>
+			<li>You want a scheduled audit with zero setup and can live with less depth</li>
+		</ul>
+		<h3>Use both if…</h3>
+		<ul>
+			<li>You are an agency: Semrush for the account team's research and reporting, one or two Screaming Frog licences for the technical SEOs</li>
+			<li>You run a large in-house programme where the suite is already budgeted and the crawler is a rounding error</li>
+		</ul>
+		<p>
+			"Both" is the most common answer among people who do this for a living, and it is not tool sprawl — it is two tools each used for what it is best at, at a combined cost dominated by the one you would have bought anyway.
+		</p>
+
+		<h2>The third option: if Site Audit is the only overlap you care about</h2>
+		<p>
+			A specific reader ends up on this page: someone who does not need keyword research from Semrush but wants something more shareable and decisive than Screaming Frog's spreadsheets. <a href="/features">Barracuda</a> is built for that reader. It crawls up to 10,000 pages on Pro, scores every issue by impact and groups it by type, attaches AI recommendations with page-specific fixes, and shows the reasoning behind each priority. Connect Google Search Console and the audit is weighted by real impressions and clicks — the same missing canonical is ranked differently on a page earning traffic than on one that is not. Crawl history shows what changed between runs, an <a href="/blog/visualize-site-structure-link-graph">interactive link graph</a> handles orphan pages, rank tracking is included, and public report links replace the emailed export. Extra users are $5 a month rather than $45. It is $29 a month, with a 100-page free tier.
+		</p>
+		<p>
+			<strong>What it does not do:</strong> keyword research or backlinks (that is Semrush's territory), and JavaScript rendering, custom extraction or list mode (that is Screaming Frog's). It replaces the recurring audit, not the deep one-off dig and not the research suite. The head-to-heads are here: <a href="/blog/screaming-frog-vs-barracuda">Screaming Frog vs Barracuda</a> and <a href="/blog/semrush-vs-barracuda">Semrush vs Barracuda</a>. For the whole field, see our <a href="/blog/best-seo-crawler-tools">SEO crawler comparison</a>.
+		</p>
+
+		<h2>Frequently asked questions</h2>
+		<h3>Is Screaming Frog better than Semrush?</h3>
+		<p>
+			For technical site audits, yes — it is deeper, more configurable, and a fraction of the price. For keyword research, rank tracking, backlinks and competitor analysis, Screaming Frog does not compete at all; Semrush is the better tool because it is the only one of the two that does those things.
+		</p>
+		<h3>Can Semrush replace Screaming Frog?</h3>
+		<p>
+			For routine audits on a normal site, Semrush Site Audit covers most of what most people use Screaming Frog for, with less depth and no custom extraction, list mode or full crawl configuration. For migrations, large or unusual sites, and data extraction, it cannot. Many teams keep one Screaming Frog licence alongside Semrush for exactly those jobs.
+		</p>
+		<h3>Which is better for beginners?</h3>
+		<p>
+			Semrush, for the guided interface, health score and built-in explanations — though the free version of Screaming Frog is an excellent way to learn what a crawler actually sees, and costs nothing. Beginners who only need a site audit may find a prioritized tool such as Barracuda or Sitebulb easier than either.
+		</p>
+		<h3>Is Screaming Frog free? Is Semrush free?</h3>
+		<p>
+			Screaming Frog is free for up to 500 URLs with no expiry. Semrush has a 7-day trial and a free account limited to roughly ten lookups a day with one project — enough to evaluate, not to work.
+		</p>
+
+		<h2>The bottom line</h2>
+		<p>
+			Screaming Frog and Semrush are not alternatives; they are answers to different questions. Buy Screaming Frog when the question is "what is technically wrong with this site," buy Semrush when it is "what should this site rank for and who is beating it," and buy both when you are paid to answer both. If the only Semrush question you ask is the first one, you are paying suite prices for a crawler — and there are better crawlers for that money.
+		</p>
+		<div class="bg-[#282828] p-8 rounded-lg border border-[#8ec07c]/30 text-center my-10">
+			<h3 class="mt-0 text-white">Just need the audit, prioritized?</h3>
+			<p class="text-white/80 mb-6">
+				Crawl 100 pages free, no card. See issues ranked by impact with the reasoning behind each one.
+			</p>
+			<a href="https://app.barracudaseo.com" class="inline-block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-3 rounded-lg font-medium transition-colors">
+				Try Barracuda Free
+			</a>
+		</div>
+	`,
 	'screaming-frog-pricing': `
 		<p>
 			<strong>Screaming Frog SEO Spider costs $279 per user per year</strong> (£199 / €245), with volume discounts from five licences. The free version crawls up to 500 URLs with most of the checks enabled but no saved crawls, JavaScript rendering, custom extraction, scheduling, or API integrations. There is no monthly plan. That is the whole pricing model, and it has barely changed in a decade — the price went up modestly, the structure did not.
@@ -129,7 +269,7 @@ export const blogContent: Record<string, string> = {
 			<li><strong>Only the 500-URL limit:</strong> <strong>LibreCrawl</strong> and <strong>SiteOne Crawler</strong> are MIT-licensed, unlimited, and render JavaScript; both are covered in our <a href="/blog/alternatives-to-screaming-frog">Screaming Frog alternatives</a> guide.</li>
 			<li><strong>Only a scheduled cloud audit of a site you own:</strong> <strong>Ahrefs Webmaster Tools</strong> is free for verified sites.</li>
 			<li><strong>The triage and sharing problem:</strong> this is what <a href="/features">Barracuda</a> is for. It crawls up to 10,000 pages, scores issues by impact, shows the reasoning behind each priority, overlays Search Console impressions and clicks, keeps history, and gives you a public report link instead of a spreadsheet. At $29 a month it costs slightly more per year than one Screaming Frog licence and considerably less than five; the free tier covers 100 pages. It does not render JavaScript or do custom extraction, so it replaces the recurring audit rather than the deep one-off dig — our <a href="/blog/screaming-frog-vs-barracuda">Screaming Frog vs Barracuda</a> comparison goes through the split.</li>
-			<li><strong>You already pay for a suite:</strong> the Site Audit tools in Semrush, Ahrefs and SE Ranking are bundled. Less depth, no extra cost.</li>
+			<li><strong>You already pay for a suite:</strong> the Site Audit tools in Semrush, Ahrefs and SE Ranking are bundled. Less depth, no extra cost — <a href="/blog/screaming-frog-vs-semrush">Screaming Frog vs Semrush</a> compares the two audits directly.</li>
 		</ul>
 		<p>
 			For a wider view of the field, our comparison of <a href="/blog/best-seo-crawler-tools">SEO crawler and site audit tools</a> covers all of these by use case.
@@ -576,7 +716,7 @@ export const blogContent: Record<string, string> = {
 			Cloud crawlers trade configurability for scale, scheduling, and shared access. The enterprise tier — <strong>Lumar</strong> (formerly DeepCrawl), <strong>Oncrawl</strong>, and <strong>Botify</strong> — crawls millions of URLs, joins the crawl to server log files so you can see what Googlebot actually fetched, and prices by quote, usually in the thousands per month. <strong>JetOctopus</strong> is the value option in that class: about $549 a month on annual for a million crawled URLs and five million log lines, with unlimited seats and a JavaScript crawler included. For the enterprise buyer the decision is usually about log-file analysis, segmentation, and integrations rather than the crawl itself, which all of them do well.
 		</p>
 		<p>
-			Below enterprise, <strong>Sitechecker</strong> and similar cloud tools bundle a crawler with rank tracking, GSC and GA4 dashboards, and alerting for small agencies that want monitoring rather than deep audits. And the crawler built into <strong>Semrush</strong>, <strong>Ahrefs</strong>, and <strong>SE Ranking</strong> is "free" if you already pay $129–139 a month for the suite — competent, scheduled, and the same undifferentiated issue list every suite produces. If the suite is the thing you are questioning, our guides to <a href="/blog/best-semrush-alternatives-2026">Semrush alternatives</a> and <a href="/blog/alternatives-to-ahrefs">Ahrefs alternatives</a> break down what the audit module alone costs elsewhere.
+			Below enterprise, <strong>Sitechecker</strong> and similar cloud tools bundle a crawler with rank tracking, GSC and GA4 dashboards, and alerting for small agencies that want monitoring rather than deep audits. And the crawler built into <strong>Semrush</strong>, <strong>Ahrefs</strong>, and <strong>SE Ranking</strong> is "free" if you already pay $129–139 a month for the suite — competent, scheduled, and the same undifferentiated issue list every suite produces. For the direct comparison, see <a href="/blog/screaming-frog-vs-semrush">Screaming Frog vs Semrush</a>. If the suite is the thing you are questioning, our guides to <a href="/blog/best-semrush-alternatives-2026">Semrush alternatives</a> and <a href="/blog/alternatives-to-ahrefs">Ahrefs alternatives</a> break down what the audit module alone costs elsewhere.
 		</p>
 
 		<h2>Best SEO crawler for prioritization: Barracuda</h2>
@@ -6087,7 +6227,7 @@ sys.exit(0)</code></pre>
 			<a href="/features">Barracuda</a> starts from the same kind of crawl (up to 10,000 pages on Pro, with an interactive link graph for spotting orphan pages and weak internal linking) and does the triage. Issues are scored by impact and grouped by type, AI recommendations come with contextual fixes rather than a generic help-article link, and each priority shows its reasoning so you can defend it to a client or a developer. One caveat for JavaScript-heavy sites: Barracuda crawls server-rendered HTML, so if your content only exists after client-side rendering, Screaming Frog or Sitebulb in JS mode is the right tool for that crawl. Connect Google Search Console and it overlays real impressions and clicks, so "this page has a missing H1" becomes "this page gets 4,000 impressions a month and has a missing H1." It also covers the two things people keep Semrush for after the audit — <strong>keyword rank tracking</strong> with scheduled checks and <strong>shareable public reports</strong> — at $29 a month, with extra seats at $5 instead of $45.
 		</p>
 		<p>
-			<strong>What Barracuda does not do:</strong> it is not a keyword research database, and it has no third-party backlink index. If you open Keyword Magic Tool or Backlink Gap every week, you will need one of the tools above alongside it. We would rather say that here than have you find out on day two. For a fuller head-to-head, see <a href="/blog/semrush-vs-barracuda">Semrush vs Barracuda</a>.
+			<strong>What Barracuda does not do:</strong> it is not a keyword research database, and it has no third-party backlink index. If you open Keyword Magic Tool or Backlink Gap every week, you will need one of the tools above alongside it. We would rather say that here than have you find out on day two. For a fuller head-to-head, see <a href="/blog/semrush-vs-barracuda">Semrush vs Barracuda</a>, or <a href="/blog/screaming-frog-vs-semrush">Screaming Frog vs Semrush</a> if you are weighing the suite against a dedicated crawler.
 		</p>
 
 		<h2>How to switch from Semrush without losing anything</h2>
@@ -6293,7 +6433,7 @@ sys.exit(0)</code></pre>
 			<li><strong>Oncrawl</strong> — similar territory with a stronger data-science bent: crawl data joined to logs, GSC and analytics for segmentation. Also quote-based.</li>
 			<li><strong>JetOctopus</strong> — the value option at enterprise scale. Pro starts at about $549 a month (annual) for a million crawled URLs and five million log lines, with unlimited seats and projects and a JavaScript crawler included.</li>
 			<li><strong>Sitebulb Cloud</strong> — from £95 a month, the natural upgrade for Sitebulb desktop users who need collaboration.</li>
-			<li><strong>Ahrefs Site Audit and Semrush Site Audit</strong> — if you already pay $129–139 a month for the suite, the bundled cloud crawler is "free." Both are less configurable than Screaming Frog and produce the same kind of undifferentiated issue list; see our <a href="/blog/best-semrush-alternatives-2026">Semrush alternatives</a> and <a href="/blog/alternatives-to-ahrefs">Ahrefs alternatives</a> guides if the suite itself is the thing you are questioning.</li>
+			<li><strong>Ahrefs Site Audit and Semrush Site Audit</strong> — if you already pay $129–139 a month for the suite, the bundled cloud crawler is "free" (see <a href="/blog/screaming-frog-vs-semrush">Screaming Frog vs Semrush</a> for how the two audits compare). Both are less configurable than Screaming Frog and produce the same kind of undifferentiated issue list; see our <a href="/blog/best-semrush-alternatives-2026">Semrush alternatives</a> and <a href="/blog/alternatives-to-ahrefs">Ahrefs alternatives</a> guides if the suite itself is the thing you are questioning.</li>
 		</ul>
 
 		<h2>Barracuda: for when the crawl is not the hard part</h2>
