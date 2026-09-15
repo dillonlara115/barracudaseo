@@ -1,5 +1,153 @@
 // Blog post content stored separately for better maintainability
 export const blogContent: Record<string, string> = {
+	'screaming-frog-vs-sitebulb': `
+		<p>
+			Screaming Frog and Sitebulb are the two desktop crawlers most technical SEOs actually own, and the difference between them is not what they find — both crawl a site thoroughly and flag the same classes of problem — but what they do next. <strong>Screaming Frog gives you the data; Sitebulb gives you the explanation.</strong> Which one you want depends on whether you are the person who interprets audits or the person who has to hand them to someone else.
+		</p>
+		<p>
+			This comparison covers where each tool is clearly better, the pricing (which is more different than it looks), the "both" case that most agencies land on, and a third option for the reader who only needs the recurring audit. We make that third option and say so.
+		</p>
+		<p class="text-white/60 text-sm">
+			Prices checked September 2026. Sitebulb's desktop prices are shown approximately because its pricing page renders them dynamically; confirm on sitebulb.com.
+		</p>
+
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<h3 class="mt-0 text-white">Screaming Frog vs Sitebulb at a glance</h3>
+			<div class="overflow-x-auto">
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]"></th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Screaming Frog</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Sitebulb</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Philosophy</td><td class="p-3 border border-white/20 text-white/80">Raw data, maximum control</td><td class="p-3 border border-white/20 text-white/80">Explained issues, prioritized "Hints"</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Platform</td><td class="p-3 border border-white/20 text-white/80">Desktop (Win/Mac/Linux)</td><td class="p-3 border border-white/20 text-white/80">Desktop (Win/Mac) + Sitebulb Cloud</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Crawl limit</td><td class="p-3 border border-white/20 text-white/80">500 free; unlimited paid (memory-bound)</td><td class="p-3 border border-white/20 text-white/80">10k/audit Lite; 500k/audit Pro</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">JavaScript rendering</td><td class="p-3 border border-white/20 text-white/80">Yes (paid)</td><td class="p-3 border border-white/20 text-white/80">Yes</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Custom extraction</td><td class="p-3 border border-white/20 text-white/80">XPath, CSS, regex — best in class</td><td class="p-3 border border-white/20 text-white/80">Limited</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">List mode</td><td class="p-3 border border-white/20 text-white/80">Yes</td><td class="p-3 border border-white/20 text-white/80">Yes (URL list / sitemap sources)</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Visualisation</td><td class="p-3 border border-white/20 text-white/80">Basic crawl tree and force-directed graph</td><td class="p-3 border border-white/20 text-white/80">Crawl maps, link graphs — best in class</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Issue guidance</td><td class="p-3 border border-white/20 text-white/80">Minimal; you interpret</td><td class="p-3 border border-white/20 text-white/80">Every Hint explained with importance and fix advice</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Client-ready reports</td><td class="p-3 border border-white/20 text-white/80">No; export and format yourself</td><td class="p-3 border border-white/20 text-white/80">Yes, PDF and shareable</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">GSC / GA / PSI integration</td><td class="p-3 border border-white/20 text-white/80">Yes (paid)</td><td class="p-3 border border-white/20 text-white/80">Yes</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Scheduling &amp; crawl comparison</td><td class="p-3 border border-white/20 text-white/80">Yes (paid)</td><td class="p-3 border border-white/20 text-white/80">Yes</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Team access</td><td class="p-3 border border-white/20 text-white/80">Per-user licences</td><td class="p-3 border border-white/20 text-white/80">Extra users ~£7/mo; Cloud for teams</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Price</td><td class="p-3 border border-white/20 text-white/80">$279/user/yr (~$23/mo)</td><td class="p-3 border border-white/20 text-white/80">~$15/mo Lite, ~$35/mo Pro; Cloud from £95/mo</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Trial</td><td class="p-3 border border-white/20 text-white/80">Free tier, no expiry</td><td class="p-3 border border-white/20 text-white/80">14 days, no card</td></tr>
+				</tbody>
+			</table>
+			</div>
+		</div>
+
+		<h2>Where Screaming Frog wins</h2>
+		<h3>Control and depth</h3>
+		<p>
+			Screaming Frog exposes every crawl setting there is: speed and threads, include and exclude patterns, user-agent, cookies, authentication, rendering timeouts, what to treat as internal, how to handle parameters. On a site that does something unusual — session IDs, faceted navigation, a staging server behind basic auth — that control is the difference between a useful crawl and a useless one. Sitebulb covers the common cases well and gets awkward at the edges.
+		</p>
+		<h3>Custom extraction</h3>
+		<p>
+			This is the feature that makes technical SEOs refuse to give up Screaming Frog. Point an XPath or CSS selector at any element and the crawler collects it from every page: prices, stock status, schema properties, author names, the presence of a tracking script. It turns a crawler into a data-collection tool, and nothing at desktop prices comes close. Sitebulb's equivalent is far more limited.
+		</p>
+		<h3>Raw data, your way</h3>
+		<p>
+			If you already know what you are looking for, Screaming Frog's tabs, filters, and exports are faster than any guided interface. Experienced SEOs find Sitebulb's explanations get in the way after the tenth audit; Screaming Frog never explains anything, which is exactly what they want.
+		</p>
+		<h3>Price for a single user</h3>
+		<p>
+			$279 a year — about $23 a month — with a free tier that handles 500 URLs forever. Sitebulb Pro at roughly $35 a month is around 50% more over a year; Sitebulb Lite is cheaper but capped at 10,000 URLs per audit. Our <a href="/blog/screaming-frog-pricing">Screaming Frog pricing guide</a> has the full breakdown, including the per-user catch.
+		</p>
+
+		<h2>Where Sitebulb wins</h2>
+		<h3>Explaining the audit</h3>
+		<p>
+			Every issue Sitebulb finds is a "Hint" with a plain-English description of what it is, why it matters, how important it is, and how to fix it. For anyone who is not a full-time technical SEO — in-house marketers, content teams, junior staff, clients — this is the difference between an audit they can act on and one they file. It is also a genuinely good way to learn technical SEO.
+		</p>
+		<h3>Visualisation and presentation</h3>
+		<p>
+			Sitebulb's crawl maps and link graphs are the best in the category: you can see site architecture, crawl depth, and orphaned sections at a glance, and drop the image straight into a client deck. Reports export cleanly as PDFs. Screaming Frog's visualisations exist but look like what they are — a data tool's afterthought — and its "report" is a spreadsheet.
+		</p>
+		<h3>Teams and cloud</h3>
+		<p>
+			Sitebulb desktop lets you add users for around £7 a month each, and Sitebulb Cloud (from £95 a month, two-user minimum) moves crawling off laptops entirely with shared projects and scheduling. Screaming Frog's answer to "my colleague needs to see this" is a second $279 licence and an exported file.
+		</p>
+		<h3>Getting started</h3>
+		<p>
+			Sitebulb's setup wizard, sensible defaults, and 14-day trial mean a first useful audit in ten minutes. Screaming Frog's free tier is just as quick to run, but reading the result takes experience Sitebulb does not assume.
+		</p>
+
+		<h2>Where they tie</h2>
+		<p>
+			Crawl accuracy: both find the same broken links, redirect chains, canonical problems, duplicate titles, and indexability issues on a normal site. JavaScript rendering: both do it with headless Chrome, Screaming Frog only in the paid version. Integrations: both pull Search Console, Analytics and PageSpeed data onto the crawl. Scheduling and crawl comparison: both, paid. If your decision hinges on "which one finds more," you will not find a meaningful difference on a typical site; the difference is entirely in configuration at the edges and interpretation at the end.
+		</p>
+
+		<h2>The pricing math, properly</h2>
+		<p>
+			For one person, Screaming Frog is cheaper: $279 a year against roughly $180 for Sitebulb Lite (fine up to 10,000 URLs per audit) or about $420 for Pro. For a team of three, the calculation flips: three Screaming Frog licences are $837 a year, while Sitebulb Pro plus two extra users is around $590. For a team that needs shared cloud projects, Sitebulb Cloud at £95 a month (about $1,450 a year) is a different budget line entirely, and at that point you are comparing it against JetOctopus and Lumar rather than Screaming Frog.
+		</p>
+
+		<h2>Which should you choose?</h2>
+		<h3>Choose Screaming Frog if…</h3>
+		<ul>
+			<li>You are the technical SEO and you interpret the data yourself</li>
+			<li>You need custom extraction, deep configuration, or unusual-site handling</li>
+			<li>Migrations and one-off deep audits are the main use</li>
+			<li>One licence covers everyone who actually runs crawls</li>
+		</ul>
+		<h3>Choose Sitebulb if…</h3>
+		<ul>
+			<li>You present audits to clients or stakeholders</li>
+			<li>Your team includes people who need the "why" explained</li>
+			<li>Visual site architecture matters to your work</li>
+			<li>More than one person needs access and you would rather not buy licences per head</li>
+		</ul>
+		<h3>Use both if…</h3>
+		<ul>
+			<li>You are an agency: Sitebulb for the audits that go to clients, one Screaming Frog licence for the technical lead's deep dives and extractions</li>
+		</ul>
+		<p>
+			"Both" is, again, the most common answer among professionals. They are cheap enough together — under $60 a month for one of each — that the question is rarely which to buy and usually which to open first.
+		</p>
+
+		<h2>A third option: if the audit is recurring and the output is what matters</h2>
+		<p>
+			Both of these are desktop tools built around the one-off audit, and both end in a list — Screaming Frog's unranked, Sitebulb's explained. If what you actually need is a monthly crawl that tells you which handful of issues to fix <em>this month</em>, given what the site earns traffic from, and a link you can send to whoever has to fix them, that is a different product. <a href="/features">Barracuda</a> crawls up to 10,000 pages on Pro, scores issues by impact, shows the reasoning behind each priority, weights everything by real Search Console impressions and clicks, keeps crawl history, includes rank tracking and public report links, and adds users at $5 a month. It is $29 a month with a 100-page free tier. It does not render JavaScript or do custom extraction, so it does not replace Screaming Frog for the deep dig — it replaces the spreadsheet that follows it. Our <a href="/blog/screaming-frog-vs-barracuda">Screaming Frog vs Barracuda</a> comparison covers that split, and our <a href="/blog/best-seo-crawler-tools">SEO crawler comparison</a> covers the whole field, including the other <a href="/blog/alternatives-to-screaming-frog">Screaming Frog alternatives</a>.
+		</p>
+
+		<h2>Frequently asked questions</h2>
+		<h3>Is Sitebulb better than Screaming Frog?</h3>
+		<p>
+			For explaining and presenting an audit, yes; for crawl control, custom extraction and raw data, no. They find essentially the same issues on a typical site. Sitebulb is the better tool for people who hand audits to others; Screaming Frog is the better tool for people who interpret them.
+		</p>
+		<h3>How much do Screaming Frog and Sitebulb cost?</h3>
+		<p>
+			Screaming Frog is $279 per user per year, with a free tier for up to 500 URLs. Sitebulb desktop runs roughly $15 a month for Lite (10,000 URLs per audit) and about $35 for Pro (500,000), with extra users around £7 a month; Sitebulb Cloud starts at £95 a month. Sitebulb has a 14-day free trial.
+		</p>
+		<h3>Is Screaming Frog a good tool for SEO?</h3>
+		<p>
+			It is the reference desktop crawler for technical SEO and has been for over a decade. It does not do keyword research, backlinks or rank tracking, and it does not prioritize what it finds, but for crawling and technical diagnosis it remains the standard other tools are measured against.
+		</p>
+		<h3>Can I use Sitebulb and Screaming Frog together?</h3>
+		<p>
+			Yes, and many agencies do: Sitebulb for client-facing audits and team access, Screaming Frog for deep configuration, custom extraction and migrations. Together they cost under $60 a month for one user of each.
+		</p>
+
+		<h2>The bottom line</h2>
+		<p>
+			Screaming Frog is a data tool; Sitebulb is an audit tool. If you are the expert, Screaming Frog's control and price are hard to beat. If you serve people who are not, Sitebulb's explanations and visuals earn their cost on the first client call. Most professionals end up with both, and the ones whose audits keep ending in a spreadsheet nobody actions end up wanting a third thing entirely.
+		</p>
+		<div class="bg-[#282828] p-8 rounded-lg border border-[#8ec07c]/30 text-center my-10">
+			<h3 class="mt-0 text-white">The recurring audit, prioritized</h3>
+			<p class="text-white/80 mb-6">
+				Crawl 100 pages free, no card. See issues ranked by impact with the reasoning behind each one.
+			</p>
+			<a href="https://app.barracudaseo.com" class="inline-block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-3 rounded-lg font-medium transition-colors">
+				Try Barracuda Free
+			</a>
+		</div>
+	`,
 	'screaming-frog-vs-semrush': `
 		<p>
 			Screaming Frog and Semrush get compared constantly and are barely the same kind of product. Screaming Frog is a desktop crawler that does one thing — technical site audits — to a depth nothing else matches, for $279 a year. Semrush is a cloud marketing suite that does forty things, one of which is a site audit, for $139 to $549 a month. The question people are really asking when they search this is: <strong>do I need both, and if I can only afford one, which?</strong>
@@ -242,7 +390,7 @@ export const blogContent: Record<string, string> = {
 		</p>
 		<h3>Small agency with several people: yes for one or two, not for everyone</h3>
 		<p>
-			Per-user licensing is where the bill stops being small. The usual pattern is one or two licences for the people who actually run deep crawls, and something cloud-based with shared access for the rest of the team and for clients — see our note on hidden costs below. Buying five licences so everyone can open the same crawl is the expensive way to solve a sharing problem.
+			Per-user licensing is where the bill stops being small. The usual pattern is one or two licences for the people who actually run deep crawls, and something cloud-based with shared access for the rest of the team and for clients — see our note on hidden costs below. Buying five licences so everyone can open the same crawl is the expensive way to solve a sharing problem; <a href="/blog/screaming-frog-vs-sitebulb">Sitebulb</a> adds users for about £7 a month, which is one reason agencies often run both.
 		</p>
 		<h3>Content or general marketer who audits occasionally: probably not</h3>
 		<p>
@@ -691,7 +839,7 @@ export const blogContent: Record<string, string> = {
 		</p>
 		<h3>Sitebulb</h3>
 		<p>
-			The crawler for people who have to explain the audit to someone else. Every finding is a "Hint" with a plain-English description, a priority, and fix guidance, and the crawl map visualisation is the best in the category. Desktop plans run from roughly $15 a month (Lite, 10,000 URLs per audit) to about $35 (Pro, 500,000), with a 14-day trial; Sitebulb Cloud adds team access from £95 a month. Less configurable than Screaming Frog, and it decides what is worth flagging, which is the point.
+			The crawler for people who have to explain the audit to someone else. Every finding is a "Hint" with a plain-English description, a priority, and fix guidance, and the crawl map visualisation is the best in the category. Desktop plans run from roughly $15 a month (Lite, 10,000 URLs per audit) to about $35 (Pro, 500,000), with a 14-day trial; Sitebulb Cloud adds team access from £95 a month. Less configurable than Screaming Frog, and it decides what is worth flagging, which is the point — see <a href="/blog/screaming-frog-vs-sitebulb">Screaming Frog vs Sitebulb</a> for the head-to-head.
 		</p>
 		<h3>Netpeak Spider</h3>
 		<p>
@@ -6416,7 +6564,7 @@ sys.exit(0)</code></pre>
 			Sitebulb is the tool most people mean when they say "Screaming Frog but nicer." It crawls the same way and then does the explaining: every issue is a "Hint" with a plain-English description, importance rating, and how-to-fix guidance, and the site is visualised as a crawl map you can actually show a client. Desktop plans start around $15 a month (Lite, 10,000 URLs per audit) and go to roughly $35 (Pro, 500,000 URLs), with a 14-day trial and extra seats at about £7. Sitebulb Cloud, for teams, starts at £95 a month. The trade-off against Screaming Frog is control: Sitebulb decides what is worth flagging, and its custom extraction is far more limited.
 		</p>
 		<p>
-			We have a dedicated <a href="/blog/screaming-frog-vs-barracuda">Screaming Frog vs Barracuda</a> comparison; the short version of Screaming Frog vs Sitebulb is that Sitebulb wins on presentation and loses on raw configurability, and a lot of agencies run both.
+			We have a dedicated <a href="/blog/screaming-frog-vs-barracuda">Screaming Frog vs Barracuda</a> comparison; the short version of <a href="/blog/screaming-frog-vs-sitebulb">Screaming Frog vs Sitebulb</a> is that Sitebulb wins on presentation and loses on raw configurability, and a lot of agencies run both.
 		</p>
 
 		<h3>Netpeak Spider — the budget desktop option</h3>

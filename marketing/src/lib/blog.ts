@@ -18,6 +18,47 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
 	{
+		slug: 'screaming-frog-vs-sitebulb',
+		title: 'Screaming Frog vs Sitebulb (2026): Which Crawler Should You Actually Use?',
+		seoTitle: 'Screaming Frog vs Sitebulb (2026): Which Crawler Wins?',
+		description:
+			'Screaming Frog gives you the data; Sitebulb gives you the explanation. Where each wins, the real pricing math for one user vs a team, when to run both, and a third option for recurring audits.',
+		author: 'Barracuda Team',
+		publishDate: '2026-09-15',
+		readTime: 9,
+		category: 'Comparisons',
+		tags: [
+			'screaming frog',
+			'sitebulb',
+			'comparison',
+			'SEO crawler',
+			'technical SEO',
+			'site audit'
+		],
+		faqs: [
+			{
+				question: 'Is Sitebulb better than Screaming Frog?',
+				answer:
+					'For explaining and presenting an audit, yes; for crawl control, custom extraction and raw data, no. They find essentially the same issues on a typical site. Sitebulb suits people who hand audits to others; Screaming Frog suits people who interpret them.'
+			},
+			{
+				question: 'How much do Screaming Frog and Sitebulb cost?',
+				answer:
+					'Screaming Frog is $279 per user per year with a free tier up to 500 URLs. Sitebulb desktop is roughly $15 a month for Lite (10,000 URLs per audit) and about $35 for Pro (500,000), with extra users around £7 a month; Sitebulb Cloud starts at £95 a month and has a 14-day free trial.'
+			},
+			{
+				question: 'Is Screaming Frog a good tool for SEO?',
+				answer:
+					'It is the reference desktop crawler for technical SEO and has been for over a decade. It does not do keyword research, backlinks or rank tracking, and it does not prioritize findings, but for crawling and technical diagnosis it remains the standard other tools are measured against.'
+			},
+			{
+				question: 'Can I use Sitebulb and Screaming Frog together?',
+				answer:
+					'Yes, and many agencies do: Sitebulb for client-facing audits and team access, Screaming Frog for deep configuration, custom extraction and migrations. Together they cost under $60 a month for one user of each.'
+			}
+		]
+	},
+	{
 		slug: 'screaming-frog-vs-semrush',
 		title: 'Screaming Frog vs Semrush (vs Barracuda): Crawler or Suite?',
 		seoTitle: 'Screaming Frog vs Semrush: Which Do You Need in 2026?',
