@@ -107,7 +107,7 @@ export const blogPosts: BlogPost[] = [
 			{
 				question: 'How much does Screaming Frog cost?',
 				answer:
-					'$279 per user per year (£199, €245) for the SEO Spider, with discounts to $265, $249 and $235 per licence at 5, 10 and 20 licences. The Log File Analyser is a separate £79-a-year licence. There is no monthly plan.'
+					'$279 per user per year (£199, €245) for the SEO Spider, with discounts to $265, $249 and $235 per licence at 5, 10 and 20 licences. The Log File Analyser is a separate $139-a-year licence. There is no monthly plan.'
 			},
 			{
 				question: 'Is there a free version of Screaming Frog?',

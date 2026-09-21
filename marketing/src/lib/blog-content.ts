@@ -341,7 +341,7 @@ export const blogContent: Record<string, string> = {
 			</table>
 			</div>
 			<p class="text-white/60 text-sm mt-4 mb-0">
-				Licences last one year and must be renewed at the then-current price. No monthly billing, no auto-renew by default, no free trial of the paid features. The separate <strong>Log File Analyser</strong> is free for 1,000 log lines and £79 per user per year beyond that (£69 at 20+ licences).
+				Licences last one year and must be renewed at the then-current price. No monthly billing, no auto-renew by default, no free trial of the paid features. The separate <strong>Log File Analyser</strong> is free for 1,000 log lines and $139 per user per year beyond that ($99 at 20+ licences).
 			</p>
 		</div>
 		<p>
@@ -426,7 +426,7 @@ export const blogContent: Record<string, string> = {
 		<h2>Frequently asked questions</h2>
 		<h3>How much does Screaming Frog cost?</h3>
 		<p>
-			$279 per user per year (£199, €245) for the SEO Spider, with discounts to $265, $249 and $235 per licence at 5, 10 and 20 licences. The Log File Analyser is a separate £79-a-year licence. There is no monthly plan.
+			$279 per user per year (£199, €245) for the SEO Spider, with discounts to $265, $249 and $235 per licence at 5, 10 and 20 licences. The Log File Analyser is a separate $139-a-year licence. There is no monthly plan.
 		</p>
 		<h3>Is there a free version of Screaming Frog?</h3>
 		<p>
@@ -590,7 +590,7 @@ export const blogContent: Record<string, string> = {
 
 		<h2>6. Log file analysis</h2>
 		<p>
-			Crawlers show what <em>could</em> be crawled; logs show what Googlebot <em>did</em> crawl, how often, and what it wasted budget on. GSC's <strong>Crawl Stats</strong> report is the free, aggregated version. The <strong>Screaming Frog Log File Analyser</strong> is free up to 1,000 lines and around £79 a year beyond, and is the right tool for a one-off analysis. At scale, <strong>JetOctopus</strong>, <strong>Oncrawl</strong> and <strong>Botify</strong> ingest logs continuously and join them to crawl data, which is the single most valuable thing the enterprise tier does.
+			Crawlers show what <em>could</em> be crawled; logs show what Googlebot <em>did</em> crawl, how often, and what it wasted budget on. GSC's <strong>Crawl Stats</strong> report is the free, aggregated version. The <strong>Screaming Frog Log File Analyser</strong> is free up to 1,000 lines and $139 a year beyond, and is the right tool for a one-off analysis. At scale, <strong>JetOctopus</strong>, <strong>Oncrawl</strong> and <strong>Botify</strong> ingest logs continuously and join them to crawl data, which is the single most valuable thing the enterprise tier does.
 		</p>
 
 		<h2>7. robots.txt, sitemaps, hreflang, and the small stuff</h2>
