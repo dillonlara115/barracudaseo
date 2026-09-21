@@ -15,8 +15,8 @@ function latestBlogDate(): string {
 const staticRoutes = [
 	{ path: '', priority: '1.0', changefreq: 'weekly', lastmod: '2026-09-14' }, // Home
 	{ path: '/about', priority: '0.8', changefreq: 'monthly', lastmod: '2026-03-14' },
-	{ path: '/features', priority: '0.9', changefreq: 'monthly', lastmod: '2026-09-14' },
-	{ path: '/pricing', priority: '0.9', changefreq: 'monthly', lastmod: '2026-02-26' },
+	{ path: '/features', priority: '0.9', changefreq: 'monthly', lastmod: '2026-09-21' },
+	{ path: '/pricing', priority: '0.9', changefreq: 'monthly', lastmod: '2026-09-21' },
 	{ path: '/faq', priority: '0.8', changefreq: 'monthly', lastmod: '2026-02-26' },
 	{ path: '/roadmap', priority: '0.7', changefreq: 'monthly', lastmod: '2026-02-26' },
 	{ path: '/privacy', priority: '0.5', changefreq: 'yearly', lastmod: '2026-02-26' },

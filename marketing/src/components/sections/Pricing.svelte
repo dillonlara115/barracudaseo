@@ -111,7 +111,7 @@
 					</li>
 					<li class="flex items-center gap-2 text-[#3c3836]">
 						<span>✓</span>
-						<span>Integrations: Google Search Console, Analytics, Clarity, Slack</span>
+						<span>Integrations: Google Search Console, Analytics, Clarity (Slack coming soon)</span>
 					</li>
 					<li class="flex items-center gap-2 text-[#3c3836]">
 						<span>✓</span>

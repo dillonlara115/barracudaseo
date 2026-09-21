@@ -120,28 +120,37 @@
 					<ul class="space-y-2 text-white/70">
 						<li class="flex items-start gap-2">
 							<CircleCheck class="mt-0.5 h-5 w-5 flex-shrink-0 text-[#8ec07c]" />
-							<span>Broken links and redirect chains</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<CircleCheck class="mt-0.5 h-5 w-5 flex-shrink-0 text-[#8ec07c]" />
 							<span
-								>Missing or <a
-									href="/blog/duplicate-meta-tags-fix"
-									class="text-[#8ec07c] underline hover:text-[#a0d28c]">duplicate meta tags</a
+								>Broken links, broken images and <a
+									href="/blog/redirect-chains-seo-killer"
+									class="text-[#8ec07c] underline hover:text-[#a0d28c]">redirect chains</a
 								></span
 							>
 						</li>
 						<li class="flex items-start gap-2">
 							<CircleCheck class="mt-0.5 h-5 w-5 flex-shrink-0 text-[#8ec07c]" />
-							<span>Slow-loading pages</span>
+							<span
+								>Missing, short, long or empty titles and <a
+									href="/blog/are-missing-meta-descriptions-important"
+									class="text-[#8ec07c] underline hover:text-[#a0d28c]">meta descriptions</a
+								></span
+							>
+						</li>
+						<li class="flex items-start gap-2">
+							<CircleCheck class="mt-0.5 h-5 w-5 flex-shrink-0 text-[#8ec07c]" />
+							<span>Missing or multiple H1s, and pages with no canonical tag</span>
+						</li>
+						<li class="flex items-start gap-2">
+							<CircleCheck class="mt-0.5 h-5 w-5 flex-shrink-0 text-[#8ec07c]" />
+							<span>Slow-responding pages, oversized images and missing alt text</span>
 						</li>
 						<li class="flex items-start gap-2">
 							<CircleCheck class="mt-0.5 h-5 w-5 flex-shrink-0 text-[#8ec07c]" />
 							<span
 								><a
-									href="/blog/crawled-not-indexed"
-									class="text-[#8ec07c] underline hover:text-[#a0d28c]">Indexability issues</a
-								> and best practice violations</span
+									href="/blog/visualize-site-structure-link-graph"
+									class="text-[#8ec07c] underline hover:text-[#a0d28c]">Orphaned pages</a
+								> and weak internal linking, via the link graph</span
 							>
 						</li>
 					</ul>
