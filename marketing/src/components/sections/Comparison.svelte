@@ -22,6 +22,27 @@
 				You're not replacing tools like SEMrush or Ahrefs. You're replacing the stress of
 				interpreting them alone.
 			</p>
+			<p class="mx-auto mt-3 max-w-2xl text-sm text-white/40">
+				Weighing your options? See how Barracuda compares to
+				<a
+					href="/blog/screaming-frog-vs-barracuda"
+					class="text-[#8ec07c]/80 hover:text-[#8ec07c] hover:underline">Screaming Frog</a
+				>
+				and
+				<a
+					href="/blog/semrush-vs-barracuda"
+					class="text-[#8ec07c]/80 hover:text-[#8ec07c] hover:underline">Semrush</a
+				>, or browse the
+				<a
+					href="/blog/alternatives-to-ahrefs"
+					class="text-[#8ec07c]/80 hover:text-[#8ec07c] hover:underline">Ahrefs alternatives</a
+				>
+				and
+				<a
+					href="/blog/best-seo-crawler-tools"
+					class="text-[#8ec07c]/80 hover:text-[#8ec07c] hover:underline">SEO crawler comparison</a
+				>.
+			</p>
 		</div>
 
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">

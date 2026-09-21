@@ -22,7 +22,7 @@ const staticRoutes = [
 	{ path: '/privacy', priority: '0.5', changefreq: 'yearly', lastmod: '2026-02-26' },
 	{ path: '/terms', priority: '0.5', changefreq: 'yearly', lastmod: '2026-02-26' },
 	{ path: '/use-cases/e-commerce', priority: '0.8', changefreq: 'monthly', lastmod: '2026-09-14' },
-	{ path: '/use-cases/local-seo', priority: '0.8', changefreq: 'monthly', lastmod: '2026-09-14' },
+	{ path: '/use-cases/local-seo', priority: '0.8', changefreq: 'monthly', lastmod: '2026-09-21' },
 	{
 		path: '/use-cases/programmatic-seo',
 		priority: '0.8',
