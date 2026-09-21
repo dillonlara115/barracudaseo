@@ -845,14 +845,49 @@ export const blogPosts: BlogPost[] = [
 	},
 	{
 		slug: 'how-to-write-title-tags-that-rank-and-get-clicks',
-		title: 'Title Tag Optimization for 2026: Get More Clicks',
+		title: 'Title Tags for SEO in 2026: Length, Examples, Formulas, and Why Google Rewrites Them',
+		seoTitle: 'Title Tag SEO: Length, Examples & Formulas (2026)',
 		description:
-			'Master title tag optimization with proven formulas. We show before and after examples of how tweaking a few words boosts click-through rates and rankings.',
+			'2026 title tag length limits, why Google rewrites titles and how to stop it, five formulas, twelve before-and-after examples by page type, and how to test a change.',
 		author: 'Barracuda Team',
 		publishDate: '2026-03-28',
-		readTime: 7,
+		updatedDate: '2026-09-21',
+		readTime: 11,
 		category: 'On-Page SEO',
-		tags: ['title tags', 'on-page SEO', 'CTR optimization', 'SEO copywriting'],
+		tags: [
+			'title tags',
+			'on-page SEO',
+			'CTR optimization',
+			'SEO copywriting',
+			'title tag examples'
+		],
+		faqs: [
+			{
+				question: 'How long should a title tag be?',
+				answer:
+					'Aim for 50–60 characters, with the keyword and main promise in the first 50. Google truncates by pixel width at around 600 px on desktop, so wide letters and capitals shorten the budget. Going over is not penalised — the end is cut with an ellipsis — but only the brand suffix should live past 60.'
+			},
+			{
+				question: 'What are some good title tag examples?',
+				answer:
+					'"How to Fix CLS Issues on WordPress Sites" for a how-to; "Men\'s Blue Trail Running Shoes – Free Shipping | ShoeStore" for a product; "24/7 Emergency Plumber in Chicago – 30-Min Response" for a local service; "Screaming Frog vs Sitebulb (2026): Which Crawler Wins?" for a comparison. Each states the keyword once, early, and adds one specific reason to click.'
+			},
+			{
+				question: 'How do I optimize title tags?',
+				answer:
+					'Put the primary keyword once in the first half, match the format the top results use, make the title agree with the H1, keep it unique across the site, and add one concrete hook such as a number, timeframe, location or benefit. Then measure click-through rate in Search Console for 14–28 days and keep what improved.'
+			},
+			{
+				question: 'Do title tags affect rankings?',
+				answer:
+					'Yes, but modestly. Google confirms the title is a ranking signal and a keyword in it helps relevance, but it will not lift a weak page onto page one. The larger effect is on click-through rate, which is why a page can double its traffic from a title change without moving position.'
+			},
+			{
+				question: 'Why does Google change my title tag?',
+				answer:
+					'Because it judged the title too long, repetitive, boilerplate, or a poor match for the page or query, and substituted text from the H1 or page. Shortening it, removing repetition, aligning it with the H1 and making it describe the page resolves the large majority of rewrites.'
+			}
+		],
 		featured: false
 	},
 	{

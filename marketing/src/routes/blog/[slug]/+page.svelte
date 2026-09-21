@@ -119,7 +119,7 @@
 	<div class="container mx-auto max-w-4xl px-4">
 		<div class="mb-6">
 			<a
-				href="/blog/category/{post.category.toLowerCase()}"
+				href="/blog/category/{encodeURIComponent(post.category.toLowerCase())}"
 				class="rounded-full bg-[#8ec07c]/20 px-3 py-1 text-sm font-medium text-[#8ec07c] transition-colors hover:bg-[#8ec07c]/30"
 			>
 				{post.category}

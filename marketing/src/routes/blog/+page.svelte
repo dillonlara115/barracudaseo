@@ -71,7 +71,7 @@
 						<div class="p-6">
 							<div class="relative z-10 mb-3 flex items-center gap-2">
 								<a
-									href="/blog/category/{post.category.toLowerCase()}"
+									href="/blog/category/{encodeURIComponent(post.category.toLowerCase())}"
 									class="rounded-full bg-[#8ec07c]/20 px-3 py-1 text-xs font-medium text-[#8ec07c] transition-colors hover:bg-[#8ec07c]/30"
 								>
 									{post.category}
@@ -122,7 +122,7 @@
 					<div class="p-6">
 						<div class="relative z-10 mb-3 flex items-center gap-2">
 							<a
-								href="/blog/category/{post.category.toLowerCase()}"
+								href="/blog/category/{encodeURIComponent(post.category.toLowerCase())}"
 								class="rounded-full bg-[#8ec07c]/20 px-3 py-1 text-xs font-medium text-[#8ec07c] transition-colors hover:bg-[#8ec07c]/30"
 							>
 								{post.category}

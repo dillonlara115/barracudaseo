@@ -8436,278 +8436,204 @@ sys.exit(0)</code></pre>
 	`,
 	'how-to-write-title-tags-that-rank-and-get-clicks': `
 		<p>
-			Most SEO campaigns fail before a user even lands on the website. If your title tag does not stand out in the search results, you will not get the click.
+			A title tag is the one line of SEO copy that both Google and the person searching read before anything else. It is a small ranking signal and a large click signal: two pages in the same position can differ by 2–3× in click-through rate on the strength of the title alone. It is also the element Google rewrites most often — in most studies, somewhere between a third and two-thirds of titles get altered in the results — which means writing a good one is now partly about writing one Google is willing to keep.
 		</p>
-
 		<p>
-			Too many marketers treat title tags as an afterthought. They cram a few keywords together, add their brand name, and hit publish. In 2026, Google often rewrites these lazy titles entirely. Proper title tag optimization requires balancing keyword targeting with genuine click appeal.
+			This guide covers the 2026 length limits (in pixels, not just characters), why Google rewrites titles and how to stop it, five formulas that work, twelve before-and-after examples by page type, and how to test a change so you know whether it helped. Everything here applies whether you edit titles by hand in a CMS or fix them at scale after a crawl.
 		</p>
 
+		<h2>What a title tag is (and is not)</h2>
 		<p>
-			When you get this right, you can see traffic increases without building a single new backlink. This guide breaks down exactly how to write title tags that rank well and demand clicks, complete with before and after examples.
+			The title tag is the <code>&lt;title&gt;</code> element in a page's <code>&lt;head&gt;</code>. It appears as the blue link in search results, the browser tab, and the default text when the page is shared. It is not the H1 — that is the visible headline on the page — although the two should agree, because when they disagree Google tends to swap in the H1. It is also not the meta description, which is the grey text below the link and is not a ranking factor at all.
 		</p>
-
-		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8">
-			<h2 class="mt-0 text-[#8ec07c]">What This Post Covers</h2>
-			<ul class="mb-0">
-				<li>Why Google rewrites title tags and how to prevent it</li>
-				<li>The golden rules of effective title tag optimization</li>
-				<li>Proven title tag formulas with before and after examples</li>
-				<li>Real examples for e-commerce, local service, and blog pages</li>
-				<li>How to test and measure title tag performance</li>
-			</ul>
-		</div>
-
-		<h2>The State of Title Tag Optimization in 2026</h2>
-
 		<p>
-			Google has grown increasingly aggressive with how it displays search results. If your title tag is too long, irrelevant to the query, or stuffed with repetitive terms, Google will rewrite it. They often pull an H1 tag or a random snippet of text instead.
+			Google's own guidance calls the result-page version a "title link" and says it is generated from the title tag, headings, on-page text, and anchor text pointing at the page. The title tag is the strongest input, but it is an input, not a guarantee.
 		</p>
 
+		<h2>Title tag length in 2026</h2>
 		<p>
-			Your goal is to write a title tag that Google wants to keep and users want to click.
+			Google truncates title links by pixel width, not character count. The current limits are approximately:
 		</p>
-
-		<p>
-			This means you have to think like an advertiser. A title tag is not just a ranking factor. It is the headline of your organic advertisement. If it does not compel the user to act, the ranking position hardly matters.
-		</p>
-
-		<h2>The Golden Rules of Title Tag Optimization</h2>
-
-		<p>
-			Before we look at specific formulas, you need to understand the baseline rules for writing effective titles.
-		</p>
-
-		<h3>Respect the Pixel Limit</h3>
-
-		<p>
-			Characters do not matter as much as pixels. Google typically truncates titles that exceed 600 pixels. For most fonts, this means you have about 50 to 60 characters to make your point.
-		</p>
-
-		<div class="bg-[#282828] p-6 rounded-lg border border-[#fabd2f]/30 my-8">
-			<h3 class="mt-0 text-[#fabd2f]">Pixel Width vs. Character Count</h3>
-			<p class="text-white/80 mb-0">
-				A lowercase "i" takes up far fewer pixels than an uppercase "W." Counting characters alone is unreliable. Use a SERP preview tool to check actual pixel width. Put your most important information at the front. If Google truncates the end of your title, the user should still understand the core value proposition.
-			</p>
-		</div>
-
-		<h3>One Primary Intent Per Page</h3>
-
-		<p>
-			A common mistake is trying to target too many distinct concepts in a single title. If you try to rank for "buy running shoes" and "how to clean running shoes" on the same page, you confuse both Google and the user.
-		</p>
-
-		<p>
-			Keep your titles focused. If you find yourself needing a completely different title to target a secondary phrase, you might have a <a href="/blog/keyword-cannibalization-fix" class="text-[#8ec07c] hover:underline">keyword cannibalization</a> issue. You probably need a separate page.
-		</p>
-
-		<h3>Match Search Intent Exactly</h3>
-
-		<p>
-			If someone searches for a template, your title needs to include the word "template." If they search for a guide, call it a guide.
-		</p>
-
-		<p>
-			Analyze the top five ranking pages for your target term. Look at the patterns in their titles. If every ranking page uses the current year, your title tag optimization strategy must include adding the year to your title.
-		</p>
-
-		<h2>Proven Title Tag Formulas</h2>
-
-		<p>
-			You do not need to reinvent the wheel for every page. These structural formulas work consistently across different industries.
-		</p>
-
-		<h3>The Number Plus Benefit Formula</h3>
-
-		<p>
-			Numbers stand out in a wall of text. They promise a specific, structured format that users find easy to digest.
-		</p>
-
 		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
-			<h3 class="mt-0 text-white">Formula: [Number] [Target Keyword] to [Achieve Specific Benefit]</h3>
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<div>
-					<p class="text-[#fb4934] font-bold mb-1">Before</p>
-					<p class="text-white/80 mb-0">Link Building Strategies for Small Businesses</p>
-				</div>
-				<div>
-					<p class="text-[#8ec07c] font-bold mb-1">After</p>
-					<p class="text-white/80 mb-0">7 Link Building Strategies to Double Local Traffic</p>
-				</div>
+			<div class="overflow-x-auto">
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Device</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Pixel limit</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Roughly</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Safe target</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr><td class="p-3 border border-white/20 text-white/80">Desktop</td><td class="p-3 border border-white/20 text-white/80">~600 px</td><td class="p-3 border border-white/20 text-white/80">55–65 characters</td><td class="p-3 border border-white/20 text-white/80">≤ 60 characters</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80">Mobile</td><td class="p-3 border border-white/20 text-white/80">Two lines, ~920 px total</td><td class="p-3 border border-white/20 text-white/80">Up to ~78 characters, but wrapped</td><td class="p-3 border border-white/20 text-white/80">Front-load the first 50</td></tr>
+				</tbody>
+			</table>
 			</div>
 		</div>
-
 		<p>
-			The "after" version tells the user exactly what they will get and why they should care.
+			Because it is pixels, the same character count can fit or truncate depending on the letters: "Illinois" is narrow, "WordPress" is wide, and CAPITALS are widest of all. Two practical rules follow. Keep the target keyword and the value proposition in the first 50 characters, so a truncated title still makes sense. And treat 60 characters as a ceiling for the part you care about, not the whole string — the brand suffix after a separator can go past it, since losing "| Brand Name" to an ellipsis costs nothing.
+		</p>
+		<p>
+			There is no minimum length that Google enforces, but very short titles ("Home", "Services", "Blog") are the ones it rewrites most aggressively, because they describe nothing. A crawl of any site older than a few years usually turns up dozens of them.
 		</p>
 
-		<h3>The Time or Speed Formula</h3>
-
+		<h2>Why Google rewrites title tags — and how to stop it</h2>
 		<p>
-			People want solutions quickly. If you can promise a fast result, your click-through rate will climb.
+			Since the 2021 title-link update, Google generates its own title when it thinks yours is a poor fit for the query or the page. The documented triggers are:
+		</p>
+		<ul>
+			<li><strong>Too long</strong> — it truncates or substitutes a shorter one, usually from the H1.</li>
+			<li><strong>Keyword-stuffed</strong> — "Plumber Boulder | Boulder Plumbers | Plumbing Boulder CO" becomes "Plumber in Boulder".</li>
+			<li><strong>Boilerplate or missing</strong> — "Home", "Untitled", or the same title on every page.</li>
+			<li><strong>Mismatch with the page</strong> — the title promises one thing and the H1 and content say another.</li>
+			<li><strong>Brand-first repetition</strong> — "Acme Corp – Acme Corp Blog – Post Title" gets the brand stripped.</li>
+		</ul>
+		<p>
+			The fix in every case is the same: make the title a concise, accurate description of the page that agrees with the H1, with the keyword once. Google still rewrites some titles it has no reason to, and you cannot prevent that entirely — but you can check what it is showing. Search Console's Performance report shows the query; a live search for the URL shows the title link Google chose. If they disagree with your tag on important pages, that is your priority list.
 		</p>
 
+		<h2>The rules that still hold</h2>
+		<h3>One primary keyword, early</h3>
+		<p>
+			Put the term the page is meant to rank for in the first half of the title, once. Google's guidance is explicit that repeating it does not help, and the click data says it hurts — stuffed titles read as spam to people too. If the page needs two unrelated keywords, it is probably two pages; see our guide to <a href="/blog/keyword-cannibalization-fix" class="text-[#8ec07c] hover:underline">keyword cannibalization</a>.
+		</p>
+		<h3>Match the format the query expects</h3>
+		<p>
+			Search the term and look at the top five titles. If they all say "guide", "checklist", "template", or carry a year, the intent is telling you the format. A product page will not rank for a "how to" query no matter how good the title, and vice versa.
+		</p>
+		<h3>Agree with the H1</h3>
+		<p>
+			They do not have to be identical, but they must describe the same thing. Titles that diverge from the H1 are the most common rewrite trigger on otherwise well-built pages.
+		</p>
+		<h3>Unique on every page</h3>
+		<p>
+			Duplicate titles across a site tell Google the pages are interchangeable, and it will pick one to show. E-commerce sites with "Product | Store" patterns and blogs that prepend the site name are the usual offenders.
+		</p>
+		<h3>Brand last, separated, optional</h3>
+		<p>
+			"| Brand" or "– Brand" at the end. Google may strip it on long titles, and that is fine. Put the brand first only on the homepage and on pages where the brand is the query.
+		</p>
+
+		<h2>Five title tag formulas that work</h2>
+		<p>
+			These are structures, not templates. Fill them with the specific promise the page actually keeps.
+		</p>
+		<h3>1. Number + keyword + benefit</h3>
+		<p>
+			<em>[Number] [Keyword] to [Outcome]</em> — "7 Link Building Strategies to Double Local Traffic". Numbers promise structure and stand out in a list of sentences. Use real numbers; "7 Tips" for a post with nine of them gets noticed.
+		</p>
+		<h3>2. How to + task + constraint</h3>
+		<p>
+			<em>How to [Task] in [Time or Without X]</em> — "How to Fix WordPress CLS Issues in Under 10 Minutes". The constraint is the click: it tells the reader the cost of finding out.
+		</p>
+		<h3>3. Keyword + year or version</h3>
+		<p>
+			<em>[Keyword]: [Year] Guide</em> — "Core Web Vitals in 2026: What Actually Matters". Only where the topic genuinely changes year to year, and only if you actually update the post. A 2024 article with "2026" in the title is a bounce.
+		</p>
+		<h3>4. Keyword + qualifier + differentiator</h3>
+		<p>
+			<em>[Keyword] for [Audience] ([Differentiator])</em> — "Best Technical SEO Tools for Agencies (Free &amp; Paid)". The qualifier narrows intent, the parenthetical answers the question the searcher was about to ask.
+		</p>
+		<h3>5. Question the searcher typed</h3>
+		<p>
+			<em>[Question]? [Short Answer]</em> — "Are Missing Meta Descriptions Bad for SEO? Not the Way You Think". Mirrors the query exactly and previews the answer, which is what earns the click and, increasingly, the AI Overview citation.
+		</p>
+
+		<h2>Title tag examples: before and after, by page type</h2>
 		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
-			<h3 class="mt-0 text-white">Formula: How to [Task with Keyword] in [Timeframe]</h3>
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<div>
-					<p class="text-[#fb4934] font-bold mb-1">Before</p>
-					<p class="text-white/80 mb-0">Fix WordPress CLS Issues</p>
-				</div>
-				<div>
-					<p class="text-[#8ec07c] font-bold mb-1">After</p>
-					<p class="text-white/80 mb-0">How to Fix WordPress CLS Issues in Under 10 Minutes</p>
-				</div>
+			<div class="overflow-x-auto">
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Page type</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Before</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">After</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">What changed</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Homepage</td><td class="p-3 border border-white/20 text-white/80">Home | Acme</td><td class="p-3 border border-white/20 text-white/80">Acme: Commercial HVAC Repair in Denver, Same-Day Service</td><td class="p-3 border border-white/20 text-white/80">Says what the business does and where</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Product page</td><td class="p-3 border border-white/20 text-white/80">Blue Running Shoes | ShoeStore</td><td class="p-3 border border-white/20 text-white/80">Men's Blue Trail Running Shoes – Free Shipping | ShoeStore</td><td class="p-3 border border-white/20 text-white/80">Modifiers people search for, plus a conversion trigger</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Category page</td><td class="p-3 border border-white/20 text-white/80">Shoes</td><td class="p-3 border border-white/20 text-white/80">Women's Running Shoes: 140+ Styles, Free Returns</td><td class="p-3 border border-white/20 text-white/80">Specific, with a number and a reason to click</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Local service</td><td class="p-3 border border-white/20 text-white/80">Emergency Plumbing Services | Bob's Plumbing</td><td class="p-3 border border-white/20 text-white/80">24/7 Emergency Plumber in Chicago – 30-Min Response | Bob's</td><td class="p-3 border border-white/20 text-white/80">Location and urgency up front</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Location page</td><td class="p-3 border border-white/20 text-white/80">Boulder | Acme HVAC</td><td class="p-3 border border-white/20 text-white/80">HVAC Repair in Boulder, CO – Licensed &amp; Insured | Acme</td><td class="p-3 border border-white/20 text-white/80">Service + city, the query people type</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">How-to post</td><td class="p-3 border border-white/20 text-white/80">Fixing CLS Issues</td><td class="p-3 border border-white/20 text-white/80">How to Fix CLS Issues on WordPress Sites</td><td class="p-3 border border-white/20 text-white/80">Mirrors the query; names the platform</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Listicle</td><td class="p-3 border border-white/20 text-white/80">SEO Tools You Should Know</td><td class="p-3 border border-white/20 text-white/80">Best Technical SEO Tools 2026: Free &amp; Paid, by Job</td><td class="p-3 border border-white/20 text-white/80">Keyword, year, and the two things readers filter on</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Comparison</td><td class="p-3 border border-white/20 text-white/80">Screaming Frog Compared to Sitebulb</td><td class="p-3 border border-white/20 text-white/80">Screaming Frog vs Sitebulb (2026): Which Crawler Wins?</td><td class="p-3 border border-white/20 text-white/80">"vs" is the query form; the question promises a verdict</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Pricing page</td><td class="p-3 border border-white/20 text-white/80">Pricing</td><td class="p-3 border border-white/20 text-white/80">Barracuda Pricing: Free, $29/mo Pro, Team Plans</td><td class="p-3 border border-white/20 text-white/80">Answers the question in the title</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Definition post</td><td class="p-3 border border-white/20 text-white/80">Title Tag Optimization</td><td class="p-3 border border-white/20 text-white/80">What Is a Title Tag? Definition, Length &amp; Examples</td><td class="p-3 border border-white/20 text-white/80">Matches "what is" intent and lists the sub-questions</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Recipe / instructions</td><td class="p-3 border border-white/20 text-white/80">Sourdough Recipe</td><td class="p-3 border border-white/20 text-white/80">Easy Sourdough Bread Recipe (No Starter Needed, 24 Hours)</td><td class="p-3 border border-white/20 text-white/80">Two objections handled in the parenthetical</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80 font-bold">Case study</td><td class="p-3 border border-white/20 text-white/80">Client Case Study: Acme</td><td class="p-3 border border-white/20 text-white/80">How Acme Cut Support Tickets 41% with Self-Serve Docs</td><td class="p-3 border border-white/20 text-white/80">Result first; the client's name is not the hook</td></tr>
+				</tbody>
+			</table>
 			</div>
 		</div>
 
+		<h2>How to find the titles worth fixing</h2>
 		<p>
-			This title reduces friction. It tells the user that solving their problem will not take all day.
+			On a site of any size, the problem is not writing a good title — it is knowing which of your 2,000 pages have bad ones and which of those matter. Two sources, used together:
+		</p>
+		<ol>
+			<li><strong>A crawl</strong> lists every page with a missing, empty, too-short or too-long title in one pass. Screaming Frog's free tier does this for 500 URLs; our comparison of <a href="/blog/best-seo-crawler-tools" class="text-[#8ec07c] hover:underline">SEO crawler tools</a> covers the rest. <a href="/features" class="text-[#8ec07c] hover:underline">Barracuda</a> runs the same checks and then weights each one by the page's Search Console impressions, so a short title on a page earning 3,000 impressions a month surfaces above the same issue on a page nobody sees.</li>
+			<li><strong>Search Console</strong> tells you which titles are underperforming even when they are technically fine. In the Performance report, filter to pages on page one (position ≤ 10) and sort by CTR ascending. Anything under about 3% at position 5 or better has a title problem, not a ranking problem.</li>
+		</ol>
+		<p>
+			Fix the intersection first: pages that get impressions <em>and</em> have a flagged title. That list is usually short, and it is where the traffic is.
+		</p>
+		<p>
+			Two page types deserve their own treatment: location pages, where the title is doing most of the local ranking work (see our <a href="/blog/hyperlocal-content-strategy-writing-pages-that-rank-for-service-near-me" class="text-[#8ec07c] hover:underline">hyperlocal content strategy</a>), and cluster content, where titles should signal the hub-and-spoke relationship between a pillar and its supporting posts (see <a href="/blog/the-hub-and-spoke-content-model-building-topical-authority-step-by-step" class="text-[#8ec07c] hover:underline">the hub-and-spoke content model</a>).
 		</p>
 
-		<h3>The Freshness Formula</h3>
-
+		<h2>How to test a title tag change</h2>
+		<ol>
+			<li><strong>Record the baseline.</strong> In Search Console, note the page's clicks, impressions, CTR and average position for the last 28 days.</li>
+			<li><strong>Change one thing.</strong> The title only. If you also rewrite the H1, the intro, and the meta description, you will not know what worked.</li>
+			<li><strong>Request indexing</strong> for the URL so the new title shows within days rather than weeks.</li>
+			<li><strong>Wait 14–28 days</strong>, then compare CTR at the same position band. Position drifts; CTR at a given position is the honest metric.</li>
+			<li><strong>Keep or revert.</strong> A CTR gain with stable position is a win; apply the pattern to sibling pages. A drop is data too — revert and try a different formula.</li>
+		</ol>
 		<p>
-			For rapidly changing topics, users want the most current information. Adding the current month or year is a powerful signal.
+			Run this on ten pages and you will learn more about what your audience clicks than any guide, including this one, can tell you.
 		</p>
 
-		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
-			<h3 class="mt-0 text-white">Formula: [Keyword Guide/Review]: [Current Year] Update</h3>
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<div>
-					<p class="text-[#fb4934] font-bold mb-1">Before</p>
-					<p class="text-white/80 mb-0">Best SEO Tools for Agencies</p>
-				</div>
-				<div>
-					<p class="text-[#8ec07c] font-bold mb-1">After</p>
-					<p class="text-white/80 mb-0">Best SEO Tools for Agencies: 2026 Review</p>
-				</div>
-			</div>
-		</div>
-
+		<h2>Frequently asked questions</h2>
+		<h3>How long should a title tag be?</h3>
 		<p>
-			This signals relevance and prevents users from bouncing to a competitor who appears more up to date.
+			Aim for 50–60 characters, and put the keyword and main promise in the first 50. Google truncates by pixel width at around 600 px on desktop, so wide letters and capitals shorten the budget. There is no penalty for going over — the end is cut off with an ellipsis — but the brand suffix is the only thing that should live past 60.
+		</p>
+		<h3>What are some good title tag examples?</h3>
+		<p>
+			"How to Fix CLS Issues on WordPress Sites" for a how-to; "Men's Blue Trail Running Shoes – Free Shipping | ShoeStore" for a product; "24/7 Emergency Plumber in Chicago – 30-Min Response" for a local service; "Screaming Frog vs Sitebulb (2026): Which Crawler Wins?" for a comparison. Each states the keyword once, early, and adds one specific reason to click. The table above has twelve before-and-after pairs by page type.
+		</p>
+		<h3>How do I optimize title tags?</h3>
+		<p>
+			Put the primary keyword once in the first half, match the format the top results use, make it agree with the H1, keep it unique across the site, and add one concrete hook — a number, a timeframe, a location, a benefit. Then measure CTR in Search Console for 14–28 days and keep what improved.
+		</p>
+		<h3>Do title tags affect rankings?</h3>
+		<p>
+			Yes, but modestly. Google confirms the title is a ranking signal, and a keyword in it helps relevance; it will not lift a weak page onto page one. The larger effect is on click-through rate, which is why the same page can double its traffic from a title change without moving position.
+		</p>
+		<h3>Why does Google change my title tag?</h3>
+		<p>
+			Because it judged yours too long, repetitive, boilerplate, or a poor match for the page or query, and substituted text from the H1 or page. Shorten it, remove repetition, align it with the H1, and make sure it describes the page; that resolves the large majority of rewrites.
 		</p>
 
-		<h2>Real Before and After Examples</h2>
-
+		<h2>The bottom line</h2>
 		<p>
-			Let us look at how these principles apply to specific page types.
+			A title tag is a headline with a 60-character budget and two readers. Write it for the person first — keyword once, promise once, no filler — keep it consistent with the H1 so Google leaves it alone, and check the ones on pages that already earn impressions before the ones that do not. Five minutes per title, measured properly, is the best-returning work in on-page SEO.
 		</p>
-
-		<h3>E-commerce Product Page</h3>
-
-		<p>
-			E-commerce titles often suffer from extreme duplication. They usually just list the product name and the brand.
-		</p>
-
-		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<div>
-					<p class="text-[#fb4934] font-bold mb-1">Before</p>
-					<p class="text-white/80 mb-0">Blue Running Shoes | ShoeStore</p>
-				</div>
-				<div>
-					<p class="text-[#8ec07c] font-bold mb-1">After</p>
-					<p class="text-white/80 mb-0">Men's Blue Trail Running Shoes | Free Shipping | ShoeStore</p>
-				</div>
-			</div>
-		</div>
-
-		<p>
-			The updated version adds specific modifiers (Men's, Trail) and includes a compelling conversion trigger (Free Shipping).
-		</p>
-
-		<h3>Local Service Page</h3>
-
-		<p>
-			Local businesses frequently forget to include geographic modifiers in their core titles. If you are building a <a href="/blog/hyperlocal-content-strategy-writing-pages-that-rank-for-service-near-me" class="text-[#8ec07c] hover:underline">hyperlocal content strategy</a>, the location must be front and center.
-		</p>
-
-		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<div>
-					<p class="text-[#fb4934] font-bold mb-1">Before</p>
-					<p class="text-white/80 mb-0">Emergency Plumbing Services | Bob's Plumbing</p>
-				</div>
-				<div>
-					<p class="text-[#8ec07c] font-bold mb-1">After</p>
-					<p class="text-white/80 mb-0">24/7 Emergency Plumber in Chicago | 30-Min Response | Bob's Plumbing</p>
-				</div>
-			</div>
-		</div>
-
-		<p>
-			The new title directly addresses the user's urgency (24/7, 30-Min Response) and confirms the location.
-		</p>
-
-		<h3>Informational Blog Post</h3>
-
-		<p>
-			Informational content titles often lack a clear hook. They describe the topic without giving a reason to click. This is especially important when building out a <a href="/blog/the-hub-and-spoke-content-model-building-topical-authority-step-by-step" class="text-[#8ec07c] hover:underline">hub and spoke content model</a>.
-		</p>
-
-		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<div>
-					<p class="text-[#fb4934] font-bold mb-1">Before</p>
-					<p class="text-white/80 mb-0">What is Title Tag Optimization?</p>
-				</div>
-				<div>
-					<p class="text-[#8ec07c] font-bold mb-1">After</p>
-					<p class="text-white/80 mb-0">Title Tag Optimization: A Step-by-Step Guide for Beginners</p>
-				</div>
-			</div>
-		</div>
-
-		<p>
-			Adding "Step-by-Step Guide for Beginners" clarifies the format and the target audience.
-		</p>
-
-		<h2>How to Test and Measure Success</h2>
-
-		<p>
-			You should not change title tags blindly. Every change needs to be tracked.
-		</p>
-
-		<div class="bg-[#282828] p-6 rounded-lg border border-[#8ec07c]/30 my-8">
-			<h3 class="mt-0 text-[#8ec07c]">Title Tag Testing Process</h3>
-			<div class="space-y-3">
-				<div class="flex items-start gap-3">
-					<span class="text-[#8ec07c] font-bold shrink-0">1.</span>
-					<span class="text-white/80"><strong>Log into Google Search Console</strong> — look at the performance report for the specific page. Note the average position and the click-through rate over the last 28 days.</span>
-				</div>
-				<div class="flex items-start gap-3">
-					<span class="text-[#8ec07c] font-bold shrink-0">2.</span>
-					<span class="text-white/80"><strong>Update the title tag</strong> — wait for Google to crawl and index the new title. You can usually speed this up by requesting indexing in Search Console.</span>
-				</div>
-				<div class="flex items-start gap-3">
-					<span class="text-[#8ec07c] font-bold shrink-0">3.</span>
-					<span class="text-white/80"><strong>Wait 14 to 28 days</strong> — compare the new click-through rate to the historical data. If the CTR dropped, revert the change. If it improved, keep it and apply the lesson to similar pages.</span>
-				</div>
-			</div>
-		</div>
-
-		<h2>Stop Ignoring Your Headlines</h2>
-
-		<p>
-			Title tag optimization remains one of the highest ROI activities in SEO. It takes five minutes to rewrite a weak title, but that single change can permanently increase a page's organic traffic.
-		</p>
-
-		<p>
-			Stop settling for default titles generated by your CMS. A crawl with any of the <a href="/blog/best-seo-crawler-tools" class="text-[#8ec07c] hover:underline">SEO crawler tools</a> we compare — or the site audit in a suite like Ahrefs (or one of the cheaper <a href="/blog/alternatives-to-ahrefs" class="text-[#8ec07c] hover:underline">Ahrefs alternatives</a>) — will list every missing, duplicate or over-long title in minutes. Review your most important pages this week. Find the ones ranking on the first page with a CTR below three percent. Rewrite those titles using the formulas above, measure the results, and watch your traffic grow.
-		</p>
-
 		<div class="bg-[#282828] p-8 rounded-lg border border-[#8ec07c]/30 text-center my-10">
-			<h3 class="mt-0 text-white">Stop guessing which title tags need work</h3>
+			<h3 class="mt-0 text-white">Find the titles worth fixing</h3>
 			<p class="text-white/80 mb-6">
-				Barracuda SEO crawls your site and flags weak, duplicate, and truncated title tags — with AI-powered suggestions so you can optimize the titles that matter most.
+				Barracuda crawls your site, flags missing, short, long and empty title tags, and ranks them by the Search Console impressions each page already earns. 100 pages free, no card.
 			</p>
 			<a href="https://app.barracudaseo.com" class="inline-block bg-[#8ec07c] hover:bg-[#a0d28c] text-[#3c3836] px-8 py-3 rounded-lg font-medium transition-colors">
-				Try Barracuda SEO Free
+				Try Barracuda Free
 			</a>
 		</div>
-	`,
+`,
 	'the-hub-and-spoke-content-model-building-topical-authority-step-by-step': `
 		<p>
 			Your blog is likely a graveyard of isolated ideas. You publish a post on one topic, wait a week, then publish a post on something completely different. Without an overarching structure, Google struggles to identify your core expertise.
