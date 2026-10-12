@@ -209,10 +209,14 @@ func (t *Tracker) getMonthlyUsage(ctx context.Context, projectID, feature string
 
 func estimateCost(model string, inputTokens, outputTokens int) float64 {
 	switch {
+	case model == "gemini-3.5-flash-lite":
+		return float64(inputTokens)*0.30/1_000_000 + float64(outputTokens)*2.50/1_000_000
 	case model == "gemini-2.5-flash-lite" || model == "gemini-2.0-flash-lite":
 		return float64(inputTokens)*0.10/1_000_000 + float64(outputTokens)*0.40/1_000_000
-	default:
-		// gemini-2.5-flash and similar
+	case model == "gemini-2.5-flash":
 		return float64(inputTokens)*0.30/1_000_000 + float64(outputTokens)*2.50/1_000_000
+	default:
+		// gemini-3.8-flash. Google doubles this to $1.50 / $7.50 on 2027-01-01.
+		return float64(inputTokens)*0.75/1_000_000 + float64(outputTokens)*3.75/1_000_000
 	}
 }

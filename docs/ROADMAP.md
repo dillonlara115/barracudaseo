@@ -18,7 +18,7 @@ This document tracks planned features and enhancements for Barracuda SEO, organi
 
 *Full spec: `docs/AI_BRIEF.md` — AI baked in, not bolted on.*
 
-The AI Suite is the highest-priority initiative. Every feature below embeds intelligence at the point of action — no chat interface, no separate AI tab. Powered by Gemini 2.5 Flash (primary), Gemini 2.5 Flash-Lite (lightweight), and `text-embedding-004` (embeddings via pgvector).
+The AI Suite is the highest-priority initiative. Every feature below embeds intelligence at the point of action — no chat interface, no separate AI tab. Powered by Gemini 3.8 Flash (primary), Gemini 3.5 Flash-Lite (lightweight), and `text-embedding-004` (embeddings via pgvector).
 
 #### Shared AI Infrastructure
 - 🔄 Context Builder — assembles prompts from crawled pages (pgvector similarity), GSC data, voice profile, project memory

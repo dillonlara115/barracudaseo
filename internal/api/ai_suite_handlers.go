@@ -21,6 +21,13 @@ import (
 	"go.uber.org/zap"
 )
 
+// Gemini model IDs. 2.5-series models are only served to accounts that used them
+// before, so new API keys must use the 3.x models.
+const (
+	geminiFlashModel     = "gemini-3.8-flash"
+	geminiFlashLiteModel = "gemini-3.5-flash-lite"
+)
+
 // AISuiteServices holds shared dependencies for all AI suite handlers
 type AISuiteServices struct {
 	FlashProvider  *providers.GeminiProvider
@@ -41,13 +48,13 @@ func (s *Server) InitAISuite() *AISuiteServices {
 		return nil
 	}
 
-	flashProvider, err := providers.NewGeminiProvider(apiKey, "gemini-2.5-flash", s.logger)
+	flashProvider, err := providers.NewGeminiProvider(apiKey, geminiFlashModel, s.logger)
 	if err != nil {
 		s.logger.Error("Failed to init Gemini Flash provider", zap.Error(err))
 		return nil
 	}
 
-	liteProvider, err := providers.NewGeminiProvider(apiKey, "gemini-2.5-flash-lite", s.logger)
+	liteProvider, err := providers.NewGeminiProvider(apiKey, geminiFlashLiteModel, s.logger)
 	if err != nil {
 		s.logger.Error("Failed to init Gemini Flash-Lite provider", zap.Error(err))
 		return nil
@@ -309,7 +316,7 @@ Ground every recommendation in the GSC data and crawled site content provided. B
 		s.serviceRole.From("content_briefs").Insert(json.RawMessage(data), false, "", "", "").Execute()
 
 		// Log usage
-		go ai.UsageTracker.Log(context.Background(), req.ProjectID, userID, "brief", "gemini-2.5-flash", 0, 0)
+		go ai.UsageTracker.Log(context.Background(), req.ProjectID, userID, "brief", geminiFlashModel, 0, 0)
 		go ai.MemoryService.ExtractAndStore(context.Background(), req.ProjectID, "brief", fullText)
 	}
 }
@@ -471,7 +478,7 @@ Write in markdown format. Include all H2 sections from the outline. Suggest inte
 		data, _ := json.Marshal(article)
 		s.serviceRole.From("articles").Insert(json.RawMessage(data), false, "", "", "").Execute()
 
-		go ai.UsageTracker.Log(context.Background(), req.ProjectID, userID, "article", "gemini-2.5-flash", 0, 0)
+		go ai.UsageTracker.Log(context.Background(), req.ProjectID, userID, "article", geminiFlashModel, 0, 0)
 		go ai.MemoryService.ExtractAndStore(context.Background(), req.ProjectID, "article", fullText)
 	}
 }
@@ -887,7 +894,7 @@ func (s *Server) handleExplainOpportunity(ai *AISuiteServices) http.HandlerFunc 
 		}
 		_ = fullText
 
-		go ai.UsageTracker.Log(context.Background(), req.ProjectID, userID, "explain", "gemini-2.5-flash", 0, 0)
+		go ai.UsageTracker.Log(context.Background(), req.ProjectID, userID, "explain", geminiFlashModel, 0, 0)
 	}
 }
 
@@ -941,7 +948,7 @@ Include a recommended next action.`, req.PageURL),
 		}
 		_ = fullText
 
-		go ai.UsageTracker.Log(context.Background(), req.ProjectID, userID, "diagnose", "gemini-2.5-flash", 0, 0)
+		go ai.UsageTracker.Log(context.Background(), req.ProjectID, userID, "diagnose", geminiFlashModel, 0, 0)
 	}
 }
 

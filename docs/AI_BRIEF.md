@@ -31,8 +31,8 @@ Every AI capability is contextual and action-triggered. Users encounter intellig
 | Backend | Golang (Google Cloud Run) |
 | Database | Supabase (PostgreSQL + pgvector) |
 | Auth | Supabase Auth |
-| AI — Generation (primary) | Gemini 2.5 Flash (`gemini-2.5-flash`) via Google AI API |
-| AI — Generation (lightweight) | Gemini 2.5 Flash-Lite (`gemini-2.5-flash-lite`) via Google AI API |
+| AI — Generation (primary) | Gemini 3.8 Flash (`gemini-3.8-flash`) via Google AI API |
+| AI — Generation (lightweight) | Gemini 3.5 Flash-Lite (`gemini-3.5-flash-lite`) via Google AI API |
 | AI — Embeddings | Gemini `text-embedding-004` via Google AI API |
 | GSC | Google Search Console API v3 |
 | Icons | Lucide Svelte |
