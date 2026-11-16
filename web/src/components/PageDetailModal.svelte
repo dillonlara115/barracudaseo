@@ -123,6 +123,13 @@
         </div>
       {/if}
 
+      {#if page.word_count}
+        <div class="mb-4">
+          <div class="font-semibold mb-2">Main content:</div>
+          <div>{page.word_count.toLocaleString()} words</div>
+        </div>
+      {/if}
+
       <!-- Indexability -->
       {#if page.indexability_status || page.meta_robots || page.x_robots_tag || page.in_sitemap}
         <div class="mb-4">

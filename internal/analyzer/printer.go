@@ -125,9 +125,9 @@ func getIssueIcon(issueType IssueType) string {
 	case IssueMissingH1, IssueMissingTitle, IssueMissingMetaDesc, IssueBrokenLink, IssueBrokenImage, IssueEmptyH1, IssueBrokenInternalLink,
 		IssueCanonicalNonIndexable:
 		return "🔴"
-	case IssueBlockedByRobots, IssueNonIndexableInSitemap:
+	case IssueBlockedByRobots, IssueNonIndexableInSitemap, IssueThinContent, IssueDuplicateContent:
 		return "⚠️"
-	case IssueNoindexPage, IssueCanonicalised, IssueNotInSitemap:
+	case IssueNoindexPage, IssueCanonicalised, IssueNotInSitemap, IssueNearDuplicateContent:
 		return "ℹ️"
 	case IssueLongTitle, IssueLongMetaDesc, IssueShortTitle, IssueShortMetaDesc, IssueMultipleH1, IssueRedirectChain, IssueLargeImage, IssueMissingImageAlt,
 		IssueDuplicateTitle, IssueDuplicateMetaDesc, IssueOrphanPage:
@@ -185,6 +185,12 @@ func formatIssueType(issueType IssueType) string {
 		return "Links to Broken Pages"
 	case IssueLinkToRedirect:
 		return "Links to Redirects"
+	case IssueThinContent:
+		return "Thin Content"
+	case IssueDuplicateContent:
+		return "Duplicate Content"
+	case IssueNearDuplicateContent:
+		return "Near-Duplicate Content"
 	case IssueNoindexPage:
 		return "Noindex Pages"
 	case IssueBlockedByRobots:

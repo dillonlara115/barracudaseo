@@ -270,6 +270,42 @@
         { name: "Redirect Best Practices", url: "https://moz.com/learn/seo/redirection" }
       ]
     },
+    thin_content: {
+      title: "Expand Thin Pages",
+      impact: "Medium",
+      description: "These pages have very little main text once navigation, header and footer are set aside. Thin pages rarely rank and can drag down how the whole site is assessed.",
+      codeSnippet: `<main>
+  <h1>Topic of the page</h1>
+  <p>Enough original content to fully answer what a visitor came for...</p>
+</main>`,
+      explanation: "Add content that covers the topic properly, merge the page into a stronger one, or noindex it if it is not meant to rank. Word count is a signal, not a target: a short page that fully answers its query is fine.",
+      resources: [
+        { name: "Creating Helpful Content", url: "https://developers.google.com/search/docs/fundamentals/creating-helpful-content" }
+      ]
+    },
+    duplicate_content: {
+      title: "Consolidate Duplicate Pages",
+      impact: "High",
+      description: "These pages have exactly the same main content as another page on the site, so they compete with each other in search.",
+      codeSnippet: `<!-- On each duplicate, point to the version you want indexed -->
+<link rel="canonical" href="https://example.com/preferred-page">`,
+      explanation: "Pick one version to keep. Redirect the others to it with a 301, or set their canonical to it if they must stay reachable (for example URL-parameter variants).",
+      resources: [
+        { name: "Consolidate Duplicate URLs", url: "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls" }
+      ]
+    },
+    near_duplicate_content: {
+      title: "Differentiate Near-Duplicate Pages",
+      impact: "Medium",
+      description: "These pages share almost all of their main content with another page. This is common with location or product-variant pages built from one template.",
+      codeSnippet: `<!-- Each page needs content the others do not have -->
+<h1>Roof Repair in Austin</h1>
+<p>Details, examples and FAQs specific to Austin...</p>`,
+      explanation: "Give each page substantial content of its own, or consolidate the set into one page. Swapping a single word such as a city name is not enough for search engines to treat pages as distinct.",
+      resources: [
+        { name: "Spam Policies: Doorway and Scaled Content", url: "https://developers.google.com/search/docs/essentials/spam-policies" }
+      ]
+    },
     noindex_page: {
       title: "Review Noindex Pages",
       impact: "Medium",

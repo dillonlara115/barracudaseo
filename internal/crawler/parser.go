@@ -183,6 +183,12 @@ func (p *Parser) Parse(htmlContent []byte) (*models.PageResult, error) {
 		}
 	})
 
+	// Summarise the main text for thin / duplicate content analysis
+	content := ExtractContent(doc)
+	result.WordCount = content.WordCount
+	result.ContentHash = content.Hash
+	result.ContentSimHash = content.SimHash
+
 	// Extract links
 	doc.Find("a[href]").Each(func(i int, s *goquery.Selection) {
 		href, exists := s.Attr("href")

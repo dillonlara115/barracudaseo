@@ -279,6 +279,12 @@ func Analyze(results []*models.PageResult) *Summary {
 		summary.IssuesByType[issue.Type]++
 	}
 
+	// Content: thin pages and duplicated or near-duplicated main text
+	for _, issue := range AnalyzeContent(results) {
+		summary.Issues = append(summary.Issues, issue)
+		summary.IssuesByType[issue.Type]++
+	}
+
 	// Indexability: classify every URL and report why pages are not indexable
 	indexabilityIssues, breakdown := AnalyzeIndexability(results)
 	for _, issue := range indexabilityIssues {

@@ -349,6 +349,9 @@ func (m *Manager) worker(id int) {
 			result.PageResult.InternalLinks = parsedData.InternalLinks
 			result.PageResult.ExternalLinks = parsedData.ExternalLinks
 			result.PageResult.Images = parsedData.Images
+			result.PageResult.WordCount = parsedData.WordCount
+			result.PageResult.ContentHash = parsedData.ContentHash
+			result.PageResult.ContentSimHash = parsedData.ContentSimHash
 
 			// Determine indexability status based on robots.txt, x-robots-tag, and meta robots
 			result.PageResult.DetermineIndexabilityStatus(isBlockedByRobots)

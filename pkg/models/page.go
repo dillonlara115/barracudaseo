@@ -36,7 +36,10 @@ type PageResult struct {
 	XRobotsTag         string             `json:"x_robots_tag,omitempty"` // HTTP X-Robots-Tag header value
 	MetaRobots         string             `json:"meta_robots,omitempty"`  // HTML meta robots tag value
 	IndexabilityStatus IndexabilityStatus `json:"indexability_status,omitempty"`
-	InSitemap          bool               `json:"in_sitemap,omitempty"` // URL was listed in the XML sitemap (set only when the sitemap is parsed)
+	InSitemap          bool               `json:"in_sitemap,omitempty"`      // URL was listed in the XML sitemap (set only when the sitemap is parsed)
+	WordCount          int                `json:"word_count,omitempty"`      // Words in the page's main text (navigation, header and footer excluded)
+	ContentHash        string             `json:"content_hash,omitempty"`    // Hash of the main text; equal hashes mean identical content
+	ContentSimHash     string             `json:"content_simhash,omitempty"` // 64-bit similarity hash (hex); near-identical content differs in few bits
 	CrawledAt          time.Time          `json:"crawled_at"`
 }
 
