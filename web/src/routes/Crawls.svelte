@@ -4,6 +4,7 @@
   import { fetchProjects, fetchCrawls, fetchCrawl, deleteCrawl } from '../lib/data.js';
   import ProjectPageLayout from '../components/ProjectPageLayout.svelte';
   import TriggerCrawlButton from '../components/TriggerCrawlButton.svelte';
+  import CrawlScheduleCard from '../components/CrawlScheduleCard.svelte';
   import { FileSearch, Trash2, Eye, Loader, AlertTriangle } from 'lucide-svelte';
 
   let projectId = null;
@@ -201,6 +202,9 @@
           <TriggerCrawlButton {projectId} project={project} on:created={handleCrawlCreated} />
         {/if}
       </div>
+      {#if projectId}
+        <CrawlScheduleCard {projectId} />
+      {/if}
     </div>
 
     <!-- Active Crawl Notification -->

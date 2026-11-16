@@ -199,6 +199,8 @@ func (s *Server) Router() http.Handler {
 	mux.HandleFunc("/api/internal/keywords/poll", s.handleKeywordTaskPoll)
 	// Internal cron endpoint for scheduled keyword checks (protected via shared secret)
 	mux.HandleFunc("/api/internal/keywords/check-scheduled", s.handleScheduledKeywordChecks)
+	// Internal cron endpoint that starts due scheduled crawls
+	mux.HandleFunc("/api/internal/crawls/run-scheduled", s.handleScheduledCrawls)
 
 	// API v1 routes
 	v1 := http.NewServeMux()

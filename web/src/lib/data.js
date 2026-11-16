@@ -1471,3 +1471,28 @@ export async function triggerSiteCrawl(projectId, siteUrl, maxPages) {
 		body: { project_id: projectId, site_url: siteUrl, max_pages: maxPages }
 	});
 }
+
+// Crawl comparison: what changed since the previous crawl (or a chosen baseline)
+export async function fetchCrawlDiff(crawlId, againstCrawlId = null) {
+	const query = againstCrawlId ? `?against=${encodeURIComponent(againstCrawlId)}` : '';
+	return authorizedJSON(`/api/v1/crawls/${crawlId}/diff${query}`);
+}
+
+// Scheduled crawls: one recurring schedule per project
+export async function fetchCrawlSchedule(projectId) {
+	return authorizedJSON(`/api/v1/projects/${projectId}/crawl-schedule`);
+}
+
+export async function saveCrawlSchedule(projectId, schedule) {
+	return authorizedJSON(`/api/v1/projects/${projectId}/crawl-schedule`, {
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(schedule)
+	});
+}
+
+export async function deleteCrawlSchedule(projectId) {
+	return authorizedJSON(`/api/v1/projects/${projectId}/crawl-schedule`, {
+		method: 'DELETE'
+	});
+}

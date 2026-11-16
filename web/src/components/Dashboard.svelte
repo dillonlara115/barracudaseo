@@ -12,6 +12,7 @@
   import ClarityDashboardPanel from './ClarityDashboardPanel.svelte';
   import UnifiedInsightsPanel from './UnifiedInsightsPanel.svelte';
   import CrawlSummary from './AI/CrawlSummary.svelte';
+  import CrawlDiffCard from './CrawlDiffCard.svelte';
   import PublicReportGenerator from './PublicReportGenerator.svelte';
   import ProjectSidebar from './ProjectSidebar.svelte';
   import CrawlSelector from './CrawlSelector.svelte';
@@ -352,6 +353,7 @@
       />
 
       {#if crawlId}
+        <CrawlDiffCard {crawlId} />
         <CrawlSummary {crawlId} />
         <PublicReportGenerator {crawlId} {projectId} />
       {/if}

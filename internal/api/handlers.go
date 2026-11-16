@@ -231,7 +231,8 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 
 	// Insert issues with URL normalization and deduplication
 	issues := make([]map[string]interface{}, 0, len(summary.Issues))
-	seenIssues := make(map[string]bool) // Track (type + normalized URL) to prevent duplicates
+	seenIssues := make(map[string]bool) // Track issue fingerprints to prevent duplicates
+	carried := s.carriedIssueStatuses(req.ProjectID, crawlID)
 	pageURLToID := make(map[string]int64)
 
 	// Build page URL to ID map for this crawl
@@ -266,7 +267,7 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Create deduplication key: type + normalized URL
-		dedupeKey := fmt.Sprintf("%s:%s", issue.Type, normalizedIssueURL)
+		dedupeKey := issueIdentity(issue)
 		if seenIssues[dedupeKey] {
 			s.logger.Debug("Skipping duplicate issue",
 				zap.String("type", string(issue.Type)),
@@ -284,7 +285,7 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 			"message":        issue.Message,
 			"recommendation": issue.Recommendation,
 			"value":          issue.Value,
-			"status":         "new",
+			"status":         carriedStatus(carried, dedupeKey),
 		}
 		// Try to find page ID using normalized URL first, then fallback to original
 		if pageID, ok := pageURLToID[normalizedIssueURL]; ok {
@@ -536,6 +537,9 @@ func (s *Server) handleProjectByID(w http.ResponseWriter, r *http.Request) {
 			} else {
 				s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			}
+			return
+		case "crawl-schedule":
+			s.handleProjectCrawlSchedule(w, r, projectID, userID)
 			return
 		case "gsc":
 			s.handleProjectGSC(w, r, projectID, userID, parts[2:])
@@ -1350,7 +1354,8 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 	// Store issues with URL normalization and deduplication
 	s.updateCrawlPhase(crawlID, "storing")
 	issues := make([]map[string]interface{}, 0, len(summary.Issues))
-	seenIssues := make(map[string]bool) // Track (type + normalized URL) to prevent duplicates
+	seenIssues := make(map[string]bool) // Track issue fingerprints to prevent duplicates
+	carried := s.carriedIssueStatuses(projectID, crawlID)
 
 	for _, issue := range summary.Issues {
 		// Normalize issue URL to prevent duplicates (e.g., https://example.com vs https://example.com/)
@@ -1362,7 +1367,7 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 		}
 
 		// Create deduplication key: type + normalized URL
-		dedupeKey := fmt.Sprintf("%s:%s", issue.Type, normalizedIssueURL)
+		dedupeKey := issueIdentity(issue)
 		if seenIssues[dedupeKey] {
 			// Skip duplicate issue (same type and URL)
 			s.logger.Debug("Skipping duplicate issue",
@@ -1381,7 +1386,7 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 			"message":        issue.Message,
 			"recommendation": issue.Recommendation,
 			"value":          issue.Value,
-			"status":         "new",
+			"status":         carriedStatus(carried, dedupeKey),
 		}
 		// Try to find page ID using normalized URL first, then fallback to original
 		var pageID int64
@@ -1859,6 +1864,13 @@ func (s *Server) handleCrawlByID(w http.ResponseWriter, r *http.Request) {
 		case "issues":
 			if r.Method == http.MethodGet {
 				s.handleCrawlIssues(w, r, crawlID, userID)
+			} else {
+				s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			}
+			return
+		case "diff":
+			if r.Method == http.MethodGet {
+				s.handleCrawlDiff(w, r, crawlID, userID)
 			} else {
 				s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			}
