@@ -310,7 +310,9 @@ func (s *Server) handleViewPublicReport(w http.ResponseWriter, r *http.Request) 
 
 	// Fetch project data
 	projectID, _ := reportData["project_id"].(string)
-	projectDataBytes, _, err := s.serviceRole.From("projects").Select("*", "", false).Eq("id", projectID).Execute()
+	// Public endpoint: select only display fields. projects.settings holds
+	// integration credentials and must never reach unauthenticated viewers.
+	projectDataBytes, _, err := s.serviceRole.From("projects").Select("name,domain", "", false).Eq("id", projectID).Execute()
 	var projectData map[string]interface{}
 	if err != nil {
 		s.logger.Warn("Failed to fetch project data", zap.Error(err))

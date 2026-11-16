@@ -1836,7 +1836,7 @@ func (s *Server) handleCrawlByID(w http.ResponseWriter, r *http.Request) {
 		switch resource {
 		case "graph":
 			if r.Method == http.MethodGet {
-				s.handleCrawlGraph(w, r, crawlID)
+				s.handleCrawlGraph(w, r, crawlID, userID)
 			} else {
 				s.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			}
@@ -1990,10 +1990,27 @@ func (s *Server) handleGetCrawl(w http.ResponseWriter, r *http.Request, crawlID 
 }
 
 // handleCrawlGraph handles GET /api/v1/crawls/:id/graph - returns link graph data
-func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlID string) {
+func (s *Server) handleCrawlGraph(w http.ResponseWriter, r *http.Request, crawlID string, userID string) {
 	_ = r
 
-	s.logger.Info("Fetching link graph", zap.String("crawl_id", crawlID))
+	s.logger.Info("Fetching link graph", zap.String("crawl_id", crawlID), zap.String("user_id", userID))
+
+	// The query below uses the service role (bypasses RLS), so access must be
+	// verified explicitly (via project membership).
+	hasAccess, err := s.verifyCrawlAccess(userID, crawlID)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			s.respondError(w, http.StatusNotFound, "Crawl not found")
+		} else {
+			s.logger.Error("Failed to verify crawl access", zap.String("crawl_id", crawlID), zap.String("user_id", userID), zap.Error(err))
+			s.respondError(w, http.StatusInternalServerError, "Failed to verify crawl access")
+		}
+		return
+	}
+	if !hasAccess {
+		s.respondError(w, http.StatusForbidden, "You don't have access to this crawl")
+		return
+	}
 
 	// Fetch all pages for this crawl using service role to ensure access
 	// Select all fields to ensure we get the data field properly
