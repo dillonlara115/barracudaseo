@@ -130,6 +130,31 @@
         </div>
       {/if}
 
+      {#if page.schema_items && page.schema_items.length > 0}
+        <div class="mb-4">
+          <div class="font-semibold mb-2">Structured data:</div>
+          <div class="flex flex-wrap gap-1">
+            {#each [...new Set(page.schema_items.map((item) => item.type))] as schemaType}
+              <span class="badge badge-ghost">{schemaType}</span>
+            {/each}
+          </div>
+        </div>
+      {/if}
+
+      {#if page.hreflang && page.hreflang.length > 0}
+        <div class="mb-4">
+          <div class="font-semibold mb-2">hreflang ({page.hreflang.length}):</div>
+          <div class="max-h-32 overflow-y-auto">
+            {#each page.hreflang as alternate}
+              <div class="text-sm break-all">
+                <span class="badge badge-ghost badge-sm">{alternate.lang}</span>
+                {alternate.url}
+              </div>
+            {/each}
+          </div>
+        </div>
+      {/if}
+
       <!-- Indexability -->
       {#if page.indexability_status || page.meta_robots || page.x_robots_tag || page.in_sitemap}
         <div class="mb-4">

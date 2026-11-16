@@ -17,9 +17,13 @@ func issueSubject(issueType IssueType, value string) string {
 	value = strings.TrimSpace(value)
 
 	switch issueType {
-	case IssueMissingImageAlt, IssueBrokenImage, IssueBrokenInternalLink:
-		// Value is the image URL / link target
+	case IssueMissingImageAlt, IssueBrokenImage, IssueBrokenInternalLink,
+		IssueHreflangMissingReturnLink, IssueHreflangToNonIndexable:
+		// Value is the image URL / link target / alternate URL
 		return urlKey(value)
+	case IssueStructuredDataMissingFields, IssueMissingSecurityHeader, IssueHreflangInvalidLanguage:
+		// Value is the schema type / header name / language code
+		return strings.ToLower(value)
 	case IssueLargeImage:
 		// Value is "<image url> (123 KB)"
 		if i := strings.LastIndex(value, " ("); i >= 0 {

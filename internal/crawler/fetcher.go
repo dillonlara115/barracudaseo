@@ -141,6 +141,10 @@ func (f *Fetcher) Fetch(url string) *FetchResult {
 		result.PageResult.RedirectChain = redirectChain
 	}
 
+	// Record security headers for the security audit. The map is always set
+	// (possibly empty) so "none sent" can be told apart from "not recorded".
+	result.PageResult.SecurityHeaders = extractSecurityHeaders(resp.Header)
+
 	// Check Content-Type header - skip non-HTML content (images, PDFs, etc.)
 	contentType := resp.Header.Get("Content-Type")
 	if contentType != "" {

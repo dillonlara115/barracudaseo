@@ -3,6 +3,7 @@ package analyzer
 import (
 	"fmt"
 	"os"
+	"sort"
 	"text/tabwriter"
 )
 
@@ -45,6 +46,25 @@ func PrintSummary(summary *Summary) {
 			if count := summary.Indexability[row.class]; count > 0 {
 				fmt.Fprintf(w, "  %s:\t%d\n", row.label, count)
 			}
+		}
+		fmt.Fprintf(w, "\n")
+	}
+
+	// Structured data in use
+	if len(summary.SchemaTypes) > 0 {
+		fmt.Fprintf(os.Stdout, "Structured Data (pages per type):\n")
+		typeNames := make([]string, 0, len(summary.SchemaTypes))
+		for typeName := range summary.SchemaTypes {
+			typeNames = append(typeNames, typeName)
+		}
+		sort.Slice(typeNames, func(i, j int) bool {
+			if summary.SchemaTypes[typeNames[i]] != summary.SchemaTypes[typeNames[j]] {
+				return summary.SchemaTypes[typeNames[i]] > summary.SchemaTypes[typeNames[j]]
+			}
+			return typeNames[i] < typeNames[j]
+		})
+		for _, typeName := range typeNames {
+			fmt.Fprintf(w, "  %s:\t%d\n", typeName, summary.SchemaTypes[typeName])
 		}
 		fmt.Fprintf(w, "\n")
 	}
@@ -123,8 +143,13 @@ func PrintSummary(summary *Summary) {
 func getIssueIcon(issueType IssueType) string {
 	switch issueType {
 	case IssueMissingH1, IssueMissingTitle, IssueMissingMetaDesc, IssueBrokenLink, IssueBrokenImage, IssueEmptyH1, IssueBrokenInternalLink,
-		IssueCanonicalNonIndexable:
+		IssueCanonicalNonIndexable, IssueInvalidStructuredData, IssueInsecurePage,
+		IssueHreflangInvalidLanguage, IssueHreflangMissingReturnLink, IssueHreflangToNonIndexable:
 		return "🔴"
+	case IssueStructuredDataMissingFields, IssueMixedContent, IssueHreflangMissingSelf:
+		return "⚠️"
+	case IssueMissingSecurityHeader, IssueHreflangMissingXDefault:
+		return "ℹ️"
 	case IssueBlockedByRobots, IssueNonIndexableInSitemap, IssueThinContent, IssueDuplicateContent:
 		return "⚠️"
 	case IssueNoindexPage, IssueCanonicalised, IssueNotInSitemap, IssueNearDuplicateContent:
@@ -185,6 +210,26 @@ func formatIssueType(issueType IssueType) string {
 		return "Links to Broken Pages"
 	case IssueLinkToRedirect:
 		return "Links to Redirects"
+	case IssueInvalidStructuredData:
+		return "Invalid Structured Data"
+	case IssueStructuredDataMissingFields:
+		return "Structured Data Missing Fields"
+	case IssueHreflangInvalidLanguage:
+		return "Invalid hreflang Values"
+	case IssueHreflangMissingSelf:
+		return "hreflang Missing Self-Reference"
+	case IssueHreflangMissingReturnLink:
+		return "hreflang Missing Return Links"
+	case IssueHreflangToNonIndexable:
+		return "hreflang to Non-Indexable URLs"
+	case IssueHreflangMissingXDefault:
+		return "hreflang Missing x-default"
+	case IssueMixedContent:
+		return "Mixed Content"
+	case IssueInsecurePage:
+		return "Pages Served over HTTP"
+	case IssueMissingSecurityHeader:
+		return "Missing Security Headers"
 	case IssueThinContent:
 		return "Thin Content"
 	case IssueDuplicateContent:

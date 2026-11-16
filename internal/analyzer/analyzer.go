@@ -57,6 +57,8 @@ type Summary struct {
 	SlowestPages        []PagePerformance `json:"slowest_pages,omitempty"`
 	// Indexability counts crawled URLs by the reason they are or are not indexable
 	Indexability map[IndexabilityClass]int `json:"indexability,omitempty"`
+	// SchemaTypes counts the pages using each Schema.org structured data type
+	SchemaTypes map[string]int `json:"schema_types,omitempty"`
 }
 
 // PagePerformance tracks page performance metrics
@@ -281,6 +283,16 @@ func Analyze(results []*models.PageResult) *Summary {
 
 	// Content: thin pages and duplicated or near-duplicated main text
 	for _, issue := range AnalyzeContent(results) {
+		summary.Issues = append(summary.Issues, issue)
+		summary.IssuesByType[issue.Type]++
+	}
+
+	// Structured data, hreflang and security
+	schemaIssues, schemaTypes := AnalyzeStructuredData(results)
+	summary.SchemaTypes = schemaTypes
+	markupIssues := append(schemaIssues, AnalyzeHreflang(results)...)
+	markupIssues = append(markupIssues, AnalyzeSecurity(results)...)
+	for _, issue := range markupIssues {
 		summary.Issues = append(summary.Issues, issue)
 		summary.IssuesByType[issue.Type]++
 	}

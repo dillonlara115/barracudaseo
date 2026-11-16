@@ -40,7 +40,25 @@ type PageResult struct {
 	WordCount          int                `json:"word_count,omitempty"`      // Words in the page's main text (navigation, header and footer excluded)
 	ContentHash        string             `json:"content_hash,omitempty"`    // Hash of the main text; equal hashes mean identical content
 	ContentSimHash     string             `json:"content_simhash,omitempty"` // 64-bit similarity hash (hex); near-identical content differs in few bits
+	SchemaItems        []SchemaItem       `json:"schema_items,omitempty"`    // Structured data entities found on the page
+	SchemaErrors       []string           `json:"schema_errors,omitempty"`   // JSON-LD blocks that could not be read, with the reason
+	Hreflang           []HreflangLink     `json:"hreflang,omitempty"`        // <link rel="alternate" hreflang> annotations
+	SecurityHeaders    map[string]string  `json:"security_headers"`          // Security-related response headers by lowercase name; nil means not recorded, empty means none sent
+	MixedContent       []string           `json:"mixed_content,omitempty"`   // http:// resources loaded by an https:// page
 	CrawledAt          time.Time          `json:"crawled_at"`
+}
+
+// SchemaItem is one structured data entity (a JSON-LD object or a microdata item).
+type SchemaItem struct {
+	Format     string   `json:"format"`               // "json-ld" or "microdata"
+	Type       string   `json:"type"`                 // Schema.org type, e.g. "Product"
+	Properties []string `json:"properties,omitempty"` // Property names present on the entity
+}
+
+// HreflangLink is one hreflang annotation: a language/region and the URL that serves it.
+type HreflangLink struct {
+	Lang string `json:"lang"`
+	URL  string `json:"url"`
 }
 
 // Image represents an image found on a page

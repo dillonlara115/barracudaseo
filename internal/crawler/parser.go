@@ -189,6 +189,11 @@ func (p *Parser) Parse(htmlContent []byte) (*models.PageResult, error) {
 	result.ContentHash = content.Hash
 	result.ContentSimHash = content.SimHash
 
+	// Structured data, hreflang annotations and insecure resources
+	result.SchemaItems, result.SchemaErrors = extractStructuredData(doc)
+	result.Hreflang = extractHreflang(doc, p.baseURL)
+	result.MixedContent = extractMixedContent(doc, p.baseURL)
+
 	// Extract links
 	doc.Find("a[href]").Each(func(i int, s *goquery.Selection) {
 		href, exists := s.Attr("href")

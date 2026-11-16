@@ -270,6 +270,141 @@
         { name: "Redirect Best Practices", url: "https://moz.com/learn/seo/redirection" }
       ]
     },
+    invalid_structured_data: {
+      title: "Fix Unreadable Structured Data",
+      impact: "High",
+      description: "These pages contain JSON-LD that is not valid JSON or has no @type. Search engines ignore a block they cannot parse, so the page gets no rich results from it.",
+      codeSnippet: `<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Example"
+}
+<\/script>`,
+      explanation: "The usual causes are a trailing comma, an unescaped quote in a text value, or a template that printed nothing. Validate the block after fixing it.",
+      resources: [
+        { name: "Rich Results Test", url: "https://search.google.com/test/rich-results" },
+        { name: "Schema Markup Validator", url: "https://validator.schema.org/" }
+      ]
+    },
+    structured_data_missing_fields: {
+      title: "Complete Structured Data",
+      impact: "Medium",
+      description: "These pages declare a Schema.org type but leave out properties that are required before the markup can produce a rich result.",
+      codeSnippet: `{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "Widget",
+  "offers": { "@type": "Offer", "price": "9.99", "priceCurrency": "USD" }
+}`,
+      explanation: "Add the listed properties using values that are visible on the page. Markup that describes content users cannot see violates Google's guidelines.",
+      resources: [
+        { name: "Structured Data Search Gallery", url: "https://developers.google.com/search/docs/appearance/structured-data/search-gallery" },
+        { name: "Rich Results Test", url: "https://search.google.com/test/rich-results" }
+      ]
+    },
+    hreflang_invalid_language: {
+      title: "Fix Invalid hreflang Values",
+      impact: "High",
+      description: "These pages use hreflang values that are not valid language or region codes, so search engines ignore the annotation.",
+      codeSnippet: `<!-- Wrong -->
+<link rel="alternate" hreflang="en_US" href="https://example.com/us/">
+<link rel="alternate" hreflang="en-UK" href="https://example.com/uk/">
+
+<!-- Right -->
+<link rel="alternate" hreflang="en-US" href="https://example.com/us/">
+<link rel="alternate" hreflang="en-GB" href="https://example.com/uk/">`,
+      explanation: "Use an ISO 639-1 language code, optionally followed by a hyphen and an ISO 3166-1 region. Use a hyphen, not an underscore, and GB rather than UK.",
+      resources: [
+        { name: "Google hreflang Guide", url: "https://developers.google.com/search/docs/specialty/international/localized-versions" }
+      ]
+    },
+    hreflang_missing_return_link: {
+      title: "Add hreflang Return Links",
+      impact: "High",
+      description: "These pages point to an alternate language version that does not point back. hreflang only works when both pages reference each other.",
+      codeSnippet: `<!-- On the English page AND on the German page -->
+<link rel="alternate" hreflang="en" href="https://example.com/en/page">
+<link rel="alternate" hreflang="de" href="https://example.com/de/page">`,
+      explanation: "Every page in a language set should carry the same full list of alternates, including itself. Generating the list from one source for all versions prevents this.",
+      resources: [
+        { name: "Google hreflang Guide", url: "https://developers.google.com/search/docs/specialty/international/localized-versions" }
+      ]
+    },
+    hreflang_to_non_indexable: {
+      title: "Point hreflang at Indexable URLs",
+      impact: "High",
+      description: "These pages list an alternate language URL that redirects, is broken, is noindexed or is canonicalised elsewhere.",
+      codeSnippet: `<link rel="alternate" hreflang="de" href="https://example.com/de/final-indexable-url">`,
+      explanation: "Each hreflang URL must be the final, indexable address of that language version. Update the annotation, or fix the target page.",
+      resources: [
+        { name: "Google hreflang Guide", url: "https://developers.google.com/search/docs/specialty/international/localized-versions" }
+      ]
+    },
+    hreflang_missing_self_reference: {
+      title: "Add a Self-Referencing hreflang",
+      impact: "Medium",
+      description: "These pages list their alternate versions but leave themselves out of the set.",
+      codeSnippet: `<!-- On https://example.com/en/page -->
+<link rel="alternate" hreflang="en" href="https://example.com/en/page">
+<link rel="alternate" hreflang="de" href="https://example.com/de/page">`,
+      explanation: "Include an entry for the page's own language pointing at its own URL, alongside the alternates.",
+      resources: [
+        { name: "Google hreflang Guide", url: "https://developers.google.com/search/docs/specialty/international/localized-versions" }
+      ]
+    },
+    hreflang_missing_x_default: {
+      title: "Add an x-default hreflang",
+      impact: "Low",
+      description: "These language sets have no x-default, the version shown to users whose language matches none of the alternates.",
+      codeSnippet: `<link rel="alternate" hreflang="x-default" href="https://example.com/">`,
+      explanation: "Point x-default at your language selector or your most general version. It is optional but recommended.",
+      resources: [
+        { name: "Google hreflang Guide", url: "https://developers.google.com/search/docs/specialty/international/localized-versions" }
+      ]
+    },
+    mixed_content: {
+      title: "Remove Mixed Content",
+      impact: "Medium",
+      description: "These HTTPS pages load images, scripts, styles or frames over plain HTTP. Browsers block or warn about them, which can break the page and removes the secure padlock.",
+      codeSnippet: `<!-- Before -->
+<img src="http://example.com/photo.jpg">
+
+<!-- After -->
+<img src="https://example.com/photo.jpg">`,
+      explanation: "Change each resource URL to HTTPS. If a third party does not offer HTTPS, host the file yourself or replace it.",
+      resources: [
+        { name: "Fixing Mixed Content", url: "https://web.dev/articles/fixing-mixed-content" }
+      ]
+    },
+    insecure_page: {
+      title: "Serve Pages over HTTPS",
+      impact: "High",
+      description: "These pages are served over plain HTTP. Browsers mark them as not secure and HTTPS is a ranking signal.",
+      codeSnippet: `# Redirect all HTTP requests to HTTPS (nginx)
+server {
+  listen 80;
+  return 301 https://$host$request_uri;
+}`,
+      explanation: "Install a certificate, redirect every HTTP URL to its HTTPS equivalent with a 301, and update internal links and canonicals to HTTPS.",
+      resources: [
+        { name: "Why HTTPS Matters", url: "https://web.dev/articles/why-https-matters" }
+      ]
+    },
+    missing_security_header: {
+      title: "Add Security Headers",
+      impact: "Low",
+      description: "The site does not send one or more recommended security headers. These protect visitors; they are not a direct ranking factor.",
+      codeSnippet: `Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+Referrer-Policy: strict-origin-when-cross-origin
+Content-Security-Policy: default-src 'self'`,
+      explanation: "Set these once at the server, CDN or hosting platform and they apply to every page. Test a Content-Security-Policy in report-only mode first, since a strict one can block legitimate scripts.",
+      resources: [
+        { name: "MDN HTTP Security Headers", url: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers#security" }
+      ]
+    },
     thin_content: {
       title: "Expand Thin Pages",
       impact: "Medium",

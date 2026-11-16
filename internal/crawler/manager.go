@@ -352,6 +352,10 @@ func (m *Manager) worker(id int) {
 			result.PageResult.WordCount = parsedData.WordCount
 			result.PageResult.ContentHash = parsedData.ContentHash
 			result.PageResult.ContentSimHash = parsedData.ContentSimHash
+			result.PageResult.SchemaItems = parsedData.SchemaItems
+			result.PageResult.SchemaErrors = parsedData.SchemaErrors
+			result.PageResult.Hreflang = parsedData.Hreflang
+			result.PageResult.MixedContent = parsedData.MixedContent
 
 			// Determine indexability status based on robots.txt, x-robots-tag, and meta robots
 			result.PageResult.DetermineIndexabilityStatus(isBlockedByRobots)
