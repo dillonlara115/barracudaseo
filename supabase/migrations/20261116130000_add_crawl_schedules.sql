@@ -34,9 +34,24 @@ create index if not exists idx_crawl_schedules_due
 -- Anyone with access to the project can see its schedule. Writes go through
 -- the API server (service role), which checks project access and plan limits.
 drop policy if exists "Project members can view crawl schedules" on public.crawl_schedules;
+-- The access check is written inline (members or owner), matching the clarity
+-- tables: the can_access_project(uuid) helper was dropped from the live schema.
 create policy "Project members can view crawl schedules"
   on public.crawl_schedules for select
-  using (public.can_access_project(project_id));
+  using (
+    exists (
+      select 1
+      from public.project_members pm
+      where pm.project_id = crawl_schedules.project_id
+        and pm.user_id = (select auth.uid())
+    )
+    or exists (
+      select 1
+      from public.projects p
+      where p.id = crawl_schedules.project_id
+        and p.owner_id = (select auth.uid())
+    )
+  );
 
 drop trigger if exists set_updated_at_crawl_schedules on public.crawl_schedules;
 create trigger set_updated_at_crawl_schedules
