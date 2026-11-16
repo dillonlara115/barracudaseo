@@ -196,6 +196,79 @@
         { name: "Link Building Best Practices", url: "https://moz.com/learn/seo/internal-link" },
         { name: "HTTP Status Codes", url: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status" }
       ]
+    },
+    duplicate_title: {
+      title: "Write Unique Page Titles",
+      impact: "High",
+      description: "Several pages share the same title, so search engines cannot tell which one to rank for a query.",
+      codeSnippet: `<!-- Before: the same title on every page -->
+<title>Our Services</title>
+
+<!-- After: each title describes its own page -->
+<title>Roof Repair in Austin | Brand</title>
+<title>Roof Replacement in Austin | Brand</title>`,
+      explanation: "Give every indexable page a title that names its specific topic. If two pages really are the same content, consolidate them or set a canonical.",
+      resources: [
+        { name: "Google Title Link Guidelines", url: "https://developers.google.com/search/docs/appearance/title-link" },
+        { name: "Consolidate Duplicate URLs", url: "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls" }
+      ]
+    },
+    duplicate_meta_description: {
+      title: "Write Unique Meta Descriptions",
+      impact: "Medium",
+      description: "Several pages share the same meta description, which makes their search snippets indistinguishable.",
+      codeSnippet: `<meta name="description" content="A summary specific to this page, 120-160 characters.">`,
+      explanation: "Describe what is unique about each page. Templates that fill in the page's own product, location or topic are fine.",
+      resources: [
+        { name: "Google Snippet Guidelines", url: "https://developers.google.com/search/docs/appearance/snippet" }
+      ]
+    },
+    duplicate_h1: {
+      title: "Use Distinct H1 Headings",
+      impact: "Low",
+      description: "Several pages share the same H1, which weakens the signal of what each page is about.",
+      codeSnippet: `<h1>A heading that names this page's topic</h1>`,
+      explanation: "Check that the H1 is page content rather than a site-wide element such as the logo or site name.",
+      resources: [
+        { name: "H1 Tag Best Practices", url: "https://moz.com/learn/seo/h1-tag" }
+      ]
+    },
+    orphan_page: {
+      title: "Link to Orphan Pages",
+      impact: "High",
+      description: "No crawled page links to these pages. They were found through the sitemap only, so users cannot reach them and search engines give them little weight.",
+      codeSnippet: `<!-- Add a contextual link from a related page -->
+<a href="/orphan-page">Descriptive anchor text</a>`,
+      explanation: "Link to each page from a relevant page, hub or navigation. If the page is no longer needed, remove it from the sitemap and redirect or delete it. If the crawl stopped at its page limit, re-crawl with a higher limit to confirm.",
+      resources: [
+        { name: "Internal Linking Guide", url: "https://moz.com/learn/seo/internal-link" },
+        { name: "Google Link Best Practices", url: "https://developers.google.com/search/docs/crawling-indexing/links-crawlable" }
+      ]
+    },
+    broken_internal_link: {
+      title: "Fix Links to Broken Pages",
+      impact: "High",
+      description: "These pages contain links to URLs on your site that return an error.",
+      codeSnippet: `<!-- Point the link at a working URL -->
+<a href="/working-page">Link Text</a>`,
+      explanation: "Update each link to the correct URL, or remove it. If the target moved, also add a redirect so external links keep working.",
+      resources: [
+        { name: "HTTP Status Codes", url: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status" }
+      ]
+    },
+    internal_link_to_redirect: {
+      title: "Link Directly to Final URLs",
+      impact: "Low",
+      description: "These pages link to URLs that redirect. Each one adds an extra hop for users and crawlers.",
+      codeSnippet: `<!-- Before -->
+<a href="/old-url">Link Text</a>
+
+<!-- After -->
+<a href="/final-url/">Link Text</a>`,
+      explanation: "Update the link to the redirect's destination. This is often a navigation or footer link, so one template fix clears many pages.",
+      resources: [
+        { name: "Redirect Best Practices", url: "https://moz.com/learn/seo/redirection" }
+      ]
     }
   };
 

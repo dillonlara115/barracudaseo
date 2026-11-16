@@ -100,11 +100,12 @@ func PrintSummary(summary *Summary) {
 
 func getIssueIcon(issueType IssueType) string {
 	switch issueType {
-	case IssueMissingH1, IssueMissingTitle, IssueMissingMetaDesc, IssueBrokenLink, IssueBrokenImage, IssueEmptyH1:
+	case IssueMissingH1, IssueMissingTitle, IssueMissingMetaDesc, IssueBrokenLink, IssueBrokenImage, IssueEmptyH1, IssueBrokenInternalLink:
 		return "🔴"
-	case IssueLongTitle, IssueLongMetaDesc, IssueShortTitle, IssueShortMetaDesc, IssueMultipleH1, IssueRedirectChain, IssueLargeImage, IssueMissingImageAlt:
+	case IssueLongTitle, IssueLongMetaDesc, IssueShortTitle, IssueShortMetaDesc, IssueMultipleH1, IssueRedirectChain, IssueLargeImage, IssueMissingImageAlt,
+		IssueDuplicateTitle, IssueDuplicateMetaDesc, IssueOrphanPage:
 		return "⚠️"
-	case IssueNoCanonical, IssueSlowResponse:
+	case IssueNoCanonical, IssueSlowResponse, IssueDuplicateH1, IssueLinkToRedirect:
 		return "ℹ️"
 	default:
 		return "•"
@@ -145,6 +146,18 @@ func formatIssueType(issueType IssueType) string {
 		return "Multiple H1 Tags"
 	case IssueEmptyH1:
 		return "Empty H1 Tag"
+	case IssueDuplicateTitle:
+		return "Duplicate Titles"
+	case IssueDuplicateMetaDesc:
+		return "Duplicate Meta Descriptions"
+	case IssueDuplicateH1:
+		return "Duplicate H1 Tags"
+	case IssueOrphanPage:
+		return "Orphan Pages"
+	case IssueBrokenInternalLink:
+		return "Links to Broken Pages"
+	case IssueLinkToRedirect:
+		return "Links to Redirects"
 	default:
 		return string(issueType)
 	}

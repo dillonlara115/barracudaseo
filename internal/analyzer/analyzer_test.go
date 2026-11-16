@@ -67,7 +67,7 @@ func TestAnalyze(t *testing.T) {
 					StatusCode:         200,
 					Title:              "This is a very very very very very very very very very long title that exceeds the limit",                                                                                                                     // Too long
 					MetaDesc:           "This description is way too long and just keeps going and going and going and going and going and going and going and going and going and going and going and going and going and going and going and going.", // Too long
-					H1:                 []string{"Heading"},
+					H1:                 []string{"Long Heading"},
 					Canonical:          "https://example.com/long",
 					IndexabilityStatus: models.IndexabilityIndexable,
 				},

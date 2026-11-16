@@ -271,6 +271,12 @@ func Analyze(results []*models.PageResult) *Summary {
 		summary.SlowestPages = slowPages
 	}
 
+	// Second pass: checks that compare pages against each other
+	for _, issue := range AnalyzeCrossPage(results) {
+		summary.Issues = append(summary.Issues, issue)
+		summary.IssuesByType[issue.Type]++
+	}
+
 	summary.TotalIssues = len(summary.Issues)
 
 	return summary
