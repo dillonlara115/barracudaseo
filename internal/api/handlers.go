@@ -215,6 +215,7 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 				"hreflang":         page.Hreflang,
 				"security_headers": page.SecurityHeaders,
 				"mixed_content":    page.MixedContent,
+				"js":               page.JS,
 			},
 		}
 		pages = append(pages, pageData)
@@ -1167,6 +1168,7 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 				"hreflang":         page.Hreflang,
 				"security_headers": page.SecurityHeaders,
 				"mixed_content":    page.MixedContent,
+				"js":               page.JS,
 			},
 		}
 
@@ -1298,6 +1300,9 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 	}
 
 	// Analyze results (only non-image URLs)
+	// Core Web Vitals for a few key pages (only when PSI_API_KEY is configured)
+	s.measureWebVitals(crawlID, filteredResults)
+
 	s.updateCrawlPhase(crawlID, "metadata_review")
 	summary := analyzer.Analyze(filteredResults)
 	s.updateCrawlPhase(crawlID, "image_analysis")

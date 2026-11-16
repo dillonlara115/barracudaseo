@@ -270,6 +270,124 @@
         { name: "Redirect Best Practices", url: "https://moz.com/learn/seo/redirection" }
       ]
     },
+    slow_lcp: {
+      title: "Speed Up Largest Contentful Paint",
+      impact: "High",
+      description: "The largest element in the first screen takes too long to appear. Google's threshold for good is 2.5 seconds at the 75th percentile of visits.",
+      codeSnippet: `<!-- Preload the hero image and tell the browser it is important -->
+<link rel="preload" as="image" href="/hero.avif" fetchpriority="high">
+<img src="/hero.avif" width="1200" height="600" fetchpriority="high" alt="...">`,
+      explanation: "Find the LCP element in PageSpeed Insights first. Then cut server response time, serve the image in a modern format at the right size, preload it, and remove render-blocking CSS and scripts ahead of it. Never lazy-load the LCP image.",
+      resources: [
+        { name: "Optimize LCP", url: "https://web.dev/articles/optimize-lcp" },
+        { name: "PageSpeed Insights", url: "https://pagespeed.web.dev/" }
+      ]
+    },
+    slow_inp: {
+      title: "Improve Interaction to Next Paint",
+      impact: "High",
+      description: "The page is slow to respond when users click, tap or type. Google's threshold for good is 200 milliseconds at the 75th percentile.",
+      codeSnippet: `// Break up long tasks so the browser can respond in between
+async function processAll(items) {
+  for (const item of items) {
+    process(item);
+    await scheduler.yield();
+  }
+}`,
+      explanation: "The cause is almost always too much JavaScript on the main thread. Break up long tasks, defer or remove third-party scripts, and keep event handlers small. INP can only be measured from real users, so check the field data after each change.",
+      resources: [
+        { name: "Optimize INP", url: "https://web.dev/articles/optimize-inp" }
+      ]
+    },
+    high_cls: {
+      title: "Reduce Cumulative Layout Shift",
+      impact: "Medium",
+      description: "Content moves around while the page loads. Google's threshold for good is 0.1 at the 75th percentile.",
+      codeSnippet: `<!-- Always reserve space for images, video, ads and embeds -->
+<img src="/photo.jpg" width="800" height="450" alt="...">
+
+<style>
+  .ad-slot { min-height: 250px; }
+</style>`,
+      explanation: "Set width and height on images and video, reserve space for ads and embeds, avoid inserting banners above existing content, and load fonts in a way that does not swap in a differently sized font late.",
+      resources: [
+        { name: "Optimize CLS", url: "https://web.dev/articles/optimize-cls" }
+      ]
+    },
+    js_dependent_content: {
+      title: "Check Pages That Look Client-Rendered",
+      impact: "High",
+      description: "The HTML the server sends for these pages is an almost empty app shell, so the content likely appears only after JavaScript runs. This was judged from the HTML alone; the pages were not rendered.",
+      codeSnippet: `<!-- What a crawler that does not run JavaScript sees -->
+<body>
+  <div id="root"></div>
+</body>`,
+      explanation: "Google can render JavaScript, but does so later and less reliably than it reads HTML, and most AI crawlers do not render at all. Move to server-side rendering or static generation for pages that need to rank. Re-crawl with JavaScript rendering to confirm what is missing.",
+      resources: [
+        { name: "JavaScript SEO Basics", url: "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics" }
+      ]
+    },
+    content_requires_javascript: {
+      title: "Server-Render Content That Needs JavaScript",
+      impact: "High",
+      description: "Rendering these pages in a browser showed far more content than the HTML the server sent. That content is invisible to anything that does not run JavaScript.",
+      codeSnippet: `<!-- Goal: the main content is already in the HTML response -->
+<main>
+  <h1>Page heading</h1>
+  <p>The content a visitor came for...</p>
+</main>`,
+      explanation: "Use server-side rendering, static generation or pre-rendering for the main content, and keep JavaScript for interactivity. Check the result by viewing the page source, not the inspector.",
+      resources: [
+        { name: "Rendering on the Web", url: "https://web.dev/articles/rendering-on-the-web" },
+        { name: "JavaScript SEO Basics", url: "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics" }
+      ]
+    },
+    links_require_javascript: {
+      title: "Put Internal Links in the HTML",
+      impact: "High",
+      description: "Some internal links on these pages exist only after JavaScript runs, so crawlers reading the HTML cannot discover the pages they point to.",
+      codeSnippet: `<!-- Crawlable -->
+<a href="/products/widget">Widget</a>
+
+<!-- Not crawlable -->
+<span onclick="goTo('/products/widget')">Widget</span>`,
+      explanation: "Render navigation and in-content links on the server as real anchor elements with an href. Client-side routing can still take over the click.",
+      resources: [
+        { name: "Make Links Crawlable", url: "https://developers.google.com/search/docs/crawling-indexing/links-crawlable" }
+      ]
+    },
+    rendered_canonical_mismatch: {
+      title: "Serve One Consistent Canonical",
+      impact: "High",
+      description: "The canonical URL in the HTML the server sent differs from the one present after JavaScript ran. When they conflict, Google may use either.",
+      codeSnippet: `<!-- Same value in the server HTML and after rendering -->
+<link rel="canonical" href="https://example.com/this-page">`,
+      explanation: "Set the correct canonical in the server-rendered HTML and stop JavaScript from rewriting it. A common cause is a layout that ships a default canonical which a client-side router then replaces.",
+      resources: [
+        { name: "JavaScript SEO Basics", url: "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics" }
+      ]
+    },
+    rendered_robots_mismatch: {
+      title: "Fix noindex That Changes After Rendering",
+      impact: "High",
+      description: "These pages are noindex in the HTML the server sent but not after JavaScript ran, or the reverse. Google can honour a noindex from the raw HTML without ever rendering the page.",
+      codeSnippet: `<!-- The directive you intend must be in the server HTML -->
+<meta name="robots" content="index, follow">`,
+      explanation: "Send the intended robots directive in the initial HTML. Do not rely on JavaScript to remove a noindex: a page that starts as noindex may never be rendered.",
+      resources: [
+        { name: "JavaScript SEO Basics", url: "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics" }
+      ]
+    },
+    rendered_title_mismatch: {
+      title: "Set the Final Title on the Server",
+      impact: "Low",
+      description: "The page title in the HTML the server sent differs from the title after JavaScript ran.",
+      codeSnippet: `<title>The final title, already in the server HTML</title>`,
+      explanation: "Render the real title on the server so every crawler and link preview sees the same one. A placeholder such as 'Loading...' can end up in search results.",
+      resources: [
+        { name: "Google Title Link Guidelines", url: "https://developers.google.com/search/docs/appearance/title-link" }
+      ]
+    },
     invalid_structured_data: {
       title: "Fix Unreadable Structured Data",
       impact: "High",

@@ -189,6 +189,9 @@ func (p *Parser) Parse(htmlContent []byte) (*models.PageResult, error) {
 	result.ContentHash = content.Hash
 	result.ContentSimHash = content.SimHash
 
+	// JavaScript framework and client-side rendering signals
+	result.JS = detectJS(doc, content)
+
 	// Structured data, hreflang annotations and insecure resources
 	result.SchemaItems, result.SchemaErrors = extractStructuredData(doc)
 	result.Hreflang = extractHreflang(doc, p.baseURL)

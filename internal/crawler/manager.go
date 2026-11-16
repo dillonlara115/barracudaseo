@@ -356,6 +356,7 @@ func (m *Manager) worker(id int) {
 			result.PageResult.SchemaErrors = parsedData.SchemaErrors
 			result.PageResult.Hreflang = parsedData.Hreflang
 			result.PageResult.MixedContent = parsedData.MixedContent
+			result.PageResult.JS = parsedData.JS
 
 			// Determine indexability status based on robots.txt, x-robots-tag, and meta robots
 			result.PageResult.DetermineIndexabilityStatus(isBlockedByRobots)

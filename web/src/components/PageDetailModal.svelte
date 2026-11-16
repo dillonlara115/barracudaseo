@@ -130,6 +130,53 @@
         </div>
       {/if}
 
+      {#if page.js && (page.js.framework || page.js.client_rendered)}
+        <div class="mb-4">
+          <div class="font-semibold mb-2">JavaScript:</div>
+          <div>
+            {#if page.js.framework}
+              <span class="badge badge-ghost">{page.js.framework}</span>
+            {/if}
+            {#if page.js.client_rendered}
+              <span class="badge badge-warning">Looks client-rendered</span>
+            {/if}
+          </div>
+        </div>
+      {/if}
+
+      {#if page.web_vitals && !page.web_vitals.error}
+        <div class="mb-4">
+          <div class="font-semibold mb-2">Core Web Vitals ({page.web_vitals.strategy}):</div>
+          <div class="space-y-1 text-sm">
+            {#if page.web_vitals.field_source}
+              <div class="text-base-content/70">
+                Real-user data for {page.web_vitals.field_source === 'origin' ? 'the whole site' : 'this page'}
+              </div>
+              {#if page.web_vitals.lcp_ms != null}
+                <div><span class="font-semibold">LCP:</span> {(page.web_vitals.lcp_ms / 1000).toFixed(1)} s</div>
+              {/if}
+              {#if page.web_vitals.inp_ms != null}
+                <div><span class="font-semibold">INP:</span> {Math.round(page.web_vitals.inp_ms)} ms</div>
+              {/if}
+              {#if page.web_vitals.cls != null}
+                <div><span class="font-semibold">CLS:</span> {page.web_vitals.cls.toFixed(2)}</div>
+              {/if}
+            {:else}
+              <div class="text-base-content/70">Lab test only; Google has no real-user data for this page</div>
+              {#if page.web_vitals.lab_lcp_ms != null}
+                <div><span class="font-semibold">LCP:</span> {(page.web_vitals.lab_lcp_ms / 1000).toFixed(1)} s</div>
+              {/if}
+              {#if page.web_vitals.lab_cls != null}
+                <div><span class="font-semibold">CLS:</span> {page.web_vitals.lab_cls.toFixed(2)}</div>
+              {/if}
+            {/if}
+            {#if page.web_vitals.performance_score != null}
+              <div><span class="font-semibold">Performance score:</span> {page.web_vitals.performance_score}</div>
+            {/if}
+          </div>
+        </div>
+      {/if}
+
       {#if page.schema_items && page.schema_items.length > 0}
         <div class="mb-4">
           <div class="font-semibold mb-2">Structured data:</div>

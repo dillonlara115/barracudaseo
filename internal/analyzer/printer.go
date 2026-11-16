@@ -146,6 +146,12 @@ func getIssueIcon(issueType IssueType) string {
 		IssueCanonicalNonIndexable, IssueInvalidStructuredData, IssueInsecurePage,
 		IssueHreflangInvalidLanguage, IssueHreflangMissingReturnLink, IssueHreflangToNonIndexable:
 		return "🔴"
+	case IssueRenderedCanonicalDiff, IssueRenderedRobotsMismatch:
+		return "🔴"
+	case IssueSlowLCP, IssueSlowINP, IssueHighCLS, IssueJSDependentContent, IssueContentRequiresJS, IssueLinksRequireJS:
+		return "⚠️"
+	case IssueRenderedTitleMismatch:
+		return "ℹ️"
 	case IssueStructuredDataMissingFields, IssueMixedContent, IssueHreflangMissingSelf:
 		return "⚠️"
 	case IssueMissingSecurityHeader, IssueHreflangMissingXDefault:
@@ -230,6 +236,24 @@ func formatIssueType(issueType IssueType) string {
 		return "Pages Served over HTTP"
 	case IssueMissingSecurityHeader:
 		return "Missing Security Headers"
+	case IssueSlowLCP:
+		return "Slow Largest Contentful Paint"
+	case IssueSlowINP:
+		return "Slow Interaction to Next Paint"
+	case IssueHighCLS:
+		return "High Cumulative Layout Shift"
+	case IssueJSDependentContent:
+		return "Likely Client-Rendered Pages"
+	case IssueContentRequiresJS:
+		return "Content Requires JavaScript"
+	case IssueLinksRequireJS:
+		return "Links Require JavaScript"
+	case IssueRenderedCanonicalDiff:
+		return "Canonical Changes After Rendering"
+	case IssueRenderedRobotsMismatch:
+		return "noindex Changes After Rendering"
+	case IssueRenderedTitleMismatch:
+		return "Title Changes After Rendering"
 	case IssueThinContent:
 		return "Thin Content"
 	case IssueDuplicateContent:

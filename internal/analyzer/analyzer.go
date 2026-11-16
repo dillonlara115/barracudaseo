@@ -292,6 +292,8 @@ func Analyze(results []*models.PageResult) *Summary {
 	summary.SchemaTypes = schemaTypes
 	markupIssues := append(schemaIssues, AnalyzeHreflang(results)...)
 	markupIssues = append(markupIssues, AnalyzeSecurity(results)...)
+	markupIssues = append(markupIssues, AnalyzeWebVitals(results)...)
+	markupIssues = append(markupIssues, AnalyzeRendering(results)...)
 	for _, issue := range markupIssues {
 		summary.Issues = append(summary.Issues, issue)
 		summary.IssuesByType[issue.Type]++

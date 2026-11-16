@@ -11,6 +11,8 @@ import (
 	"github.com/dillonlara115/barracudaseo/internal/crawler"
 	"github.com/dillonlara115/barracudaseo/internal/exporter"
 	"github.com/dillonlara115/barracudaseo/internal/graph"
+	"github.com/dillonlara115/barracudaseo/internal/psi"
+	"github.com/dillonlara115/barracudaseo/internal/render"
 	"github.com/dillonlara115/barracudaseo/internal/utils"
 	"github.com/dillonlara115/barracudaseo/pkg/models"
 	"github.com/spf13/cobra"
@@ -35,6 +37,9 @@ var (
 	openBrowser      bool
 	cloudUpload      bool
 	cloudProjectID   string
+	vitalsPages      int
+	vitalsStrategy   string
+	renderPages      int
 )
 
 // crawlCmd represents the crawl command
@@ -60,6 +65,9 @@ func init() {
 	crawlCmd.Flags().DurationVar(&delay, "delay", 0, "Delay between requests (e.g., 100ms)")
 	crawlCmd.Flags().DurationVar(&timeout, "timeout", 30*time.Second, "HTTP request timeout")
 	crawlCmd.Flags().StringVar(&userAgent, "user-agent", "barracuda/1.0.0", "User agent string")
+	crawlCmd.Flags().IntVar(&vitalsPages, "web-vitals", 0, "Measure Core Web Vitals for this many key pages via PageSpeed Insights (set PSI_API_KEY; each page takes 10-30s)")
+	crawlCmd.Flags().StringVar(&vitalsStrategy, "web-vitals-strategy", "mobile", "PageSpeed strategy: 'mobile' or 'desktop'")
+	crawlCmd.Flags().IntVar(&renderPages, "render-js", 0, "Render this many pages in headless Chrome and compare with the raw HTML (requires Chrome or Chromium)")
 	crawlCmd.Flags().BoolVar(&respectRobots, "respect-robots", true, "Respect robots.txt")
 	crawlCmd.Flags().BoolVar(&parseSitemap, "parse-sitemap", false, "Parse sitemap.xml for seed URLs")
 	crawlCmd.Flags().BoolVar(&crawlSitemapOnly, "sitemap-only", false, "Crawl only sitemap URLs, no link discovery (requires --parse-sitemap)")
@@ -178,6 +186,9 @@ func runCrawl(cmd *cobra.Command, args []string) error {
 
 	utils.Info("Crawl completed", utils.NewField("pages_crawled", len(results)))
 
+	// Optional enrichment of a few key pages: Core Web Vitals and JS rendering
+	enrichKeyPages(results, config.UserAgent)
+
 	// Analyze results and print summary (including image size checking)
 	summary := analyzer.AnalyzeWithImages(results, config.Timeout)
 	analyzer.PrintSummary(summary)
@@ -267,5 +278,46 @@ func exportResults(results []*models.PageResult, config *utils.Config) error {
 		return exporter.ExportJSON(results, config.ExportPath, true)
 	default:
 		return fmt.Errorf("unsupported export format: %s", config.ExportFormat)
+	}
+}
+
+// enrichKeyPages runs the slow, opt-in measurements on a handful of pages:
+// Core Web Vitals (--web-vitals) and headless rendering (--render-js). Failures
+// are reported and skipped; they never fail the crawl.
+func enrichKeyPages(results []*models.PageResult, userAgent string) {
+	if vitalsPages > 0 {
+		if vitalsStrategy != "mobile" && vitalsStrategy != "desktop" {
+			fmt.Fprintf(os.Stderr, "⚠ Skipping Core Web Vitals: --web-vitals-strategy must be 'mobile' or 'desktop'\n")
+		} else {
+			selected := psi.SelectPages(results, vitalsPages)
+			fmt.Fprintf(os.Stdout, "Measuring Core Web Vitals for %d page(s) (this takes a while)...\n", len(selected))
+			client := psi.NewClient(os.Getenv("PSI_API_KEY"))
+			measured := client.Enrich(context.Background(), selected, vitalsStrategy, 3)
+			fmt.Fprintf(os.Stdout, "✓ Measured %d of %d page(s)\n", measured, len(selected))
+			for _, p := range selected {
+				if p.WebVitals != nil && p.WebVitals.Error != "" {
+					fmt.Fprintf(os.Stderr, "⚠ %s: %s\n", p.URL, p.WebVitals.Error)
+				}
+			}
+		}
+	}
+
+	if renderPages > 0 {
+		selected := render.SelectPages(results, psi.SelectPages(results, renderPages), renderPages)
+		renderer, err := render.NewRenderer(userAgent)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "⚠ Skipping JavaScript rendering: %v\n", err)
+			return
+		}
+		defer renderer.Close()
+
+		fmt.Fprintf(os.Stdout, "Rendering %d page(s) in headless Chrome...\n", len(selected))
+		rendered := renderer.Enrich(selected, 3)
+		fmt.Fprintf(os.Stdout, "✓ Rendered %d of %d page(s)\n", rendered, len(selected))
+		for _, p := range selected {
+			if p.Rendered != nil && p.Rendered.Error != "" {
+				fmt.Fprintf(os.Stderr, "⚠ %s: %s\n", p.URL, p.Rendered.Error)
+			}
+		}
 	}
 }

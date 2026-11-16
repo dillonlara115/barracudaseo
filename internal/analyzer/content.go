@@ -69,6 +69,11 @@ func findThinContent(results []*models.PageResult) []Issue {
 		if !isIndexablePage(p) || !hasContentData(p) {
 			continue
 		}
+		// A client-rendered shell is short because its content needs
+		// JavaScript; that is reported as a rendering issue, not thin content.
+		if p.JS != nil && p.JS.ClientRendered {
+			continue
+		}
 		threshold := thinContentThreshold(p)
 		if threshold <= 0 || p.WordCount >= threshold {
 			continue

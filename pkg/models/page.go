@@ -45,7 +45,49 @@ type PageResult struct {
 	Hreflang           []HreflangLink     `json:"hreflang,omitempty"`        // <link rel="alternate" hreflang> annotations
 	SecurityHeaders    map[string]string  `json:"security_headers"`          // Security-related response headers by lowercase name; nil means not recorded, empty means none sent
 	MixedContent       []string           `json:"mixed_content,omitempty"`   // http:// resources loaded by an https:// page
+	JS                 *JSInfo            `json:"js,omitempty"`              // JavaScript framework and client-side rendering signals from the raw HTML
+	WebVitals          *WebVitals         `json:"web_vitals,omitempty"`      // Core Web Vitals from PageSpeed Insights (only for pages that were tested)
+	Rendered           *RenderComparison  `json:"rendered,omitempty"`        // Raw HTML vs the DOM after JavaScript ran (only for pages that were rendered)
 	CrawledAt          time.Time          `json:"crawled_at"`
+}
+
+// JSInfo describes how much a page depends on JavaScript, judged from the HTML
+// the server sent (no JavaScript is run).
+type JSInfo struct {
+	Framework      string   `json:"framework,omitempty"` // Detected framework, e.g. "Next.js"
+	ClientRendered bool     `json:"client_rendered"`     // The HTML is an empty app shell: content appears only after JavaScript runs
+	Signals        []string `json:"signals,omitempty"`   // What the judgement is based on
+}
+
+// WebVitals holds a page's Core Web Vitals. Field values are the 75th
+// percentile of real Chrome users; lab values come from one simulated load.
+// A nil value means that measurement was not available.
+type WebVitals struct {
+	Strategy         string   `json:"strategy"`               // "mobile" or "desktop"
+	FieldSource      string   `json:"field_source,omitempty"` // "page", "origin" (site-wide fallback) or "" when Google has no field data
+	LCPMs            *float64 `json:"lcp_ms,omitempty"`       // Largest Contentful Paint, field
+	INPMs            *float64 `json:"inp_ms,omitempty"`       // Interaction to Next Paint, field
+	CLS              *float64 `json:"cls,omitempty"`          // Cumulative Layout Shift, field
+	LabLCPMs         *float64 `json:"lab_lcp_ms,omitempty"`
+	LabCLS           *float64 `json:"lab_cls,omitempty"`
+	LabTBTMs         *float64 `json:"lab_tbt_ms,omitempty"` // Total Blocking Time, the lab stand-in for INP
+	PerformanceScore *int     `json:"performance_score,omitempty"`
+	Error            string   `json:"error,omitempty"`
+}
+
+// RenderComparison records how a page differs between the HTML the server sent
+// and the DOM after JavaScript ran in a headless browser.
+type RenderComparison struct {
+	RawWordCount       int      `json:"raw_word_count"`
+	RenderedWordCount  int      `json:"rendered_word_count"`
+	RawTitle           string   `json:"raw_title,omitempty"`
+	RenderedTitle      string   `json:"rendered_title,omitempty"`
+	RawCanonical       string   `json:"raw_canonical,omitempty"`
+	RenderedCanonical  string   `json:"rendered_canonical,omitempty"`
+	RawMetaRobots      string   `json:"raw_meta_robots,omitempty"`
+	RenderedMetaRobots string   `json:"rendered_meta_robots,omitempty"`
+	LinksOnlyRendered  []string `json:"links_only_rendered,omitempty"` // Internal links present only after rendering
+	Error              string   `json:"error,omitempty"`
 }
 
 // SchemaItem is one structured data entity (a JSON-LD object or a microdata item).
