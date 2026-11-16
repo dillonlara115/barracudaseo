@@ -269,6 +269,78 @@
       resources: [
         { name: "Redirect Best Practices", url: "https://moz.com/learn/seo/redirection" }
       ]
+    },
+    noindex_page: {
+      title: "Review Noindex Pages",
+      impact: "Medium",
+      description: "These pages carry a noindex directive, so search engines will not show them. This is often intentional, but an accidental noindex silently removes a page from search.",
+      codeSnippet: `<!-- In the HTML head -->
+<meta name="robots" content="noindex">
+
+<!-- Or as an HTTP response header -->
+X-Robots-Tag: noindex`,
+      explanation: "Check each page against what you expect to rank. To restore a page, remove the directive from the HTML and from any server or CDN header rule.",
+      resources: [
+        { name: "Block Indexing with noindex", url: "https://developers.google.com/search/docs/crawling-indexing/block-indexing" }
+      ]
+    },
+    blocked_by_robots: {
+      title: "Review Pages Blocked by robots.txt",
+      impact: "Medium",
+      description: "These pages are disallowed in robots.txt. Search engines cannot crawl them, but can still index the bare URL if other pages link to it.",
+      codeSnippet: `# robots.txt
+User-agent: *
+Disallow: /private/`,
+      explanation: "Keep the rule if the section should not be crawled. To keep a page out of search results, allow crawling and use noindex instead; a blocked page's noindex is never seen.",
+      resources: [
+        { name: "Google robots.txt Introduction", url: "https://developers.google.com/search/docs/crawling-indexing/robots/intro" }
+      ]
+    },
+    canonical_points_elsewhere: {
+      title: "Confirm Canonicalised Pages",
+      impact: "Low",
+      description: "These pages declare another URL as canonical, so they will not be indexed themselves.",
+      codeSnippet: `<link rel="canonical" href="https://example.com/preferred-url">`,
+      explanation: "This is correct for true duplicates such as tracking-parameter or filtered URLs. If a page has its own content and should rank, make its canonical self-referencing.",
+      resources: [
+        { name: "Consolidate Duplicate URLs", url: "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls" }
+      ]
+    },
+    canonical_to_non_indexable: {
+      title: "Fix Canonicals Pointing to Non-Indexable URLs",
+      impact: "High",
+      description: "These pages name a canonical URL that is broken, redirects, is noindexed, or is itself canonicalised elsewhere. Search engines may ignore the canonical or drop both pages.",
+      codeSnippet: `<!-- The canonical target must return 200 and be indexable -->
+<link rel="canonical" href="https://example.com/working-indexable-url">`,
+      explanation: "Point the canonical at the final, indexable URL. This is usually a template or plugin setting, so one fix often clears many pages.",
+      resources: [
+        { name: "Canonicalization Troubleshooting", url: "https://developers.google.com/search/docs/crawling-indexing/canonicalization-troubleshooting" }
+      ]
+    },
+    non_indexable_in_sitemap: {
+      title: "Clean Up the Sitemap",
+      impact: "Medium",
+      description: "The sitemap lists URLs that cannot be indexed: redirects, errors, noindexed or canonicalised pages.",
+      codeSnippet: `<!-- List only final, indexable, canonical URLs -->
+<url>
+  <loc>https://example.com/indexable-page</loc>
+</url>`,
+      explanation: "Either fix the page so it is indexable, or remove it from the sitemap. Mixed signals waste crawl budget and make sitemap reports harder to read.",
+      resources: [
+        { name: "Build and Submit a Sitemap", url: "https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap" }
+      ]
+    },
+    indexable_not_in_sitemap: {
+      title: "Add Indexable Pages to the Sitemap",
+      impact: "Low",
+      description: "These pages are indexable and linked on the site but missing from the sitemap.",
+      codeSnippet: `<url>
+  <loc>https://example.com/missing-page</loc>
+</url>`,
+      explanation: "Add them so search engines discover changes faster. If a page should not be in search, noindex it instead.",
+      resources: [
+        { name: "Build and Submit a Sitemap", url: "https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap" }
+      ]
     }
   };
 

@@ -30,10 +30,9 @@ func NewRobotsChecker(fetcher *Fetcher, userAgent string, respectRobots bool) *R
 
 // IsAllowed checks if a URL is allowed by robots.txt
 func (r *RobotsChecker) IsAllowed(targetURL string) (bool, error) {
-	if !r.respectRobots {
-		return true, nil
-	}
-
+	// Note: this always evaluates robots.txt, even when respectRobots is false.
+	// The manager decides what to do with a disallowed URL: skip it (respect)
+	// or crawl it and mark it as blocked (ignore), so indexability is accurate.
 	u, err := url.Parse(targetURL)
 	if err != nil {
 		return false, fmt.Errorf("invalid URL: %w", err)
@@ -42,13 +41,25 @@ func (r *RobotsChecker) IsAllowed(targetURL string) (bool, error) {
 	robotsURL := fmt.Sprintf("%s://%s/robots.txt", u.Scheme, u.Host)
 	domain := u.Host
 
-	// Check cache
+	// robots.txt rules match on the path (plus query), not the full URL
+	path := u.EscapedPath()
+	if path == "" {
+		path = "/"
+	}
+	if u.RawQuery != "" {
+		path += "?" + u.RawQuery
+	}
+
+	// Check cache (a nil entry means robots.txt was unavailable: allow all)
 	r.cacheMu.RLock()
 	cached, exists := r.cache[domain]
 	r.cacheMu.RUnlock()
 
-	if exists && cached != nil {
-		return cached.Test(targetURL), nil
+	if exists {
+		if cached == nil {
+			return true, nil
+		}
+		return cached.Test(path), nil
 	}
 
 	// Fetch robots.txt
@@ -86,7 +97,7 @@ func (r *RobotsChecker) IsAllowed(targetURL string) (bool, error) {
 	r.cache[domain] = group
 	r.cacheMu.Unlock()
 
-	return group.Test(targetURL), nil
+	return group.Test(path), nil
 }
 
 // fetchRobotsTxt fetches robots.txt content

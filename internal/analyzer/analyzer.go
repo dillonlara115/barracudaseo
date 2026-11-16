@@ -55,6 +55,8 @@ type Summary struct {
 	TotalInternalLinks  int               `json:"total_internal_links"`
 	TotalExternalLinks  int               `json:"total_external_links"`
 	SlowestPages        []PagePerformance `json:"slowest_pages,omitempty"`
+	// Indexability counts crawled URLs by the reason they are or are not indexable
+	Indexability map[IndexabilityClass]int `json:"indexability,omitempty"`
 }
 
 // PagePerformance tracks page performance metrics
@@ -276,6 +278,14 @@ func Analyze(results []*models.PageResult) *Summary {
 		summary.Issues = append(summary.Issues, issue)
 		summary.IssuesByType[issue.Type]++
 	}
+
+	// Indexability: classify every URL and report why pages are not indexable
+	indexabilityIssues, breakdown := AnalyzeIndexability(results)
+	for _, issue := range indexabilityIssues {
+		summary.Issues = append(summary.Issues, issue)
+		summary.IssuesByType[issue.Type]++
+	}
+	summary.Indexability = breakdown
 
 	summary.TotalIssues = len(summary.Issues)
 

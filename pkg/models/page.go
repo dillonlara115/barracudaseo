@@ -36,6 +36,7 @@ type PageResult struct {
 	XRobotsTag         string             `json:"x_robots_tag,omitempty"` // HTTP X-Robots-Tag header value
 	MetaRobots         string             `json:"meta_robots,omitempty"`  // HTML meta robots tag value
 	IndexabilityStatus IndexabilityStatus `json:"indexability_status,omitempty"`
+	InSitemap          bool               `json:"in_sitemap,omitempty"` // URL was listed in the XML sitemap (set only when the sitemap is parsed)
 	CrawledAt          time.Time          `json:"crawled_at"`
 }
 

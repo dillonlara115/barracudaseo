@@ -26,7 +26,8 @@ type Manager struct {
 	robotsChecker      *RobotsChecker
 	sitemapParser      *SitemapParser
 	linkGraph          *graph.Graph
-	visited            sync.Map // map[string]bool for visited URLs
+	sitemapURLs        map[string]bool // normalized URLs listed in the sitemap; written before workers start, read-only after
+	visited            sync.Map        // map[string]bool for visited URLs
 	queue              chan crawlTask
 	results            []*models.PageResult
 	resultsMu          sync.Mutex
@@ -103,6 +104,12 @@ func (m *Manager) Crawl() ([]*models.PageResult, error) {
 			for _, url := range urls {
 				if !utils.IsImageURL(url) {
 					seedURLs = append(seedURLs, url)
+					if normalized, err := utils.NormalizeURL(url); err == nil {
+						if m.sitemapURLs == nil {
+							m.sitemapURLs = make(map[string]bool, len(urls))
+						}
+						m.sitemapURLs[normalized] = true
+					}
 				} else {
 					utils.Debug("Skipping image URL from sitemap", utils.NewField("url", url))
 				}
@@ -242,6 +249,7 @@ func (m *Manager) worker(id int) {
 
 			// Fetch the URL with retry logic
 			result := m.fetcher.FetchWithRetry(task.URL, 3)
+			result.PageResult.InSitemap = m.sitemapURLs[task.URL]
 
 			// Skip non-HTML content (images, PDFs, etc.) - don't add to results
 			if result.Error != nil && strings.Contains(result.Error.Error(), "skipped non-HTML") {

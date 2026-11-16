@@ -123,6 +123,35 @@
         </div>
       {/if}
 
+      <!-- Indexability -->
+      {#if page.indexability_status || page.meta_robots || page.x_robots_tag || page.in_sitemap}
+        <div class="mb-4">
+          <div class="font-semibold mb-2">Indexability:</div>
+          <div class="space-y-1">
+            {#if page.indexability_status}
+              <div>
+                <span
+                  class="badge"
+                  class:badge-success={page.indexability_status === 'indexable'}
+                  class:badge-warning={page.indexability_status !== 'indexable'}
+                >
+                  {page.indexability_status}
+                </span>
+                {#if page.in_sitemap}
+                  <span class="badge badge-ghost">In sitemap</span>
+                {/if}
+              </div>
+            {/if}
+            {#if page.meta_robots}
+              <div><span class="font-semibold">Meta robots:</span> {page.meta_robots}</div>
+            {/if}
+            {#if page.x_robots_tag}
+              <div><span class="font-semibold">X-Robots-Tag:</span> {page.x_robots_tag}</div>
+            {/if}
+          </div>
+        </div>
+      {/if}
+
       <!-- Headings -->
       <div class="mb-4">
         <div class="font-semibold mb-2">Headings:</div>

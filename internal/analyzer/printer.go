@@ -27,6 +27,28 @@ func PrintSummary(summary *Summary) {
 	fmt.Fprintf(w, "Total External Links:\t%d\n", summary.TotalExternalLinks)
 	fmt.Fprintf(w, "\n")
 
+	// Indexability breakdown
+	if len(summary.Indexability) > 0 {
+		fmt.Fprintf(os.Stdout, "Indexability:\n")
+		rows := []struct {
+			class IndexabilityClass
+			label string
+		}{
+			{ClassIndexable, "Indexable"},
+			{ClassNoindex, "Noindex"},
+			{ClassCanonicalised, "Canonicalised elsewhere"},
+			{ClassBlocked, "Blocked by robots.txt"},
+			{ClassRedirect, "Redirect"},
+			{ClassError, "Error (4xx/5xx/failed)"},
+		}
+		for _, row := range rows {
+			if count := summary.Indexability[row.class]; count > 0 {
+				fmt.Fprintf(w, "  %s:\t%d\n", row.label, count)
+			}
+		}
+		fmt.Fprintf(w, "\n")
+	}
+
 	// Issues by severity
 	severityCounts := summary.GetIssueCountBySeverity()
 	if len(severityCounts) > 0 {
@@ -100,8 +122,13 @@ func PrintSummary(summary *Summary) {
 
 func getIssueIcon(issueType IssueType) string {
 	switch issueType {
-	case IssueMissingH1, IssueMissingTitle, IssueMissingMetaDesc, IssueBrokenLink, IssueBrokenImage, IssueEmptyH1, IssueBrokenInternalLink:
+	case IssueMissingH1, IssueMissingTitle, IssueMissingMetaDesc, IssueBrokenLink, IssueBrokenImage, IssueEmptyH1, IssueBrokenInternalLink,
+		IssueCanonicalNonIndexable:
 		return "🔴"
+	case IssueBlockedByRobots, IssueNonIndexableInSitemap:
+		return "⚠️"
+	case IssueNoindexPage, IssueCanonicalised, IssueNotInSitemap:
+		return "ℹ️"
 	case IssueLongTitle, IssueLongMetaDesc, IssueShortTitle, IssueShortMetaDesc, IssueMultipleH1, IssueRedirectChain, IssueLargeImage, IssueMissingImageAlt,
 		IssueDuplicateTitle, IssueDuplicateMetaDesc, IssueOrphanPage:
 		return "⚠️"
@@ -158,6 +185,18 @@ func formatIssueType(issueType IssueType) string {
 		return "Links to Broken Pages"
 	case IssueLinkToRedirect:
 		return "Links to Redirects"
+	case IssueNoindexPage:
+		return "Noindex Pages"
+	case IssueBlockedByRobots:
+		return "Blocked by robots.txt"
+	case IssueCanonicalised:
+		return "Canonical Points Elsewhere"
+	case IssueCanonicalNonIndexable:
+		return "Canonical to Non-Indexable URL"
+	case IssueNonIndexableInSitemap:
+		return "Non-Indexable URLs in Sitemap"
+	case IssueNotInSitemap:
+		return "Indexable Pages Not in Sitemap"
 	default:
 		return string(issueType)
 	}

@@ -148,7 +148,9 @@ func TestAnalyze(t *testing.T) {
 				},
 			},
 			expectedIssues: map[IssueType]int{
-				// Should have NO SEO issues reported because it's noindex
+				// No on-page SEO issues because it's noindex; only the
+				// indexability finding itself is reported.
+				IssueNoindexPage: 1,
 			},
 			expectedPages: 1,
 		},

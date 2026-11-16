@@ -204,6 +204,10 @@ func (s *Server) handleCreateCrawl(w http.ResponseWriter, r *http.Request) {
 				"internal_links": page.InternalLinks,
 				"external_links": page.ExternalLinks,
 				"images":         page.Images,
+				"meta_robots":    page.MetaRobots,
+				"x_robots_tag":   page.XRobotsTag,
+				"redirect_chain": page.RedirectChain,
+				"in_sitemap":     page.InSitemap,
 			},
 		}
 		pages = append(pages, pageData)
@@ -1141,6 +1145,10 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 				"internal_links": internalLinks,
 				"external_links": externalLinks,
 				"images":         images,
+				"meta_robots":    page.MetaRobots,
+				"x_robots_tag":   page.XRobotsTag,
+				"redirect_chain": page.RedirectChain,
+				"in_sitemap":     page.InSitemap,
 			},
 		}
 
