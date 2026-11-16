@@ -1496,3 +1496,10 @@ export async function deleteCrawlSchedule(projectId) {
 		method: 'DELETE'
 	});
 }
+
+// Crawl vs Google: compare a crawl's indexability with Search Console page data
+export async function fetchCrawlGSCCoverage(projectId, crawlId = null) {
+	if (!projectId) return { data: null, error: new Error('projectId is required') };
+	const query = crawlId ? `?crawl_id=${encodeURIComponent(crawlId)}` : '';
+	return authorizedJSON(`/api/v1/projects/${projectId}/gsc/crawl-coverage${query}`);
+}

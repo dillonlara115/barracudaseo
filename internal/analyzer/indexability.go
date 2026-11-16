@@ -239,3 +239,16 @@ func nonEmpty(values ...string) []string {
 	}
 	return out
 }
+
+// ClassifyIndexability returns the single reason a crawled URL is, or is not,
+// indexable. It is exported for callers that compare the crawl with outside
+// data such as Search Console.
+func ClassifyIndexability(p *models.PageResult) IndexabilityClass {
+	return classifyIndexability(p)
+}
+
+// DescribeIndexability explains a URL's indexability class in a sentence
+// fragment, e.g. "is set to noindex" or "redirects to https://...".
+func DescribeIndexability(p *models.PageResult) string {
+	return describeClass(p, classifyIndexability(p))
+}

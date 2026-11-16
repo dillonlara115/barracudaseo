@@ -13,6 +13,7 @@
   import UnifiedInsightsPanel from './UnifiedInsightsPanel.svelte';
   import CrawlSummary from './AI/CrawlSummary.svelte';
   import CrawlDiffCard from './CrawlDiffCard.svelte';
+  import CrawlGoogleCoverage from './CrawlGoogleCoverage.svelte';
   import PublicReportGenerator from './PublicReportGenerator.svelte';
   import ProjectSidebar from './ProjectSidebar.svelte';
   import CrawlSelector from './CrawlSelector.svelte';
@@ -354,6 +355,9 @@
 
       {#if crawlId}
         <CrawlDiffCard {crawlId} />
+        {#if gscProperty}
+          <CrawlGoogleCoverage {projectId} {crawlId} />
+        {/if}
         <CrawlSummary {crawlId} />
         <PublicReportGenerator {crawlId} {projectId} />
       {/if}

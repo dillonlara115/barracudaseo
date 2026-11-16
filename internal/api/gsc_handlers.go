@@ -56,6 +56,8 @@ func (s *Server) handleProjectGSC(w http.ResponseWriter, r *http.Request, projec
 		s.handleProjectGSCStatus(w, r, projectID)
 	case "dimensions":
 		s.handleProjectGSCDimensionsDirect(w, r, projectID)
+	case "crawl-coverage":
+		s.handleProjectGSCCrawlCoverage(w, r, projectID)
 	default:
 		s.respondError(w, http.StatusNotFound, fmt.Sprintf("Unknown GSC resource: %s", segments[0]))
 	}
