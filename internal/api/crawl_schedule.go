@@ -331,6 +331,11 @@ func (s *Server) handleScheduledCrawls(w http.ResponseWriter, r *http.Request) {
 	}
 
 	now := time.Now().UTC()
+
+	// Clear out crawls whose runner died first, so a dead crawl does not block
+	// its project's schedule as "already running".
+	swept := s.sweepStaleCrawls(now)
+
 	data, _, err := s.serviceRole.From("crawl_schedules").
 		Select("*", "", false).
 		Eq("enabled", "true").
@@ -368,6 +373,7 @@ func (s *Server) handleScheduledCrawls(w http.ResponseWriter, r *http.Request) {
 		"due":     len(schedules),
 		"started": started,
 		"skipped": skipped,
+		"swept":   swept,
 	})
 }
 
@@ -463,6 +469,6 @@ func (s *Server) runScheduledCrawl(schedule map[string]interface{}, now time.Tim
 		s.logger.Warn("Failed to record scheduled crawl on schedule", zap.Error(err), zap.String("schedule_id", scheduleID))
 	}
 
-	go s.runCrawlAsync(crawlID, projectID, req)
+	s.startCrawl(crawlID, projectID, req)
 	return crawlID, ""
 }

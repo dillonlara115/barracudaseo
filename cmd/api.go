@@ -42,16 +42,7 @@ func init() {
 }
 
 func runAPI(cmd *cobra.Command, args []string) error {
-	// Load .env file if it exists (for production/shared defaults)
-	// Only load .env.local in local development (not in Cloud Run/production)
-	// Ignore errors - these files are optional
-	_ = godotenv.Load() // Load .env first
-
-	// Skip .env.local in production (Cloud Run sets PORT env var)
-	// This prevents local dev values from overriding production config
-	if os.Getenv("PORT") == "" {
-		_ = godotenv.Overload(".env.local") // Only override with .env.local in local dev
-	}
+	loadAPIEnvFiles()
 
 	// Initialize logger
 	logger, err := zap.NewProduction()
@@ -59,31 +50,6 @@ func runAPI(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to initialize logger: %w", err)
 	}
 	defer logger.Sync()
-
-	// Get configuration from flags or environment
-	supabaseURL := apiSupabaseURL
-	if supabaseURL == "" {
-		supabaseURL = os.Getenv("PUBLIC_SUPABASE_URL")
-	}
-	if supabaseURL == "" {
-		return fmt.Errorf("PUBLIC_SUPABASE_URL is required (flag or environment variable)")
-	}
-
-	supabaseServiceKey := apiSupabaseServiceKey
-	if supabaseServiceKey == "" {
-		supabaseServiceKey = os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
-	}
-	if supabaseServiceKey == "" {
-		return fmt.Errorf("SUPABASE_SERVICE_ROLE_KEY is required (flag or environment variable)")
-	}
-
-	supabaseAnonKey := apiSupabaseAnonKey
-	if supabaseAnonKey == "" {
-		supabaseAnonKey = os.Getenv("PUBLIC_SUPABASE_ANON_KEY")
-	}
-	if supabaseAnonKey == "" {
-		return fmt.Errorf("PUBLIC_SUPABASE_ANON_KEY is required (flag or environment variable)")
-	}
 
 	// Check if PORT is set (Cloud Run sets this)
 	if portEnv := os.Getenv("PORT"); portEnv != "" {
@@ -96,23 +62,9 @@ func runAPI(cmd *cobra.Command, args []string) error {
 	// derives localhost callback URLs from PORT.
 	_ = os.Setenv("PORT", strconv.Itoa(apiPort))
 
-	// Log configuration (without sensitive data)
-	logger.Info("Initializing API server",
-		zap.String("supabase_url", supabaseURL),
-		zap.Bool("has_service_key", supabaseServiceKey != ""),
-		zap.Bool("has_anon_key", supabaseAnonKey != ""))
-
-	// Initialize API server
-	server, err := api.NewServer(api.Config{
-		SupabaseURL:        supabaseURL,
-		SupabaseServiceKey: supabaseServiceKey,
-		SupabaseAnonKey:    supabaseAnonKey,
-		SupabaseJWTSecret:  os.Getenv("SUPABASE_JWT_SECRET"),
-		CronSyncSecret:     os.Getenv("GSC_SYNC_SECRET"),
-		Logger:             logger,
-	})
+	server, err := newAPIServer(logger)
 	if err != nil {
-		return fmt.Errorf("failed to initialize API server: %w", err)
+		return err
 	}
 
 	// Create HTTP server
@@ -129,7 +81,6 @@ func runAPI(cmd *cobra.Command, args []string) error {
 	go func() {
 		logger.Info("Starting API server",
 			zap.Int("port", apiPort),
-			zap.String("supabase_url", supabaseURL),
 		)
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal("Failed to start server", zap.Error(err))
@@ -143,6 +94,10 @@ func runAPI(cmd *cobra.Command, args []string) error {
 
 	logger.Info("Shutting down server...")
 
+	// Crawls running in this process cannot outlive it; record that now, while
+	// there is still time, instead of leaving them marked as running.
+	server.InterruptActiveCrawls()
+
 	// Graceful shutdown with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -154,4 +109,65 @@ func runAPI(cmd *cobra.Command, args []string) error {
 
 	logger.Info("Server exited")
 	return nil
+}
+
+// loadAPIEnvFiles loads .env, and .env.local in local development.
+func loadAPIEnvFiles() {
+	// Ignore errors - these files are optional
+	_ = godotenv.Load() // Load .env first
+
+	// Skip .env.local in production (Cloud Run sets PORT for services and
+	// CLOUD_RUN_JOB for jobs). This prevents local dev values from overriding
+	// production config.
+	if os.Getenv("PORT") == "" && os.Getenv("CLOUD_RUN_JOB") == "" {
+		_ = godotenv.Overload(".env.local") // Only override with .env.local in local dev
+	}
+}
+
+// newAPIServer builds the API server from flags and environment variables.
+// The api command serves HTTP with it; the crawl-job command runs one crawl.
+func newAPIServer(logger *zap.Logger) (*api.Server, error) {
+	supabaseURL := apiSupabaseURL
+	if supabaseURL == "" {
+		supabaseURL = os.Getenv("PUBLIC_SUPABASE_URL")
+	}
+	if supabaseURL == "" {
+		return nil, fmt.Errorf("PUBLIC_SUPABASE_URL is required (flag or environment variable)")
+	}
+
+	supabaseServiceKey := apiSupabaseServiceKey
+	if supabaseServiceKey == "" {
+		supabaseServiceKey = os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+	}
+	if supabaseServiceKey == "" {
+		return nil, fmt.Errorf("SUPABASE_SERVICE_ROLE_KEY is required (flag or environment variable)")
+	}
+
+	supabaseAnonKey := apiSupabaseAnonKey
+	if supabaseAnonKey == "" {
+		supabaseAnonKey = os.Getenv("PUBLIC_SUPABASE_ANON_KEY")
+	}
+	if supabaseAnonKey == "" {
+		return nil, fmt.Errorf("PUBLIC_SUPABASE_ANON_KEY is required (flag or environment variable)")
+	}
+
+	// Log configuration (without sensitive data)
+	logger.Info("Initializing API server",
+		zap.String("supabase_url", supabaseURL),
+		zap.Bool("has_service_key", supabaseServiceKey != ""),
+		zap.Bool("has_anon_key", supabaseAnonKey != ""))
+
+	server, err := api.NewServer(api.Config{
+		SupabaseURL:        supabaseURL,
+		SupabaseServiceKey: supabaseServiceKey,
+		SupabaseAnonKey:    supabaseAnonKey,
+		SupabaseJWTSecret:  os.Getenv("SUPABASE_JWT_SECRET"),
+		CronSyncSecret:     os.Getenv("GSC_SYNC_SECRET"),
+		CrawlJob:           os.Getenv("CRAWL_JOB"),
+		Logger:             logger,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize API server: %w", err)
+	}
+	return server, nil
 }

@@ -36,6 +36,7 @@ type Manager struct {
 	cancel             context.CancelFunc
 	pending            int32            // Track pending tasks (atomic)
 	queueClosed        int32            // Atomic flag to track if queue is closed
+	interrupted        int32            // Atomic flag: set when a shutdown signal stopped the crawl
 	progressCallback   ProgressCallback // Optional callback for progress updates
 	normalizedStartURL string           // Store normalized start URL for domain comparison
 }
@@ -518,8 +519,21 @@ func (m *Manager) monitorQueue() {
 func (m *Manager) handleSignals() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(sigChan)
 
-	<-sigChan
-	utils.Info("Received interrupt signal, shutting down gracefully...")
-	m.cancel()
+	select {
+	case <-sigChan:
+		utils.Info("Received interrupt signal, shutting down gracefully...")
+		atomic.StoreInt32(&m.interrupted, 1)
+		m.cancel()
+	case <-m.ctx.Done():
+		// The crawl stopped on its own (for example at the page limit)
+	}
+}
+
+// Interrupted reports whether a shutdown signal stopped the crawl. Results
+// from an interrupted crawl are partial: the crawl did not reach its page
+// limit or run out of links, so they should not be reported as a full crawl.
+func (m *Manager) Interrupted() bool {
+	return atomic.LoadInt32(&m.interrupted) == 1
 }

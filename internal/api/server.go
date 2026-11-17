@@ -28,7 +28,11 @@ type Config struct {
 	SupabaseAnonKey    string
 	SupabaseJWTSecret  string
 	CronSyncSecret     string
-	Logger             *zap.Logger
+	// CrawlJob is the Cloud Run Job that runs crawls, as
+	// projects/PROJECT/locations/REGION/jobs/NAME. Empty runs crawls in this
+	// process (local development).
+	CrawlJob string
+	Logger   *zap.Logger
 }
 
 // Server represents the API server
@@ -47,6 +51,10 @@ type Server struct {
 	// JWKS for local JWT validation (avoids hitting Supabase for every request)
 	jwks    *keyfunc.JWKS
 	jwksURL string
+	// crawlJob runs crawls outside this process; nil runs them in-process
+	crawlJob crawlJobRunner
+	// activeCrawls holds the IDs of crawls running in this process
+	activeCrawls sync.Map
 }
 
 // TokenCacheEntry represents a cached token validation result
@@ -82,6 +90,17 @@ func NewServer(cfg Config) (*Server, error) {
 		tokenCache:    make(map[string]TokenCacheEntry),
 		tokenInflight: make(map[string]chan struct{}),
 		jwksURL:       strings.TrimSuffix(cfg.SupabaseURL, "/") + "/auth/v1/keys",
+	}
+
+	if cfg.CrawlJob != "" {
+		runner, err := newCloudRunJobRunner(context.Background(), cfg.CrawlJob)
+		if err != nil {
+			// Crawls still work, in this process, but they are not durable
+			cfg.Logger.Error("Crawl job is misconfigured - crawls will run in the API process", zap.Error(err))
+		} else {
+			server.crawlJob = runner
+			cfg.Logger.Info("Crawls will run as Cloud Run Job executions", zap.String("job", cfg.CrawlJob))
+		}
 	}
 
 	// Load JWKS for local token validation; fall back to Supabase API if it fails

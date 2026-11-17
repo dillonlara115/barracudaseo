@@ -1000,8 +1000,8 @@ func (s *Server) handleTriggerCrawl(w http.ResponseWriter, r *http.Request, proj
 		}
 	}
 
-	// Start crawl asynchronously
-	go s.runCrawlAsync(crawlID, projectID, req)
+	// Hand the crawl to its runner (a Cloud Run Job, or this process)
+	s.startCrawl(crawlID, projectID, req)
 
 	// Return immediately with crawl ID
 	s.respondJSON(w, http.StatusAccepted, map[string]interface{}{
@@ -1044,6 +1044,11 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 		s.updateCrawlStatus(crawlID, "failed", err.Error())
 		return
 	}
+
+	// Keep the crawl's heartbeat fresh for as long as this runner is alive, so
+	// the sweeper can tell a working crawl from one whose runner died.
+	stopHeartbeat := s.startCrawlHeartbeat(crawlID)
+	defer stopHeartbeat()
 
 	// Create crawler manager
 	manager := crawler.NewManager(config)
@@ -1268,6 +1273,15 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 	if err != nil {
 		s.logger.Error("Crawl failed", zap.Error(err))
 		s.updateCrawlStatus(crawlID, "failed", err.Error())
+		return
+	}
+
+	// A shutdown signal stops the crawler early and leaves partial results.
+	// Report that as a failure instead of analysing half a site as if it were
+	// the whole crawl.
+	if manager.Interrupted() {
+		s.logger.Warn("Crawl interrupted by shutdown", zap.String("crawl_id", crawlID), zap.Int("pages_so_far", len(results)))
+		s.updateCrawlStatus(crawlID, "failed", crawlInterruptedMessage)
 		return
 	}
 
@@ -1524,9 +1538,9 @@ func (s *Server) updateCrawlStatus(crawlID, status, errorMsg string) {
 		"status": status,
 	}
 	if status == "failed" && errorMsg != "" {
-		update["meta"] = map[string]interface{}{
-			"error": errorMsg,
-		}
+		// Add the error to the crawl's existing meta (URL, limits, schedule)
+		// instead of replacing it.
+		update["meta"] = metaWithError(s.fetchCrawlMeta(crawlID), errorMsg)
 	}
 	if status == "succeeded" || status == "failed" {
 		update["completed_at"] = time.Now().UTC().Format(time.RFC3339)

@@ -1,4 +1,4 @@
-.PHONY: build test install clean release frontend-build frontend-dev serve docker-build docker-push deploy-backend
+.PHONY: build test install clean release frontend-build frontend-dev serve docker-build docker-push deploy-backend setup-crawl-job
 
 # Build the binary (requires frontend to be built first)
 build: frontend-build
@@ -89,6 +89,11 @@ IMAGE_TAG ?= latest
 REPOSITORY ?= barracuda
 ENV_FILE ?= $(CURDIR)/.env
 IMAGE_URI = $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(REPOSITORY)/$(IMAGE_NAME):$(IMAGE_TAG)
+# Cloud Run Job that runs crawls (same image as the API, different command)
+CRAWL_JOB_NAME ?= barracuda-crawl
+CRAWL_JOB_MEMORY ?= 2Gi
+CRAWL_JOB_CPU ?= 2
+CRAWL_JOB_TIMEOUT ?= 6h
 
 # Build Docker image
 docker-build:
@@ -175,6 +180,15 @@ deploy-backend: docker-push
 		--max-instances=10 \
 		--port=8080 \
 		--quiet; \
+	if gcloud run jobs describe $(CRAWL_JOB_NAME) --region $$GCP_REG --format="value(name)" >/dev/null 2>&1; then \
+		echo "Updating crawl job image..."; \
+		gcloud run jobs update $(CRAWL_JOB_NAME) \
+			--image $$GCP_REG-docker.pkg.dev/$$GCP_PROJ/$(REPOSITORY)/$(IMAGE_NAME):$(IMAGE_TAG) \
+			--region $$GCP_REG \
+			--quiet; \
+	else \
+		echo "Note: crawl job $(CRAWL_JOB_NAME) does not exist yet. Run 'make setup-crawl-job' to make crawls durable."; \
+	fi; \
 	echo "✓ Deployment complete!"; \
 	echo "Service URL:"; \
 	GCP_REG="$${GCP_REGION:-$(GCP_REGION)}"; \
@@ -200,12 +214,76 @@ deploy-image: docker-push
 		--platform managed \
 		--region $$GCP_REG \
 		--quiet; \
+	if gcloud run jobs describe $(CRAWL_JOB_NAME) --region $$GCP_REG --format="value(name)" >/dev/null 2>&1; then \
+		echo "Updating crawl job image..."; \
+		gcloud run jobs update $(CRAWL_JOB_NAME) \
+			--image $$GCP_REG-docker.pkg.dev/$$GCP_PROJ/$(REPOSITORY)/$(IMAGE_NAME):$(IMAGE_TAG) \
+			--region $$GCP_REG \
+			--quiet; \
+	else \
+		echo "Note: crawl job $(CRAWL_JOB_NAME) does not exist yet. Run 'make setup-crawl-job' to make crawls durable."; \
+	fi; \
 	echo "✓ Image deployment complete!"; \
 	echo "Service URL:"; \
 	gcloud run services describe $(IMAGE_NAME) \
 		--platform managed \
 		--region $$GCP_REG \
 		--format="value(status.url)"
+
+# One-time setup of the Cloud Run Job that runs crawls. Safe to run again: it
+# updates the job if it already exists.
+#   1. creates/updates the job from the API's image, with the Supabase config
+#   2. lets the API's service account start executions of it
+#   3. tells the API which job to use (CRAWL_JOB)
+# PSI_API_KEY is copied to the job when it is set in $(ENV_FILE).
+setup-crawl-job:
+	@set -a; \
+	if [ -f "$(ENV_FILE)" ]; then . "$(ENV_FILE)"; fi; \
+	set +a; \
+	GCP_PROJ="$${GCP_PROJECT_ID:-$(GCP_PROJECT_ID)}"; \
+	GCP_REG="$${GCP_REGION:-$(GCP_REGION)}"; \
+	SUPABASE_URL="$${PUBLIC_SUPABASE_URL:-$(PUBLIC_SUPABASE_URL)}"; \
+	SUPABASE_ANON="$${PUBLIC_SUPABASE_ANON_KEY:-$(PUBLIC_SUPABASE_ANON_KEY)}"; \
+	if [ -z "$$GCP_PROJ" ] || [ -z "$$SUPABASE_URL" ] || [ -z "$$SUPABASE_ANON" ]; then \
+		echo "Error: GCP_PROJECT_ID, PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY must be set (in $(ENV_FILE) or exported)."; \
+		exit 1; \
+	fi; \
+	ENV_VARS="PUBLIC_SUPABASE_URL=$$SUPABASE_URL,PUBLIC_SUPABASE_ANON_KEY=$$SUPABASE_ANON"; \
+	if [ -n "$$PSI_API_KEY" ]; then ENV_VARS="$$ENV_VARS,PSI_API_KEY=$$PSI_API_KEY"; fi; \
+	if gcloud run jobs describe $(CRAWL_JOB_NAME) --region $$GCP_REG --format="value(name)" >/dev/null 2>&1; then \
+		VERB=update; \
+	else \
+		VERB=create; \
+	fi; \
+	echo "Running: gcloud run jobs $$VERB $(CRAWL_JOB_NAME)"; \
+	gcloud run jobs $$VERB $(CRAWL_JOB_NAME) \
+		--image $$GCP_REG-docker.pkg.dev/$$GCP_PROJ/$(REPOSITORY)/$(IMAGE_NAME):$(IMAGE_TAG) \
+		--region $$GCP_REG \
+		--args=crawl-job \
+		--memory=$(CRAWL_JOB_MEMORY) \
+		--cpu=$(CRAWL_JOB_CPU) \
+		--task-timeout=$(CRAWL_JOB_TIMEOUT) \
+		--max-retries=1 \
+		--update-env-vars="$$ENV_VARS" \
+		--set-secrets="SUPABASE_SERVICE_ROLE_KEY=supabase_service_role_key:latest,SUPABASE_JWT_SECRET=supabase_jwt_secret:latest" \
+		--quiet || exit 1; \
+	SERVICE_ACCOUNT=$$(gcloud run services describe $(IMAGE_NAME) --region $$GCP_REG --format="value(spec.template.spec.serviceAccountName)"); \
+	if [ -z "$$SERVICE_ACCOUNT" ]; then \
+		echo "Error: could not read the service account of $(IMAGE_NAME)."; \
+		exit 1; \
+	fi; \
+	echo "Allowing $$SERVICE_ACCOUNT to start the crawl job..."; \
+	gcloud run jobs add-iam-policy-binding $(CRAWL_JOB_NAME) \
+		--region $$GCP_REG \
+		--member="serviceAccount:$$SERVICE_ACCOUNT" \
+		--role=roles/run.jobsExecutorWithOverrides \
+		--quiet >/dev/null || exit 1; \
+	echo "Pointing the API at the crawl job..."; \
+	gcloud run services update $(IMAGE_NAME) \
+		--region $$GCP_REG \
+		--update-env-vars="CRAWL_JOB=projects/$$GCP_PROJ/locations/$$GCP_REG/jobs/$(CRAWL_JOB_NAME)" \
+		--quiet || exit 1; \
+	echo "✓ Crawl job ready: new crawls run as executions of $(CRAWL_JOB_NAME)"
 
 # Quick deploy (rebuild and deploy in one command)
 # Use deploy-image for faster deployments that don't change env vars

@@ -41,7 +41,12 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/health || exit 1
 
-# Run the API server
-# Use shell form to expand PORT environment variable
-CMD ./barracuda-api api --port ${PORT:-8080}
+# Exec form, so the binary is PID 1 and receives Cloud Run's SIGTERM directly
+# (a shell in between would swallow it and the server could not shut down
+# cleanly). The api command reads the port from the PORT environment variable.
+#
+# The crawl job runs this same image with the argument "crawl-job" in place of
+# "api".
+ENTRYPOINT ["./barracuda-api"]
+CMD ["api"]
 
