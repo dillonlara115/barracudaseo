@@ -2,6 +2,17 @@
   import { onMount, onDestroy, createEventDispatcher } from 'svelte';
   import { fetchCrawl, fetchCrawlPageCount } from '../lib/data.js';
   import { push } from 'svelte-spa-router';
+  import {
+    phaseLabel as labelForPhase,
+    phaseStep,
+    isScanning,
+    estimateTotal,
+    progressPercent,
+    rollingRate,
+    secondsRemaining,
+    formatDuration,
+    PHASES
+  } from '../lib/crawlProgress.js';
   
   const dispatch = createEventDispatcher();
   
@@ -23,21 +34,13 @@
     return Number.isFinite(parsed) ? parsed : 0;
   };
   
-  // Progress calculation - use max_pages from crawl (limit), not total_pages (current count)
-  $: maxPages = crawl?.max_pages || crawl?.meta?.max_pages || 100;
+  // The crawl's page limit. It is a ceiling, not the size of the site.
+  $: maxPages = toNumber(crawl?.max_pages || crawl?.meta?.max_pages);
   $: status = crawl?.status || 'pending';
   $: phase = crawl?.phase || '';
+  $: phaseLabel = labelForPhase(phase) || phase;
+  $: scanning = isScanning(phase);
 
-  // Human-readable phase labels for the modal
-  const phaseLabels = {
-    scanning: 'Scanning pages',
-    page_experience: 'Measuring page speed and rendering',
-    metadata_review: 'Reviewing metadata',
-    image_analysis: 'Analyzing images',
-    storing: 'Storing results'
-  };
-  $: phaseLabel = phase ? (phaseLabels[phase] || phase) : '';
-  
   // Use actual page count from DB, but fallback to crawl.total_pages if available
   $: displayPageCount = (() => {
     const counts = [
@@ -48,58 +51,42 @@
     ];
     return Math.max(...counts, 0);
   })();
-  $: progress = maxPages > 0 ? Math.min((displayPageCount / maxPages) * 100, 100) : 0;
-  
-  // ETA calculation
-  let startTime = null;
-  let lastPageCount = 0;
-  let lastUpdateTime = null;
-  let pagesPerSecond = 0;
+
+  // How many pages the crawl is expected to end with: what the crawler has
+  // found so far, which can still grow while it follows links.
+  $: estimatedTotal = estimateTotal({
+    crawled: displayPageCount,
+    discovered: toNumber(crawl?.pages_discovered),
+    maxPages
+  });
+  $: atPageLimit = maxPages > 0 && estimatedTotal === maxPages;
+  $: stillFinding = scanning && estimatedTotal != null && !atPageLimit;
+
+  // The estimate can jump when new links are found; never move the bar backwards.
+  let shownPercent = 0;
+  $: {
+    const percent = progressPercent({ phase, crawled: displayPageCount, total: estimatedTotal });
+    if (percent > shownPercent) shownPercent = percent;
+  }
+
+  // Rate and time left come from recent samples, so a slow start (the crawler
+  // starting up) does not distort them.
+  let samples = [];
+  let pagesPerSecond = null;
   let etaSeconds = null;
-  
-  $: if (crawl?.started_at && status === 'running') {
-    const now = new Date();
-    const started = new Date(crawl.started_at);
-    const elapsed = (now - started) / 1000; // seconds
-    const currentCount = displayPageCount;
-    
-    if (currentCount > 0) {
-      if (lastUpdateTime && lastPageCount > 0 && lastPageCount !== currentCount) {
-        const timeDiff = (now - lastUpdateTime) / 1000;
-        const pageDiff = currentCount - lastPageCount;
-        if (timeDiff > 0 && pageDiff > 0) {
-          // Use recent rate (smoothed)
-          const recentRate = pageDiff / timeDiff;
-          const overallRate = currentCount / elapsed;
-          pagesPerSecond = (recentRate * 0.7) + (overallRate * 0.3); // Weight recent rate more
-        }
-      } else if (elapsed > 0) {
-        // Use overall rate if no recent update
-        pagesPerSecond = currentCount / elapsed;
-      }
-      
-      if (pagesPerSecond > 0 && currentCount < maxPages) {
-        const remainingPages = maxPages - currentCount;
-        etaSeconds = Math.ceil(remainingPages / pagesPerSecond);
-      } else {
-        etaSeconds = null;
-      }
-    }
-    
-    // Update tracking
-    if (lastPageCount !== currentCount) {
-      lastPageCount = currentCount;
-      lastUpdateTime = now;
-    }
+
+  function recordSample(count) {
+    const latest = samples[samples.length - 1];
+    const now = Date.now();
+    if (latest && now - latest.time < 900) return;
+    samples = [...samples.slice(-60), { time: now, count }];
   }
-  
-  function formatDuration(seconds) {
-    if (!seconds || seconds < 0) return null;
-    if (seconds < 60) return `${Math.round(seconds)}s`;
-    if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
-    return `${Math.round(seconds / 3600)}h ${Math.round((seconds % 3600) / 60)}m`;
-  }
-  
+
+  $: pagesPerSecond = scanning ? rollingRate(samples) : null;
+  $: etaSeconds = scanning
+    ? secondsRemaining({ crawled: displayPageCount, total: estimatedTotal, rate: pagesPerSecond })
+    : null;
+
   async function loadCrawl() {
     if (!crawlId) {
       console.log('CrawlProgress: No crawlId provided');
@@ -167,9 +154,8 @@
         completedAt: crawl?.completed_at
       });
       
-      if (!startTime && crawl?.started_at) {
-        startTime = new Date(crawl.started_at);
-        lastUpdateTime = startTime;
+      if (crawl?.status === 'running' && pageCount > 0) {
+        recordSample(pageCount);
       }
       
       loading = false;
@@ -306,40 +292,73 @@
       </div>
       
       {#if status === 'running' || status === 'pending'}
-        {#if phaseLabel}
+        {#if displayPageCount === 0 && scanning}
+          <!-- Nothing crawled yet: the crawler is still starting up -->
           <p class="text-sm text-base-content/70 mb-2">
             <span class="loading loading-dots loading-sm"></span>
-            {phaseLabel}
+            Starting the crawler. This can take up to a minute.
           </p>
+          <progress class="progress progress-primary w-full mb-4"></progress>
+        {:else}
+          <p class="text-sm text-base-content/70 mb-2">
+            <span class="loading loading-dots loading-sm"></span>
+            {phaseLabel || 'Working'}
+            {#if phaseStep(phase) > 0}
+              <span class="text-base-content/50">· step {phaseStep(phase)} of {PHASES.length}</span>
+            {/if}
+          </p>
+
+          <!-- Progress Bar -->
+          <div class="mb-4">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm font-semibold">
+                {#if !scanning}
+                  {displayPageCount} pages crawled
+                {:else if atPageLimit}
+                  {displayPageCount} of {estimatedTotal} pages (your page limit)
+                {:else if estimatedTotal > displayPageCount}
+                  {displayPageCount} of about {estimatedTotal} pages found so far
+                {:else}
+                  {displayPageCount} pages
+                {/if}
+              </span>
+              <span class="text-sm">{Math.round(shownPercent)}%</span>
+            </div>
+            <progress class="progress progress-primary w-full" value={shownPercent} max="100"></progress>
+          </div>
+
+          <!-- Stats -->
+          <div class="grid grid-cols-3 gap-4 mb-4">
+            <div class="stat py-0">
+              <div class="stat-title text-xs">Pages Crawled</div>
+              <div class="stat-value text-2xl">{displayPageCount}</div>
+            </div>
+            <div class="stat py-0">
+              <div class="stat-title text-xs">Speed</div>
+              <div class="stat-value text-2xl">
+                {pagesPerSecond ? `${pagesPerSecond.toFixed(1)}/s` : '—'}
+              </div>
+            </div>
+            <div class="stat py-0">
+              <div class="stat-title text-xs">Time Left</div>
+              <div class="stat-value text-2xl">
+                {#if !scanning}
+                  Almost done
+                {:else if etaSeconds != null}
+                  ~{formatDuration(etaSeconds)}
+                {:else}
+                  —
+                {/if}
+              </div>
+            </div>
+          </div>
+
+          {#if stillFinding}
+            <p class="text-xs text-base-content/70 mb-2">
+              The total is an estimate. It grows if the crawler finds more pages as it follows links.
+            </p>
+          {/if}
         {/if}
-        <!-- Progress Bar -->
-        <div class="mb-4">
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-sm font-semibold">{displayPageCount} / {maxPages} pages</span>
-            <span class="text-sm">{Math.round(progress)}%</span>
-          </div>
-          <progress 
-            class="progress progress-primary w-full" 
-            value={displayPageCount} 
-            max={maxPages}
-          ></progress>
-        </div>
-        
-        <!-- Stats -->
-        <div class="grid grid-cols-3 gap-4 mb-4">
-          <div class="stat py-0">
-            <div class="stat-title text-xs">Pages Crawled</div>
-            <div class="stat-value text-2xl">{displayPageCount}</div>
-          </div>
-          <div class="stat py-0">
-            <div class="stat-title text-xs">Rate</div>
-            <div class="stat-value text-2xl">{pagesPerSecond > 0 ? pagesPerSecond.toFixed(1) : '0.0'}/s</div>
-          </div>
-          <div class="stat py-0">
-            <div class="stat-title text-xs">ETA</div>
-            <div class="stat-value text-2xl">{etaSeconds ? formatDuration(etaSeconds) : '—'}</div>
-          </div>
-        </div>
       {:else if status === 'succeeded'}
         <!-- Success State -->
         <div class="alert alert-success mb-4">

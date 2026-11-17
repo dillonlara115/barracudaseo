@@ -1241,8 +1241,9 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 
 				// Update crawl total_pages in real-time after batch insert
 				update := map[string]interface{}{
-					"total_pages": currentTotal,
-					"status":      "running", // Ensure status stays as running
+					"total_pages":      currentTotal,
+					"pages_discovered": discoveredPages(currentTotal, manager.Discovered()),
+					"status":           "running", // Ensure status stays as running
 				}
 				_, _, err = s.serviceRole.From("crawls").Update(update, "", "").Eq("id", crawlID).Execute()
 				if err != nil {
@@ -1256,8 +1257,9 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 			// Update progress for every page (best real-time updates)
 			// Only skip if we just updated in a batch to avoid redundant updates
 			update := map[string]interface{}{
-				"total_pages": currentTotal,
-				"status":      "running", // Ensure status stays as running
+				"total_pages":      currentTotal,
+				"pages_discovered": discoveredPages(currentTotal, manager.Discovered()),
+				"status":           "running", // Ensure status stays as running
 			}
 			_, _, err := s.serviceRole.From("crawls").Update(update, "", "").Eq("id", crawlID).Execute()
 			if err != nil {
@@ -1337,6 +1339,9 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 	}
 
 	// Analyze results (only non-image URLs)
+	// Scanning is over, so the page count is now exact rather than an estimate
+	s.setCrawlPagesDiscovered(crawlID, finalTotal)
+
 	// Slow, opt-in measurements on a few key pages: Core Web Vitals (when
 	// PSI_API_KEY is set) and headless rendering (when RENDER_MAX_PAGES is set).
 	// Both set fields on the results that the analysis below reports on.
@@ -1518,9 +1523,10 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 	// Update crawl status to succeeded (total_pages already updated via callback)
 	s.updateCrawlStatus(crawlID, "succeeded", "")
 	update := map[string]interface{}{
-		"total_pages":  finalTotal,
-		"total_issues": len(issues),
-		"completed_at": time.Now().UTC().Format(time.RFC3339),
+		"total_pages":      finalTotal,
+		"pages_discovered": finalTotal,
+		"total_issues":     len(issues),
+		"completed_at":     time.Now().UTC().Format(time.RFC3339),
 	}
 	_, _, err = s.serviceRole.From("crawls").Update(update, "", "").Eq("id", crawlID).Execute()
 	if err != nil {

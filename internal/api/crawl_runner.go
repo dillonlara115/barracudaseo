@@ -192,7 +192,7 @@ func (s *Server) clearCrawlResults(crawlID string) {
 	if _, _, err := s.serviceRole.From("pages").Delete("", "").Eq("crawl_id", crawlID).Execute(); err != nil {
 		s.logger.Warn("Failed to clear crawl pages", zap.Error(err), zap.String("crawl_id", crawlID))
 	}
-	reset := map[string]interface{}{"total_pages": 0, "total_issues": 0}
+	reset := map[string]interface{}{"total_pages": 0, "total_issues": 0, "pages_discovered": 0}
 	if _, _, err := s.serviceRole.From("crawls").Update(reset, "", "").Eq("id", crawlID).Execute(); err != nil {
 		s.logger.Warn("Failed to reset crawl counters", zap.Error(err), zap.String("crawl_id", crawlID))
 	}
@@ -311,4 +311,21 @@ func metaWithError(meta map[string]interface{}, message string) map[string]inter
 	}
 	out["error"] = message
 	return out
+}
+
+// discoveredPages is the progress estimate stored while a crawl scans: the
+// crawler's count of URLs found, never less than the pages already crawled.
+func discoveredPages(crawled, discovered int) int {
+	if discovered < crawled {
+		return crawled
+	}
+	return discovered
+}
+
+// setCrawlPagesDiscovered records the crawl's page estimate.
+func (s *Server) setCrawlPagesDiscovered(crawlID string, pages int) {
+	update := map[string]interface{}{"pages_discovered": pages}
+	if _, _, err := s.serviceRole.From("crawls").Update(update, "", "").Eq("id", crawlID).Execute(); err != nil {
+		s.logger.Warn("Failed to update crawl page estimate", zap.Error(err), zap.String("crawl_id", crawlID))
+	}
 }

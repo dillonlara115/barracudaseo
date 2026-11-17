@@ -123,3 +123,12 @@ func TestNewCloudRunJobRunnerRejectsBadName(t *testing.T) {
 		}
 	}
 }
+
+func TestDiscoveredPagesNeverBelowCrawled(t *testing.T) {
+	if got := discoveredPages(21, 35); got != 35 {
+		t.Errorf("discoveredPages(21, 35) = %d, want 35", got)
+	}
+	if got := discoveredPages(21, 4); got != 21 {
+		t.Errorf("discoveredPages(21, 4) = %d, want 21", got)
+	}
+}

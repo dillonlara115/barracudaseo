@@ -37,6 +37,8 @@ type Manager struct {
 	pending            int32            // Track pending tasks (atomic)
 	queueClosed        int32            // Atomic flag to track if queue is closed
 	interrupted        int32            // Atomic flag: set when a shutdown signal stopped the crawl
+	discovered         sync.Map         // URLs queued at least once, for progress estimates
+	discoveredCount    int32            // Number of distinct URLs in discovered (atomic)
 	progressCallback   ProgressCallback // Optional callback for progress updates
 	normalizedStartURL string           // Store normalized start URL for domain comparison
 }
@@ -142,6 +144,7 @@ func (m *Manager) Crawl() ([]*models.PageResult, error) {
 				continue
 			}
 
+			m.noteDiscovered(normalized)
 			atomic.AddInt32(&m.pending, 1)
 			m.queue <- crawlTask{
 				URL:   normalized,
@@ -432,6 +435,7 @@ func (m *Manager) worker(id int) {
 					case m.queue <- crawlTask{URL: linkURL, Depth: task.Depth + 1}:
 						// Successfully enqueued
 						atomic.AddInt32(&m.pending, 1)
+						m.noteDiscovered(linkURL)
 						enqueuedCount++
 						utils.Info("Enqueued link", utils.NewField("link", linkURL), utils.NewField("new_depth", task.Depth+1))
 					default:
@@ -529,6 +533,25 @@ func (m *Manager) handleSignals() {
 	case <-m.ctx.Done():
 		// The crawl stopped on its own (for example at the page limit)
 	}
+}
+
+// noteDiscovered counts a URL the first time it is queued.
+func (m *Manager) noteDiscovered(url string) {
+	if _, seen := m.discovered.LoadOrStore(url, struct{}{}); !seen {
+		atomic.AddInt32(&m.discoveredCount, 1)
+	}
+}
+
+// Discovered returns how many distinct URLs the crawl has queued so far,
+// capped at the page limit. While the crawl runs it is the best estimate of
+// how many pages the crawl will end up with: it grows as links are found, and
+// can run slightly high because some queued URLs turn out not to be pages.
+func (m *Manager) Discovered() int {
+	count := int(atomic.LoadInt32(&m.discoveredCount))
+	if count > m.config.MaxPages {
+		return m.config.MaxPages
+	}
+	return count
 }
 
 // Interrupted reports whether a shutdown signal stopped the crawl. Results
