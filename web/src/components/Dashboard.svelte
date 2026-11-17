@@ -13,6 +13,7 @@
   import UnifiedInsightsPanel from './UnifiedInsightsPanel.svelte';
   import CrawlSummary from './AI/CrawlSummary.svelte';
   import CrawlDiffCard from './CrawlDiffCard.svelte';
+  import CrawlWebVitals from './CrawlWebVitals.svelte';
   import CrawlGoogleCoverage from './CrawlGoogleCoverage.svelte';
   import PublicReportGenerator from './PublicReportGenerator.svelte';
   import ProjectSidebar from './ProjectSidebar.svelte';
@@ -358,6 +359,7 @@
         {#if gscProperty}
           <CrawlGoogleCoverage {projectId} {crawlId} />
         {/if}
+        <CrawlWebVitals crawl={selectedCrawl} />
         <CrawlSummary {crawlId} />
         <PublicReportGenerator {crawlId} {projectId} />
       {/if}

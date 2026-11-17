@@ -26,7 +26,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o barracuda-api .
 # Runtime stage
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates tzdata
+# Chromium (with fonts) is for JavaScript rendering checks. It is only started
+# where RENDER_MAX_PAGES is set, which is the crawl job, not the API service.
+RUN apk --no-cache add ca-certificates tzdata chromium nss freetype harfbuzz ttf-freefont
 
 WORKDIR /root/
 

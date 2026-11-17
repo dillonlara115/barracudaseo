@@ -36,7 +36,13 @@ type Renderer struct {
 // for example because it is not installed. Close must be called to stop the
 // browser process.
 func NewRenderer(userAgent string) (*Renderer, error) {
-	options := append(chromedp.DefaultExecAllocatorOptions[:], chromedp.NoSandbox)
+	options := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.NoSandbox,
+		chromedp.DisableGPU,
+		// Containers give /dev/shm very little space; without this Chrome
+		// crashes on larger pages.
+		chromedp.Flag("disable-dev-shm-usage", true),
+	)
 	if userAgent != "" {
 		options = append(options, chromedp.UserAgent(userAgent))
 	}

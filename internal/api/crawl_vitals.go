@@ -49,8 +49,8 @@ func (s *Server) measureWebVitals(crawlID string, results []*models.PageResult) 
 		zap.Int("selected", len(selected)),
 		zap.Int("measured", measured))
 
-	// Pages are already stored by the time the crawl reaches this step, so the
-	// readings are kept on the crawl record instead of on each page row.
+	// The readings are kept together on the crawl record for the dashboard's
+	// summary card.
 	readings := make([]map[string]interface{}, 0, len(selected))
 	for _, p := range selected {
 		if p.WebVitals == nil {
@@ -63,6 +63,10 @@ func (s *Server) measureWebVitals(crawlID string, results []*models.PageResult) 
 				zap.String("error", p.WebVitals.Error))
 		}
 		readings = append(readings, map[string]interface{}{"url": p.URL, "vitals": p.WebVitals})
+		if p.WebVitals.Error == "" {
+			// Also on the page itself, so the page detail view can show it
+			s.mergePageData(crawlID, p.URL, map[string]interface{}{"web_vitals": p.WebVitals})
+		}
 	}
 	if err := s.mergeCrawlMeta(crawlID, map[string]interface{}{"web_vitals": readings}); err != nil {
 		s.logger.Warn("Failed to store Core Web Vitals on crawl", zap.String("crawl_id", crawlID), zap.Error(err))

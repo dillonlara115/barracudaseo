@@ -31,6 +31,7 @@
   // Human-readable phase labels for the modal
   const phaseLabels = {
     scanning: 'Scanning pages',
+    page_experience: 'Measuring page speed and rendering',
     metadata_review: 'Reviewing metadata',
     image_analysis: 'Analyzing images',
     storing: 'Storing results'

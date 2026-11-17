@@ -94,6 +94,8 @@ CRAWL_JOB_NAME ?= barracuda-crawl
 CRAWL_JOB_MEMORY ?= 2Gi
 CRAWL_JOB_CPU ?= 2
 CRAWL_JOB_TIMEOUT ?= 6h
+# Pages per crawl rendered in headless Chrome (0 turns rendering off)
+CRAWL_JOB_RENDER_PAGES ?= 5
 
 # Build Docker image
 docker-build:
@@ -235,7 +237,9 @@ deploy-image: docker-push
 #   1. creates/updates the job from the API's image, with the Supabase config
 #   2. lets the API's service account start executions of it
 #   3. tells the API which job to use (CRAWL_JOB)
-# PSI_API_KEY is copied to the job when it is set in $(ENV_FILE).
+# PSI_API_KEY is copied to the job when it is set in $(ENV_FILE); without it
+# crawls skip Core Web Vitals. The job renders CRAWL_JOB_RENDER_PAGES pages per
+# crawl in headless Chrome.
 setup-crawl-job:
 	@set -a; \
 	if [ -f "$(ENV_FILE)" ]; then . "$(ENV_FILE)"; fi; \
@@ -248,8 +252,12 @@ setup-crawl-job:
 		echo "Error: GCP_PROJECT_ID, PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY must be set (in $(ENV_FILE) or exported)."; \
 		exit 1; \
 	fi; \
-	ENV_VARS="PUBLIC_SUPABASE_URL=$$SUPABASE_URL,PUBLIC_SUPABASE_ANON_KEY=$$SUPABASE_ANON"; \
-	if [ -n "$$PSI_API_KEY" ]; then ENV_VARS="$$ENV_VARS,PSI_API_KEY=$$PSI_API_KEY"; fi; \
+	ENV_VARS="PUBLIC_SUPABASE_URL=$$SUPABASE_URL,PUBLIC_SUPABASE_ANON_KEY=$$SUPABASE_ANON,RENDER_MAX_PAGES=$(CRAWL_JOB_RENDER_PAGES)"; \
+	if [ -n "$$PSI_API_KEY" ]; then \
+		ENV_VARS="$$ENV_VARS,PSI_API_KEY=$$PSI_API_KEY"; \
+	else \
+		echo "Note: PSI_API_KEY is not set in $(ENV_FILE), so crawls will not measure Core Web Vitals."; \
+	fi; \
 	if gcloud run jobs describe $(CRAWL_JOB_NAME) --region $$GCP_REG --format="value(name)" >/dev/null 2>&1; then \
 		VERB=update; \
 	else \

@@ -1029,7 +1029,7 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 		Workers:          req.Workers,
 		Delay:            0,
 		Timeout:          30 * time.Second,
-		UserAgent:        "barracuda/1.0.0",
+		UserAgent:        crawlUserAgent,
 		RespectRobots:    *req.RespectRobots,
 		ParseSitemap:     *req.ParseSitemap,
 		CrawlSitemapOnly: *req.CrawlSitemapOnly,
@@ -1337,8 +1337,14 @@ func (s *Server) runCrawlAsync(crawlID, projectID string, req TriggerCrawlReques
 	}
 
 	// Analyze results (only non-image URLs)
-	// Core Web Vitals for a few key pages (only when PSI_API_KEY is configured)
+	// Slow, opt-in measurements on a few key pages: Core Web Vitals (when
+	// PSI_API_KEY is set) and headless rendering (when RENDER_MAX_PAGES is set).
+	// Both set fields on the results that the analysis below reports on.
+	if pageExperienceEnabled() {
+		s.updateCrawlPhase(crawlID, phasePageExperience)
+	}
 	s.measureWebVitals(crawlID, filteredResults)
+	s.renderKeyPages(crawlID, filteredResults)
 
 	s.updateCrawlPhase(crawlID, "metadata_review")
 	summary := analyzer.Analyze(filteredResults)

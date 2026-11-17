@@ -144,6 +144,33 @@
         </div>
       {/if}
 
+      {#if page.rendered && !page.rendered.error}
+        <div class="mb-4">
+          <div class="font-semibold mb-2">After JavaScript runs:</div>
+          <div class="space-y-1 text-sm">
+            <div>
+              <span class="font-semibold">Words:</span>
+              {page.rendered.raw_word_count} in the raw HTML, {page.rendered.rendered_word_count} after rendering
+            </div>
+            {#if (page.rendered.raw_title || '') !== (page.rendered.rendered_title || '')}
+              <div><span class="font-semibold">Title changes to:</span> {page.rendered.rendered_title || '(none)'}</div>
+            {/if}
+            {#if (page.rendered.raw_canonical || '') !== (page.rendered.rendered_canonical || '')}
+              <div class="break-all"><span class="font-semibold">Canonical changes to:</span> {page.rendered.rendered_canonical || '(none)'}</div>
+            {/if}
+            {#if (page.rendered.raw_meta_robots || '') !== (page.rendered.rendered_meta_robots || '')}
+              <div><span class="font-semibold">Meta robots changes to:</span> {page.rendered.rendered_meta_robots || '(none)'}</div>
+            {/if}
+            {#if page.rendered.links_only_rendered && page.rendered.links_only_rendered.length > 0}
+              <div>
+                <span class="font-semibold">Links only present after rendering:</span>
+                {page.rendered.links_only_rendered.length}
+              </div>
+            {/if}
+          </div>
+        </div>
+      {/if}
+
       {#if page.web_vitals && !page.web_vitals.error}
         <div class="mb-4">
           <div class="font-semibold mb-2">Core Web Vitals ({page.web_vitals.strategy}):</div>
