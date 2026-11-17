@@ -12,7 +12,9 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
       with:
-        node-version: lts/*
+        # The Vercel adapter builds only on Node 20, 22 or 24, so this tracks
+        # the Node version the site deploys on rather than the newest LTS.
+        node-version: 24
     - name: Install marketing site dependencies
       working-directory: ./marketing
       run: npm ci
