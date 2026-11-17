@@ -7,16 +7,12 @@ on:
 jobs:
   test:
     timeout-minutes: 60
-    # Pinned to the last environment this job passed on (Ubuntu 24.04, Node 24).
-    # Playwright 1.57 cannot install browsers on Ubuntu 26.04, and its browser
-    # install hangs after the download on Node 26. Return to ubuntu-latest and
-    # lts/* after upgrading Playwright.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
       with:
-        node-version: 24
+        node-version: lts/*
     - name: Install marketing site dependencies
       working-directory: ./marketing
       run: npm ci
