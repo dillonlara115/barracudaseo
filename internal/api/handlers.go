@@ -16,6 +16,7 @@ import (
 	"github.com/dillonlara115/barracudaseo/internal/utils"
 	"github.com/dillonlara115/barracudaseo/pkg/models"
 	"github.com/google/uuid"
+	"github.com/supabase-community/postgrest-go"
 	"go.uber.org/zap"
 )
 
@@ -430,7 +431,9 @@ func (s *Server) handleCreateProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var result []map[string]interface{}
-	data, _, err := s.supabase.From("projects").Insert(project, false, "", "", "").Execute()
+	// Service role: the shared anon client carries no user token, so RLS would
+	// reject the insert. owner_id is set from the authenticated user above.
+	data, _, err := s.serviceRole.From("projects").Insert(project, false, "", "", "").Execute()
 	if err != nil {
 		s.logger.Error("Failed to create project", zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, "Failed to create project")
@@ -472,10 +475,21 @@ func (s *Server) handleListProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// RLS policies will automatically filter to projects user has access to
-	// This now includes team-based access (team members can see projects from teammates)
+	// The service role bypasses RLS, so the query itself is limited to the
+	// projects this user can reach: owned, shared as a member, or owned by a teammate.
+	filter, err := s.accessibleProjectsFilter(userID)
+	if err != nil {
+		s.logger.Error("Failed to resolve accessible projects", zap.Error(err), zap.String("user_id", userID))
+		s.respondError(w, http.StatusInternalServerError, "Failed to list projects")
+		return
+	}
+
 	var projects []map[string]interface{}
-	data, _, err := s.supabase.From("projects").Select("*", "", false).Execute()
+	data, _, err := s.serviceRole.From("projects").
+		Select("*", "", false).
+		Or(filter, "").
+		Order("created_at", &postgrest.OrderOpts{Ascending: false}).
+		Execute()
 	if err != nil {
 		s.logger.Error("Failed to list projects", zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, "Failed to list projects")
@@ -626,7 +640,7 @@ func (s *Server) handleGetProject(w http.ResponseWriter, r *http.Request, projec
 	}
 
 	var projects []map[string]interface{}
-	data, _, err := s.supabase.From("projects").Select("*", "", false).Eq("id", projectID).Execute()
+	data, _, err := s.serviceRole.From("projects").Select("*", "", false).Eq("id", projectID).Execute()
 	if err != nil {
 		s.logger.Error("Failed to get project", zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, "Failed to get project")
@@ -730,20 +744,27 @@ func (s *Server) handleUpdateProject(w http.ResponseWriter, r *http.Request, pro
 func (s *Server) handleDeleteProject(w http.ResponseWriter, r *http.Request, projectID, userID string) {
 	_ = r
 
-	// Verify access
-	hasAccess, err := s.verifyProjectAccess(userID, projectID)
+	// Deleting is narrower than access: only the owner or the owner's teammates
+	// may delete, the same rule as the RLS delete policy on projects.
+	canDelete, found, err := s.canDeleteProject(userID, projectID)
 	if err != nil {
-		s.logger.Error("Failed to verify project access", zap.Error(err))
+		s.logger.Error("Failed to verify project delete permission", zap.Error(err))
 		s.respondError(w, http.StatusInternalServerError, "Failed to verify project access")
 		return
 	}
-	if !hasAccess {
-		s.respondError(w, http.StatusForbidden, "You don't have access to this project")
+	if !found {
+		s.respondError(w, http.StatusNotFound, "Project not found")
+		return
+	}
+	if !canDelete {
+		s.respondError(w, http.StatusForbidden, "Only the project owner or their team can delete this project")
 		return
 	}
 
-	// Delete project (RLS will enforce permissions, cascade deletes will handle related data)
-	_, _, err = s.supabase.From("projects").
+	// Service role: the shared anon client carries no user token, so under RLS
+	// this delete matched no rows and still reported success. Cascades remove
+	// the project's crawls, pages and issues.
+	_, _, err = s.serviceRole.From("projects").
 		Delete("", "").
 		Eq("id", projectID).
 		Execute()
@@ -753,6 +774,8 @@ func (s *Server) handleDeleteProject(w http.ResponseWriter, r *http.Request, pro
 		s.respondError(w, http.StatusInternalServerError, "Failed to delete project")
 		return
 	}
+
+	s.logger.Info("Deleted project", zap.String("project_id", projectID), zap.String("user_id", userID))
 
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{
 		"message": "Project deleted successfully",

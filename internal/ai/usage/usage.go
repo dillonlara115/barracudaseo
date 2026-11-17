@@ -88,17 +88,21 @@ type LimitStatus struct {
 	Message    string `json:"message,omitempty"`
 }
 
-// CheckLimit verifies whether a project can perform a specific AI action based on plan limits
-func (t *Tracker) CheckLimit(ctx context.Context, projectID, feature string) (*LimitStatus, error) {
-	planTier, err := t.getProjectPlan(ctx, projectID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get project plan: %w", err)
+// LimitsFor returns the monthly limits of a plan. An unknown plan gets the
+// starter limits, the most restrictive ones.
+func LimitsFor(planTier string) PlanLimits {
+	if limits, ok := Plans[planTier]; ok {
+		return limits
 	}
+	return Plans["starter"]
+}
 
-	limits, ok := Plans[planTier]
-	if !ok {
-		limits = Plans["starter"]
-	}
+// CheckLimit verifies whether a project can perform a specific AI action under
+// the given plan. The caller resolves the plan, because it comes from the
+// project owner's subscription. An error means the usage could not be counted;
+// callers must refuse the action rather than treat that as "allowed".
+func (t *Tracker) CheckLimit(ctx context.Context, projectID, planTier, feature string) (*LimitStatus, error) {
+	limits := LimitsFor(planTier)
 
 	var maxAllowed int
 	switch feature {
@@ -167,27 +171,6 @@ func (t *Tracker) GetMonthlyUsageSummary(ctx context.Context, projectID string) 
 	return summary, nil
 }
 
-func (t *Tracker) getProjectPlan(ctx context.Context, projectID string) (string, error) {
-	var projects []struct {
-		PlanTier string `json:"plan_tier"`
-	}
-	data, _, err := t.serviceRole.From("projects").
-		Select("plan_tier", "", false).
-		Eq("id", projectID).
-		Limit(1, "").
-		Execute()
-	if err != nil {
-		return "starter", err
-	}
-	if err := json.Unmarshal(data, &projects); err != nil || len(projects) == 0 {
-		return "starter", nil
-	}
-	if projects[0].PlanTier == "" {
-		return "starter", nil
-	}
-	return projects[0].PlanTier, nil
-}
-
 func (t *Tracker) getMonthlyUsage(ctx context.Context, projectID, feature string) (int, error) {
 	startOfMonth := time.Now().UTC().Format("2006-01") + "-01T00:00:00Z"
 
@@ -202,7 +185,7 @@ func (t *Tracker) getMonthlyUsage(ctx context.Context, projectID, feature string
 		return 0, err
 	}
 	if err := json.Unmarshal(data, &records); err != nil {
-		return 0, nil
+		return 0, fmt.Errorf("failed to parse usage records: %w", err)
 	}
 	return len(records), nil
 }

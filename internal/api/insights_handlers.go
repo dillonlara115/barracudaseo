@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/supabase-community/postgrest-go"
 	"go.uber.org/zap"
 )
 
@@ -188,13 +189,18 @@ func (s *Server) handleProjectUnifiedInsights(w http.ResponseWriter, r *http.Req
 	})
 }
 
+// loadLatestCrawlIssues returns the issues of the project's most recent
+// succeeded crawl, each with the URL of its page under "url". The issues table
+// stores only a page_id, so the URL is joined in from the crawl's pages.
+// Issues that are not tied to a page are left out: insights are per page.
 func (s *Server) loadLatestCrawlIssues(projectID string) []map[string]interface{} {
-	// Find the latest crawl for this project
 	crawlData, _, err := s.serviceRole.
 		From("crawls").
 		Select("id", "", false).
 		Eq("project_id", projectID).
 		Eq("status", "succeeded").
+		Order("started_at", &postgrest.OrderOpts{Ascending: false}).
+		Limit(1, "").
 		Execute()
 	if err != nil {
 		s.logger.Warn("Failed to load crawls for insights", zap.Error(err))
@@ -205,28 +211,45 @@ func (s *Server) loadLatestCrawlIssues(projectID string) []map[string]interface{
 	if err := json.Unmarshal(crawlData, &crawls); err != nil || len(crawls) == 0 {
 		return nil
 	}
-
 	crawlID, _ := crawls[0]["id"].(string)
 	if crawlID == "" {
 		return nil
 	}
 
-	issueData, _, err := s.serviceRole.
-		From("issues").
-		Select("*", "", false).
-		Eq("crawl_id", crawlID).
-		Execute()
+	pageURLs, err := s.fetchCrawlPageURLs(crawlID)
+	if err != nil {
+		s.logger.Warn("Failed to load pages for insights", zap.Error(err))
+		return nil
+	}
+
+	rows, err := s.fetchAllRows("issues", "*", func(q *postgrest.FilterBuilder) *postgrest.FilterBuilder {
+		return q.Eq("crawl_id", crawlID)
+	})
 	if err != nil {
 		s.logger.Warn("Failed to load issues for insights", zap.Error(err))
 		return nil
 	}
 
-	var issues []map[string]interface{}
-	if err := json.Unmarshal(issueData, &issues); err != nil {
-		return nil
-	}
+	return attachIssueURLs(rows, pageURLs)
+}
 
-	return issues
+// attachIssueURLs sets "url" on each issue from its page_id and drops the
+// issues whose page is unknown.
+func attachIssueURLs(issues []map[string]interface{}, pageURLs map[int64]string) []map[string]interface{} {
+	withURL := make([]map[string]interface{}, 0, len(issues))
+	for _, issue := range issues {
+		pageID, ok := parsePageID(issue["page_id"])
+		if !ok {
+			continue
+		}
+		url, ok := pageURLs[pageID]
+		if !ok {
+			continue
+		}
+		issue["url"] = url
+		withURL = append(withURL, issue)
+	}
+	return withURL
 }
 
 func (s *Server) loadDimensionRows(table, projectID, rowType string) []map[string]interface{} {

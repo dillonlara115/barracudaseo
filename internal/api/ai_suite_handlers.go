@@ -207,14 +207,15 @@ func (s *Server) handleUpdateVoice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req["last_edited_at"] = time.Now().UTC().Format(time.RFC3339)
-	data, _ := json.Marshal(req)
+	update := pickFields(req, "tone", "structure", "sentence_style", "brand_context", "avoid_list")
+	update["last_edited_at"] = time.Now().UTC().Format(time.RFC3339)
 
 	_, _, err := s.serviceRole.From("writing_voice").
-		Update(json.RawMessage(data), "", "").
+		Update(update, "", "").
 		Eq("project_id", projectID).
 		Execute()
 	if err != nil {
+		s.logger.Error("Failed to update voice profile", zap.Error(err), zap.String("project_id", projectID))
 		s.respondError(w, http.StatusInternalServerError, "Failed to update voice profile")
 		return
 	}
@@ -246,10 +247,7 @@ func (s *Server) handleGenerateBrief(ai *AISuiteServices) http.HandlerFunc {
 			return
 		}
 
-		// Check usage limit
-		status, err := ai.UsageTracker.CheckLimit(r.Context(), req.ProjectID, "brief")
-		if err == nil && !status.Allowed {
-			s.respondError(w, http.StatusTooManyRequests, status.Message)
+		if !s.allowAIUsage(w, r, ai, req.ProjectID, "brief") {
 			return
 		}
 
@@ -364,20 +362,39 @@ func (s *Server) handleUpdateBrief(w http.ResponseWriter, r *http.Request) {
 	}
 
 	briefID, _ := req["id"].(string)
-	projectID, _ := req["project_id"].(string)
+	if briefID == "" {
+		s.respondError(w, http.StatusBadRequest, "id required")
+		return
+	}
+
+	// Access is checked against the project the brief actually belongs to,
+	// never the project_id in the request body.
+	projectID, found, err := s.projectIDOfRecord("content_briefs", briefID)
+	if err != nil {
+		s.logger.Error("Failed to load brief", zap.Error(err), zap.String("id", briefID))
+		s.respondError(w, http.StatusInternalServerError, "Failed to load brief")
+		return
+	}
+	if !found {
+		s.respondError(w, http.StatusNotFound, "Brief not found")
+		return
+	}
 	if ok, err := s.verifyProjectAccess(userID, projectID); !ok || err != nil {
 		s.respondError(w, http.StatusForbidden, "Access denied")
 		return
 	}
 
-	req["updated_at"] = time.Now().UTC().Format(time.RFC3339)
-	data, _ := json.Marshal(req)
+	// Only editable fields are written; id, project_id and created_by are not.
+	update := pickFields(req, "keyword", "brief_data", "status")
+	update["updated_at"] = time.Now().UTC().Format(time.RFC3339)
 
-	_, _, err := s.serviceRole.From("content_briefs").
-		Update(json.RawMessage(data), "", "").
+	_, _, err = s.serviceRole.From("content_briefs").
+		Update(update, "", "").
 		Eq("id", briefID).
+		Eq("project_id", projectID).
 		Execute()
 	if err != nil {
+		s.logger.Error("Failed to update brief", zap.Error(err), zap.String("id", briefID))
 		s.respondError(w, http.StatusInternalServerError, "Failed to update brief")
 		return
 	}
@@ -409,9 +426,7 @@ func (s *Server) handleGenerateArticle(ai *AISuiteServices) http.HandlerFunc {
 			return
 		}
 
-		status, err := ai.UsageTracker.CheckLimit(r.Context(), req.ProjectID, "article")
-		if err == nil && !status.Allowed {
-			s.respondError(w, http.StatusTooManyRequests, status.Message)
+		if !s.allowAIUsage(w, r, ai, req.ProjectID, "article") {
 			return
 		}
 
@@ -419,6 +434,7 @@ func (s *Server) handleGenerateArticle(ai *AISuiteServices) http.HandlerFunc {
 		briefData, _, err := s.serviceRole.From("content_briefs").
 			Select("*", "", false).
 			Eq("id", req.BriefID).
+			Eq("project_id", req.ProjectID).
 			Limit(1, "").
 			Execute()
 		if err != nil {
@@ -526,20 +542,42 @@ func (s *Server) handleUpdateArticle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	articleID, _ := req["id"].(string)
-	projectID, _ := req["project_id"].(string)
+	if articleID == "" {
+		s.respondError(w, http.StatusBadRequest, "id required")
+		return
+	}
+
+	// Access is checked against the project the article actually belongs to,
+	// never the project_id in the request body.
+	projectID, found, err := s.projectIDOfRecord("articles", articleID)
+	if err != nil {
+		s.logger.Error("Failed to load article", zap.Error(err), zap.String("id", articleID))
+		s.respondError(w, http.StatusInternalServerError, "Failed to load article")
+		return
+	}
+	if !found {
+		s.respondError(w, http.StatusNotFound, "Article not found")
+		return
+	}
 	if ok, err := s.verifyProjectAccess(userID, projectID); !ok || err != nil {
 		s.respondError(w, http.StatusForbidden, "Access denied")
 		return
 	}
 
-	req["updated_at"] = time.Now().UTC().Format(time.RFC3339)
-	data, _ := json.Marshal(req)
+	// Only editable fields are written; id, project_id and created_by are not.
+	update := pickFields(req, "content", "status")
+	if content, ok := update["content"].(string); ok {
+		update["word_count"] = len(strings.Fields(content))
+	}
+	update["updated_at"] = time.Now().UTC().Format(time.RFC3339)
 
-	_, _, err := s.serviceRole.From("articles").
-		Update(json.RawMessage(data), "", "").
+	_, _, err = s.serviceRole.From("articles").
+		Update(update, "", "").
 		Eq("id", articleID).
+		Eq("project_id", projectID).
 		Execute()
 	if err != nil {
+		s.logger.Error("Failed to update article", zap.Error(err), zap.String("id", articleID))
 		s.respondError(w, http.StatusInternalServerError, "Failed to update article")
 		return
 	}
@@ -874,6 +912,10 @@ func (s *Server) handleExplainOpportunity(ai *AISuiteServices) http.HandlerFunc 
 			return
 		}
 
+		if !s.allowAIUsage(w, r, ai, req.ProjectID, "explain") {
+			return
+		}
+
 		messages, err := ai.ContextBuilder.BuildMessages(r.Context(), req.ProjectID, aicontext.ContextExplain, aicontext.Params{
 			Keyword: req.Query,
 			PageURL: req.Page,
@@ -917,6 +959,10 @@ func (s *Server) handleDiagnoseDecline(ai *AISuiteServices) http.HandlerFunc {
 
 		if ok, err := s.verifyProjectAccess(userID, req.ProjectID); !ok || err != nil {
 			s.respondError(w, http.StatusForbidden, "Access denied")
+			return
+		}
+
+		if !s.allowAIUsage(w, r, ai, req.ProjectID, "diagnose") {
 			return
 		}
 
@@ -1387,25 +1433,14 @@ func (s *Server) handleUsageSummary(ai *AISuiteServices) http.HandlerFunc {
 			summary = map[string]int{}
 		}
 
-		// Get plan limits
-		planTier := "starter"
-		projectData, _, _ := s.serviceRole.From("projects").
-			Select("plan_tier", "", false).
-			Eq("id", projectID).
-			Limit(1, "").
-			Execute()
-		var projects []struct {
-			PlanTier string `json:"plan_tier"`
+		// The plan comes from the project owner's subscription
+		planTier, err := s.aiPlanForProject(projectID)
+		if err != nil {
+			s.logger.Error("Failed to resolve AI plan", zap.Error(err), zap.String("project_id", projectID))
+			s.respondError(w, http.StatusInternalServerError, "Failed to load usage")
+			return
 		}
-		json.Unmarshal(projectData, &projects)
-		if len(projects) > 0 && projects[0].PlanTier != "" {
-			planTier = projects[0].PlanTier
-		}
-
-		limits := usage.Plans[planTier]
-		if _, ok := usage.Plans[planTier]; !ok {
-			limits = usage.Plans["starter"]
-		}
+		limits := usage.LimitsFor(planTier)
 
 		s.respondJSON(w, http.StatusOK, map[string]interface{}{
 			"plan":  planTier,

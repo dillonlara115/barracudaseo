@@ -509,9 +509,7 @@ func (s *Server) handleDeletePublicReport(w http.ResponseWriter, r *http.Request
 	}
 
 	// Extract report ID from URL path
-	path := strings.TrimPrefix(r.URL.Path, "/api/v1/reports/public/")
-	path = strings.Trim(path, "/")
-	reportID := path
+	reportID := publicReportIDFromPath(r.URL.Path)
 
 	if reportID == "" {
 		s.respondError(w, http.StatusBadRequest, "Report ID is required")
@@ -551,4 +549,13 @@ func (s *Server) handleDeletePublicReport(w http.ResponseWriter, r *http.Request
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{
 		"success": true,
 	})
+}
+
+// publicReportIDFromPath extracts the report ID from a /reports/public/:id
+// path. The v1 router strips the /api/v1 prefix before handlers run, so the
+// path normally arrives without it; both forms are accepted.
+func publicReportIDFromPath(path string) string {
+	path = strings.TrimPrefix(path, "/api/v1")
+	path = strings.TrimPrefix(path, "/reports/public")
+	return strings.Trim(path, "/")
 }
