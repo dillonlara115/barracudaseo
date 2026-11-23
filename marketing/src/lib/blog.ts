@@ -95,11 +95,12 @@ export const blogPosts: BlogPost[] = [
 	{
 		slug: 'screaming-frog-pricing',
 		title: 'Screaming Frog Pricing in 2026: Is the $279 Licence Worth It?',
-		seoTitle: 'Screaming Frog Pricing 2026: Is $279/Year Worth It?',
+		seoTitle: 'Screaming Frog Pricing 2026: License Cost (USD, GBP, EUR)',
 		description:
-			"Screaming Frog costs $279 per user per year; the free version crawls 500 URLs. Full price list, exactly what the free tier leaves out, who gets their money's worth, hidden costs, and cheaper ways to get the same outcome.",
+			'Screaming Frog costs $279 per user per year (£199 / €245); the free version crawls 500 URLs. Full 2026 price list, team costs, API extras and who should pay.',
 		author: 'Barracuda Team',
 		publishDate: '2026-09-14',
+		updatedDate: '2026-11-23',
 		readTime: 9,
 		category: 'Comparisons',
 		tags: ['screaming frog', 'pricing', 'SEO tools', 'technical SEO', 'site audit'],
@@ -123,6 +124,16 @@ export const blogPosts: BlogPost[] = [
 				question: 'Does Screaming Frog have a monthly subscription or free trial?',
 				answer:
 					'No to both. Licences are annual only and the paid features cannot be trialled; the free version serves as the trial. Because it is a one-year term, the licence can simply be left to lapse at renewal.'
+			},
+			{
+				question: 'Does the Screaming Frog API cost extra?',
+				answer:
+					'Screaming Frog does not sell a separate API. The paid licence includes the connections to Google Analytics 4, Search Console and PageSpeed Insights at no extra charge, and those Google APIs are free to use. Pulling link data from Ahrefs, Moz or Majestic needs your own paid account with that provider, and the AI integrations need your own OpenAI or Gemini API key.'
+			},
+			{
+				question: 'Is there a Screaming Frog discount code?',
+				answer:
+					'The only discount Screaming Frog publishes is volume pricing: $265 per licence for 5 to 9 licences, $249 for 10 to 19 and $235 for 20 or more, bought in one order. Renewals are charged at the current list price.'
 			}
 		]
 	},

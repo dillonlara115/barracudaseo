@@ -296,10 +296,10 @@ export const blogContent: Record<string, string> = {
 			The more useful question, and the one the r/SEO thread "Is Screaming Frog worth the $279/year?" has a hundred-plus answers to, is whether <em>you</em> need the licence. This guide covers the full price list, exactly what the free tier leaves out, who gets their money's worth, the costs the price tag does not show, and the cheaper ways to get the same outcome.
 		</p>
 		<p class="text-white/60 text-sm">
-			Prices checked September 2026 on screamingfrog.co.uk. Confirm before you buy.
+			Prices checked 23 November 2026 on screamingfrog.co.uk, in all three currencies. Confirm before you buy.
 		</p>
 
-		<h2>Screaming Frog pricing in 2026</h2>
+		<h2>Screaming Frog licence cost in 2026 (USD, GBP, EUR)</h2>
 		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
 			<h3 class="mt-0 text-white">SEO Spider licence (per user, per year)</h3>
 			<div class="overflow-x-auto">
@@ -347,6 +347,33 @@ export const blogContent: Record<string, string> = {
 		<p>
 			Per month, a single licence works out to about $23 — cheaper than almost any cloud SEO tool. The catch is the word "user": a five-person agency pays $1,325 a year for everyone to have it, and the licences are tied to individuals rather than seats you can pass around.
 		</p>
+		<h3>How much a team spends on Screaming Frog per year</h3>
+		<p>
+			The three currencies are priced separately rather than converted at the day's exchange rate, so the US dollar price is $279 whatever the pound is doing. In dollars, the yearly bill by team size:
+		</p>
+		<div class="bg-[#3c3836] p-6 rounded-lg border border-white/10 my-8">
+			<div class="overflow-x-auto">
+			<table class="w-full border-collapse text-sm">
+				<thead>
+					<tr>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Users</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Per licence</th>
+						<th class="text-left p-3 border border-white/20 text-[#8ec07c]">Total per year</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr><td class="p-3 border border-white/20 text-white/80">1</td><td class="p-3 border border-white/20 text-white/80">$279</td><td class="p-3 border border-white/20 text-white/80 font-bold">$279</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80">3</td><td class="p-3 border border-white/20 text-white/80">$279</td><td class="p-3 border border-white/20 text-white/80 font-bold">$837</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80">5</td><td class="p-3 border border-white/20 text-white/80">$265</td><td class="p-3 border border-white/20 text-white/80 font-bold">$1,325</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80">10</td><td class="p-3 border border-white/20 text-white/80">$249</td><td class="p-3 border border-white/20 text-white/80 font-bold">$2,490</td></tr>
+					<tr><td class="p-3 border border-white/20 text-white/80">20</td><td class="p-3 border border-white/20 text-white/80">$235</td><td class="p-3 border border-white/20 text-white/80 font-bold">$4,700</td></tr>
+				</tbody>
+			</table>
+			</div>
+			<p class="text-white/60 text-sm mt-4 mb-0">
+				Volume prices apply when the licences are bought in one order. US readers searching for a Screaming Frog "license" are looking at the same thing: the company is British and spells it "licence".
+			</p>
+		</div>
 
 		<h2>Free vs paid: what the 500-URL limit actually leaves out</h2>
 		<p>
@@ -439,6 +466,14 @@ export const blogContent: Record<string, string> = {
 		<h3>Does Screaming Frog have a monthly subscription or free trial?</h3>
 		<p>
 			No to both. Licences are annual only and the paid features cannot be trialled; the free version is the trial. The licence can be cancelled at renewal with no penalty since it is a one-year term.
+		</p>
+		<h3>Does the Screaming Frog API cost extra?</h3>
+		<p>
+			Screaming Frog does not sell a separate API. The paid licence includes the connections to Google Analytics 4, Search Console and PageSpeed Insights at no extra charge, and those Google APIs are free to use. Pulling link data from Ahrefs, Moz or Majestic needs your own paid account with that provider, and the AI integrations need your own OpenAI or Gemini API key.
+		</p>
+		<h3>Is there a Screaming Frog discount code?</h3>
+		<p>
+			The only discount Screaming Frog publishes is volume pricing: $265 per licence for 5 to 9 licences, $249 for 10 to 19 and $235 for 20 or more, bought in one order. Renewals are charged at the current list price.
 		</p>
 
 		<h2>The bottom line</h2>
