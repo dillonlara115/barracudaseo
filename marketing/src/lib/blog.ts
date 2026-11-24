@@ -413,7 +413,7 @@ export const blogPosts: BlogPost[] = [
 			{
 				question: 'Can Screaming Frog crawl JavaScript websites?',
 				answer:
-					'The paid version can, using a built-in headless Chromium renderer; the free version cannot. Sitebulb, LibreCrawl, SiteOne, Netpeak Spider and the enterprise cloud crawlers also render JavaScript. Barracuda currently crawls server-rendered HTML only.'
+					"The paid version can, using a built-in headless Chromium renderer; the free version cannot. Sitebulb, LibreCrawl, SiteOne, Netpeak Spider and the enterprise cloud crawlers also render JavaScript. Barracuda crawls the server's HTML and renders a sample of key pages to flag JavaScript-dependent content."
 			}
 		],
 		featured: true
@@ -592,7 +592,7 @@ export const blogPosts: BlogPost[] = [
 			'An honest vendor comparison: Screaming Frog is the deeper crawler and cheaper for one user; Barracuda prioritizes, weights by Search Console, and shares. Feature table, pricing math, who should pick which.',
 		author: 'Barracuda Team',
 		publishDate: '2025-01-15',
-		updatedDate: '2026-09-15',
+		updatedDate: '2026-11-24',
 		readTime: 9,
 		category: 'Comparisons',
 		tags: ['screaming frog', 'SEO crawler', 'comparison', 'technical SEO', 'site audit'],
@@ -610,7 +610,7 @@ export const blogPosts: BlogPost[] = [
 			{
 				question: 'Does Barracuda render JavaScript?',
 				answer:
-					"No. Barracuda crawls server-rendered HTML, which covers most WordPress, Shopify and static sites. For client-rendered content, use Screaming Frog's paid JavaScript mode or another rendering crawler."
+					"Partly. Barracuda crawls the server's HTML, which covers most WordPress, Shopify and static sites, and renders a sample of key pages in headless Chrome to flag content, links, canonicals and titles that change once JavaScript runs. It does not render every page, so for a client-rendered site use Screaming Frog's paid JavaScript mode or another rendering crawler."
 			},
 			{
 				question: 'Can I import Screaming Frog crawls into Barracuda?',
