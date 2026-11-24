@@ -857,12 +857,12 @@ export const blogPosts: BlogPost[] = [
 	{
 		slug: 'how-to-write-title-tags-that-rank-and-get-clicks',
 		title: 'Title Tags for SEO in 2026: Length, Examples, Formulas, and Why Google Rewrites Them',
-		seoTitle: 'Title Tag SEO: Length, Examples & Formulas (2026)',
+		seoTitle: 'Title Tag Length & SEO Title Examples (2026) + Checker',
 		description:
-			'2026 title tag length limits, why Google rewrites titles and how to stop it, five formulas, twelve before-and-after examples by page type, and how to test a change.',
+			'How long a title tag should be in 2026 (50–60 characters, about 600 px), with a free length checker, twelve before-and-after examples and five formulas.',
 		author: 'Barracuda Team',
 		publishDate: '2026-03-28',
-		updatedDate: '2026-09-21',
+		updatedDate: '2026-11-24',
 		readTime: 11,
 		category: 'On-Page SEO',
 		tags: [
@@ -877,6 +877,11 @@ export const blogPosts: BlogPost[] = [
 				question: 'How long should a title tag be?',
 				answer:
 					'Aim for 50–60 characters, with the keyword and main promise in the first 50. Google truncates by pixel width at around 600 px on desktop, so wide letters and capitals shorten the budget. Going over is not penalised — the end is cut with an ellipsis — but only the brand suffix should live past 60.'
+			},
+			{
+				question: 'What is the character limit for a meta title?',
+				answer:
+					'There is no hard character limit. Meta title, SEO title and title tag all mean the same thing, the HTML title element, and Google cuts it by width at about 600 pixels on desktop, which is usually 55 to 65 characters. Staying at 60 or under keeps most titles whole.'
 			},
 			{
 				question: 'What are some good title tag examples?',

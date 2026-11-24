@@ -4514,7 +4514,7 @@ sys.exit(0)</code></pre>
 		<h2>Types of Duplicate Meta Tags</h2>
 
 		<h3>Duplicate Title Tags</h3>
-		<p>The most critical issue. Every page should have a unique, descriptive title tag that accurately represents its content.</p>
+		<p>The most critical issue. Every page should have a unique, descriptive title tag that accurately represents its content. Our guide to <a href="/blog/how-to-write-title-tags-that-rank-and-get-clicks">title tag length and examples</a> covers how to write one.</p>
 
 		<h3>Duplicate Meta Descriptions</h3>
 		<p>Less critical than titles, but still important. Unique descriptions improve click-through rates from search results.</p>
@@ -5293,7 +5293,7 @@ sys.exit(0)</code></pre>
 
 		<h2>On-Page SEO</h2>
 		<ul>
-			<li>✓ Title tags (unique, proper length, optimized)</li>
+			<li>✓ Title tags (unique, <a href="/blog/how-to-write-title-tags-that-rank-and-get-clicks">proper length</a>, optimized)</li>
 			<li>✓ Meta descriptions (unique, compelling, proper length)</li>
 			<li>✓ H1 tags (one per page, descriptive)</li>
 			<li>✓ Heading hierarchy (H2, H3, etc.)</li>
@@ -6043,7 +6043,7 @@ sys.exit(0)</code></pre>
 			Not all declines mean the same thing. Once you've identified a page worth investigating, the pattern of the data tells you where to focus.
 		</p>
 		<ul>
-			<li><strong>Clicks down, impressions stable, position holding.</strong> This is a CTR problem. Your page is showing up in roughly the same place it always has, but users are choosing other results more often. The fix is usually a better title tag or meta description, not a content rewrite.</li>
+			<li><strong>Clicks down, impressions stable, position holding.</strong> This is a CTR problem. Your page is showing up in roughly the same place it always has, but users are choosing other results more often. The fix is usually a <a href="/blog/how-to-write-title-tags-that-rank-and-get-clicks">better title tag</a> or meta description, not a content rewrite.</li>
 			<li><strong>Impressions and clicks both down, position stable.</strong> Search volume for the query dropped. This may have nothing to do with your page at all. Check if the decline is seasonal or if the topic has genuinely lost interest.</li>
 			<li><strong>Position dropped, impressions and clicks followed.</strong> This is a ranking problem. A competitor outranked you, an algorithm update affected your category, or your content lost relevance. This is the scenario that usually requires the most work.</li>
 			<li><strong>Impressions up, clicks down, position slipped slightly.</strong> A featured snippet or SERP feature may have appeared above your result and is now capturing clicks that previously went to you. Your page is still visible but getting less real estate.</li>
@@ -8172,7 +8172,7 @@ sys.exit(0)</code></pre>
 		</p>
 
 		<p>
-			Instead, optimize your hyperlocal pages for the neighborhood name and the specific service. Ensure your title tag, meta description, and H1 clearly state the location and what you do.
+			Instead, optimize your hyperlocal pages for the neighborhood name and the specific service. Ensure your <a href="/blog/how-to-write-title-tags-that-rank-and-get-clicks">title tag</a>, meta description, and H1 clearly state the location and what you do.
 		</p>
 
 		<div class="bg-[#282828] p-6 rounded-lg border border-[#fabd2f]/30 my-8">
@@ -8471,6 +8471,9 @@ sys.exit(0)</code></pre>
 	`,
 	'how-to-write-title-tags-that-rank-and-get-clicks': `
 		<p>
+			<strong>A title tag should be 50–60 characters, or about 600 pixels wide on desktop</strong>, with the keyword and the main promise in the first 50. That holds whether you call it a title tag, a meta title or an SEO title: all three mean the <code>&lt;title&gt;</code> element. You can <a href="#title-length-checker">measure a title in the checker below</a>; the rest of this guide covers what to put in those 60 characters.
+		</p>
+		<p>
 			A title tag is the one line of SEO copy that both Google and the person searching read before anything else. It is a small ranking signal and a large click signal: two pages in the same position can differ by 2–3× in click-through rate on the strength of the title alone. It is also the element Google rewrites most often — in most studies, somewhere between a third and two-thirds of titles get altered in the results — which means writing a good one is now partly about writing one Google is willing to keep.
 		</p>
 		<p>
@@ -8510,6 +8513,11 @@ sys.exit(0)</code></pre>
 		<p>
 			Because it is pixels, the same character count can fit or truncate depending on the letters: "Illinois" is narrow, "WordPress" is wide, and CAPITALS are widest of all. Two practical rules follow. Keep the target keyword and the value proposition in the first 50 characters, so a truncated title still makes sense. And treat 60 characters as a ceiling for the part you care about, not the whole string — the brand suffix after a separator can go past it, since losing "| Brand Name" to an ellipsis costs nothing.
 		</p>
+		<h3 id="title-length-checker">Check a title tag's length</h3>
+		<p>
+			Type or paste a title to see its character count, its pixel width as Google draws it on desktop, and how it would be cut off.
+		</p>
+		<!--title-length-checker-->
 		<p>
 			There is no minimum length that Google enforces, but very short titles ("Home", "Services", "Blog") are the ones it rewrites most aggressively, because they describe nothing. A crawl of any site older than a few years usually turns up dozens of them.
 		</p>
@@ -8637,6 +8645,10 @@ sys.exit(0)</code></pre>
 		<h3>How long should a title tag be?</h3>
 		<p>
 			Aim for 50–60 characters, and put the keyword and main promise in the first 50. Google truncates by pixel width at around 600 px on desktop, so wide letters and capitals shorten the budget. There is no penalty for going over — the end is cut off with an ellipsis — but the brand suffix is the only thing that should live past 60.
+		</p>
+		<h3>What is the character limit for a meta title?</h3>
+		<p>
+			There is no hard character limit. Meta title, SEO title and title tag all mean the same thing, the HTML title element, and Google cuts it by width at about 600 pixels on desktop, which is usually 55 to 65 characters. Staying at 60 or under keeps most titles whole.
 		</p>
 		<h3>What are some good title tag examples?</h3>
 		<p>

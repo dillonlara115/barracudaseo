@@ -10,11 +10,17 @@
 	import { Calendar, Clock, ArrowLeft, Tag } from '@lucide/svelte';
 	import { trackCTA } from '$lib/analytics';
 	import { blogContent } from '$lib/blog-content';
+	import TitleLengthChecker from '../../../components/TitleLengthChecker.svelte';
 
 	let { data } = $props();
 
 	const { post, relatedPosts } = data;
 	const content = blogContent[post.slug] || '<p>Content coming soon...</p>';
+
+	// A post can place the title length checker with this marker in its HTML.
+	const checkerMarker = '<!--title-length-checker-->';
+	const hasChecker = content.includes(checkerMarker);
+	const [contentBefore, contentAfter = ''] = content.split(checkerMarker);
 
 	const meta = getMetaTags({
 		title: post.seoTitle ?? post.title,
@@ -165,7 +171,11 @@
 <article class="bg-[#2d2826] py-12">
 	<div class="container mx-auto max-w-4xl px-4">
 		<div class="blog-content">
-			{@html content}
+			{@html contentBefore}
+			{#if hasChecker}
+				<TitleLengthChecker />
+				{@html contentAfter}
+			{/if}
 		</div>
 	</div>
 </article>
